@@ -7,10 +7,10 @@ import { useState, useEffect } from 'react';
 interface HeaderProps {
   language: 'fr' | 'en';
   onLanguageChange: (lang: 'fr' | 'en') => void;
-  onReserveNow?: () => void;
+  onReservationClick?: () => void;
 }
 
-export default function Header({ language, onLanguageChange, onReserveNow }: HeaderProps) {
+export default function Header({ language, onLanguageChange, onReservationClick }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const scrollToSection = (sectionId: string) => {

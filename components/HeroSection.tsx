@@ -6,10 +6,10 @@ import { useState, useEffect } from 'react';
 
 interface HeroSectionProps {
   language: 'fr' | 'en';
-  onReserveNow?: () => void;
+  onReservationClick?: () => void;
 }
 
-export default function HeroSection({ language, onReserveNow }: HeroSectionProps) {
+export default function HeroSection({ language, onReservationClick }: HeroSectionProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const backgroundImages = [
@@ -100,7 +100,7 @@ export default function HeroSection({ language, onReserveNow }: HeroSectionProps
                     {texts[language].emergency}
                   </a>
                   <button
-                    onClick={handleReserveNow}
+                    onClick={onReservationClick ? onReservationClick : handleReserveNow}
                     className="bg-white/10 backdrop-blur-sm text-white px-12 py-6 rounded-full font-semibold text-xl hover:bg-white hover:text-black transition-colors text-center cursor-pointer whitespace-nowrap"
                   >
                     <i className="ri-calendar-line mr-3 text-2xl"></i>

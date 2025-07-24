@@ -8,6 +8,8 @@ import LegalNoticeModal from './LegalNoticeModal';
 
 interface FooterProps {
   language: 'fr' | 'en';
+  onLegalNoticeClick?: () => void;
+  onRentalConditionsClick?: () => void;
 }
 
 export default function Footer({ language }: FooterProps) {
