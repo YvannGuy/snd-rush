@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://sndrush.com/og-image.jpg", // Remplace par l'URL réelle de ton image OG
+        url: "https://sndrush.com/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "snd rush - Location sono express Paris",
@@ -75,6 +75,9 @@ export const metadata: Metadata = {
       en: "https://sndrush.com/en",
     },
   },
+  icons: {
+    icon: "/favicon.jpg", // favicon placé dans /public/favicon.jpg
+  },
 };
 
 export default function RootLayout({
@@ -84,11 +87,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <head>
-        <link rel="alternate" href="https://sndrush.com" hrefLang="fr" />
-        <link rel="alternate" href="https://sndrush.com/en" hrefLang="en" />
-        <link rel="alternate" href="https://sndrush.com" hrefLang="x-default" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}
       >
