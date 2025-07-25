@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
         <p><strong>Adresse :</strong> ${adresse}</p>
         <p><strong>Message :</strong><br/>${message}</p>
       `,
-      reply_to: email,
+      replyTo: email,
     });
 
     return NextResponse.json({ message: "Message envoyé avec succès.", data }, { status: 200 });
