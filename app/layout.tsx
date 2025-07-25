@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | snd rush",
   },
   description:
-    "snd rush propose un service de location d'équipement sono et lumière 24h/24 - 7j/7 à Paris et en Île-de-France. Livraison express sous 2 heures.",
+    "snd rush propose un service de location d'équipement sono, enceintes et micros 24h/24 - 7j/7 à Paris et en Île-de-France. Livraison express sous 2 heures.",
   keywords: [
     "location sono Paris",
     "location enceinte DJ",
@@ -75,9 +75,6 @@ export const metadata: Metadata = {
       en: "https://sndrush.com/en",
     },
   },
-  icons: {
-    icon: "/favicon.ico", // favicon placé dans /public/favicon.jpg
-  },
 };
 
 export default function RootLayout({
@@ -87,6 +84,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}
       >
