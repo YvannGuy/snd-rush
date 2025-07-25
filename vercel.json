@@ -1,7 +1,4 @@
 {
-    "outputDirectory": ".next",
-    "buildCommand": "next build",
-    "ignoreCommand": "exit 1",
     "rewrites": [
       { "source": "/api/(.*)", "destination": "/api/$1" }
     ]
