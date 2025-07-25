@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | SND Rush",
   },
   description:
-    "SND Rush propose un service de location d'équipement sono et lumière 24h/24 - 7j/7 à Paris et en Île-de-France. Livraison express sous 2 heures.",
+    "snd rush propose un service de location d'équipement sono et lumière 24h/24 - 7j/7 à Paris et en Île-de-France. Livraison express sous 2 heures.",
   keywords: [
     "location sono Paris",
     "location enceinte DJ",
