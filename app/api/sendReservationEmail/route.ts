@@ -1,25 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { nom, prenom, email, telephone, date, heure, adresse, message } = body;
 
-  const transporter = nodemailer.createTransport({
-    host: 'mail.privateemail.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
   try {
-    await transporter.sendMail({
-      from: `"SND Rush" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_DEST || process.env.EMAIL_USER,
-      subject: 'Nouvelle demande de réservation SND Rush',
+    const data = await resend.emails.send({
+      from: process.env.RESEND_FROM!, // Ex: contact@sndrush.com (doit être vérifié sur Resend)
+      to: process.env.RESEND_TO || process.env.RESEND_FROM!, // destinataire
+      subject: "Nouvelle demande de réservation SND Rush",
       html: `
         <h2>Nouvelle demande reçue</h2>
         <p><strong>Nom :</strong> ${prenom} ${nom}</p>
@@ -30,11 +22,15 @@ export async function POST(req: NextRequest) {
         <p><strong>Adresse :</strong> ${adresse}</p>
         <p><strong>Message :</strong><br/>${message}</p>
       `,
+      reply_to: email,
     });
 
-    return NextResponse.json({ message: 'Message envoyé avec succès.' }, { status: 200 });
-  } catch (error) {
-    console.error('Erreur d’envoi :', error);
-    return NextResponse.json({ message: 'Erreur lors de l’envoi du message.' }, { status: 500 });
+    return NextResponse.json({ message: "Message envoyé avec succès.", data }, { status: 200 });
+  } catch (error: any) {
+    console.error("Erreur Resend :", error.message);
+    return NextResponse.json(
+      { message: "Erreur lors de l’envoi du message.", error: error.message },
+      { status: 500 }
+    );
   }
 }

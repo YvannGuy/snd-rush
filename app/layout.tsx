@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Pacifico } from "next/font/google";
 import "./globals.css";
+import { ReactNode } from "react";
 
 const pacifico = Pacifico({
-  weight: '400',
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-pacifico',
-})
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-pacifico",
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,17 +21,72 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "snd•rush - Location sonore express Paris",
-  description: "Service de location d'équipement sonore 24h/24 - 7j/7 à Paris et Île-de-France. Livraison express sous 2h.",
+  title: {
+    default: "SND Rush - Location sono express Paris",
+    template: "%s | SND Rush",
+  },
+  description:
+    "SND Rush propose un service de location d'équipement sono et lumière 24h/24 - 7j/7 à Paris et en Île-de-France. Livraison express sous 2 heures.",
+  keywords: [
+    "location sono Paris",
+    "location enceinte DJ",
+    "sono express",
+    "location matériel événementiel",
+    "location micro Paris",
+    "matériel sonorisation Paris",
+    "location sono mariage",
+    "snd rush",
+  ],
+  metadataBase: new URL("https://sndrush.com"),
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "sndrush - Sono express à Paris",
+    description:
+      "Service express de location sono, enceintes et micros à Paris. Livraison en moins de 2h, disponible 24h/24 - 7j/7.",
+    url: "https://sndrush.com",
+    siteName: "SND Rush",
+    locale: "fr_FR",
+    type: "website",
+    images: [
+      {
+        url: "https://sndrush.com/og-image.jpg", // Remplace par l'URL réelle de ton image OG
+        width: 1200,
+        height: 630,
+        alt: "snd rush - Location sono express Paris",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "snd rush - Sono express à Paris",
+    description:
+      "Location sono et lumière disponible 24h/24 à Paris. Livraison rapide, matériel professionnel.",
+    images: ["https://sndrush.com/og-image.jpg"],
+  },
+  alternates: {
+    canonical: "https://sndrush.com",
+    languages: {
+      fr: "https://sndrush.com",
+      en: "https://sndrush.com/en",
+    },
+  },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: ReactNode;
+}) {
   return (
-    <html lang="fr" suppressHydrationWarning={true}>
+    <html lang="fr" suppressHydrationWarning>
+      <head>
+        <link rel="alternate" href="https://sndrush.com" hrefLang="fr" />
+        <link rel="alternate" href="https://sndrush.com/en" hrefLang="en" />
+        <link rel="alternate" href="https://sndrush.com" hrefLang="x-default" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}
       >
