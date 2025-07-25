@@ -76,7 +76,7 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/favicon.jpg", // favicon placé dans /public/favicon.jpg
+    icon: "/favicon.ico", // favicon placé dans /public/favicon.jpg
   },
 };
 
