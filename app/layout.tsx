@@ -30,6 +30,8 @@ export const metadata: Metadata = {
   keywords: [
     "location sono Paris",
     "location enceinte DJ",
+    "location enceinte",
+    "location matériel sono",
     "sono express",
     "location matériel événementiel",
     "location micro Paris",
