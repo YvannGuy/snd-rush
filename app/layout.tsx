@@ -22,8 +22,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "SND Rush - Location sono express Paris",
-    template: "%s | SND Rush",
+    default: "snd rush - Location sono express Paris",
+    template: "%s | snd rush",
   },
   description:
     "snd rush propose un service de location d'équipement sono et lumière 24h/24 - 7j/7 à Paris et en Île-de-France. Livraison express sous 2 heures.",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     description:
       "Service express de location sono, enceintes et micros à Paris. Livraison en moins de 2h, disponible 24h/24 - 7j/7.",
     url: "https://sndrush.com",
-    siteName: "SND Rush",
+    siteName: "snd rush",
     locale: "fr_FR",
     type: "website",
     images: [
