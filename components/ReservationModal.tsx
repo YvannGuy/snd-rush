@@ -217,41 +217,50 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
       date: info.eventDate,
       heure: info.eventTime,
       adresse: `${info.address}, ${info.city} ${info.postalCode}`,
-      message: `Type d'événement : ${info.eventType}\nNombre d'invités : ${info.guestCount}\nDemandes spéciales : ${info.specialRequests || ''}\nPack sélectionné : ${selectedPack?.name || ''}`
+      message: `Type d'événement : ${info.eventType}\nNombre d'invités : ${info.guestCount}\nDemandes spéciales : ${info.specialRequests || ''}\nPack sélectionné : ${selectedPack?.name || ''}`,
     };
+  
     try {
       const res = await fetch('/api/sendReservationEmail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
+  
       if (res.ok) {
         setIsSubmitted(true);
+  
+        // ✅ Déclencher le suivi de conversion Google Ads
+        if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+          window.gtag('event', 'conversion', {
+            send_to: 'AW-17395859907/h0GECIKj3vkaEMOD_-ZA',
+          });
+        }
       } else {
-        alert('Erreur lors de l\'envoi du message.');
+        alert("Erreur lors de l'envoi du message.");
       }
     } catch (e) {
-      alert('Erreur lors de l\'envoi du message.');
+      alert("Erreur lors de l'envoi du message.");
     }
   };
-
+  
   useEffect(() => {
     if (preselectedPackId && isOpen) {
-      const pack = packs[language].find(p => p.id === preselectedPackId);
+      const pack = packs[language].find((p) => p.id === preselectedPackId);
       if (pack) {
         setSelectedPack(pack);
       }
     }
   }, [preselectedPackId, isOpen, language]);
-
+  
   const handleClose = () => {
     setSelectedPack(null);
     setIsSubmitted(false);
     onClose();
   };
-
+  
   if (!isOpen) return null;
-
+  
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
@@ -267,7 +276,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
             <i className="ri-close-line text-xl"></i>
           </button>
         </div>
-
+  
         {/* Content */}
         <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
           {!isSubmitted ? (
@@ -292,11 +301,15 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
               <div className="bg-gray-50 rounded-xl p-6 mb-8 max-w-md mx-auto">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-gray-600">{texts[language].orderNumber}:</span>
-                  <span className="font-bold text-black">#REQ{Math.floor(Math.random() * 10000)}</span>
+                  <span className="font-bold text-black">
+                    #REQ{Math.floor(Math.random() * 10000)}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">{selectedPack?.name}:</span>
-                  <span className="font-bold text-[#F2431E]">{selectedPack?.price}</span>
+                  <span className="font-bold text-[#F2431E]">
+                    {selectedPack?.price}
+                  </span>
                 </div>
               </div>
               <button

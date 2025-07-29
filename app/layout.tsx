@@ -3,6 +3,9 @@ import { Geist, Geist_Mono, Pacifico } from "next/font/google";
 import "./globals.css";
 import { ReactNode } from "react";
 
+// Google Script support
+import Script from "next/script";
+
 const pacifico = Pacifico({
   weight: "400",
   subsets: ["latin"],
@@ -85,15 +88,28 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
-  <link rel="icon" href="/favicon.ico" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        {/* Favicon */}
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+
+        {/* Google Tag (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=AW-17395859907"
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-17395859907');
+          `}
+        </Script>
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}>
         {children}
       </body>
     </html>
   );
 }
-
