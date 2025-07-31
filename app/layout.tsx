@@ -6,8 +6,9 @@ import { ReactNode } from "react";
 // Google Script support
 import Script from "next/script";
 
-// ✅ Vercel Analytics
+// ✅ Vercel Analytics & Speed Insights
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const pacifico = Pacifico({
   weight: "400",
@@ -112,7 +113,8 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}>
         {children}
-        <Analytics /> {/* ✅ Vercel Analytics intégré */}
+        <Analytics />       {/* ✅ Vercel Analytics intégré */}
+        <SpeedInsights />  {/* ✅ Vercel Speed Insights intégré */}
       </body>
     </html>
   );
