@@ -36,6 +36,13 @@ export default function TestimonialsSection({ language }: TestimonialsSectionPro
         author: "Alison T.",
         event: "Conférence",
         rating: 5
+      },
+      {
+        id: 3,
+        quote: "Je conseille snd rush, de la préparation a la livraison, et meme la qualité du matériel pour l'ouverture du magasin charlotte tilbury ils ont assuré",
+        author: "Hamadi Billy",
+        event: "Ouverture magasin Charlotte Tilbury",
+        rating: 5
       }
     ],
     en: [
@@ -52,20 +59,27 @@ export default function TestimonialsSection({ language }: TestimonialsSectionPro
         author: "Alison T.",
         event: "Conference",
         rating: 5
+      },
+      {
+        id: 3,
+        quote: "I recommend snd rush, from preparation to delivery, and even the quality of the equipment for the opening of the Charlotte Tilbury store they delivered",
+        author: "Hamadi Billy",
+        event: "Charlotte Tilbury Store Opening",
+        rating: 5
       }
     ]
   };
 
   const currentTestimonials = testimonials[language];
 
-  // Auto-rotate testimonials on mobile
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % currentTestimonials.length);
-    }, 6000);
+  // Auto-rotate testimonials on mobile (disabled for manual navigation)
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setCurrentTestimonial((prev) => (prev + 1) % currentTestimonials.length);
+  //   }, 6000);
 
-    return () => clearInterval(interval);
-  }, [currentTestimonials.length]);
+  //   return () => clearInterval(interval);
+  // }, [currentTestimonials.length]);
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -89,48 +103,87 @@ export default function TestimonialsSection({ language }: TestimonialsSectionPro
           </h2>
         </div>
 
-        {/* Desktop Grid Layout */}
-        <div className="hidden lg:grid lg:grid-cols-2 gap-12">
-          {currentTestimonials.map((testimonial, index) => (
+        {/* Desktop Carousel Layout */}
+        <div className="hidden lg:block">
+          <div className="relative overflow-hidden">
             <div
-              key={testimonial.id}
-              className="bg-white rounded-3xl p-10 shadow-lg hover:shadow-xl transition-all duration-500 ease-in-out transform hover:scale-[1.02] hover:-translate-y-1"
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ transform: `translateX(-${currentTestimonial * 33.333}%)` }}
             >
-              {/* Quote */}
-              <div className="mb-8">
-                <div className="text-4xl text-[#F2431E] mb-6 opacity-30">
-                  <i className="ri-double-quotes-l"></i>
-                </div>
-                <blockquote className="text-xl md:text-2xl text-black leading-relaxed italic font-light">
-                  {testimonial.quote}
-                </blockquote>
-              </div>
-
-              {/* Author info and rating */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-5">
-                  {/* User silhouette */}
-                  <div className="w-14 h-14 bg-gradient-to-br from-[#AAAAAA] to-gray-400 rounded-full flex items-center justify-center">
-                    <i className="ri-user-3-fill text-white text-xl"></i>
-                  </div>
-                  
-                  <div>
-                    <div className="font-medium text-black text-lg">
-                      {testimonial.author}
+              {currentTestimonials.map((testimonial, index) => (
+                <div
+                  key={testimonial.id}
+                  className="w-1/3 flex-shrink-0 px-6"
+                >
+                  <div className="bg-white rounded-3xl p-10 shadow-lg hover:shadow-xl transition-all duration-500 ease-in-out transform hover:scale-[1.02] hover:-translate-y-1">
+                    {/* Quote */}
+                    <div className="mb-8">
+                      <div className="text-4xl text-[#F2431E] mb-6 opacity-30">
+                        <i className="ri-double-quotes-l"></i>
+                      </div>
+                      <blockquote className="text-xl md:text-2xl text-black leading-relaxed italic font-light">
+                        {testimonial.quote}
+                      </blockquote>
                     </div>
-                    <div className="text-base text-[#AAAAAA] italic">
-                      {testimonial.event}
+
+                    {/* Author info and rating */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-5">
+                        {/* User silhouette */}
+                        <div className="w-14 h-14 bg-gradient-to-br from-[#AAAAAA] to-gray-400 rounded-full flex items-center justify-center">
+                          <i className="ri-user-3-fill text-white text-xl"></i>
+                        </div>
+                        
+                        <div>
+                          <div className="font-medium text-black text-lg">
+                            {testimonial.author}
+                          </div>
+                          <div className="text-base text-[#AAAAAA] italic">
+                            {testimonial.event}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Stars */}
+                      <div className="flex gap-1">
+                        {renderStars(testimonial.rating)}
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Stars */}
-                <div className="flex gap-1">
-                  {renderStars(testimonial.rating)}
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Desktop Navigation Arrows */}
+          <div className="flex justify-center items-center gap-6 mt-12">
+            <button
+              onClick={() => setCurrentTestimonial((prev) => (prev - 1 + currentTestimonials.length) % currentTestimonials.length)}
+              className="w-14 h-14 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 flex items-center justify-center group hover:bg-gray-50"
+            >
+              <i className="ri-arrow-left-line text-xl text-gray-600 group-hover:text-black transition-colors"></i>
+            </button>
+
+            {/* Desktop indicators */}
+            <div className="flex gap-2">
+              {currentTestimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentTestimonial(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    index === currentTestimonial ? 'bg-[#F2431E]' : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentTestimonial((prev) => (prev + 1) % currentTestimonials.length)}
+              className="w-14 h-14 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 flex items-center justify-center group hover:bg-gray-50"
+            >
+              <i className="ri-arrow-right-line text-xl text-gray-600 group-hover:text-black transition-colors"></i>
+            </button>
+          </div>
         </div>
 
         {/* Mobile Carousel */}

@@ -4,6 +4,22 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+interface Pack {
+  id: number;
+  name: string;
+  tagline: string;
+  description: string;
+  price: string;
+  originalPrice: string;
+  duration: string;
+  featured: boolean;
+  image: string;
+  features: string[];
+  highlight: string;
+  ideal: string;
+  caution?: string;
+}
+
 interface PacksSectionProps {
   language: 'fr' | 'en';
   onReservePack?: (packId: number) => void;
@@ -42,7 +58,7 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
     }
   };
 
-  const packs = {
+  const packs: { fr: Pack[], en: Pack[] } = {
     fr: [
       {
         id: 1,
@@ -56,7 +72,8 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
         image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/6cd244ab7117ff935d97606790e384b9.jfif",
         features: ["1 enceinte active", "Console de mixage", "Pieds d'enceintes", "Tous les câbles inclus"],
         highlight: "Essentiel",
-        ideal: "Idéal jusqu'à 50 personnes"
+        ideal: "Idéal jusqu'à 50 personnes",
+        caution: "600€"
       },
       {
         id: 2,
@@ -70,7 +87,8 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
         image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/5c261792f7820115100dfa4492f866a6.jfif",
         features: ["2 enceintes", "Console de mixage", "Micro, technicien et livraison en option", "Pieds + câbles inclus"],
         highlight: "Le + demandé",
-        ideal: "Idéal jusqu'à 100 personnes"
+        ideal: "Idéal jusqu'à 100 personnes",
+        caution: "900€"
       },
       {
         id: 3,
@@ -84,7 +102,8 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
         image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/201ad9cfef58b6b9553a19fa999690f2.jfif",
         features: ["2 enceintes + 1 caisson de basse", "Console de mixage", "Micro, technicien et installation en option", "Pieds et câbles inclus"],
         highlight: "Premium",
-        ideal: "Idéal jusqu'à 200 personnes"
+        ideal: "Idéal jusqu'à 200 personnes",
+        caution: "1200€"
       },
       {
         id: 5,
@@ -98,7 +117,8 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
         image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/fddc9abdeba1d6e4aff14662a1c018a0.jfif",
         features: ["4 enceintes actives 15'' avec trépieds", "1 mixeur professionnel", "1 caisson de basse", "Câblage complet", "Installation & technicien inclus", "Micro et livraison en option"],
         highlight: "Haut de gamme",
-        ideal: "Idéal jusqu'à 500 personnes"
+        ideal: "Idéal jusqu'à 500 personnes",
+        caution: "2000€"
       },
       {
         id: 6,
@@ -128,7 +148,8 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
         image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/6cd244ab7117ff935d97606790e384b9.jfif",
         features: ["1 active speaker", "Mixing console", "Speaker stands", "All cables included"],
         highlight: "Essential",
-        ideal: "Ideal for up to 50 people"
+        ideal: "Ideal for up to 50 people",
+        caution: "600€"
       },
       {
         id: 2,
@@ -142,7 +163,8 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
         image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/5c261792f7820115100dfa4492f866a6.jfif",
         features: ["2 speakers", "Mixing console", "Microphone, technician and delivery optional", "Stands + cables included"],
         highlight: "Most requested",
-        ideal: "Ideal for up to 100 people"
+        ideal: "Ideal for up to 100 people",
+        caution: "900€"
       },
       {
         id: 3,
@@ -156,7 +178,8 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
         image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/201ad9cfef58b6b9553a19fa999690f2.jfif",
         features: ["2 speakers + 1 subwoofer", "Mixing console", "Microphone, technician and installation optional", "Stands and cables included"],
         highlight: "Premium",
-        ideal: "Ideal for up to 200 people"
+        ideal: "Ideal for up to 200 people",
+        caution: "1200€"
       },
       {
         id: 5,
@@ -170,7 +193,8 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
         image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/fddc9abdeba1d6e4aff14662a1c018a0.jfif",
         features: ["4 active speakers 15'' with tripods", "1 professional mixer", "1 subwoofer", "Complete wiring", "Installation & technician included", "Microphone and delivery optional"],
         highlight: "High-end",
-        ideal: "Ideal for up to 500 people"
+        ideal: "Ideal for up to 500 people",
+        caution: "2000€"
       },
       {
         id: 6,
@@ -189,7 +213,7 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
     ]
   };
 
-  const expressPacks = {
+  const expressPacks: { fr: Pack[], en: Pack[] } = {
     fr: [
       {
         id: 101,
@@ -495,6 +519,11 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
                                 <span className="text-2xl font-bold text-black">{pack.price}</span>
                                 {pack.duration && <span className="text-sm text-gray-500">{pack.duration}</span>}
                               </div>
+                              {pack.caution && (
+                                <div className="text-xs text-gray-400 mt-1">
+                                  Caution: {pack.caution}
+                                </div>
+                              )}
                             </div>
                           </div>
 
