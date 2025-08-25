@@ -44,6 +44,7 @@ export const metadata: Metadata = {
     "location pioneer DJ",
     "location enceinte",
     "location matériel sono",
+    "location enceinte sans fil",
     "sono express",
     "location matériel événementiel",
     "location micro Paris",
