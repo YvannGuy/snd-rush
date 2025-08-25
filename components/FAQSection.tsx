@@ -38,6 +38,10 @@ const FAQSection = ({ language }: FAQSectionProps) => {
         answer: "Une empreinte bancaire est demandée au moment de la livraison, via carte bancaire. Il ne s'agit pas d'un débit : aucune somme n'est prélevée. Elle est automatiquement levée sous 48h après le retour et la vérification du matériel en bon état.  Aucun frais caché  Procédure simple, rapide et 100 % transparente. Nous mettons un point d'honneur à vous offrir un service express, efficace et sans mauvaise surprise."
       },
       {
+        question: "Quels sont vos tarifs de livraison?",
+        answer: "Nos tarifs de livraison et reprise dépendent de la zone de l'événement :\n\n📍 **Paris intramuros** (≤ 10 km des Lilas – 93)\n• Livraison + reprise : 80 € TTC\n• Livraison OU reprise : 50 € TTC\n\n📍 **Petite couronne** (≤ 20 km des Lilas – 93)\n• Livraison + reprise : 120 € TTC\n• Livraison OU reprise : 60 € TTC\n\n📍 **Grande couronne / Île-de-France** (≤ 35 km des Lilas – 93)\n• Livraison + reprise : 158 € TTC\n• Livraison OU reprise : 79 € TTC\n\n📍 **Au-delà de 35 km** : devis personnalisé sur demande\n\nℹ️ **Note importante** : Les tarifs sont indépendants de la quantité de matériel loué et valables jusqu'à 4 m³ de matériel."
+      },
+      {
         question: "Quels types d'événements couvrez-vous?",
         answer: "Mariages, anniversaires, conférences, soirées d'entreprise, événements culturels, fêtes privées... Nous nous adaptons à tous types d'événements avec du matériel professionnel calibré selon vos besoins spécifiques."
       },
@@ -62,6 +66,10 @@ const FAQSection = ({ language }: FAQSectionProps) => {
       {
         question: "How does the deposit work?",
         answer: "A bank imprint is requested at the time of delivery, via bank card.  This is not a debit: no amount is withdrawn. It is automatically lifted within 48 hours after return and verification of equipment in good condition.  No hidden fees  Simple, fast and 100% transparent procedure. We take pride in offering you an express, efficient service without any unpleasant surprises."
+      },
+      {
+        question: "What are your delivery rates?",
+        answer: "Our delivery and pickup rates depend on the event area:\n\n📍 **Paris intramuros** (≤ 10 km from Les Lilas – 93)\n• Delivery + pickup: 80 € incl. tax\n• Delivery OR pickup: 50 € incl. tax\n\n📍 **Inner suburbs** (≤ 20 km from Les Lilas – 93)\n• Delivery + pickup: 120 € incl. tax\n• Delivery OR pickup: 60 € incl. tax\n\n📍 **Outer suburbs / Île-de-France** (≤ 35 km from Les Lilas – 93)\n• Delivery + pickup: 158 € incl. tax\n• Delivery OR pickup: 79 € incl. tax\n\n📍 **Beyond 35 km**: personalized quote on request\n\nℹ️ **Important note**: Rates are independent of the quantity of rented equipment and valid up to 4 m³ of equipment."
       },
       {
         question: "What types of events do you cover?",

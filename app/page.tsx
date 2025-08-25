@@ -15,6 +15,7 @@ import ReservationModal from '@/components/ReservationModal';
 import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
 import FAQSection from '@/components/FAQSection';
+import WelcomePopup from '@/components/WelcomePopup';
 
 export default function Home() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -22,6 +23,7 @@ export default function Home() {
   const [legalNoticeModal, setLegalNoticeModal] = useState(false);
   const [rentalConditionsModal, setRentalConditionsModal] = useState(false);
   const [selectedPackId, setSelectedPackId] = useState<number | undefined>(undefined);
+  const [showWelcomePopup, setShowWelcomePopup] = useState(true);
 
   const handleReservePack = (packId: number) => {
     setSelectedPackId(packId);
@@ -44,7 +46,6 @@ export default function Home() {
       <main>
         <HeroSection 
           language={language} 
-          onReservationClick={() => setReservationModal(true)}
         />
         <AboutSection language={language} />
         <PacksSection 
@@ -83,6 +84,12 @@ export default function Home() {
         isOpen={rentalConditionsModal} 
         onClose={() => setRentalConditionsModal(false)}
         language={language}
+      />
+
+      {/* Popup de bienvenue */}
+      <WelcomePopup 
+        language={language}
+        onClose={() => setShowWelcomePopup(false)}
       />
     </div>
   );

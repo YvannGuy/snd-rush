@@ -137,7 +137,7 @@ export default function ReservationForm({ language, packId, onBack }: Reservatio
   };
 
   const selectedPack = packs[language].find(pack => pack.id === packId);
-  const basePrice = parseInt(selectedPack?.price.replace('€', '') || '0');
+  const basePrice = parseInt(selectedPack?.price.replace(/[^\d]/g, '') || '0');
   const urgentFee = formData.urgentDelivery ? 50 : 0;
   const totalPrice = basePrice + urgentFee;
 

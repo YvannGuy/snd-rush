@@ -10,6 +10,9 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
+// Notifications de réservation
+import ReservationNotifications from "@/components/ReservationNotifications";
+
 const pacifico = Pacifico({
   weight: "400",
   subsets: ["latin"],
@@ -37,6 +40,8 @@ export const metadata: Metadata = {
   keywords: [
     "location sono Paris",
     "location enceinte DJ",
+    "location platine DJ Paris",
+    "location pioneer DJ",
     "location enceinte",
     "location matériel sono",
     "sono express",
@@ -113,6 +118,7 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${pacifico.variable} antialiased`}>
         {children}
+        <ReservationNotifications />
         <Analytics />       {/* ✅ Vercel Analytics intégré */}
         <SpeedInsights />  {/* ✅ Vercel Speed Insights intégré */}
       </body>

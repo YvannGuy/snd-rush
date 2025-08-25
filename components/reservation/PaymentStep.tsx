@@ -159,7 +159,7 @@ export default function PaymentStep({ language, selectedPack, personalInfo, onBa
 
   const handleQuoteRequest = () => {
     // Redirection vers WhatsApp ou téléphone
-    window.open('https://wa.me/33651084994?text=Bonjour, je souhaite un devis pour le Pack LUXE', '_blank');
+    window.open('https://wa.me/33651084994?text=Bonjour, je souhaite un devis personnalisé', '_blank');
   };
 
   const isFormValid = () => {

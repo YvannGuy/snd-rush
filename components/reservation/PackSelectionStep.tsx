@@ -102,20 +102,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         highlight: "Haut de gamme",
         ideal: "Idéal pour 250-500 personnes"
       },
-      {
-        id: 6,
-        name: "Pack LUXE",
-        tagline: "Sur mesure et exclusif",
-        description: "Solution personnalisée avec équipement de studio et équipe technique complète pour des événements uniques.",
-        price: "Sur devis",
-        originalPrice: "",
-        duration: "",
-        popular: false,
-        image: "https://readdy.ai/api/search-image?query=luxury%20sound%20system%20with%20studio-grade%20equipment%20and%20professional%20lighting%20setup%2C%20exclusive%20high-end%20audio%20installation%20in%20premium%20venue%2C%20artistic%20black%20and%20white%20photography%20with%20dramatic%20red%20lighting&width=400&height=300&seq=luxe-pack-modal&orientation=landscape",
-        features: ["Système sur mesure", "Équipe technique complète", "Micros studio", "Éclairage architectural", "Régie mobile", "Service concierge"],
-        highlight: "Exclusif",
-        ideal: "Événements sur mesure"
-      }
+
     ],
     en: [
       {
@@ -188,20 +175,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         highlight: "High-end",
         ideal: "Ideal for 250-500 people"
       },
-      {
-        id: 6,
-        name: "Pack LUXURY",
-        tagline: "Custom and exclusive",
-        description: "Personalized solution with studio equipment and complete technical team for unique events.",
-        price: "Quote",
-        originalPrice: "",
-        duration: "",
-        popular: false,
-        image: "https://readdy.ai/api/search-image?query=luxury%20sound%20system%20with%20studio-grade%20equipment%20and%20professional%20lighting%20setup%2C%20exclusive%20high-end%20audio%20installation%20in%20premium%20venue%2C%20artistic%20black%20and%20white%20photography%20with%20dramatic%20red%20lighting&width=400&height=300&seq=luxe-pack-modal&orientation=landscape",
-        features: ["Custom system", "Complete technical team", "Studio microphones", "Architectural lighting", "Mobile control room", "Concierge service"],
-        highlight: "Exclusive",
-        ideal: "Custom events"
-      }
+
     ]
   };
 

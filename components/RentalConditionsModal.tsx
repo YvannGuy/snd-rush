@@ -72,7 +72,8 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
           {
             title: 'Livraison et installation',
             items: [
-              'Livraison 40€ Paris intra-muros, 80€ région parisienne',
+              'Livraison + reprise : 80€ Paris intramuros, 120€ petite couronne, 158€ grande couronne',
+              'Livraison OU reprise : 50€ Paris intramuros, 60€ petite couronne, 79€ grande couronne',
               'Installation et technicien en option'
             ]
           }
@@ -253,7 +254,8 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
         {
           title: 'Livraison et installation',
           items: [
-            'Livraison 40€ Paris intra-muros, 80€ région parisienne',
+            'Livraison + reprise : 80€ Paris intramuros, 120€ petite couronne, 158€ grande couronne',
+            'Livraison OU reprise : 50€ Paris intramuros, 60€ petite couronne, 79€ grande couronne',
             'Installation et technicien en option',
             'Respect des créneaux horaires convenus',
             'Enlèvement du matériel à la fin de l\'événement'
@@ -305,7 +307,8 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
         {
           title: 'Delivery and installation',
           items: [
-            'Delivery within 30-60 minutes in central Paris',
+            'Delivery + pickup: 80€ Paris intramuros, 120€ inner suburbs, 158€ outer suburbs',
+            'Delivery OR pickup: 50€ Paris intramuros, 60€ inner suburbs, 79€ outer suburbs',
             'Express service available for urgent needs',
             'Professional installation included',
             'Equipment pickup at the end of the event'

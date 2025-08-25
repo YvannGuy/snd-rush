@@ -1,0 +1,14 @@
+<svg width="200" height="80" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rectangle rouge -->
+  <rect x="10" y="10" width="60" height="40" fill="#F2431E" rx="4"/>
+  
+  <!-- Symbole de puissance blanc -->
+  <circle cx="40" cy="30" r="8" fill="none" stroke="white" stroke-width="2"/>
+  <line x1="40" y1="22" x2="40" y2="38" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="36" y1="26" x2="44" y2="26" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Texte en dessous -->
+  <text x="100" y="45" font-family="Arial, sans-serif" font-size="12" fill="black" text-anchor="middle">
+    votre solution sonore de dernière minute
+  </text>
+</svg>

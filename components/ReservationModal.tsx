@@ -36,24 +36,24 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
     fr: [
       {
         id: 1,
-        name: "Pack BASIC",
-        tagline: "L'essentiel pour débuter",
-        description: "Équipement sonore de base parfait pour les petits événements et réunions intimes.",
-        price: "89€",
+        name: "Enceinte Starter",
+        tagline: "Enceinte Bluetooth professionnelle",
+        description: "Solution simple et efficace avec enceinte ANNY 10 Bluetooth pour vos événements.",
+        price: "109€",
         originalPrice: "",
-        duration: "/jour",
+        duration: " TTC / jour",
         popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/6cd244ab7117ff935d97606790e384b9.jfif",
-        features: ["2 enceintes actives 300W", "Table de mixage 2 voies", "Pieds d'enceintes", "Câbles audio inclus", "Configuration simple"],
-        highlight: "Essentiel",
-        ideal: "Idéal pour 20-50 personnes"
+        image: "/enceintebt.jpg",
+        features: ["1x Enceinte active ANNY 10 – Bluetooth intégrée", "Connexion simple : Bluetooth, câble Jack ou RCA", "Option : Micro filaire ou sans fil (+10 €)", "Câblage inclus"],
+        highlight: "Starter",
+        ideal: "Idéal pour petits événements"
       },
       {
         id: 2,
         name: "Pack STANDARD",
         tagline: "Le choix équilibré",
         description: "Solution complète avec micro sans fil pour une sonorisation professionnelle adaptée à tous vos événements.",
-        price: "129€",
+        price: "139€",
         originalPrice: "",
         duration: "/jour",
         popular: true,
@@ -104,42 +104,85 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         highlight: "Haut de gamme",
         ideal: "Idéal pour 250-500 personnes"
       },
+
       {
-        id: 6,
-        name: "Pack LUXE",
-        tagline: "Sur mesure et exclusif",
-        description: "Solution personnalisée avec équipement de studio et équipe technique complète pour des événements uniques.",
-        price: "Sur devis",
+        id: 201,
+        name: "DJ Compact",
+        tagline: "Contrôleur DJ tout-en-un professionnel",
+        description: "Solution DJ complète avec contrôleur Pioneer XDJ-RR pour vos performances.",
+        price: "99€",
         originalPrice: "",
-        duration: "",
+        duration: " TTC",
         popular: false,
-        image: "https://readdy.ai/api/search-image?query=luxury%20sound%20system%20with%20studio-grade%20equipment%20and%20professional%20lighting%20setup%2C%20exclusive%20high-end%20audio%20installation%20in%20premium%20venue%2C%20artistic%20black%20and%20white%20photography%20with%20dramatic%20red%20lighting&width=400&height=300&seq=luxe-pack-modal&orientation=landscape",
-        features: ["Système sur mesure", "Équipe technique complète", "Micros studio", "Éclairage architectural", "Régie mobile", "Service concierge"],
-        highlight: "Exclusif",
-        ideal: "Événements sur mesure"
+        image: "/platinedj.jpg",
+        features: ["1x Contrôleur Pioneer XDJ-RR (tout-en-un)", "Équipement professionnel", "Câblage inclus", "Prêt à l'emploi"],
+        highlight: "Compact",
+        ideal: "Idéal pour débuter"
+      },
+      {
+        id: 202,
+        name: "Pack DJ Compact + DJ Booth",
+        tagline: "DJ Compact avec stand professionnel",
+        description: "Solution DJ complète avec contrôleur Pioneer XDJ-RR et DJ Booth professionnel.",
+        price: "149€",
+        originalPrice: "",
+        duration: " TTC",
+        popular: false,
+        image: "/platinedj4.jpg",
+        features: ["1x Contrôleur Pioneer XDJ-RR (platines + table intégrée)", "1x DJ Booth (stand pro) – structure stable et esthétique", "Câblage inclus"],
+        highlight: "Booth",
+        ideal: "Idéal pour événements"
+      },
+      {
+        id: 203,
+        name: "Pack Sono Standard DJ",
+        tagline: "DJ + Sonorisation complète",
+        description: "Pack complet avec contrôleur DJ et système de sonorisation professionnel.",
+        price: "199€",
+        originalPrice: "",
+        duration: " TTC",
+        popular: true,
+        image: "/platinedj2.jpg",
+        features: ["1x Pioneer XDJ-RR", "2x Enceintes actives (1000W chacune)", "Pieds + câblage inclus", "Système complet"],
+        highlight: "Standard",
+        ideal: "Idéal pour événements"
+      },
+      {
+        id: 204,
+        name: "Pack Sono Premium DJ",
+        tagline: "L'excellence DJ avec sonorisation premium",
+        description: "Configuration DJ premium avec caisson de basses pour des performances exceptionnelles.",
+        price: "279€",
+        originalPrice: "",
+        duration: " TTC",
+        popular: false,
+        image: "/platinedj3.jpg",
+        features: ["1x Pioneer XDJ-RR", "2x Enceintes actives (1000W chacune)", "1x Caisson de basses (1500W)", "Pieds + câblage inclus"],
+        highlight: "Premium",
+        ideal: "Professionnels confirmés"
       }
     ],
     en: [
       {
         id: 1,
-        name: "Pack BASIC",
-        tagline: "The essential to get started",
-        description: "Basic sound equipment perfect for small events and intimate meetings.",
-        price: "89€",
+        name: "Starter Speaker",
+        tagline: "Professional Bluetooth speaker",
+        description: "Simple and effective solution with ANNY 10 Bluetooth speaker for your events.",
+        price: "109€",
         originalPrice: "",
-        duration: "/day",
+        duration: " TTC / day",
         popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/6cd244ab7117ff935d97606790e384b9.jfif",
-        features: ["2 active speakers 300W", "2-channel mixing table", "Speaker stands", "Audio cables included", "Simple setup"],
-        highlight: "Essential",
-        ideal: "Ideal for 20-50 people"
+        image: "/enceintebt.jpg",
+        features: ["1x Active ANNY 10 speaker – Built-in Bluetooth", "Simple connection: Bluetooth, Jack cable or RCA", "Option: Wired or wireless microphone (+10 €)", "Cabling included"],
+        highlight: "Starter",
+        ideal: "Perfect for small events"
       },
       {
         id: 2,
         name: "Pack STANDARD",
         tagline: "The balanced choice",
         description: "Complete solution with wireless microphone for professional sound suited to all your events.",
-        price: "129€",
+        price: "139€",
         originalPrice: "",
         duration: "/day",
         popular: true,
@@ -190,19 +233,62 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         highlight: "High-end",
         ideal: "Ideal for 250-500 people"
       },
+
       {
-        id: 6,
-        name: "Pack LUXURY",
-        tagline: "Custom and exclusive",
-        description: "Personalized solution with studio equipment and complete technical team for unique events.",
-        price: "Quote",
+        id: 201,
+        name: "DJ Compact",
+        tagline: "Professional all-in-one DJ controller",
+        description: "Complete DJ solution with Pioneer XDJ-RR controller for your performances.",
+        price: "99€",
         originalPrice: "",
-        duration: "",
+        duration: " TTC",
         popular: false,
-        image: "https://readdy.ai/api/search-image?query=luxury%20sound%20system%20with%20studio-grade%20equipment%20and%20professional%20lighting%20setup%2C%20exclusive%20high-end%20audio%20installation%20in%20premium%20venue%2C%20artistic%20black%20and%20white%20photography%20with%20dramatic%20red%20lighting&width=400&height=300&seq=luxe-pack-modal&orientation=landscape",
-        features: ["Custom system", "Complete technical team", "Studio microphones", "Architectural lighting", "Mobile control room", "Concierge service"],
-        highlight: "Exclusive",
-        ideal: "Custom events"
+        image: "/platinedj.jpg",
+        features: ["1x Pioneer XDJ-RR controller (all-in-one)", "Professional equipment", "Cabling included", "Ready to use"],
+        highlight: "Compact",
+        ideal: "Perfect for beginners"
+      },
+      {
+        id: 202,
+        name: "DJ Compact + DJ Booth Pack",
+        tagline: "DJ Compact with professional stand",
+        description: "Complete DJ solution with Pioneer XDJ-RR controller and professional DJ Booth.",
+        price: "149€",
+        originalPrice: "",
+        duration: " TTC",
+        popular: false,
+        image: "/platinedj4.jpg",
+        features: ["1x Pioneer XDJ-RR controller (turntables + integrated table)", "1x DJ Booth (pro stand) – stable and aesthetic structure", "Cabling included"],
+        highlight: "Booth",
+        ideal: "Perfect for events"
+      },
+      {
+        id: 203,
+        name: "Standard Sound DJ Pack",
+        tagline: "DJ + Complete Sound System",
+        description: "Complete pack with DJ controller and professional sound system.",
+        price: "199€",
+        originalPrice: "",
+        duration: " TTC",
+        popular: true,
+        image: "/platinedj2.jpg",
+        features: ["1x Pioneer XDJ-RR", "2x Active speakers (1000W each)", "Stands + cabling included", "Complete system"],
+        highlight: "Standard",
+        ideal: "Perfect for events"
+      },
+      {
+        id: 204,
+        name: "Premium Sound DJ Pack",
+        tagline: "DJ excellence with premium sound",
+        description: "Premium DJ configuration with subwoofer for exceptional performances.",
+        price: "279€",
+        originalPrice: "",
+        duration: " TTC",
+        popular: false,
+        image: "/platinedj3.jpg",
+        features: ["1x Pioneer XDJ-RR", "2x Active speakers (1000W each)", "1x Subwoofer (1500W)", "Stands + cabling included"],
+        highlight: "Premium",
+        ideal: "Confirmed professionals"
       }
     ]
   };
@@ -210,14 +296,21 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
   const handlePersonalInfoSubmit = async (info: any) => {
     // Préparer les données à envoyer à l'API
     const payload = {
-      nom: info.lastName,
-      prenom: info.firstName,
+      firstName: info.firstName,
+      lastName: info.lastName,
       email: info.email,
-      telephone: info.phone,
-      date: info.eventDate,
-      heure: info.eventTime,
-      adresse: `${info.address}, ${info.city} ${info.postalCode}`,
-      message: `Type d'événement : ${info.eventType}\nNombre d'invités : ${info.guestCount}\nDemandes spéciales : ${info.specialRequests || ''}\nPack sélectionné : ${selectedPack?.name || ''}`,
+      phone: info.phone,
+      address: info.address,
+      city: info.city,
+      postalCode: info.postalCode,
+      eventDate: info.eventDate,
+      eventTime: info.eventTime,
+      guestCount: info.guestCount,
+      eventType: info.eventType,
+      specialRequests: info.specialRequests,
+      reservationType: info.reservationType,
+      deliveryType: info.deliveryType,
+      selectedPack: selectedPack
     };
   
     try {
@@ -284,6 +377,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
               language={language}
               onSubmit={handlePersonalInfoSubmit}
               onBack={handleClose}
+              onClose={handleClose}
               initialData={{}}
               selectedPack={selectedPack}
             />
