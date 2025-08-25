@@ -51,9 +51,9 @@ export default function Header({ language, onLanguageChange, onReservationClick 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       {/* Bandeau orange en haut */}
-      <div className="bg-[#F2431E] text-white py-2 px-6 lg:px-8">
+      <div className="bg-[#F2431E] text-white py-2 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-center">
-          <p className="text-sm font-medium text-center">
+          <p className="text-xs sm:text-sm font-medium text-center leading-tight">
             {texts[language].banner}
           </p>
         </div>
@@ -61,11 +61,11 @@ export default function Header({ language, onLanguageChange, onReservationClick 
 
       {/* Header principal */}
       <div className="bg-white shadow-md">
-        <div className="px-6 lg:px-8">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center">
-              <span className="text-3xl font-bold tracking-tight">
+              <span className="text-2xl sm:text-3xl font-bold tracking-tight">
                 <span className="text-[#F2431E]">snd</span>
                 <span className="text-black">•</span>
                 <span className="text-[#F2431E]">rush</span>
@@ -114,10 +114,10 @@ export default function Header({ language, onLanguageChange, onReservationClick 
               {/* CTA Button */}
               <button
                 onClick={handleCallClick}
-                className="bg-[#F2431E] text-white px-4 py-2.5 text-sm lg:px-6 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors cursor-pointer whitespace-nowrap flex items-center gap-2"
+                className="bg-[#F2431E] text-white px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm lg:px-6 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1 sm:gap-2"
               >
-                <span className="text-white text-base">🚨</span>
-                {texts[language].callNow}
+                <span className="text-white text-sm sm:text-base">🚨</span>
+                <span className="hidden sm:inline">{texts[language].callNow}</span>
               </button>
 
               {/* Mobile menu button */}

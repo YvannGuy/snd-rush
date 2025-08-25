@@ -76,54 +76,54 @@ export default function HeroSection({ language, onReservationClick }: HeroSectio
         <div className="flex-1 flex items-center justify-center">
           <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full">
             <div className="text-center w-full flex flex-col justify-center">
-              <div className="space-y-12">
-                <div className="space-y-8">
-                  <h1 className="text-6xl lg:text-8xl font-bold text-white leading-tight">
+              <div className="space-y-8 sm:space-y-12">
+                <div className="space-y-6 sm:space-y-8">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-bold text-white leading-tight">
                     <span className="text-[#F2431E]">{texts[language].title1}</span>,
                     <br />
-                    <span className="text-4xl lg:text-6xl font-bold text-white/90">
+                    <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white/90">
                       {texts[language].title2}
                     </span>
                   </h1>
 
-                  <p className="text-2xl lg:text-3xl text-white/90 max-w-4xl mx-auto leading-relaxed">
+                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-white/90 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0">
                     {texts[language].subtitle}
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
                   <a
                     href="tel:+33651084994"
-                    className="bg-[#F2431E] text-white px-12 py-6 rounded-full font-semibold text-xl hover:bg-[#E63A1A] transition-colors text-center cursor-pointer whitespace-nowrap"
+                    className="bg-[#F2431E] text-white px-6 sm:px-12 py-4 sm:py-6 rounded-full font-semibold text-base sm:text-xl hover:bg-[#E63A1A] transition-colors text-center cursor-pointer"
                   >
-                    <i className="ri-phone-line mr-3 text-2xl"></i>
+                    <i className="ri-phone-line mr-2 sm:mr-3 text-lg sm:text-2xl"></i>
                     {texts[language].emergency}
                   </a>
                   <button
                     onClick={onReservationClick ? onReservationClick : handleReserveNow}
-                    className="bg-white/10 backdrop-blur-sm text-white px-12 py-6 rounded-full font-semibold text-xl hover:bg-white hover:text-black transition-colors text-center cursor-pointer whitespace-nowrap"
+                    className="bg-white/10 backdrop-blur-sm text-white px-6 sm:px-12 py-4 sm:py-6 rounded-full font-semibold text-base sm:text-xl hover:bg-white hover:text-black transition-colors text-center cursor-pointer"
                   >
-                    <i className="ri-calendar-line mr-3 text-2xl"></i>
+                    <i className="ri-calendar-line mr-2 sm:mr-3 text-lg sm:text-2xl"></i>
                     {texts[language].cta}
                   </button>
                 </div>
 
-                <div className="flex items-center justify-center space-x-12 text-white/80 text-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 flex items-center justify-center">
-                      <i className="ri-time-line text-xl"></i>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-12 text-white/80 text-sm sm:text-lg">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
+                      <i className="ri-time-line text-lg sm:text-xl"></i>
                     </div>
                     <span>{texts[language].available}</span>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 flex items-center justify-center">
-                      <i className="ri-map-pin-line text-xl"></i>
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
+                      <i className="ri-map-pin-line text-lg sm:text-xl"></i>
                     </div>
                     <span>Paris & Île-de-France</span>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 flex items-center justify-center">
-                      <i className="ri-flashlight-line text-xl"></i>
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
+                      <i className="ri-flashlight-line text-lg sm:text-xl"></i>
                     </div>
                     <span>Express intervention</span>
                   </div>
@@ -134,22 +134,22 @@ export default function HeroSection({ language, onReservationClick }: HeroSectio
         </div>
 
         {/* Multilingual Support Banner */}
-        <div className="relative z-20 bg-gradient-to-r from-[#F2431E] to-[#E63A1A] py-4">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="flex items-center justify-center space-x-6 text-white">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 flex items-center justify-center">
-                  <i className="ri-translate-2 text-2xl"></i>
+        <div className="relative z-20 bg-gradient-to-r from-[#F2431E] to-[#E63A1A] py-3 sm:py-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-white text-center sm:text-left">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
+                  <i className="ri-translate-2 text-lg sm:text-2xl"></i>
                 </div>
                 <div>
-                  <span className="font-semibold text-lg">English-speaking advisors</span>
-                  <span className="ml-4 text-white/90">Foreign company or don't speak French? Our advisors assist you in English.</span>
+                  <span className="font-semibold text-sm sm:text-lg">English-speaking advisors</span>
+                  <span className="block sm:inline sm:ml-4 text-white/90 text-xs sm:text-base">Foreign company or don't speak French? Our advisors assist you in English.</span>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">🇬🇧</span>
-                  <span className="font-medium">EN</span>
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <span className="text-lg sm:text-2xl">🇬🇧</span>
+                  <span className="font-medium text-sm sm:text-base">EN</span>
                 </div>
               </div>
             </div>

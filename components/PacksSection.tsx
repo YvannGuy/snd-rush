@@ -579,7 +579,7 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
           >
             {Array.from({ length: totalSlides }, (_, slideIndex) => (
               <div key={slideIndex} className="w-full flex-shrink-0">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12">
                   {currentPacks.slice(slideIndex * packsPerSlide, (slideIndex + 1) * packsPerSlide).map((pack, index) => (
                     <div
                       key={pack.id}
@@ -618,20 +618,20 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
                         </div>
 
                         {/* Content */}
-                        <div className="p-8 transform transition-all duration-500 ease-in-out">
+                        <div className="p-4 sm:p-6 lg:p-8 transform transition-all duration-500 ease-in-out">
                           <div className="flex items-start justify-between mb-6">
                             <div className="flex-1">
-                              <h3 className="text-2xl font-bold text-black mb-3 transition-all duration-300">
+                              <h3 className="text-xl sm:text-2xl font-bold text-black mb-2 sm:mb-3 transition-all duration-300">
                                 {pack.name}
                               </h3>
-                              <p className="text-[#F2431E] font-medium text-base transition-all duration-300">
+                              <p className="text-[#F2431E] font-medium text-sm sm:text-base transition-all duration-300">
                                 {pack.tagline}
                               </p>
                             </div>
                             <div className="text-right ml-4">
                               <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-bold text-black">{pack.price}</span>
-                                {pack.duration && <span className="text-sm text-gray-500">{pack.duration}</span>}
+                                <span className="text-lg sm:text-2xl font-bold text-black">{pack.price}</span>
+                                {pack.duration && <span className="text-xs sm:text-sm text-gray-500">{pack.duration}</span>}
                               </div>
                               {pack.caution && (
                                 <div className="text-xs text-gray-400 mt-1">
@@ -641,23 +641,23 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
                             </div>
                           </div>
 
-                          <p className="text-gray-600 mb-8 leading-relaxed text-base transition-all duration-300">
+                          <p className="text-gray-600 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base transition-all duration-300">
                             {pack.description}
                           </p>
 
                           {/* Features */}
-                          <div className="space-y-3 mb-4">
+                          <div className="space-y-2 sm:space-y-3 mb-4">
                             {pack.features.map((feature, featureIndex) => (
                               <div key={featureIndex} className="flex items-center gap-3 transition-all duration-300 hover:transform hover:translate-x-1">
                                 <div className="w-2 h-2 bg-[#F2431E] rounded-full"></div>
-                                <span className="text-base text-gray-700">{feature}</span>
+                                <span className="text-sm sm:text-base text-gray-700">{feature}</span>
                               </div>
                             ))}
                           </div>
 
                           {/* Ideal for */}
-                          <div className="mb-8">
-                            <p className="text-sm font-medium text-gray-600 bg-gray-50 px-4 py-2 rounded-lg text-center">
+                          <div className="mb-6 sm:mb-8">
+                            <p className="text-xs sm:text-sm font-medium text-gray-600 bg-gray-50 px-3 sm:px-4 py-2 rounded-lg text-center">
                               {pack.ideal}
                             </p>
                           </div>
@@ -666,7 +666,7 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
                           {activeTab === 'advance' ? (
                             <button
                               onClick={() => handleReservePack(pack.id)}
-                              className="w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl transform hover:scale-105 bg-[#F2431E] text-white hover:bg-[#E63A1A] whitespace-nowrap cursor-pointer"
+                              className="w-full py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl transform hover:scale-105 bg-[#F2431E] text-white hover:bg-[#E63A1A] whitespace-nowrap cursor-pointer"
                             >
                               <i className="ri-calendar-line mr-2"></i>
                               {texts[language].reserveNow}
@@ -746,7 +746,7 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
             >
               {Array.from({ length: totalDjSlides }, (_, slideIndex) => (
                 <div key={slideIndex} className="w-full flex-shrink-0">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12">
                     {djPacks[language].slice(slideIndex * djPacksPerSlide, (slideIndex + 1) * djPacksPerSlide).map((pack, index) => (
                       <div
                         key={pack.id}
@@ -785,20 +785,20 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
                           </div>
 
                           {/* Content */}
-                          <div className="p-8 transform transition-all duration-500 ease-in-out">
+                          <div className="p-4 sm:p-6 lg:p-8 transform transition-all duration-500 ease-in-out">
                             <div className="flex items-start justify-between mb-6">
                               <div className="flex-1">
-                                <h3 className="text-2xl font-bold text-black mb-3 transition-all duration-300">
+                                <h3 className="text-xl sm:text-2xl font-bold text-black mb-2 sm:mb-3 transition-all duration-300">
                                   {pack.name}
                                 </h3>
-                                <p className="text-[#F2431E] font-medium text-base transition-all duration-300">
+                                <p className="text-[#F2431E] font-medium text-sm sm:text-base transition-all duration-300">
                                   {pack.tagline}
                                 </p>
                               </div>
                               <div className="text-right ml-4">
                                 <div className="flex items-baseline gap-1">
-                                  <span className="text-2xl font-bold text-black">{pack.price}</span>
-                                  {pack.duration && <span className="text-sm text-gray-500">{pack.duration}</span>}
+                                  <span className="text-lg sm:text-2xl font-bold text-black">{pack.price}</span>
+                                  {pack.duration && <span className="text-xs sm:text-sm text-gray-500">{pack.duration}</span>}
                                 </div>
                                 {pack.caution && (
                                   <div className="text-xs text-gray-400 mt-1">
@@ -808,23 +808,23 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
                               </div>
                             </div>
 
-                            <p className="text-gray-600 mb-8 leading-relaxed text-base transition-all duration-300">
+                            <p className="text-gray-600 mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base transition-all duration-300">
                               {pack.description}
                             </p>
 
                             {/* Features */}
-                            <div className="space-y-3 mb-4">
+                            <div className="space-y-2 sm:space-y-3 mb-4">
                               {pack.features.map((feature, featureIndex) => (
                                 <div key={featureIndex} className="flex items-center gap-3 transition-all duration-300 hover:transform hover:translate-x-1">
                                   <div className="w-2 h-2 bg-[#F2431E] rounded-full"></div>
-                                  <span className="text-base text-gray-700">{feature}</span>
+                                  <span className="text-sm sm:text-base text-gray-700">{feature}</span>
                                 </div>
                               ))}
                             </div>
 
                             {/* Ideal for */}
-                            <div className="mb-8">
-                              <p className="text-sm font-medium text-gray-600 bg-gray-50 px-4 py-2 rounded-lg text-center">
+                            <div className="mb-6 sm:mb-8">
+                              <p className="text-xs sm:text-sm font-medium text-gray-600 bg-gray-50 px-3 sm:px-4 py-2 rounded-lg text-center">
                                 {pack.ideal}
                               </p>
                             </div>
@@ -832,7 +832,7 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
                             {/* Button */}
                             <button
                               onClick={() => handleReservePack(pack.id)}
-                              className="w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl transform hover:scale-105 bg-[#F2431E] text-white hover:bg-[#E63A1A] whitespace-nowrap cursor-pointer"
+                              className="w-full py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl transform hover:scale-105 bg-[#F2431E] text-white hover:bg-[#E63A1A] whitespace-nowrap cursor-pointer"
                             >
                               <i className="ri-calendar-line mr-2"></i>
                               {texts[language].reserveNow}
