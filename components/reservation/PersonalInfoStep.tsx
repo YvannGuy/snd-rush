@@ -268,13 +268,31 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
           }
         }, 1000);
 
-        // Ouvrir Stripe dans une popup après un délai plus long
+        // Ouvrir Stripe (popup sur desktop, redirection sur mobile)
         setTimeout(() => {
           const stripeLink = stripeLinks[selectedPack.name as keyof typeof stripeLinks];
           console.log('Lien Stripe:', stripeLink);
           if (stripeLink && stripeLink !== '#') {
-            console.log('Ouverture de Stripe en popup...');
-            window.open(stripeLink, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
+            console.log('Ouverture de Stripe...');
+            
+            // Détecter si c'est un appareil mobile
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+              // Sur mobile, rediriger directement
+              console.log('Appareil mobile détecté, redirection directe vers Stripe');
+              window.location.href = stripeLink;
+            } else {
+              // Sur desktop, ouvrir en popup
+              console.log('Appareil desktop détecté, ouverture en popup');
+              const popup = window.open(stripeLink, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
+              
+              // Vérifier si la popup a été bloquée
+              if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+                console.log('Popup bloquée, redirection directe');
+                window.location.href = stripeLink;
+              }
+            }
           }
         }, 1500);
 
@@ -293,7 +311,21 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
         setTimeout(() => {
           const stripeLink = stripeLinks[selectedPack.name as keyof typeof stripeLinks];
           if (stripeLink && stripeLink !== '#') {
-            window.open(stripeLink, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
+            // Détecter si c'est un appareil mobile
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+              // Sur mobile, rediriger directement
+              window.location.href = stripeLink;
+            } else {
+              // Sur desktop, ouvrir en popup
+              const popup = window.open(stripeLink, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
+              
+              // Vérifier si la popup a été bloquée
+              if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+                window.location.href = stripeLink;
+              }
+            }
           }
         }, 1500);
       }
@@ -386,32 +418,32 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
   };
 
   return (
-    <div className="p-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-black mb-4">
+    <div className="p-4 sm:p-8 pb-8">
+      <div className="text-center mb-4 sm:mb-8">
+        <h2 className="text-xl sm:text-3xl font-bold text-black mb-2 sm:mb-4">
           {texts[language].title}
         </h2>
-        <p className="text-gray-600 text-lg">
+        <p className="text-gray-600 text-sm sm:text-lg px-1 sm:px-2">
           {texts[language].subtitle}
         </p>
       </div>
 
       {/* Pack sélectionné */}
       {selectedPack && (
-        <div className="max-w-4xl mx-auto mb-8">
-          <div className="bg-gray-50 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-black mb-2">
+        <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
+          <div className="bg-gray-50 rounded-xl p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-black mb-2">
               {texts[language].selectedPack}
             </h3>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-black">{selectedPack.name}</p>
-                <p className="text-sm text-gray-600">{selectedPack.tagline}</p>
+                <p className="font-medium text-black text-sm sm:text-base">{selectedPack.name}</p>
+                <p className="text-xs sm:text-sm text-gray-600">{selectedPack.tagline}</p>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold text-[#F2431E]">{selectedPack.price}</p>
+                <p className="text-lg sm:text-xl font-bold text-[#F2431E]">{selectedPack.price}</p>
                 {selectedPack.duration && (
-                  <p className="text-sm text-gray-500">{selectedPack.duration}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">{selectedPack.duration}</p>
                 )}
               </div>
             </div>
@@ -421,9 +453,9 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
       )}
 
       {/* Calendrier de disponibilité */}
-      <div className="max-w-4xl mx-auto mb-8">
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-black mb-4 flex items-center">
+      <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-black mb-4 flex items-center">
             <i className="ri-calendar-line mr-2 text-[#F2431E]"></i>
             Calendrier de disponibilité
           </h3>
@@ -546,9 +578,9 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
       </div>
 
       {/* Type de réservation */}
-      <div className="max-w-4xl mx-auto mb-8">
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-black mb-6 flex items-center">
+      <div className="max-w-4xl mx-auto mb-6 sm:mb-8 mobile-spacing">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
+          <h3 className="text-lg font-semibold text-black mb-4 sm:mb-6 flex items-center">
             <i className="ri-shield-check-line mr-2 text-[#F2431E]"></i>
             {texts[language].reservationType}
           </h3>
@@ -556,7 +588,7 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Réservation simple */}
             <div
-              className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 ${
+              className={`border-2 rounded-xl p-4 sm:p-6 cursor-pointer transition-all duration-300 ${
                 formData.reservationType === 'simple'
                   ? 'border-[#F2431E] bg-[#F2431E]/5'
                   : 'border-gray-200 hover:border-gray-300'
@@ -600,7 +632,7 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
 
             {/* Réservation avec acompte */}
             <div
-              className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 ${
+              className={`border-2 rounded-xl p-4 sm:p-6 cursor-pointer transition-all duration-300 ${
                 formData.reservationType === 'acompte'
                   ? 'border-[#F2431E] bg-[#F2431E]/5'
                   : 'border-gray-200 hover:border-gray-300'
@@ -648,10 +680,10 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8">
+              <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
         {/* Informations personnelles */}
-        <div>
-          <h3 className="text-xl font-semibold text-black mb-6 flex items-center">
+        <div className="mobile-spacing">
+          <h3 className="text-lg sm:text-xl font-semibold text-black mb-4 sm:mb-6 flex items-center">
             <i className="ri-user-line mr-2 text-[#F2431E]"></i>
             {texts[language].personalInfo}
           </h3>
@@ -732,8 +764,8 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
         </div>
 
         {/* Informations de l'événement */}
-        <div>
-          <h3 className="text-xl font-semibold text-black mb-6 flex items-center">
+        <div className="mobile-spacing">
+          <h3 className="text-lg sm:text-xl font-semibold text-black mb-4 sm:mb-6 flex items-center">
             <i className="ri-calendar-event-line mr-2 text-[#F2431E]"></i>
             {texts[language].eventInfo}
           </h3>
@@ -890,8 +922,8 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
         </div>
 
         {/* Mode de récupération */}
-        <div>
-          <h3 className="text-xl font-semibold text-black mb-6 flex items-center">
+        <div className="mobile-spacing">
+          <h3 className="text-lg sm:text-xl font-semibold text-black mb-4 sm:mb-6 flex items-center">
             <i className="ri-truck-line mr-2 text-[#F2431E]"></i>
             {texts[language].deliveryType}
           </h3>
@@ -899,7 +931,7 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Livraison */}
             <div
-              className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 ${
+              className={`border-2 rounded-xl p-4 sm:p-6 cursor-pointer transition-all duration-300 ${
                 formData.deliveryType === 'livraison'
                   ? 'border-[#F2431E] bg-[#F2431E]/5'
                   : 'border-gray-200 hover:border-gray-300'
@@ -933,7 +965,7 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
 
             {/* Récupération sur place */}
             <div
-              className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 ${
+              className={`border-2 rounded-xl p-4 sm:p-6 cursor-pointer transition-all duration-300 ${
                 formData.deliveryType === 'recuperation'
                   ? 'border-[#F2431E] bg-[#F2431E]/5'
                   : 'border-gray-200 hover:border-gray-300'
@@ -975,11 +1007,11 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
           ></div>
         </div>
 
-        <div className="flex gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
           <button
             type="button"
             onClick={onBack}
-            className="flex-1 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+            className="flex-1 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-sm sm:text-base"
           >
             {texts[language].back}
           </button>
@@ -987,7 +1019,7 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
           <button
             type="submit"
             disabled={false}
-            className="flex-1 py-3 bg-[#F2431E] text-white rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            className="flex-1 py-3 bg-[#F2431E] text-white rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm sm:text-base"
           >
             {formData.reservationType === 'acompte' && selectedPack ? (
               <div className="flex flex-col items-center">
@@ -1005,8 +1037,8 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
 
       {/* Modal de succès */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 max-w-md mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-sm sm:max-w-md w-full mx-4">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <i className="ri-check-line text-3xl text-green-600"></i>
@@ -1016,12 +1048,12 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
                 Demande envoyée !
               </h2>
               
-              <p className="text-gray-600 mb-6">
+              <p className="text-base text-gray-600 mb-6 px-2">
                 Votre demande de réservation avec acompte a été envoyée avec succès. La page de paiement Stripe va s'ouvrir dans une popup.
               </p>
               
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="space-y-2 text-sm">
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Numéro de demande:</span>
                     <span className="font-bold text-black">{requestNumber}</span>
@@ -1040,7 +1072,7 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
                     onClose();
                   }
                 }}
-                className="bg-[#F2431E] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors"
+                className="bg-[#F2431E] text-white px-8 py-4 rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors w-full"
               >
                 Fermer
               </button>

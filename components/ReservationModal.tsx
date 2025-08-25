@@ -355,23 +355,23 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50">
+      <div className="bg-white w-full h-full sm:h-auto sm:max-w-4xl sm:w-full sm:max-h-[90vh] sm:rounded-3xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-black">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 bg-white sticky top-0 z-10">
+          <h2 className="text-lg sm:text-2xl font-bold text-black">
             {texts[language].title}
           </h2>
           <button
             onClick={handleClose}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
           >
-            <i className="ri-close-line text-xl"></i>
+            <i className="ri-close-line text-lg sm:text-xl"></i>
           </button>
         </div>
   
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+        <div className="overflow-y-auto h-full sm:max-h-[calc(90vh-80px)]">
           {!isSubmitted ? (
             <PersonalInfoStep
               language={language}
@@ -382,24 +382,24 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
               selectedPack={selectedPack}
             />
           ) : (
-            <div className="p-8 text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i className="ri-check-line text-3xl text-green-600"></i>
+            <div className="p-4 sm:p-8 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                <i className="ri-check-line text-2xl sm:text-3xl text-green-600"></i>
               </div>
-              <h2 className="text-3xl font-bold text-black mb-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-black mb-3 sm:mb-4">
                 {texts[language].successTitle}
               </h2>
-              <p className="text-lg text-gray-600 mb-8">
+              <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 px-2">
                 {texts[language].successMessage}
               </p>
-              <div className="bg-gray-50 rounded-xl p-6 mb-8 max-w-md mx-auto">
-                <div className="flex justify-between items-center mb-4">
+              <div className="bg-gray-50 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 max-w-md mx-auto">
+                <div className="flex justify-between items-center mb-3 sm:mb-4 text-sm sm:text-base">
                   <span className="text-gray-600">{texts[language].orderNumber}:</span>
                   <span className="font-bold text-black">
                     #REQ{Math.floor(Math.random() * 10000)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center text-sm sm:text-base">
                   <span className="text-gray-600">{selectedPack?.name}:</span>
                   <span className="font-bold text-[#F2431E]">
                     {selectedPack?.price}
@@ -408,7 +408,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
               </div>
               <button
                 onClick={handleClose}
-                className="bg-[#F2431E] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors"
+                className="bg-[#F2431E] text-white px-6 sm:px-8 py-3 rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors w-full sm:w-auto"
               >
                 {texts[language].close}
               </button>
