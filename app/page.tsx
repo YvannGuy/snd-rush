@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
+import AISearchBox from '@/components/AISearchBox';
 import AboutSection from '@/components/AboutSection';
 import PacksSection from '@/components/PacksSection';
 import TestimonialsSection from '@/components/TestimonialsSection';
@@ -43,8 +44,19 @@ export default function Home() {
       
       <main>
         <HeroSection 
-          language={language} 
+          language={language}
         />
+        
+        {/* AI Search Section */}
+        <section className="bg-gradient-to-br from-[#F2431E] via-[#E63A1A] to-[#D6341A] py-16 sm:py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <AISearchBox 
+              language={language} 
+              onPackSelected={handleReservePack}
+            />
+          </div>
+        </section>
+        
         <AboutSection language={language} />
         <PacksSection 
           language={language} 

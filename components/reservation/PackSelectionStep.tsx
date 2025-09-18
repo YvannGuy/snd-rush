@@ -55,7 +55,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/jour",
         popular: true,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/5c261792f7820115100dfa4492f866a6.jfif",
+        image: "/pack2c.jpg",
         features: ["2 enceintes 500W", "Table de mixage 4 voies", "1 micro sans fil", "Pieds + câbles inclus", "Égaliseur intégré"],
         highlight: "Le + demandé",
         ideal: "Idéal pour 50-100 personnes"
@@ -69,7 +69,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/jour",
         popular: false,
-        image: "https://readdy.ai/api/search-image?query=premium%20sound%20system%20with%20subwoofer%20and%20professional%20mixing%20console%2C%20high-end%20audio%20equipment%20in%20elegant%20event%20space%2C%20black%20and%20white%20photography%20with%20red%20lighting%20effects&width=400&height=300&seq=premium-pack-modal&orientation=landscape",
+        image: "/pack2cc.jpg",
         features: ["2 enceintes 800W + caisson", "Table de mixage 6 voies", "2 micros sans fil", "Éclairage LED inclus", "Installation incluse"],
         highlight: "Qualité Pro",
         ideal: "Idéal pour 100-200 personnes"
@@ -97,7 +97,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/jour",
         popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/fddc9abdeba1d6e4aff14662a1c018a0.jfif",
+        image: "/pack4cc.jpg",
         features: ["Système line array 1500W", "Console numérique", "4 micros sans fil premium", "Éclairage scénique", "Ingénieur du son", "Enregistrement HD"],
         highlight: "Haut de gamme",
         ideal: "Idéal pour 250-500 personnes"
@@ -128,7 +128,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/day",
         popular: true,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/5c261792f7820115100dfa4492f866a6.jfif",
+        image: "/pack2c.jpg",
         features: ["2 speakers 500W", "4-channel mixing table", "1 wireless microphone", "Stands + cables included", "Integrated equalizer"],
         highlight: "Most requested",
         ideal: "Ideal for 50-100 people"
@@ -142,7 +142,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/day",
         popular: false,
-        image: "https://readdy.ai/api/search-image?query=premium%20sound%20system%20with%20subwoofer%20and%20professional%20mixing%20console%2C%20high-end%20audio%20equipment%20in%20elegant%20event%20space%2C%20black%20and%20white%20photography%20with%20red%20lighting%20effects&width=400&height=300&seq=premium-pack-modal&orientation=landscape",
+        image: "/pack2cc.jpg",
         features: ["2 speakers 800W + subwoofer", "6-channel mixing table", "2 wireless microphones", "LED lighting included", "Installation included"],
         highlight: "Pro Quality",
         ideal: "Ideal for 100-200 people"
@@ -170,7 +170,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/day",
         popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/fddc9abdeba1d6e4aff14662a1c018a0.jfif",
+        image: "/pack4cc.jpg",
         features: ["Line array system 1500W", "Digital console", "4 premium wireless mics", "Stage lighting", "Sound engineer", "HD recording"],
         highlight: "High-end",
         ideal: "Ideal for 250-500 people"

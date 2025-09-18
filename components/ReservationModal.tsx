@@ -57,7 +57,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "/jour",
         popular: true,
-        image: "https://readdy.ai/api/search-image?query=standard%20sound%20system%20with%20powerful%20speakers%20and%20wireless%20microphone%2C%20professional%20audio%20equipment%20setup%20in%20modern%20venue%2C%20black%20and%20white%20photography%20with%20red%20lighting%20accents&width=400&height=300&seq=standard-pack-modal&orientation=landscape",
+        image: "/pack2c.jpg",
         features: ["2 enceintes 500W", "Table de mixage 4 voies", "1 micro sans fil", "Pieds + câbles inclus", "Égaliseur intégré"],
         highlight: "Le + demandé",
         ideal: "Idéal pour 50-100 personnes"
@@ -71,7 +71,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "/jour",
         popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/201ad9cfef58b6b9553a19fa999690f2.jfif",
+        image: "/pack2cc.jpg",
         features: ["2 enceintes 800W + caisson", "Table de mixage 6 voies", "2 micros sans fil", "Éclairage LED inclus", "Installation incluse"],
         highlight: "Qualité Pro",
         ideal: "Idéal pour 100-200 personnes"
@@ -99,7 +99,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "/jour",
         popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/fddc9abdeba1d6e4aff14662a1c018a0.jfif",
+        image: "/pack4cc.jpg",
         features: ["Système line array 1500W", "Console numérique", "4 micros sans fil premium", "Éclairage scénique", "Ingénieur du son", "Enregistrement HD"],
         highlight: "Haut de gamme",
         ideal: "Idéal pour 250-500 personnes"
@@ -114,7 +114,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/platinedj.jpg",
+        image: "/pack2c.jpg",
         features: ["1x Contrôleur Pioneer XDJ-RR (tout-en-un)", "Équipement professionnel", "Câblage inclus", "Prêt à l'emploi"],
         highlight: "Compact",
         ideal: "Idéal pour débuter"
@@ -128,7 +128,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/platinedj4.jpg",
+        image: "/pack4cc.jpg",
         features: ["1x Contrôleur Pioneer XDJ-RR (platines + table intégrée)", "1x DJ Booth (stand pro) – structure stable et esthétique", "Câblage inclus"],
         highlight: "Booth",
         ideal: "Idéal pour événements"
@@ -142,7 +142,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: true,
-        image: "/platinedj2.jpg",
+        image: "/pack2cc.jpg",
         features: ["1x Pioneer XDJ-RR", "2x Enceintes actives (1000W chacune)", "Pieds + câblage inclus", "Système complet"],
         highlight: "Standard",
         ideal: "Idéal pour événements"
@@ -156,7 +156,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/platinedj3.jpg",
+        image: "/pack4cc.jpg",
         features: ["1x Pioneer XDJ-RR", "2x Enceintes actives (1000W chacune)", "1x Caisson de basses (1500W)", "Pieds + câblage inclus"],
         highlight: "Premium",
         ideal: "Professionnels confirmés"
@@ -186,7 +186,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "/day",
         popular: true,
-        image: "https://readdy.ai/api/search-image?query=standard%20sound%20system%20with%20powerful%20speakers%20and%20wireless%20microphone%2C%20professional%20audio%20equipment%20setup%20in%20modern%20venue%2C%20black%20and%20white%20photography%20with%20red%20lighting%20accents&width=400&height=300&seq=standard-pack-modal&orientation=landscape",
+        image: "/pack2c.jpg",
         features: ["2 speakers 500W", "4-channel mixing table", "1 wireless microphone", "Stands + cables included", "Integrated equalizer"],
         highlight: "Most requested",
         ideal: "Ideal for 50-100 people"
@@ -200,7 +200,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "/day",
         popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/201ad9cfef58b6b9553a19fa999690f2.jfif",
+        image: "/pack2cc.jpg",
         features: ["2 speakers 800W + subwoofer", "6-channel mixing table", "2 wireless microphones", "LED lighting included", "Installation included"],
         highlight: "Pro Quality",
         ideal: "Ideal for 100-200 people"
@@ -228,7 +228,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "/day",
         popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/fddc9abdeba1d6e4aff14662a1c018a0.jfif",
+        image: "/pack4cc.jpg",
         features: ["Line array system 1500W", "Digital console", "4 premium wireless mics", "Stage lighting", "Sound engineer", "HD recording"],
         highlight: "High-end",
         ideal: "Ideal for 250-500 people"
@@ -243,7 +243,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/platinedj.jpg",
+        image: "/pack2c.jpg",
         features: ["1x Pioneer XDJ-RR controller (all-in-one)", "Professional equipment", "Cabling included", "Ready to use"],
         highlight: "Compact",
         ideal: "Perfect for beginners"
@@ -257,7 +257,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/platinedj4.jpg",
+        image: "/pack4cc.jpg",
         features: ["1x Pioneer XDJ-RR controller (turntables + integrated table)", "1x DJ Booth (pro stand) – stable and aesthetic structure", "Cabling included"],
         highlight: "Booth",
         ideal: "Perfect for events"
@@ -271,7 +271,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: true,
-        image: "/platinedj2.jpg",
+        image: "/pack2cc.jpg",
         features: ["1x Pioneer XDJ-RR", "2x Active speakers (1000W each)", "Stands + cabling included", "Complete system"],
         highlight: "Standard",
         ideal: "Perfect for events"
@@ -285,7 +285,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/platinedj3.jpg",
+        image: "/pack4cc.jpg",
         features: ["1x Pioneer XDJ-RR", "2x Active speakers (1000W each)", "1x Subwoofer (1500W)", "Stands + cabling included"],
         highlight: "Premium",
         ideal: "Confirmed professionals"

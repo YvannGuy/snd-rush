@@ -7,9 +7,10 @@ import { useState, useEffect } from 'react';
 interface HeroSectionProps {
   language: 'fr' | 'en';
   onReservationClick?: () => void;
+  onPackSelected?: (packId: number) => void;
 }
 
-export default function HeroSection({ language, onReservationClick }: HeroSectionProps) {
+export default function HeroSection({ language, onReservationClick, onPackSelected }: HeroSectionProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const backgroundImages = [
@@ -107,6 +108,7 @@ export default function HeroSection({ language, onReservationClick }: HeroSectio
                     {texts[language].cta}
                   </button>
                 </div>
+
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-12 text-white/80 text-sm sm:text-lg">
                   <div className="flex items-center space-x-2 sm:space-x-3">
