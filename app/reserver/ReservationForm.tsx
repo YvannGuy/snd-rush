@@ -30,6 +30,7 @@ export default function ReservationForm({ language, packId, onBack }: Reservatio
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showPricingTooltip, setShowPricingTooltip] = useState(false);
 
   const texts = {
     fr: {
