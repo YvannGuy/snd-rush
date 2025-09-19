@@ -24,7 +24,7 @@ export default function HeroSection({ language, onReservationClick, onPackSelect
     fr: {
       title1: 'Votre solution sono',
       title2: 'de dernière minute.',
-      subtitle: 'Faites appel à nos spécialistes de l\'urgence sonore ou planifiez votre événement avec Sound Rush, notre service de réservation à l\'avance. Matériel professionnel, intervention express et équipe disponible 24h/24 - 7j/7 sur Paris et région parisienne pour tous vos besoins sonores.',
+      subtitle: 'Faites appel à nos spécialistes de l\'urgence sonore ou planifiez votre événement avec Sound Rush, notre service de réservation à l\'avance. Matériel professionnel, intervention express et équipe disponible 24h/24 - 7j/7 sur Paris et région parisienne pour tous vos besoins en matière de son.',
       cta: 'Réserver à l\'avance',
       emergency: 'Urgence ? Appelez maintenant',
       available: 'Disponible 24h/24 - 7j/7'
@@ -32,7 +32,7 @@ export default function HeroSection({ language, onReservationClick, onPackSelect
     en: {
       title1: 'Emergency sound',
       title2: 'equipment specialists.',
-      subtitle: 'Sound failure during your event? Emergency sound specialists, our team intervenes express with professional equipment to save your evening. Intervention service available 24/7 in Paris and Paris region.',
+      subtitle: 'Sound failure during your event? Emergency sound specialists, our team intervenes express with professional equipment to save your evening. Intervention service available 24/7 in Paris and Paris region for all your sound needs.',
       cta: 'Book in advance',
       emergency: 'Emergency? Call now',
       available: 'Available 24/7'

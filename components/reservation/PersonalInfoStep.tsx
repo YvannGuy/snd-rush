@@ -35,6 +35,150 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [requestNumber, setRequestNumber] = useState('');
+  const [showPricingTooltip, setShowPricingTooltip] = useState(false);
+  const [selectedZone, setSelectedZone] = useState<string>('paris');
+
+  // Forcer la sélection de "Réservation simple" quand zone "devis" est sélectionnée
+  useEffect(() => {
+    if (selectedZone === 'devis') {
+      setFormData(prev => ({ ...prev, reservationType: 'simple' }));
+    }
+  }, [selectedZone]);
+
+  // Fermer le tooltip quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.pricing-tooltip-container')) {
+        setShowPricingTooltip(false);
+      }
+    };
+
+    if (showPricingTooltip) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showPricingTooltip]);
+
+  // Fonction centralisée pour calculer l'acompte
+  const calculateAcompte = (packPrice: string) => {
+    // Extraire le prix numérique (gérer "À partir de 550 € TTC")
+    const priceMatch = packPrice.match(/(\d+)/);
+    const basePrice = priceMatch ? parseInt(priceMatch[1]) : 0;
+    return Math.round(basePrice * 0.3); // 30% d'acompte
+  };
+
+  // Fonction pour obtenir le prix selon la zone sélectionnée
+  const getPriceByZone = (packId: number, zone: string) => {
+    const zonePrices = {
+      2: { // Pack STANDARD
+        paris: 550,
+        petite: 630,
+        moyenne: 710,
+        grande: 750,
+        devis: null
+      },
+      3: { // Pack PREMIUM
+        paris: 700,
+        petite: 780,
+        moyenne: 860,
+        grande: 900,
+        devis: null
+      },
+      5: { // Pack PRESTIGE
+        paris: 1100,
+        petite: 1180,
+        moyenne: 1260,
+        grande: 1300,
+        devis: null
+      }
+    };
+    
+    return zonePrices[packId as keyof typeof zonePrices]?.[zone as keyof typeof zonePrices[2]] || null;
+  };
+
+  // Fonction pour obtenir le nom de la zone
+  const getZoneName = (zone: string) => {
+    const zoneNames = {
+      paris: language === 'fr' ? 'Paris intra-muros' : 'Paris intra-muros',
+      petite: language === 'fr' ? 'Petite couronne (0–15 km)' : 'Inner suburbs (0–15 km)',
+      moyenne: language === 'fr' ? 'Moyenne couronne (15–30 km)' : 'Outer suburbs (15–30 km)',
+      grande: language === 'fr' ? 'Grande couronne (30–50 km)' : 'Greater Paris (30–50 km)',
+      devis: language === 'fr' ? 'Au-delà de 50 km' : 'Beyond 50 km'
+    };
+    return zoneNames[zone as keyof typeof zoneNames] || '';
+  };
+
+  // Fonction pour obtenir les tarifs par zones selon l'ID du pack
+  const getPricingZones = (packId: number) => {
+    const pricingZones = {
+      2: { // Pack STANDARD
+        fr: [
+          ["Paris intra-muros", "550 € TTC"],
+          ["Petite couronne (0–15 km)", "630 € TTC"],
+          ["Moyenne couronne (15–30 km)", "710 € TTC"],
+          ["Grande couronne (30–50 km)", "750 € TTC"],
+          ["Au-delà de 50 km", "Sur devis"]
+        ],
+        en: [
+          ["Paris intra-muros", "550 € TTC"],
+          ["Inner suburbs (0–15 km)", "630 € TTC"],
+          ["Outer suburbs (15–30 km)", "710 € TTC"],
+          ["Greater Paris (30–50 km)", "750 € TTC"],
+          ["Beyond 50 km", "Quote on request"]
+        ]
+      },
+      3: { // Pack PREMIUM
+        fr: [
+          ["Paris intra-muros", "700 € TTC"],
+          ["Petite couronne (0–15 km)", "780 € TTC"],
+          ["Moyenne couronne (15–30 km)", "860 € TTC"],
+          ["Grande couronne (30–50 km)", "900 € TTC"],
+          ["Au-delà de 50 km", "Sur devis"]
+        ],
+        en: [
+          ["Paris intra-muros", "700 € TTC"],
+          ["Inner suburbs (0–15 km)", "780 € TTC"],
+          ["Outer suburbs (15–30 km)", "860 € TTC"],
+          ["Greater Paris (30–50 km)", "900 € TTC"],
+          ["Beyond 50 km", "Quote on request"]
+        ]
+      },
+      5: { // Pack PRESTIGE
+        fr: [
+          ["Paris intra-muros", "1 100 € TTC"],
+          ["Petite couronne (0–15 km)", "1 180 € TTC"],
+          ["Moyenne couronne (15–30 km)", "1 260 € TTC"],
+          ["Grande couronne (30–50 km)", "1 300 € TTC"],
+          ["Au-delà de 50 km", "Sur devis"]
+        ],
+        en: [
+          ["Paris intra-muros", "1 100 € TTC"],
+          ["Inner suburbs (0–15 km)", "1 180 € TTC"],
+          ["Outer suburbs (15–30 km)", "1 260 € TTC"],
+          ["Greater Paris (30–50 km)", "1 300 € TTC"],
+          ["Beyond 50 km", "Quote on request"]
+        ]
+      }
+    };
+    
+    return pricingZones[packId as keyof typeof pricingZones]?.[language] || [];
+  };
+
+  // Fermer le tooltip quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.pricing-tooltip-container')) {
+        setShowPricingTooltip(false);
+      }
+    };
+
+    if (showPricingTooltip) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showPricingTooltip]);
 
 
   // Dates d'indisponibilité (exemple - à adapter selon vos besoins)
@@ -190,20 +334,34 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
     }));
   };
 
-  // Liens Stripe pour chaque pack
-  const stripeLinks = {
-    'Enceinte Starter': 'https://buy.stripe.com/9B69ATfDMdYj8CZ42K1sQ0h',
-    'Starter Speaker': 'https://buy.stripe.com/9B69ATfDMdYj8CZ42K1sQ0h',
-    'Pack STANDARD': 'https://buy.stripe.com/3cIbJ1dvE6vR4mJ42K1sQ0i',
-    'Pack PREMIUM': 'https://buy.stripe.com/aFa5kD63cf2nf1n1UC1sQ0j',
-    'Pack PRESTIGE': 'https://buy.stripe.com/28E9AT8bkdYj3iF7eW1sQ0k',
-    'DJ Compact': 'https://buy.stripe.com/cNi28rfDM7zVbPbczg1sQ0d',
-    'Pack DJ Compact + DJ Booth': 'https://buy.stripe.com/fZu14n63c1bxdXjczg1sQ0e',
-    'DJ Compact + DJ Booth Pack': 'https://buy.stripe.com/fZu14n63c1bxdXjczg1sQ0e',
-    'Pack Sono Standard DJ': 'https://buy.stripe.com/28E00j4Z8cUf06tfLs1sQ0f',
-    'Standard Sound DJ Pack': 'https://buy.stripe.com/28E00j4Z8cUf06tfLs1sQ0f',
-    'Pack Sono Premium DJ': 'https://buy.stripe.com/aFaeVd3V4aM7dXj8j01sQ0g',
-    'Premium Sound DJ Pack': 'https://buy.stripe.com/aFaeVd3V4aM7dXj8j01sQ0g'
+  // Fonction pour créer une session Stripe dynamique
+  const createStripeSession = async (packName: string, amount: number) => {
+    try {
+      const response = await fetch('/api/create-stripe-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount,
+          packName,
+          customerEmail: formData.email,
+          customerName: `${formData.firstName} ${formData.lastName}`
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success && data.url) {
+        return data.url;
+      } else {
+        console.error('Erreur lors de la création de la session Stripe:', data.error);
+        throw new Error(data.error || 'Erreur inconnue lors de la création du paiement');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la création de la session Stripe:', error);
+      throw error;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -268,32 +426,46 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
           }
         }, 1000);
 
-        // Ouvrir Stripe (popup sur desktop, redirection sur mobile)
-        setTimeout(() => {
-          const stripeLink = stripeLinks[selectedPack.name as keyof typeof stripeLinks];
-          console.log('Lien Stripe:', stripeLink);
-          if (stripeLink && stripeLink !== '#') {
-            console.log('Ouverture de Stripe...');
+        // Créer une session Stripe dynamique
+        setTimeout(async () => {
+          const price = getPriceByZone(selectedPack.id, selectedZone);
+          if (price) {
+            const acompteAmount = Math.round(price * 0.3);
+            console.log('Création de la session Stripe pour:', selectedPack.name, 'Montant:', acompteAmount);
             
-            // Détecter si c'est un appareil mobile
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
-            if (isMobile) {
-              // Sur mobile, rediriger directement
-              console.log('Appareil mobile détecté, redirection directe vers Stripe');
-              window.location.href = stripeLink;
-            } else {
-              // Sur desktop, ouvrir en popup
-              console.log('Appareil desktop détecté, ouverture en popup');
-              const popup = window.open(stripeLink, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
+            try {
+              const stripeUrl = await createStripeSession(selectedPack.name, acompteAmount);
               
-              // Vérifier si la popup a été bloquée
-              if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-                console.log('Popup bloquée, redirection directe');
-                window.location.href = stripeLink;
+              if (stripeUrl) {
+                console.log('Session Stripe créée, redirection vers:', stripeUrl);
+              
+              // Détecter si c'est un appareil mobile
+              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+              
+              if (isMobile) {
+                // Sur mobile, rediriger directement
+                console.log('Appareil mobile détecté, redirection directe vers Stripe');
+                window.location.href = stripeUrl;
+              } else {
+                // Sur desktop, ouvrir en popup
+                console.log('Appareil desktop détecté, ouverture en popup');
+                const popup = window.open(stripeUrl, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
+                
+                // Vérifier si la popup a été bloquée
+                if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+                  console.log('Popup bloquée, redirection directe');
+                  window.location.href = stripeUrl;
+                }
               }
+            } else {
+              console.error('Impossible de créer la session Stripe');
+              alert('Erreur lors de la création du paiement. Veuillez réessayer.');
             }
+          } catch (error) {
+            console.error('Erreur lors de la création de la session Stripe:', error);
+            alert('Erreur lors de la création du paiement. Veuillez réessayer.');
           }
+        }
         }, 1500);
 
         return;
@@ -308,22 +480,27 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
           }
         }, 1000);
         
-        setTimeout(() => {
-          const stripeLink = stripeLinks[selectedPack.name as keyof typeof stripeLinks];
-          if (stripeLink && stripeLink !== '#') {
-            // Détecter si c'est un appareil mobile
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        setTimeout(async () => {
+          const price = getPriceByZone(selectedPack.id, selectedZone);
+          if (price) {
+            const acompteAmount = Math.round(price * 0.3);
+            const stripeUrl = await createStripeSession(selectedPack.name, acompteAmount);
             
-            if (isMobile) {
-              // Sur mobile, rediriger directement
-              window.location.href = stripeLink;
-            } else {
-              // Sur desktop, ouvrir en popup
-              const popup = window.open(stripeLink, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
+            if (stripeUrl) {
+              // Détecter si c'est un appareil mobile
+              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
               
-              // Vérifier si la popup a été bloquée
-              if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-                window.location.href = stripeLink;
+              if (isMobile) {
+                // Sur mobile, rediriger directement
+                window.location.href = stripeUrl;
+              } else {
+                // Sur desktop, ouvrir en popup
+                const popup = window.open(stripeUrl, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
+                
+                // Vérifier si la popup a été bloquée
+                if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+                  window.location.href = stripeUrl;
+                }
               }
             }
           }
@@ -435,17 +612,131 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
             <h3 className="text-base sm:text-lg font-semibold text-black mb-2">
               {texts[language].selectedPack}
             </h3>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-black text-sm sm:text-base">{selectedPack.name}</p>
-                <p className="text-xs sm:text-sm text-gray-600">{selectedPack.tagline}</p>
+            <div className="space-y-3">
+              {/* Informations du pack */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-black text-sm sm:text-base">{selectedPack.name}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">{selectedPack.tagline}</p>
+                </div>
+                <div className="text-right">
+                  {/* Sélecteur de zone moderne */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {language === 'fr' ? 'Zone de livraison' : 'Delivery zone'}
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {[
+                        { key: 'paris', label: language === 'fr' ? 'Paris intra-muros' : 'Paris intra-muros' },
+                        { key: 'petite', label: language === 'fr' ? 'Petite couronne' : 'Inner suburbs' },
+                        { key: 'moyenne', label: language === 'fr' ? 'Moyenne couronne' : 'Outer suburbs' },
+                        { key: 'grande', label: language === 'fr' ? 'Grande couronne' : 'Greater Paris' },
+                        { key: 'devis', label: language === 'fr' ? 'Au-delà de 50 km' : 'Beyond 50 km' }
+                      ].map((zone) => (
+                        <button
+                          key={zone.key}
+                          onClick={() => setSelectedZone(zone.key)}
+                          className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                            selectedZone === zone.key
+                              ? 'bg-[#F2431E] text-white border-[#F2431E]'
+                              : 'bg-white text-gray-700 border-gray-300 hover:border-[#F2431E] hover:text-[#F2431E]'
+                          }`}
+                        >
+                          {zone.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Prix et acompte dynamiques */}
+                  <div className="bg-gray-50 rounded-lg p-4 relative">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <div className="text-2xl font-bold text-[#F2431E]">
+                          {(() => {
+                            const price = getPriceByZone(selectedPack.id, selectedZone);
+                            return price ? `${price} € TTC` : (language === 'fr' ? 'Sur devis' : 'Quote on request');
+                          })()}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowPricingTooltip(!showPricingTooltip);
+                          }}
+                          className="text-gray-500 hover:text-blue-600 transition-colors"
+                          aria-label="Informations sur les tarifs par zones"
+                        >
+                          <i className="ri-information-line text-lg"></i>
+                        </button>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-3">
+                        {getZoneName(selectedZone)}
+                      </div>
+                      {(() => {
+                        const price = getPriceByZone(selectedPack.id, selectedZone);
+                        return price ? null : (
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <div className="text-sm text-orange-800 font-medium">
+                              {language === 'fr' ? 'Devis personnalisé' : 'Custom quote'}
+                            </div>
+                            <div className="text-sm text-orange-600">
+                              {language === 'fr' ? 'Contactez-nous pour un devis' : 'Contact us for a quote'}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    
+                    {/* Tooltip avec les zones de livraison */}
+                    {showPricingTooltip && (
+                      <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 sm:p-4 z-20 min-w-[280px] sm:min-w-[320px] max-w-[350px] sm:max-w-none pricing-tooltip-container">
+                        <div className="text-xs sm:text-sm font-semibold text-gray-800 mb-2 sm:mb-3">
+                          {language === 'fr' ? 'Zone de livraison depuis notre entrepôt à Romainville' : 'Delivery zone from our warehouse in Romainville'}
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 text-xs sm:text-sm">Paris intra-muros:</span>
+                            <span className="font-semibold text-gray-800 text-xs sm:text-sm">550 € TTC</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 text-xs sm:text-sm">Petite couronne (0–15 km):</span>
+                            <span className="font-semibold text-gray-800 text-xs sm:text-sm">630 € TTC</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 text-xs sm:text-sm">Moyenne couronne (15–30 km):</span>
+                            <span className="font-semibold text-gray-800 text-xs sm:text-sm">710 € TTC</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 text-xs sm:text-sm">Grande couronne (30–50 km):</span>
+                            <span className="font-semibold text-gray-800 text-xs sm:text-sm">750 € TTC</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 text-xs sm:text-sm">Au-delà de 50 km:</span>
+                            <span className="font-semibold text-orange-600 text-xs sm:text-sm">Sur devis</span>
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-2 border-t border-gray-100">
+                          <div className="text-xs text-gray-500">
+                            {language === 'fr' 
+                              ? '* Tarifs TTC, livraison et installation incluses'
+                              : '* All prices include tax, delivery and installation'
+                            }
+                          </div>
+                        </div>
+                        {/* Bouton de fermeture pour mobile */}
+                        <button
+                          onClick={() => setShowPricingTooltip(false)}
+                          className="absolute top-1 right-1 text-gray-400 hover:text-gray-600 sm:hidden"
+                          aria-label="Fermer"
+                        >
+                          <i className="ri-close-line text-sm"></i>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-lg sm:text-xl font-bold text-[#F2431E]">{selectedPack.price}</p>
-                {selectedPack.duration && (
-                  <p className="text-xs sm:text-sm text-gray-500">{selectedPack.duration}</p>
-                )}
-              </div>
+
             </div>
 
           </div>
@@ -630,15 +921,16 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
               </div>
             </div>
 
-            {/* Réservation avec acompte */}
-            <div
-              className={`border-2 rounded-xl p-4 sm:p-6 cursor-pointer transition-all duration-300 ${
-                formData.reservationType === 'acompte'
-                  ? 'border-[#F2431E] bg-[#F2431E]/5'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-              onClick={() => setFormData(prev => ({ ...prev, reservationType: 'acompte' }))}
-            >
+            {/* Réservation avec acompte - Masquée si zone "devis" */}
+            {selectedZone !== 'devis' && (
+              <div
+                className={`border-2 rounded-xl p-4 sm:p-6 cursor-pointer transition-all duration-300 ${
+                  formData.reservationType === 'acompte'
+                    ? 'border-[#F2431E] bg-[#F2431E]/5'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setFormData(prev => ({ ...prev, reservationType: 'acompte' }))}
+              >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
@@ -656,7 +948,10 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
                 </div>
                 <div className="text-right">
                   <span className="text-lg font-bold text-[#F2431E]">
-                    {selectedPack ? `${Math.round(parseInt(selectedPack.price.replace(/[^\d]/g, '')) * 0.3)}€` : '30%'}
+                    {selectedPack ? (() => {
+                      const price = getPriceByZone(selectedPack.id, selectedZone);
+                      return price ? `${Math.round(price * 0.3)}€` : 'Sur devis';
+                    })() : '30%'}
                   </span>
                 </div>
               </div>
@@ -676,6 +971,7 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>
@@ -1025,7 +1321,10 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
               <div className="flex flex-col items-center">
                 <span>{texts[language].continue}</span>
                 <span className="text-sm opacity-90">
-                  Acompte : {Math.round(parseInt(selectedPack.price.replace(/[^\d]/g, '')) * 0.3)}€
+                  {language === 'fr' ? 'Acompte :' : 'Deposit:'} {(() => {
+                    const price = getPriceByZone(selectedPack.id, selectedZone);
+                    return price ? Math.round(price * 0.3) : 'Sur devis';
+                  })()}€
                 </span>
               </div>
             ) : (

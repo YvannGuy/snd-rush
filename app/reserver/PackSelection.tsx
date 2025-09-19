@@ -40,90 +40,122 @@ export default function PackSelection({ language, onPackSelect }: PackSelectionP
   const packs = {
     fr: [
       {
-        id: 1,
-        name: "Mariage Express",
-        tagline: "Le son parfait pour le plus beau jour",
-        description: "Sonorisation complète pour votre mariage avec installation professionnelle et accompagnement dédié.",
-        price: "190€",
-        originalPrice: "240€",
-        duration: "12h",
-        popular: true,
-        image: "https://readdy.ai/api/search-image?query=elegant%20wedding%20ceremony%20with%20professional%20audio%20equipment%20microphones%20and%20speakers%20in%20romantic%20venue%20with%20soft%20lighting%20minimal%20background%20black%20and%20white%20photography%20style%20with%20subtle%20red%20accent%20lighting&width=600&height=400&seq=wedding-pack-reserve&orientation=landscape",
-        features: ["Micros sans fil premium", "Enceintes haute définition", "Table de mixage pro", "Installation incluse", "Technicien sur site", "Éclairage ambiance"],
-        highlight: "Le + demandé",
-        ideal: "Idéal pour 50-150 invités"
-      },
-      {
         id: 2,
-        name: "Événement Pro",
-        tagline: "L'audio corporate sans fausse note",
-        description: "Solution complète pour conférences, séminaires et événements d'entreprise avec technicien dédié.",
-        price: "280€",
-        originalPrice: "350€",
-        duration: "8h",
-        popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/5c261792f7820115100dfa4492f866a6.jfif",
-        features: ["Système complet", "Technicien sur site", "Micros-cravates", "Sonorisation salle", "Enregistrement possible", "Support technique"],
-        highlight: "Professionnel",
-        ideal: "Idéal pour 20-100 participants"
+        name: "Pack STANDARD",
+        tagline: "Jusqu'à 150 personnes",
+        description: "Sonorisation professionnelle complète avec installation et technicien inclus.",
+        price: "À partir de 550€",
+        duration: "Clé en main",
+        popular: true,
+        image: "/pack2c.jpg",
+        features: [
+          "Sonorisation pour 150 pers",
+          "1 micro filaire",
+          "Livraison & Reprise",
+          "Installation & réglages par technicien",
+          "Démontage après l'événement"
+        ],
+        highlight: "Clé en main",
+        ideal: "Jusqu'à 150 personnes"
       },
       {
         id: 3,
-        name: "Soirée Privée",
-        tagline: "L'ambiance qui fait vibrer vos invités",
-        description: "Équipement plug-and-play pour anniversaires, fêtes et célébrations privées avec éclairage ambiance.",
-        price: "120€",
-        originalPrice: "160€",
-        duration: "6h",
+        name: "Pack PREMIUM",
+        tagline: "Jusqu'à 250 personnes",
+        description: "Système professionnel complet avec assistance technique pendant l'événement.",
+        price: "À partir de 700€",
+        duration: "Clé en main",
         popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/201ad9cfef58b6b9553a19fa999690f2.jfif",
-        features: ["Enceintes Bluetooth pro", "Éclairage LED ambiance", "Micros karaoké", "Configuration simple", "Playlist incluse", "Contrôle à distance"],
-        highlight: "Plug & Play",
-        ideal: "Idéal pour 10-50 invités"
+        image: "/pack2cc.jpg",
+        features: [
+          "Sonorisation 250 pers",
+          "2 micros filaires",
+          "Livraison & Reprise",
+          "Installation + assistance technicien",
+          "Démontage complet"
+        ],
+        highlight: "Clé en main",
+        ideal: "Jusqu'à 250 personnes"
+      },
+      {
+        id: 5,
+        name: "Pack PRESTIGE",
+        tagline: "Jusqu'à 500 personnes",
+        description: "Configuration maximale avec supervision technique pendant l'événement.",
+        price: "À partir de 1 100€",
+        duration: "Clé en main",
+        popular: false,
+        image: "/pack4cc.jpg",
+        features: [
+          "Sonorisation pro 500 pers",
+          "Micros sans fil & accessoires",
+          "Livraison & Reprise en camion",
+          "Installation complète",
+          "Supervision technique (max 5h)",
+          "Démontage & rangement"
+        ],
+        highlight: "Clé en main",
+        ideal: "Jusqu'à 500 personnes"
       }
     ],
     en: [
       {
-        id: 1,
-        name: "Wedding Express",
-        tagline: "Perfect sound for the most beautiful day",
-        description: "Complete sound system for your wedding with professional installation and dedicated support.",
-        price: "190€",
-        originalPrice: "240€",
-        duration: "12h",
-        popular: true,
-        image: "https://readdy.ai/api/search-image?query=elegant%20wedding%20ceremony%20with%20professional%20audio%20equipment%20microphones%20and%20speakers%20in%20romantic%20venue%20with%20soft%20lighting%20minimal%20background%20black%20and%20white%20photography%20style%20with%20subtle%20red%20accent%20lighting&width=600&height=400&seq=wedding-pack-reserve&orientation=landscape",
-        features: ["Premium wireless mics", "High-definition speakers", "Pro mixing console", "Installation included", "On-site technician", "Ambient lighting"],
-        highlight: "Most requested",
-        ideal: "Ideal for 50-150 guests"
-      },
-      {
         id: 2,
-        name: "Corporate Event",
-        tagline: "Corporate audio without a false note",
-        description: "Complete solution for conferences, seminars and corporate events with dedicated technician.",
-        price: "280€",
-        originalPrice: "350€",
-        duration: "8h",
-        popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/5c261792f7820115100dfa4492f866a6.jfif",
-        features: ["Complete system", "On-site technician", "Lapel microphones", "Room sound system", "Recording possible", "Technical support"],
-        highlight: "Professional",
-        ideal: "Ideal for 20-100 participants"
+        name: "Pack STANDARD",
+        tagline: "Up to 150 people",
+        description: "Complete professional sound system with installation and technician included.",
+        price: "From 550€",
+        duration: "Turnkey",
+        popular: true,
+        image: "/pack2c.jpg",
+        features: [
+          "Sound system for 150 people",
+          "1 wired microphone",
+          "Delivery & Pickup",
+          "Installation & tuning by technician",
+          "Dismantling after event"
+        ],
+        highlight: "Turnkey",
+        ideal: "Up to 150 people"
       },
       {
         id: 3,
-        name: "Private Party",
-        tagline: "The atmosphere that makes your guests vibrate",
-        description: "Plug-and-play equipment for birthdays, parties and private celebrations with ambient lighting.",
-        price: "120€",
-        originalPrice: "160€",
-        duration: "6h",
+        name: "Pack PREMIUM",
+        tagline: "Up to 250 people",
+        description: "Complete professional system with technical assistance during the event.",
+        price: "From 700€",
+        duration: "Turnkey",
         popular: false,
-        image: "https://static.readdy.ai/image/da957b73b52f8479bc0334fc9a75f115/201ad9cfef58b6b9553a19fa999690f2.jfif",
-        features: ["Pro Bluetooth speakers", "LED ambient lighting", "Karaoke microphones", "Simple setup", "Playlist included", "Remote control"],
-        highlight: "Plug & Play",
-        ideal: "Ideal for 10-50 guests"
+        image: "/pack2cc.jpg",
+        features: [
+          "Sound system for 250 people",
+          "2 wired microphones",
+          "Delivery & Pickup",
+          "Installation + technician assistance",
+          "Complete dismantling"
+        ],
+        highlight: "Turnkey",
+        ideal: "Up to 250 people"
+      },
+      {
+        id: 5,
+        name: "Pack PRESTIGE",
+        tagline: "Up to 500 people",
+        description: "Maximum configuration with technical supervision during the event.",
+        price: "From 1 100€",
+        duration: "Turnkey",
+        popular: false,
+        image: "/pack4cc.jpg",
+        features: [
+          "Professional sound system for 500 people",
+          "Wireless microphones & accessories",
+          "Delivery & Pickup by truck",
+          "Complete installation",
+          "Technical supervision (max 5h)",
+          "Dismantling & storage"
+        ],
+        highlight: "Turnkey",
+        ideal: "Up to 500 people"
       }
     ]
   };

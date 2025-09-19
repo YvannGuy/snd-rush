@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
           <h3 style="color: #92400e; margin: 0;">⚠️ Client en cours de paiement d'acompte</h3>
           <p style="margin: 10px 0 0 0; color: #92400e;"><strong>Numéro de demande :</strong> ${requestNumber || 'Non généré'}</p>
           <p style="margin: 5px 0; color: #92400e;"><strong>Pack :</strong> ${selectedPack?.name}</p>
-          <p style="margin: 5px 0; color: #92400e;"><strong>Montant de l'acompte :</strong> ${Math.round(parseInt(selectedPack?.price?.replace('€', '') || '0') * 0.3)}€</p>
+          <p style="margin: 5px 0; color: #92400e;"><strong>Montant de l'acompte :</strong> ${Math.round(parseInt(selectedPack?.price?.match(/(\d+)/)?.[1] || '0') * 0.3)}€</p>
           <p style="margin: 5px 0; color: #92400e;"><strong>Prix total :</strong> ${selectedPack?.price}</p>
         </div>
         

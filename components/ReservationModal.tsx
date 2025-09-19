@@ -51,30 +51,42 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
       {
         id: 2,
         name: "Pack STANDARD",
-        tagline: "Le choix équilibré",
-        description: "Solution complète avec micro sans fil pour une sonorisation professionnelle adaptée à tous vos événements.",
-        price: "139€",
+        tagline: "Jusqu'à 150 personnes",
+        description: "Sonorisation professionnelle complète avec installation et technicien inclus.",
+        price: "À partir de 550 € TTC",
         originalPrice: "",
-        duration: "/jour",
+        duration: "Paris intra-muros",
         popular: true,
         image: "/pack2c.jpg",
-        features: ["2 enceintes 500W", "Table de mixage 4 voies", "1 micro sans fil", "Pieds + câbles inclus", "Égaliseur intégré"],
-        highlight: "Le + demandé",
-        ideal: "Idéal pour 50-100 personnes"
+        features: [
+          "Sonorisation pour 150 pers",
+          "1 micro filaire",
+          "Livraison & Reprise",
+          "Installation & réglages par technicien",
+          "Démontage après l'événement"
+        ],
+        highlight: "Clé en main",
+        ideal: "Jusqu'à 150 personnes"
       },
       {
         id: 3,
         name: "Pack PREMIUM",
-        tagline: "La qualité supérieure",
-        description: "Système professionnel avec caisson de basses pour une expérience sonore immersive et puissante.",
-        price: "169€",
+        tagline: "Jusqu'à 250 personnes",
+        description: "Système professionnel complet avec assistance technique pendant l'événement.",
+        price: "À partir de 700 € TTC",
         originalPrice: "",
-        duration: "/jour",
+        duration: "Paris intra-muros",
         popular: false,
         image: "/pack2cc.jpg",
-        features: ["2 enceintes 800W + caisson", "Table de mixage 6 voies", "2 micros sans fil", "Éclairage LED inclus", "Installation incluse"],
-        highlight: "Qualité Pro",
-        ideal: "Idéal pour 100-200 personnes"
+        features: [
+          "Sonorisation 250 pers",
+          "2 micros filaires",
+          "Livraison & Reprise",
+          "Installation + assistance technicien",
+          "Démontage complet"
+        ],
+        highlight: "Clé en main",
+        ideal: "Jusqu'à 250 personnes"
       },
       {
         id: 4,
@@ -93,16 +105,22 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
       {
         id: 5,
         name: "Pack PRESTIGE",
-        tagline: "L'excellence absolue",
-        description: "Système haut de gamme avec équipement premium et service VIP pour des événements d'exception.",
-        price: "319€",
+        tagline: "Jusqu'à 500 personnes",
+        description: "Configuration maximale avec supervision technique pendant l'événement.",
+        price: "À partir de 1 100 € TTC",
         originalPrice: "",
-        duration: "/jour",
+        duration: "Paris intra-muros",
         popular: false,
         image: "/pack4cc.jpg",
-        features: ["Système line array 1500W", "Console numérique", "4 micros sans fil premium", "Éclairage scénique", "Ingénieur du son", "Enregistrement HD"],
-        highlight: "Haut de gamme",
-        ideal: "Idéal pour 250-500 personnes"
+        features: [
+          "Sonorisation pro 500 pers",
+          "2 micros sans fil",
+          "Livraison & Reprise en camion",
+          "Installation complète + assistance technicien",
+          "Démontage & rangement"
+        ],
+        highlight: "Clé en main",
+        ideal: "Jusqu'à 500 personnes"
       },
 
       {
@@ -180,30 +198,42 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
       {
         id: 2,
         name: "Pack STANDARD",
-        tagline: "The balanced choice",
-        description: "Complete solution with wireless microphone for professional sound suited to all your events.",
-        price: "139€",
+        tagline: "Up to 150 people",
+        description: "Complete professional sound system with installation and technician included.",
+        price: "À partir de 550 € TTC",
         originalPrice: "",
-        duration: "/day",
+        duration: "Paris intra-muros",
         popular: true,
         image: "/pack2c.jpg",
-        features: ["2 speakers 500W", "4-channel mixing table", "1 wireless microphone", "Stands + cables included", "Integrated equalizer"],
-        highlight: "Most requested",
-        ideal: "Ideal for 50-100 people"
+        features: [
+          "Sound system for 150 people",
+          "1 wired microphone",
+          "Delivery & Pickup",
+          "Installation & tuning by technician",
+          "Dismantling after event"
+        ],
+        highlight: "Turnkey",
+        ideal: "Up to 150 people"
       },
       {
         id: 3,
         name: "Pack PREMIUM",
-        tagline: "Superior quality",
-        description: "Professional system with subwoofer for an immersive and powerful sound experience.",
-        price: "169€",
+        tagline: "Up to 250 people",
+        description: "Complete professional system with technical assistance during the event.",
+        price: "À partir de 700 € TTC",
         originalPrice: "",
-        duration: "/day",
+        duration: "Paris intra-muros",
         popular: false,
         image: "/pack2cc.jpg",
-        features: ["2 speakers 800W + subwoofer", "6-channel mixing table", "2 wireless microphones", "LED lighting included", "Installation included"],
-        highlight: "Pro Quality",
-        ideal: "Ideal for 100-200 people"
+        features: [
+          "Sound system for 250 people",
+          "2 wired microphones",
+          "Delivery & Pickup",
+          "Installation + technician assistance",
+          "Complete dismantling"
+        ],
+        highlight: "Turnkey",
+        ideal: "Up to 250 people"
       },
       {
         id: 4,
@@ -222,16 +252,22 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
       {
         id: 5,
         name: "Pack PRESTIGE",
-        tagline: "Absolute excellence",
-        description: "High-end system with premium equipment and VIP service for exceptional events.",
-        price: "319€",
+        tagline: "Up to 500 people",
+        description: "Maximum configuration with technical supervision during the event.",
+        price: "À partir de 1 100 € TTC",
         originalPrice: "",
-        duration: "/day",
+        duration: "Paris intra-muros",
         popular: false,
         image: "/pack4cc.jpg",
-        features: ["Line array system 1500W", "Digital console", "4 premium wireless mics", "Stage lighting", "Sound engineer", "HD recording"],
-        highlight: "High-end",
-        ideal: "Ideal for 250-500 people"
+        features: [
+          "Professional sound system for 500 people",
+          "2 wireless microphones",
+          "Delivery & Pickup by truck",
+          "Complete installation + technician assistance",
+          "Dismantling & storage"
+        ],
+        highlight: "Turnkey",
+        ideal: "Up to 500 people"
       },
 
       {

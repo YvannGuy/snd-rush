@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import AISearchBox from '@/components/AISearchBox';
@@ -33,6 +33,30 @@ export default function Home() {
     setReservationModal(false);
     setSelectedPackId(undefined);
   };
+
+  // Écouter l'événement de réservation depuis l'assistant
+  useEffect(() => {
+    const handleOpenReservationModal = (event: CustomEvent) => {
+      const { packId, message } = event.detail;
+      setSelectedPackId(packId);
+      setReservationModal(true);
+      
+      // Préremplir le message après ouverture du modal
+      setTimeout(() => {
+        const messageField = document.querySelector('textarea[name*="message"], textarea[name*="comment"]') as HTMLTextAreaElement;
+        if (messageField) {
+          messageField.value = message;
+          messageField.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }, 100);
+    };
+
+    window.addEventListener('openReservationModal', handleOpenReservationModal as EventListener);
+    
+    return () => {
+      window.removeEventListener('openReservationModal', handleOpenReservationModal as EventListener);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
