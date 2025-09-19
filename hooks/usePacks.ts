@@ -11,36 +11,36 @@ export interface Pack {
   capacity: 'small' | 'medium' | 'large';
 }
 
-// Packs par défaut
+// Packs par défaut - Coordonnés avec les nouveaux packs clé en main
 const DEFAULT_PACKS: Pack[] = [
   {
     name: 'Pack STANDARD',
-    priceText: '139€',
-    priceValue: 139,
-    description: 'Solution complète avec micro sans fil pour une sonorisation professionnelle.',
-    features: ['2 enceintes', 'Console de mixage', 'Micro, technicien et livraison en option', 'Pieds + câbles inclus'],
-    ideal: 'Idéal jusqu\'à 100 personnes',
-    caution: '1000€',
+    priceText: 'À partir de 550 € TTC',
+    priceValue: 550,
+    description: 'Sonorisation professionnelle complète avec installation et technicien inclus.',
+    features: ['Sonorisation pour 150 pers', '1 micro filaire', 'Livraison & Reprise', 'Installation & réglages par technicien', 'Démontage après l\'événement'],
+    ideal: 'Jusqu\'à 150 personnes',
+    caution: '0€',
     capacity: 'small'
   },
   {
     name: 'Pack PREMIUM',
-    priceText: '169€',
-    priceValue: 169,
-    description: 'Système professionnel complet avec installation incluse pour une expérience premium.',
-    features: ['2 enceintes + 1 caisson de basse', 'Console de mixage', 'Micro, technicien et installation en option', 'Pieds et câbles inclus'],
-    ideal: 'Idéal jusqu\'à 200 personnes',
-    caution: '1500€',
+    priceText: 'À partir de 700 € TTC',
+    priceValue: 700,
+    description: 'Système professionnel complet avec assistance technique pendant l\'événement.',
+    features: ['Sonorisation 250 pers', '2 micros filaires', 'Livraison & Reprise', 'Installation + assistance technicien', 'Démontage complet'],
+    ideal: 'Jusqu\'à 250 personnes',
+    caution: '0€',
     capacity: 'medium'
   },
   {
     name: 'Pack PRESTIGE',
-    priceText: '319€',
-    priceValue: 319,
-    description: 'Configuration maximale pour des événements nécessitant une puissance sonore exceptionnelle.',
-    features: ['4 enceintes actives 15" avec trépieds', '1 mixeur professionnel', '1 caisson de basse', 'Câblage complet', 'Installation & technicien inclus'],
-    ideal: 'Idéal jusqu\'à 500 personnes',
-    caution: '2200€',
+    priceText: 'À partir de 1 100 € TTC',
+    priceValue: 1100,
+    description: 'Configuration maximale avec supervision technique pendant l\'événement.',
+    features: ['Sonorisation pro 500 pers', '2 micros sans fil', 'Livraison & Reprise en camion', 'Installation complète + assistance technicien', 'Démontage & rangement'],
+    ideal: 'Jusqu\'à 500 personnes',
+    caution: '0€',
     capacity: 'large'
   }
 ];

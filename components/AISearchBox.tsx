@@ -47,83 +47,65 @@ export default function AISearchBox({ language, onPackSelected }: AISearchBoxPro
     if (numbers && numbers.length > 0) {
       const num = parseInt(numbers[0]);
       
-      // Logique basée uniquement sur le nombre de personnes
-      if (num >= 50 && num <= 180) {
+      // Logique basée sur les nouvelles capacités (Standard: 150, Premium: 250, Prestige: 500)
+      if (num >= 1 && num <= 150) {
         bestMatch = {
           id: 2,
-          name: 'Pack Standard',
+          name: 'Pack STANDARD',
           confidence: 95,
-          reason: `Événement de ${num} personnes - Pack Standard recommandé`
+          reason: `Événement de ${num} personnes - Pack STANDARD recommandé`
         };
-      } else if (num >= 200 && num <= 250) {
+      } else if (num >= 151 && num <= 250) {
         bestMatch = {
           id: 3,
-          name: 'Pack Premium',
+          name: 'Pack PREMIUM',
           confidence: 95,
-          reason: `Événement de ${num} personnes - Pack Premium recommandé`
+          reason: `Événement de ${num} personnes - Pack PREMIUM recommandé`
         };
-      } else if (num > 250) {
+      } else if (num >= 251 && num <= 500) {
         bestMatch = {
-          id: 4,
-          name: 'Pack Prestige',
+          id: 5,
+          name: 'Pack PRESTIGE',
           confidence: 95,
-          reason: `Événement de ${num} personnes - Pack Prestige recommandé`
+          reason: `Événement de ${num} personnes - Pack PRESTIGE recommandé`
         };
-      } else if (num < 50) {
-        // Pour moins de 50 personnes, on recommande le Pack Standard
+      } else if (num > 500) {
         bestMatch = {
-          id: 2,
-          name: 'Pack Standard',
+          id: 5,
+          name: 'Pack PRESTIGE',
           confidence: 85,
-          reason: `Événement de ${num} personnes - Pack Standard adapté`
+          reason: `Événement de ${num} personnes - Pack PRESTIGE (sur devis)`
         };
-      } else {
-        // Cas limites - choisir le pack le plus proche
-        if (num >= 180 && num < 200) {
-          bestMatch = {
-            id: 2,
-            name: 'Pack Standard',
-            confidence: 80,
-            reason: `Événement de ${num} personnes - Pack Standard (limite haute)`
-          };
-        } else if (num >= 250 && num < 300) {
-          bestMatch = {
-            id: 4,
-            name: 'Pack Prestige',
-            confidence: 80,
-            reason: `Événement de ${num} personnes - Pack Prestige recommandé`
-          };
-        }
       }
     } else {
       // Si pas de nombre, analyser les mots-clés simples
       if (lowerQuery.includes('petit') || lowerQuery.includes('small') || lowerQuery.includes('intime') || lowerQuery.includes('famille')) {
         bestMatch = {
           id: 2,
-          name: 'Pack Standard',
+          name: 'Pack STANDARD',
           confidence: 70,
-          reason: 'Événement petit/intime détecté - Pack Standard recommandé'
+          reason: 'Événement petit/intime détecté - Pack STANDARD recommandé'
         };
       } else if (lowerQuery.includes('mariage') || lowerQuery.includes('wedding') || lowerQuery.includes('standard')) {
         bestMatch = {
           id: 2,
-          name: 'Pack Standard',
+          name: 'Pack STANDARD',
           confidence: 70,
-          reason: 'Mariage/événement standard détecté - Pack Standard recommandé'
+          reason: 'Mariage/événement standard détecté - Pack STANDARD recommandé'
         };
       } else if (lowerQuery.includes('grand') || lowerQuery.includes('large') || lowerQuery.includes('premium')) {
         bestMatch = {
           id: 3,
-          name: 'Pack Premium',
+          name: 'Pack PREMIUM',
           confidence: 70,
-          reason: 'Grand événement détecté - Pack Premium recommandé'
+          reason: 'Grand événement détecté - Pack PREMIUM recommandé'
         };
       } else if (lowerQuery.includes('prestige') || lowerQuery.includes('luxe') || lowerQuery.includes('exceptionnel')) {
         bestMatch = {
-          id: 4,
-          name: 'Pack Prestige',
+          id: 5,
+          name: 'Pack PRESTIGE',
           confidence: 70,
-          reason: 'Événement prestigieux détecté - Pack Prestige recommandé'
+          reason: 'Événement prestigieux détecté - Pack PRESTIGE recommandé'
         };
       }
     }
@@ -133,35 +115,35 @@ export default function AISearchBox({ language, onPackSelected }: AISearchBoxPro
 
   const getPackName = (packId: number): string => {
     const packNames = {
-      2: 'Pack Standard', 
-      3: 'Pack Premium',
-      4: 'Pack Prestige'
+      2: 'Pack STANDARD', 
+      3: 'Pack PREMIUM',
+      5: 'Pack PRESTIGE'
     };
     return packNames[packId as keyof typeof packNames] || 'Pack inconnu';
   };
 
   const getPackDetails = (packId: number): { image: string; price: string; description: string } => {
     const packDetails = {
-      2: { // Pack STANDARD - Sono
-        image: '/pack2cc.jpg',
-        price: '139€',
+      2: { // Pack STANDARD - Clé en main
+        image: '/pack2c.jpg',
+        price: 'À partir de 550 € TTC',
         description: language === 'fr'
-          ? 'Pack standard parfait pour événements de 100 à 180 personnes avec sonorisation professionnelle.'
-          : 'Standard pack perfect for events of 100 to 180 people with professional sound.'
+          ? 'Pack STANDARD parfait pour événements jusqu\'à 150 personnes avec sonorisation professionnelle clé en main.'
+          : 'STANDARD pack perfect for events up to 150 people with professional turnkey sound.'
       },
-      3: { // Pack PREMIUM - Sono
+      3: { // Pack PREMIUM - Clé en main
         image: '/pack2cc.jpg',
-        price: '199€',
+        price: 'À partir de 700 € TTC',
         description: language === 'fr'
-          ? 'Pack premium avec équipement haut de gamme pour événements de 200 à 250 personnes.'
-          : 'Premium pack with high-end equipment for events of 200 to 250 people.'
+          ? 'Pack PREMIUM avec équipement haut de gamme pour événements jusqu\'à 250 personnes clé en main.'
+          : 'PREMIUM pack with high-end equipment for events up to 250 people turnkey.'
       },
-      4: { // Pack PRESTIGE - Sono
+      5: { // Pack PRESTIGE - Clé en main
         image: '/pack4cc.jpg',
-        price: '299€',
+        price: 'À partir de 1 100 € TTC',
         description: language === 'fr'
-          ? 'Pack prestige avec matériel d\'exception pour événements de plus de 250 personnes.'
-          : 'Prestige pack with exceptional equipment for events of more than 250 people.'
+          ? 'Pack PRESTIGE avec matériel d\'exception pour événements jusqu\'à 500 personnes clé en main.'
+          : 'PRESTIGE pack with exceptional equipment for events up to 500 people turnkey.'
       }
     };
     return packDetails[packId as keyof typeof packDetails] || {
@@ -317,10 +299,10 @@ export default function AISearchBox({ language, onPackSelected }: AISearchBoxPro
                 <p className="text-center text-gray-500 text-sm mb-4">Exemples de requêtes :</p>
                 <div className="flex flex-wrap justify-center gap-3">
                   {[
-                    "Mariage 150 personnes",
-                    "Anniversaire 60 invités", 
-                    "Événement 250 personnes",
-                    "Gala 350 invités"
+                    "Mariage 120 personnes",
+                    "Anniversaire 80 invités", 
+                    "Événement 200 personnes",
+                    "Gala 400 invités"
                   ].map((example, index) => (
                   <button
                       key={index}

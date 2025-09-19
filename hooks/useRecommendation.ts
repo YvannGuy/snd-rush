@@ -22,13 +22,13 @@ export const useRecommendation = (answers: Record<string, string>, packs: Pack[]
         capacityScore = { small: 0.9, medium: 0.3, large: 0.1 };
         break;
       case '50-100':
-        capacityScore = { small: 0.7, medium: 0.8, large: 0.2 };
+        capacityScore = { small: 0.8, medium: 0.4, large: 0.1 };
         break;
       case '100-200':
-        capacityScore = { small: 0.2, medium: 0.9, large: 0.6 };
+        capacityScore = { small: 0.3, medium: 0.9, large: 0.4 };
         break;
       case '200+':
-        capacityScore = { small: 0.1, medium: 0.4, large: 0.95 };
+        capacityScore = { small: 0.1, medium: 0.2, large: 0.95 };
         break;
     }
 
