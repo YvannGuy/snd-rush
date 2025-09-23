@@ -93,164 +93,91 @@ export default function TestimonialsSection({ language }: TestimonialsSectionPro
   };
 
   return (
-    <section className="py-24 lg:py-32 bg-[#FAFAFA] transition-all duration-1000 ease-in-out mx-4 mb-8 rounded-3xl">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+    <section className="py-16 lg:py-24 bg-gradient-to-br from-gray-50 via-white to-gray-100 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#F2431E]/5 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[#F2431E]/5 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative">
         {/* Title */}
-        <div className="text-center mb-20 transform transition-all duration-1000 ease-in-out">
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-black leading-tight transition-all duration-1000 ease-in-out">
-            {texts[language].title}{' '}
-            <span className="text-[#F2431E]">{texts[language].titleHighlight}</span>
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
+            {texts[language].title}
           </h2>
+          <p className="text-xl text-[#F2431E] font-medium">
+            {texts[language].titleHighlight}
+          </p>
         </div>
 
-        {/* Desktop Carousel Layout */}
-        <div className="hidden lg:block">
-          <div className="relative overflow-hidden">
+        {/* Modern Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {currentTestimonials.map((testimonial, index) => (
             <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{ transform: `translateX(-${currentTestimonial * 33.333}%)` }}
+              key={testimonial.id}
+              className="group relative"
             >
-              {currentTestimonials.map((testimonial, index) => (
-                <div
-                  key={testimonial.id}
-                  className="w-1/3 flex-shrink-0 px-6"
-                >
-                  <div className="bg-white rounded-3xl p-10 shadow-lg hover:shadow-xl transition-all duration-500 ease-in-out transform hover:scale-[1.02] hover:-translate-y-1">
-                    {/* Quote */}
-                    <div className="mb-8">
-                      <div className="text-4xl text-[#F2431E] mb-6 opacity-30">
-                        <i className="ri-double-quotes-l"></i>
-                      </div>
-                      <blockquote className="text-xl md:text-2xl text-black leading-relaxed italic font-light">
-                        {testimonial.quote}
-                      </blockquote>
+              {/* Card */}
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 ease-in-out transform hover:scale-105 hover:-translate-y-2 border border-white/20">
+                {/* Quote icon */}
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-[#F2431E] rounded-full flex items-center justify-center shadow-lg">
+                  <i className="ri-double-quotes-l text-white text-xl"></i>
+                </div>
+
+                {/* Quote */}
+                <blockquote className="text-gray-800 text-lg leading-relaxed mb-6 pt-4">
+                  "{testimonial.quote}"
+                </blockquote>
+
+                {/* Author section */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    {/* Avatar */}
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      {testimonial.author.charAt(0)}
                     </div>
-
-                    {/* Author info and rating */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-5">
-                        {/* User silhouette */}
-                        <div className="w-14 h-14 bg-gradient-to-br from-[#AAAAAA] to-gray-400 rounded-full flex items-center justify-center">
-                          <i className="ri-user-3-fill text-white text-xl"></i>
-                        </div>
-                        
-                        <div>
-                          <div className="font-medium text-black text-lg">
-                            {testimonial.author}
-                          </div>
-                          <div className="text-base text-[#AAAAAA] italic">
-                            {testimonial.event}
-                          </div>
-                        </div>
+                    
+                    <div>
+                      <div className="font-semibold text-gray-900 text-lg">
+                        {testimonial.author}
                       </div>
-
-                      {/* Stars */}
-                      <div className="flex gap-1">
-                        {renderStars(testimonial.rating)}
+                      <div className="text-sm text-gray-600">
+                        {testimonial.event}
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Desktop Navigation Arrows */}
-          <div className="flex justify-center items-center gap-6 mt-12">
-            <button
-              onClick={() => setCurrentTestimonial((prev) => (prev - 1 + currentTestimonials.length) % currentTestimonials.length)}
-              className="w-14 h-14 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 flex items-center justify-center group hover:bg-gray-50"
-            >
-              <i className="ri-arrow-left-line text-xl text-gray-600 group-hover:text-black transition-colors"></i>
-            </button>
-
-            {/* Desktop indicators */}
-            <div className="flex gap-2">
-              {currentTestimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentTestimonial(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentTestimonial ? 'bg-[#F2431E]' : 'bg-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={() => setCurrentTestimonial((prev) => (prev + 1) % currentTestimonials.length)}
-              className="w-14 h-14 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 flex items-center justify-center group hover:bg-gray-50"
-            >
-              <i className="ri-arrow-right-line text-xl text-gray-600 group-hover:text-black transition-colors"></i>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Carousel */}
-        <div className="lg:hidden">
-          <div className="relative overflow-hidden">
-            <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{ transform: `translateX(-${currentTestimonial * 100}%)` }}
-            >
-              {currentTestimonials.map((testimonial, index) => (
-                <div
-                  key={testimonial.id}
-                  className="w-full flex-shrink-0 px-4"
-                >
-                  <div className="bg-white rounded-3xl p-8 shadow-lg">
-                    {/* Quote */}
-                    <div className="mb-6">
-                      <div className="text-3xl text-[#F2431E] mb-4 opacity-30">
-                        <i className="ri-double-quotes-l"></i>
-                      </div>
-                      <blockquote className="text-xl text-black leading-relaxed italic font-light">
-                        {testimonial.quote}
-                      </blockquote>
-                    </div>
-
-                    {/* Author info and rating */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {/* User silhouette */}
-                        <div className="w-12 h-12 bg-gradient-to-br from-[#AAAAAA] to-gray-400 rounded-full flex items-center justify-center">
-                          <i className="ri-user-3-fill text-white text-base"></i>
-                        </div>
-                        
-                        <div>
-                          <div className="font-medium text-black text-base">
-                            {testimonial.author}
-                          </div>
-                          <div className="text-sm text-[#AAAAAA] italic">
-                            {testimonial.event}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Stars */}
-                      <div className="flex gap-1">
-                        {renderStars(testimonial.rating)}
-                      </div>
-                    </div>
+                  {/* Stars */}
+                  <div className="flex gap-1">
+                    {renderStars(testimonial.rating)}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Mobile indicators */}
-          <div className="flex justify-center gap-3 mt-8">
-            {currentTestimonials.map((_, index) => (
-              <button
-                key={index}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === currentTestimonial 
-                    ? 'bg-[#F2431E] w-8' 
-                    : 'bg-[#AAAAAA]'
-                }`}
-                onClick={() => setCurrentTestimonial(index)}
-              />
-            ))}
+                {/* Decorative line */}
+                <div className="absolute bottom-0 left-8 right-8 h-1 bg-gradient-to-r from-[#F2431E] to-transparent rounded-full"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Trust indicators */}
+        <div className="mt-16 text-center">
+          <div className="inline-flex items-center gap-8 bg-white/60 backdrop-blur-sm rounded-full px-8 py-4 shadow-lg border border-white/20">
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1">
+                {renderStars(5)}
+              </div>
+              <span className="text-gray-700 font-medium">4.9/5</span>
+            </div>
+            <div className="w-px h-6 bg-gray-300"></div>
+            <div className="text-gray-700 font-medium">
+              {language === 'fr' ? 'Plus de 200 événements' : 'Over 200 events'}
+            </div>
+            <div className="w-px h-6 bg-gray-300"></div>
+            <div className="text-gray-700 font-medium">
+              {language === 'fr' ? '100% satisfaits' : '100% satisfied'}
+            </div>
           </div>
         </div>
       </div>

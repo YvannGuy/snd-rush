@@ -438,22 +438,22 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
               
               if (stripeUrl) {
                 console.log('Session Stripe créée, redirection vers:', stripeUrl);
-              
-              // Détecter si c'est un appareil mobile
-              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-              
-              if (isMobile) {
-                // Sur mobile, rediriger directement
-                console.log('Appareil mobile détecté, redirection directe vers Stripe');
+            
+            // Détecter si c'est un appareil mobile
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+              // Sur mobile, rediriger directement
+              console.log('Appareil mobile détecté, redirection directe vers Stripe');
                 window.location.href = stripeUrl;
-              } else {
-                // Sur desktop, ouvrir en popup
-                console.log('Appareil desktop détecté, ouverture en popup');
+            } else {
+              // Sur desktop, ouvrir en popup
+              console.log('Appareil desktop détecté, ouverture en popup');
                 const popup = window.open(stripeUrl, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
-                
-                // Vérifier si la popup a été bloquée
-                if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-                  console.log('Popup bloquée, redirection directe');
+              
+              // Vérifier si la popup a été bloquée
+              if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+                console.log('Popup bloquée, redirection directe');
                   window.location.href = stripeUrl;
                 }
               }
@@ -464,8 +464,8 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
           } catch (error) {
             console.error('Erreur lors de la création de la session Stripe:', error);
             alert('Erreur lors de la création du paiement. Veuillez réessayer.');
+            }
           }
-        }
         }, 1500);
 
         return;
@@ -487,18 +487,18 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
             const stripeUrl = await createStripeSession(selectedPack.name, acompteAmount);
             
             if (stripeUrl) {
-              // Détecter si c'est un appareil mobile
-              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-              
-              if (isMobile) {
-                // Sur mobile, rediriger directement
+            // Détecter si c'est un appareil mobile
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+              // Sur mobile, rediriger directement
                 window.location.href = stripeUrl;
-              } else {
-                // Sur desktop, ouvrir en popup
+            } else {
+              // Sur desktop, ouvrir en popup
                 const popup = window.open(stripeUrl, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
-                
-                // Vérifier si la popup a été bloquée
-                if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+              
+              // Vérifier si la popup a été bloquée
+              if (!popup || popup.closed || typeof popup.closed === 'undefined') {
                   window.location.href = stripeUrl;
                 }
               }
@@ -614,12 +614,12 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
             </h3>
             <div className="space-y-3">
               {/* Informations du pack */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-black text-sm sm:text-base">{selectedPack.name}</p>
-                  <p className="text-xs sm:text-sm text-gray-600">{selectedPack.tagline}</p>
-                </div>
-                <div className="text-right">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-black text-sm sm:text-base">{selectedPack.name}</p>
+                <p className="text-xs sm:text-sm text-gray-600">{selectedPack.tagline}</p>
+              </div>
+              <div className="text-right">
                   {/* Sélecteur de zone moderne */}
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -734,7 +734,7 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
                       </div>
                     )}
                   </div>
-                </div>
+              </div>
               </div>
 
             </div>
@@ -923,14 +923,14 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
 
             {/* Réservation avec acompte - Masquée si zone "devis" */}
             {selectedZone !== 'devis' && (
-              <div
-                className={`border-2 rounded-xl p-4 sm:p-6 cursor-pointer transition-all duration-300 ${
-                  formData.reservationType === 'acompte'
-                    ? 'border-[#F2431E] bg-[#F2431E]/5'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => setFormData(prev => ({ ...prev, reservationType: 'acompte' }))}
-              >
+            <div
+              className={`border-2 rounded-xl p-4 sm:p-6 cursor-pointer transition-all duration-300 ${
+                formData.reservationType === 'acompte'
+                  ? 'border-[#F2431E] bg-[#F2431E]/5'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+              onClick={() => setFormData(prev => ({ ...prev, reservationType: 'acompte' }))}
+            >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${

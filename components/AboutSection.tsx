@@ -187,61 +187,6 @@ export default function AboutSection({ language }: AboutSectionProps) {
           </div>
         </div>
 
-        {/* Section Paiements Sécurisés */}
-        <div className="mt-16 text-center">
-          <div className="bg-white border border-gray-200 rounded-2xl p-8 lg:p-12">
-            <div className="mb-8">
-              <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
-                <i className="ri-shield-check-line text-3xl text-green-600"></i>
-              </div>
-              <h3 className="text-2xl lg:text-3xl font-bold text-black mb-4">
-                {language === 'fr' ? 'Paiements 100% Sécurisés' : '100% Secure Payments'}
-              </h3>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                {language === 'fr' 
-                  ? 'Tous nos paiements sont protégés par Stripe, leader mondial du paiement en ligne. Vos données bancaires sont chiffrées et sécurisées.'
-                  : 'All our payments are protected by Stripe, the world leader in online payments. Your banking data is encrypted and secure.'
-                }
-              </p>
-            </div>
-
-            {/* Logos des cartes de paiement */}
-            <div className="flex justify-center items-center gap-6 mb-6">
-              <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <svg className="w-12 h-8" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="48" height="32" rx="4" fill="#1A1F71"/>
-                  <path d="M20 8H28V24H20V8Z" fill="white"/>
-                  <path d="M32 8H36V24H32V8Z" fill="white"/>
-                  <path d="M12 8H16V24H12V8Z" fill="white"/>
-                  <path d="M24 8H28V24H24V8Z" fill="white"/>
-                </svg>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-3">
-                <svg className="w-12 h-8" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="48" height="32" rx="4" fill="#EB001B"/>
-                  <path d="M24 16C24 12.6863 26.6863 10 30 10H42C45.3137 10 48 12.6863 48 16C48 19.3137 45.3137 22 42 22H30C26.6863 22 24 19.3137 24 16Z" fill="#F79E1B"/>
-                  <path d="M0 16C0 12.6863 2.68629 10 6 10H18C21.3137 10 24 12.6863 24 16C24 19.3137 21.3137 22 18 22H6C2.68629 22 0 19.3137 0 16Z" fill="#FF5F00"/>
-                </svg>
-              </div>
-            </div>
-
-            {/* Informations supplémentaires */}
-            <div className="grid md:grid-cols-3 gap-6 text-sm text-gray-600">
-              <div className="flex items-center justify-center gap-2">
-                <i className="ri-lock-line text-green-600"></i>
-                <span>{language === 'fr' ? 'Chiffrement SSL' : 'SSL Encryption'}</span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <i className="ri-shield-check-line text-green-600"></i>
-                <span>{language === 'fr' ? 'Certification PCI DSS' : 'PCI DSS Certified'}</span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <i className="ri-bank-card-line text-green-600"></i>
-                <span>{language === 'fr' ? 'Paiement en 3D Secure' : '3D Secure Payment'}</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );

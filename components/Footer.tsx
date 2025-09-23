@@ -28,7 +28,7 @@ export default function Footer({ language }: FooterProps) {
       schedule: "24h/24 - 7j/7",
       phone: "06 51 08 49 94",
       whatsapp: "WhatsApp",
-      email: "contact@sndrush.com",
+      email: "contact@guylocationevents.com",
       rights: " 2025 snd•rush. Tous droits réservés.",
       about: "À propos",
       address: "Adresse",
@@ -51,7 +51,7 @@ export default function Footer({ language }: FooterProps) {
       schedule: "24/7",
       phone: "06 51 08 49 94",
       whatsapp: "WhatsApp",
-      email: "contact@sndrush.com",
+      email: "contact@guylocationevents.com",
       rights: " 2025 snd•rush. All rights reserved.",
       about: "About",
       address: "Address",
@@ -165,7 +165,7 @@ export default function Footer({ language }: FooterProps) {
                   <div className="w-4 h-4 flex items-center justify-center">
                     <i className="ri-mail-line text-[#F2431E]"></i>
                   </div>
-                  <a href="mailto:contact@sndrush.com" className="text-gray-300 hover:text-white transition-colors text-sm cursor-pointer">
+                  <a href="mailto:contact@guylocationevents.com" className="text-gray-300 hover:text-white transition-colors text-sm cursor-pointer">
                     {texts[language].email}
                   </a>
                 </div>

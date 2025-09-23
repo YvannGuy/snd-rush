@@ -8,9 +8,10 @@ interface HeaderProps {
   language: 'fr' | 'en';
   onLanguageChange: (lang: 'fr' | 'en') => void;
   onReservationClick?: () => void;
+  onAssistantClick?: () => void;
 }
 
-export default function Header({ language, onLanguageChange, onReservationClick }: HeaderProps) {
+export default function Header({ language, onLanguageChange, onReservationClick, onAssistantClick }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const scrollToSection = (sectionId: string) => {
@@ -26,8 +27,11 @@ export default function Header({ language, onLanguageChange, onReservationClick 
     onLanguageChange(newLanguage);
   };
 
-  const handleCallClick = () => {
-    window.location.href = 'tel:+33651084994';
+  const handleReserveClick = () => {
+    // Ouvrir le modal assistant
+    if (onAssistantClick) {
+      onAssistantClick();
+    }
     setIsMobileMenuOpen(false);
   };
 
@@ -36,14 +40,14 @@ export default function Header({ language, onLanguageChange, onReservationClick 
       packs: 'Packs',
       faq: 'FAQ',
       contact: 'Contact',
-      callNow: 'Appeler',
+      reserveNow: 'Réservez mon pack',
       banner: '1er spécialiste de l\'urgence sonore • Paris et Île-de-France • 24h/24 7j/7 • Intervention rapide • Devis gratuit'
     },
     en: {
       packs: 'Packs',
       faq: 'FAQ',
       contact: 'Contact',
-      callNow: 'Call',
+      reserveNow: 'Reserve my pack',
       banner: '1st sound emergency specialist • Paris and Île-de-France • 24/7 • Fast intervention • Free quote'
     }
   };
@@ -113,11 +117,11 @@ export default function Header({ language, onLanguageChange, onReservationClick 
 
               {/* CTA Button */}
               <button
-                onClick={handleCallClick}
+                onClick={handleReserveClick}
                 className="bg-[#F2431E] text-white px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm lg:px-6 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1 sm:gap-2"
               >
-                <span className="text-white text-sm sm:text-base">🚨</span>
-                <span className="hidden sm:inline">{texts[language].callNow}</span>
+                <span className="text-white text-sm sm:text-base">🎯</span>
+                <span className="hidden sm:inline">{texts[language].reserveNow}</span>
               </button>
 
               {/* Mobile menu button */}
