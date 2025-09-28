@@ -269,7 +269,21 @@ export default function AssistantRefactored({
         <div className="border-2 border-[#e27431] rounded-xl p-6 bg-[#e27431]/5">
           <div className="text-center">
             <h3 className="text-2xl font-bold text-[#e27431] mb-2">{recommendation.pack.name}</h3>
-            <p className="text-gray-600 mb-4">{recommendation.pack.description}</p>
+            
+            {/* Composition exacte */}
+            {recommendation.compositionFinale && (
+              <div className="mb-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Composition :</h4>
+                <ul className="text-sm text-gray-700 space-y-1 text-left">
+                  {recommendation.compositionFinale.map((item, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="text-[#e27431] mr-2">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             
             {/* Détail des coûts */}
             <div className="space-y-2 text-sm">

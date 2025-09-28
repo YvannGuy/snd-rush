@@ -65,6 +65,13 @@ export interface Recommendation {
     extras: number;
     urgency: number;
   };
+  compositionFinale?: string[];
+  customConfig?: Array<{
+    id: string;
+    label: string;
+    price: number;
+    qty: number;
+  }>;
 }
 
 export interface ReservationPayload {

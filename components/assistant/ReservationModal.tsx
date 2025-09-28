@@ -119,8 +119,9 @@ export default function ReservationModal({
     onConfirm(payload);
   };
 
-  const isFormValid = formData.firstName && formData.lastName && formData.email && 
-                     formData.phone && formData.date && formData.time && formData.postalCode && cgvAccepted;
+  const isFormValid = formData.firstName.trim() && formData.lastName.trim() && formData.email.trim() && 
+                     formData.phone.trim() && formData.date.trim() && formData.time.trim() && 
+                     formData.postalCode.trim() && cgvAccepted;
 
   if (!isOpen) return null;
 
@@ -154,6 +155,21 @@ export default function ReservationModal({
             {/* Pack et coûts */}
             <div className="border border-gray-200 rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 mb-3">{recommendation.pack.name}</h3>
+              
+              {/* Composition exacte */}
+              {recommendation.compositionFinale && (
+                <div className="mb-4">
+                  <h4 className="font-medium text-gray-800 mb-2">Composition :</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    {recommendation.compositionFinale.map((item, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-[#e27431] mr-2">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">

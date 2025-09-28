@@ -1,6 +1,8 @@
 // Fonctions pures pour l'assistant SND Rush
 
 import { Answers, Pack, Recommendation, PRICING_CONFIG, ReservationPayload } from '@/types/assistant';
+import { PACKS, recommendPackByGuests, packMatchesNeeds } from './packs';
+import { generateCustomConfig } from './inventory';
 
 /**
  * Détecte la zone à partir d'un texte (adresse ou code postal)
@@ -44,78 +46,85 @@ export function isUrgent(dateStr: string, timeStr?: string): boolean {
 }
 
 /**
- * Recommande un pack basé sur les réponses
+ * Recommande un pack basé sur les réponses (nouvelle logique avec packs fixes + à-la-carte)
  */
 export function recommendPack(answers: Answers, packs: Pack[]): Recommendation | null {
   if (!answers.guests || !answers.needs) return null;
 
   const guestCount = getGuestCount(answers.guests);
-  const hasIntensiveNeeds = answers.needs.includes('dj') || answers.needs.includes('lumiere');
-  const isOutdoor = answers.environment === 'exterieur';
   
-  // Logique de recommandation
-  let recommendedPack: Pack;
-  let confidence = 0.8;
-  const reasons: string[] = [];
-
-  // Pack Essentiel : < 50 personnes, besoins simples
-  if (guestCount <= 50 && !hasIntensiveNeeds && !isOutdoor) {
-    recommendedPack = PRICING_CONFIG.packs.essentiel;
-    reasons.push('Parfait pour petits événements');
-    reasons.push('Solution économique');
-    confidence = 0.9;
-  }
-  // Pack Standard : 50-100 personnes
-  else if (guestCount <= 100) {
-    recommendedPack = PRICING_CONFIG.packs.standard;
-    reasons.push('Idéal pour événements moyens');
-    reasons.push('Bon rapport qualité/prix');
-    confidence = 0.85;
-  }
-  // Pack Premium : 100-250 personnes
-  else if (guestCount <= 250) {
-    recommendedPack = PRICING_CONFIG.packs.premium;
-    reasons.push('Solution professionnelle');
-    reasons.push('Puissance adaptée aux grands événements');
-    confidence = 0.9;
-  }
-  // Pack Prestige : 250+ personnes ou besoins intensifs
-  else {
-    recommendedPack = PRICING_CONFIG.packs.prestige;
-    reasons.push('Solution haut de gamme');
-    reasons.push('Sur devis personnalisé');
-    confidence = 0.95;
-  }
-
-  // Ajustements de confiance
-  if (hasIntensiveNeeds) {
-    confidence += 0.05;
-    reasons.push('Besoins intensifs détectés');
+  // 1. Essayer d'abord les packs fixes
+  const recommendedPack = recommendPackByGuests(answers.guests);
+  
+  if (recommendedPack && packMatchesNeeds(recommendedPack, answers.needs, answers.environment || 'interieur')) {
+    // Pack fixe qui correspond
+    const basePrice = recommendedPack.basePrice || 0;
+    const totalPrice = computePrice(basePrice, answers, PRICING_CONFIG);
+    
+    return {
+      pack: {
+        id: recommendedPack.id,
+        name: recommendedPack.name,
+        priceId: `price_${recommendedPack.id}`,
+        basePrice: basePrice,
+        capacity: recommendedPack.capacity
+      },
+      totalPrice,
+      confidence: 0.9,
+      reasons: [
+        'Pack optimisé pour vos besoins',
+        'Solution clé en main',
+        'Meilleur rapport qualité/prix'
+      ],
+      breakdown: {
+        base: basePrice,
+        delivery: getDeliveryPrice(answers.zone || ''),
+        extras: computeOptionsTotal(answers, basePrice),
+        urgency: isUrgent(answers.date || '', answers.time) ? Math.round(totalPrice * 0.2) : 0
+      },
+      compositionFinale: recommendedPack.composition
+    };
   }
   
-  if (isOutdoor) {
-    confidence += 0.05;
-    reasons.push('Environnement extérieur');
-  }
-
-  // Calcul du prix total
-  const totalPrice = computePrice(
-    recommendedPack.basePrice,
-    answers,
-    PRICING_CONFIG
+  // 2. Si aucun pack fixe ne correspond, générer une config à-la-carte
+  const customConfig = generateCustomConfig(
+    answers.guests,
+    answers.needs,
+    answers.environment || 'interieur',
+    answers.extras || []
   );
-
+  
+  const basePrice = customConfig.total;
+  const totalPrice = computePrice(basePrice, answers, PRICING_CONFIG);
+  
+  // Déterminer le type de config
+  let configType = 'Éco';
+  if (guestCount > 100) configType = 'Punchy';
+  else if (guestCount > 50) configType = 'Standard';
+  
   return {
-    pack: recommendedPack,
-    confidence: Math.min(confidence, 1),
-    reasons,
-    totalPrice,
-    breakdown: {
-      base: recommendedPack.basePrice,
-      delivery: getDeliveryPrice(answers.zone || ''),
-      extras: getExtrasPrice(answers.extras || []),
-      urgency: isUrgent(answers.date || '') ? totalPrice * 0.2 : 0,
+    pack: {
+      id: 'custom_config',
+      name: `Formule à-la-carte (${configType})`,
+      priceId: 'price_custom',
+      basePrice: basePrice,
+      capacity: { min: guestCount, max: guestCount }
     },
+    totalPrice,
+    confidence: 0.85,
+    reasons: [
+      'Configuration personnalisée',
+      'Adaptée à vos besoins spécifiques',
+      'Prix optimisé'
+    ],
+    breakdown: {
+      base: basePrice,
+      delivery: getDeliveryPrice(answers.zone || ''),
+      extras: computeOptionsTotal(answers, basePrice),
+      urgency: isUrgent(answers.date || '', answers.time) ? Math.round(totalPrice * 0.2) : 0
+    },
+    compositionFinale: customConfig.items.map(item => `${item.label} (${item.qty}x)`),
+    customConfig: customConfig.items
   };
 }
 
