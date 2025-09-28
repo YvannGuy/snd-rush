@@ -214,22 +214,6 @@ export default function AssistantRefactored({
                 />
               ))}
               
-              {/* Bouton "Je n'en ai pas besoin" pour les options */}
-              {step.id === 'extras' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAnswers(prev => ({
-                      ...prev,
-                      noExtras: true,
-                      extras: []
-                    }));
-                  }}
-                  className="w-full p-3 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e27431]"
-                >
-                  Je n'en ai pas besoin
-                </button>
-              )}
             </div>
           )}
 

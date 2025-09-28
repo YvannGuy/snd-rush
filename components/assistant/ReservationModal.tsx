@@ -29,6 +29,7 @@ export default function ReservationModal({
     lastName: '',
     email: '',
     phone: '',
+    date: '',
     time: '',
     postalCode: '',
     address: '',
@@ -46,6 +47,7 @@ export default function ReservationModal({
         lastName: '',
         email: '',
         phone: '',
+        date: '',
         time: '',
         postalCode: '',
         address: '',
@@ -73,6 +75,7 @@ export default function ReservationModal({
     if (!formData.email.trim()) newErrors.email = 'L\'email est obligatoire';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide';
     if (!formData.phone.trim()) newErrors.phone = 'Le téléphone est obligatoire';
+    if (!formData.date.trim()) newErrors.date = 'La date est obligatoire';
     if (!formData.time.trim()) newErrors.time = 'L\'horaire est obligatoire';
     if (!formData.postalCode.trim()) newErrors.postalCode = 'Le code postal est obligatoire';
     
@@ -104,7 +107,7 @@ export default function ReservationModal({
         phone: formData.phone,
       },
       eventDetails: {
-        date: answers.date || '',
+        date: formData.date || answers.date || '',
         time: formData.time,
         postalCode: formData.postalCode,
         address: formData.address,
@@ -117,7 +120,7 @@ export default function ReservationModal({
   };
 
   const isFormValid = formData.firstName && formData.lastName && formData.email && 
-                     formData.phone && formData.time && formData.postalCode && cgvAccepted;
+                     formData.phone && formData.date && formData.time && formData.postalCode && cgvAccepted;
 
   if (!isOpen) return null;
 
@@ -280,9 +283,9 @@ export default function ReservationModal({
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
                   <Input
                     type="date"
-                    value={answers.date || ''}
-                    onChange={() => {}} // Lecture seule
-                    disabled
+                    value={formData.date || answers.date || ''}
+                    onChange={(val) => handleInputChange('date', val)}
+                    error={errors.date}
                   />
                 </div>
                 <div>

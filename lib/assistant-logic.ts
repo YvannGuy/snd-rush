@@ -215,7 +215,7 @@ export function validateStep(stepId: string, value: any): boolean {
     case 'needs':
       return Array.isArray(value) && value.length > 0;
     case 'extras':
-      return true; // Optionnel
+      return Array.isArray(value) && value.length > 0; // Obligatoire maintenant
     case 'date':
       if (!value) return false;
       const date = new Date(value);
