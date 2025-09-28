@@ -253,8 +253,8 @@ export const STEPS: Step[] = [
     options: [
       { value: 'son', label: 'Son', icon: '🔊' },
       { value: 'lumiere', label: 'Lumière', icon: '💡' },
-      { value: 'micros_filaire', label: 'Micros filaires (15€)', icon: '🎤' },
-      { value: 'micros_sans_fil', label: 'Micros sans fil (20€)', icon: '🎤' },
+      { value: 'micros_filaire', label: 'Micros filaires', icon: '🎤' },
+      { value: 'micros_sans_fil', label: 'Micros sans fil', icon: '🎤' },
       { value: 'dj', label: 'DJ', icon: '🎧' },
     ],
     required: true,

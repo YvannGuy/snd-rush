@@ -142,17 +142,14 @@ export default function AssistantRefactored({
   };
 
   const handleReservation = async (bookingType: 'info' | 'deposit') => {
-    console.log('Opening reservation modal for booking type:', bookingType);
     const recommendation = recommendPack(answers, Object.values(PRICING_CONFIG.packs));
     if (!recommendation) {
       showErrorNotification('Impossible de générer une recommandation');
       return;
     }
 
-    console.log('Recommendation generated:', recommendation);
     setCurrentRecommendation(recommendation);
     setShowReservationModal(true);
-    console.log('Modal should be open now');
   };
 
   const handleReservationConfirm = async (payload: ReservationPayload) => {

@@ -119,31 +119,15 @@ export default function ReservationModal({
     onConfirm(payload);
   };
 
-  const isFormValid = Boolean(
-    formData.firstName?.trim() && 
-    formData.lastName?.trim() && 
-    formData.email?.trim() && 
-    /\S+@\S+\.\S+/.test(formData.email) &&
-    formData.phone?.trim() && 
-    formData.date?.trim() && 
-    formData.time?.trim() && 
-    formData.postalCode?.trim() && 
-    cgvAccepted
-  );
-
-  // Debug pour voir pourquoi le bouton est grisé
-  console.log('Form validation:', {
-    firstName: formData.firstName.trim(),
-    lastName: formData.lastName.trim(),
-    email: formData.email.trim(),
-    emailValid: /\S+@\S+\.\S+/.test(formData.email),
-    phone: formData.phone.trim(),
-    date: formData.date.trim(),
-    time: formData.time.trim(),
-    postalCode: formData.postalCode.trim(),
-    cgvAccepted,
-    isFormValid
-  });
+  const isFormValid = formData.firstName.trim() && 
+                     formData.lastName.trim() && 
+                     formData.email.trim() && 
+                     /\S+@\S+\.\S+/.test(formData.email) &&
+                     formData.phone.trim() && 
+                     formData.date.trim() && 
+                     formData.time.trim() && 
+                     formData.postalCode.trim() && 
+                     cgvAccepted;
 
   if (!isOpen) return null;
 

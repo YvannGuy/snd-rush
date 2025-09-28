@@ -54,14 +54,6 @@ export function recommendPack(answers: Answers, packs: Pack[]): Recommendation |
   // 1. Essayer d'abord les packs fixes
   const recommendedPack = recommendPackByGuests(answers.guests);
   
-  // Debug pour voir pourquoi le pack ne correspond pas
-  console.log('Pack recommendation debug:', {
-    recommendedPack: recommendedPack?.name,
-    needs: answers.needs,
-    environment: answers.environment,
-    matches: recommendedPack ? packMatchesNeeds(recommendedPack, answers.needs, answers.environment || 'interieur') : false
-  });
-  
   if (recommendedPack && packMatchesNeeds(recommendedPack, answers.needs, answers.environment || 'interieur')) {
     // Pack fixe qui correspond
     const basePrice = recommendedPack.basePrice || 0;
