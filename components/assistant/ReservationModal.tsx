@@ -119,9 +119,15 @@ export default function ReservationModal({
     onConfirm(payload);
   };
 
-  const isFormValid = formData.firstName.trim() && formData.lastName.trim() && formData.email.trim() && 
-                     formData.phone.trim() && formData.date.trim() && formData.time.trim() && 
-                     formData.postalCode.trim() && cgvAccepted;
+  const isFormValid = formData.firstName.trim() && 
+                     formData.lastName.trim() && 
+                     formData.email.trim() && 
+                     /\S+@\S+\.\S+/.test(formData.email) &&
+                     formData.phone.trim() && 
+                     formData.date.trim() && 
+                     formData.time.trim() && 
+                     formData.postalCode.trim() && 
+                     cgvAccepted;
 
   if (!isOpen) return null;
 

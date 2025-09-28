@@ -118,7 +118,7 @@ export default function AssistantRefactored({
     
     // Pour les étapes optionnelles (comme extras), on peut avoir un tableau vide
     if (step.id === 'extras') {
-      return validateStep(step.id, value || []);
+      return true; // Toujours valide, même si vide
     }
     
     // Pour les autres étapes, validation stricte

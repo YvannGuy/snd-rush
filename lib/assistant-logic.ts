@@ -51,8 +51,6 @@ export function isUrgent(dateStr: string, timeStr?: string): boolean {
 export function recommendPack(answers: Answers, packs: Pack[]): Recommendation | null {
   if (!answers.guests || !answers.needs) return null;
 
-  const guestCount = getGuestCount(answers.guests);
-  
   // 1. Essayer d'abord les packs fixes
   const recommendedPack = recommendPackByGuests(answers.guests);
   
@@ -67,7 +65,9 @@ export function recommendPack(answers: Answers, packs: Pack[]): Recommendation |
         name: recommendedPack.name,
         priceId: `price_${recommendedPack.id}`,
         basePrice: basePrice,
-        capacity: recommendedPack.capacity
+        capacity: recommendedPack.capacity,
+        description: recommendedPack.composition.join(', '),
+        features: recommendedPack.composition
       },
       totalPrice,
       confidence: 0.9,
@@ -98,6 +98,7 @@ export function recommendPack(answers: Answers, packs: Pack[]): Recommendation |
   const totalPrice = computePrice(basePrice, answers, PRICING_CONFIG);
   
   // Déterminer le type de config
+  const guestCount = getGuestCount(answers.guests);
   let configType = 'Éco';
   if (guestCount > 100) configType = 'Punchy';
   else if (guestCount > 50) configType = 'Standard';
@@ -108,7 +109,9 @@ export function recommendPack(answers: Answers, packs: Pack[]): Recommendation |
       name: `Formule à-la-carte (${configType})`,
       priceId: 'price_custom',
       basePrice: basePrice,
-      capacity: { min: guestCount, max: guestCount }
+      capacity: { min: guestCount, max: guestCount },
+      description: customConfig.items.map(item => item.label).join(', '),
+      features: customConfig.items.map(item => item.label)
     },
     totalPrice,
     confidence: 0.85,
