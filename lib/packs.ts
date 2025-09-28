@@ -76,7 +76,15 @@ export const PACKS: Record<string, Pack> = {
  * Recommande un pack basé sur le nombre de personnes
  */
 export function recommendPackByGuests(guests: string): Pack | null {
-  const guestCount = parseInt(guests.replace(/\D/g, '')) || 0;
+  // Utiliser la même logique que getGuestCount
+  let guestCount = 0;
+  switch (guests) {
+    case '0-50': guestCount = 25; break;
+    case '50-100': guestCount = 75; break;
+    case '100-200': guestCount = 150; break;
+    case '200+': guestCount = 300; break;
+    default: guestCount = 0;
+  }
   
   if (guestCount <= 50) return PACKS.essentiel;
   if (guestCount <= 100) return PACKS.standard;
@@ -88,7 +96,7 @@ export function recommendPackByGuests(guests: string): Pack | null {
  * Vérifie si un pack correspond aux besoins du client
  */
 export function packMatchesNeeds(pack: Pack, needs: string[], environment: string): boolean {
-  // Vérifications basiques
+  // Vérifier que le pack contient ce qui est demandé
   if (needs.includes('son') && !pack.composition.some(item => item.includes('enceinte'))) {
     return false;
   }
@@ -103,6 +111,19 @@ export function packMatchesNeeds(pack: Pack, needs: string[], environment: strin
   
   if (needs.includes('dj') && !pack.composition.some(item => item.includes('DJ') || item.includes('BoomTone'))) {
     return false;
+  }
+  
+  // Vérifier que le pack ne contient PAS ce qui n'est PAS demandé
+  if (!needs.includes('micros') && pack.composition.some(item => item.includes('micro'))) {
+    return false; // Pack contient des micros mais pas demandé
+  }
+  
+  if (!needs.includes('lumiere') && (pack.defaultLight || pack.composition.some(item => item.includes('lumiere')))) {
+    return false; // Pack contient des lumières mais pas demandé
+  }
+  
+  if (!needs.includes('dj') && pack.composition.some(item => item.includes('DJ') || item.includes('BoomTone'))) {
+    return false; // Pack contient du matériel DJ mais pas demandé
   }
   
   return true;

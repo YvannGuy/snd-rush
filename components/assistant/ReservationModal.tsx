@@ -119,15 +119,17 @@ export default function ReservationModal({
     onConfirm(payload);
   };
 
-  const isFormValid = formData.firstName.trim() && 
-                     formData.lastName.trim() && 
-                     formData.email.trim() && 
-                     /\S+@\S+\.\S+/.test(formData.email) &&
-                     formData.phone.trim() && 
-                     formData.date.trim() && 
-                     formData.time.trim() && 
-                     formData.postalCode.trim() && 
-                     cgvAccepted;
+  const isFormValid = Boolean(
+    formData.firstName?.trim() && 
+    formData.lastName?.trim() && 
+    formData.email?.trim() && 
+    /\S+@\S+\.\S+/.test(formData.email) &&
+    formData.phone?.trim() && 
+    formData.date?.trim() && 
+    formData.time?.trim() && 
+    formData.postalCode?.trim() && 
+    cgvAccepted
+  );
 
   // Debug pour voir pourquoi le bouton est grisé
   console.log('Form validation:', {
@@ -405,8 +407,9 @@ export default function ReservationModal({
                 ? 'bg-[#e27431] text-white hover:bg-[#e27431]/90'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
+            title={!isFormValid ? 'Veuillez remplir tous les champs obligatoires' : ''}
           >
-            {isLoading ? 'Traitement...' : 'Confirmer'}
+            {isLoading ? 'Traitement...' : isFormValid ? 'Confirmer' : 'Champs manquants'}
           </button>
         </div>
       </div>
