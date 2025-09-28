@@ -216,10 +216,16 @@ export const STEPS: Step[] = [
     required: true,
   },
   {
-    id: 'address',
-    title: 'Adresse ou code postal',
-    subtitle: 'Nous détectons automatiquement votre zone de livraison.',
-    type: 'text',
+    id: 'zone',
+    title: 'Zone de livraison',
+    subtitle: 'Sélectionnez votre zone pour calculer les frais de livraison A/R.',
+    type: 'single',
+    options: [
+      { value: 'paris', label: 'Paris (75)', icon: '🏙️', price: 80 },
+      { value: 'petite', label: 'Petite couronne (92, 93, 94)', icon: '🏘️', price: 120 },
+      { value: 'grande', label: 'Grande couronne (77, 78, 91, 95)', icon: '🌆', price: 156 },
+      { value: 'retrait', label: 'Retrait sur place', icon: '🚗', price: 0 },
+    ],
     required: true,
   },
   {

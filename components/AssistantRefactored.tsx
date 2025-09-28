@@ -9,7 +9,6 @@ import Chip from './assistant/Chip';
 import Radio from './assistant/Radio';
 import Input from './assistant/Input';
 import ErrorText from './assistant/ErrorText';
-import ZoneDetector from './assistant/ZoneDetector';
 import ReservationModal from './assistant/ReservationModal';
 
 interface AssistantRefactoredProps {
@@ -67,6 +66,18 @@ export default function AssistantRefactored({
 
   const handleAnswerChange = (stepId: string, value: any) => {
     const newAnswers = { ...answers, [stepId]: value };
+    
+    // Si c'est la sélection de zone, mettre automatiquement le prix de livraison
+    if (stepId === 'zone') {
+      const deliveryPrices = {
+        paris: 80,
+        petite: 120,
+        grande: 156,
+        retrait: 0
+      };
+      newAnswers.deliveryAR = deliveryPrices[value as keyof typeof deliveryPrices] || 0;
+    }
+    
     setAnswers(newAnswers);
     
     // Effacer l'erreur pour cette étape
@@ -79,27 +90,15 @@ export default function AssistantRefactored({
     const step = STEPS[currentStep];
     const value = answers[step.id as keyof Answers];
     
-    // Validation spéciale pour l'étape address
-    if (step.id === 'address') {
-      if (!value || (typeof value === 'string' && value.trim().length === 0)) {
-        setErrors({ ...errors, [step.id]: 'Veuillez saisir une adresse ou un code postal' });
-        return;
-      }
-      if (!answers.zone) {
-        setErrors({ ...errors, [step.id]: 'Veuillez détecter la zone ou sélectionner manuellement' });
-        return;
-      }
-    } else {
-      // Validation stricte pour les autres étapes
-      if (!value || (Array.isArray(value) && value.length === 0)) {
-        setErrors({ ...errors, [step.id]: 'Ce champ est obligatoire' });
-        return;
-      }
+    // Validation stricte - impossible d'avancer sans réponse valide
+    if (!value || (Array.isArray(value) && value.length === 0)) {
+      setErrors({ ...errors, [step.id]: 'Ce champ est obligatoire' });
+      return;
+    }
 
-      if (!validateStep(step.id, value)) {
-        setErrors({ ...errors, [step.id]: 'Valeur invalide' });
-        return;
-      }
+    if (!validateStep(step.id, value)) {
+      setErrors({ ...errors, [step.id]: 'Valeur invalide' });
+      return;
     }
 
     // Effacer les erreurs si validation OK
@@ -116,11 +115,6 @@ export default function AssistantRefactored({
   const canProceed = () => {
     const step = STEPS[currentStep];
     const value = answers[step.id as keyof Answers];
-    
-    // Pour l'étape address, on doit avoir soit l'adresse soit la zone détectée
-    if (step.id === 'address') {
-      return (value && typeof value === 'string' && value.trim().length > 0) || answers.zone;
-    }
     
     if (!value || (Array.isArray(value) && value.length === 0)) {
       return false;
@@ -260,17 +254,6 @@ export default function AssistantRefactored({
             />
           )}
 
-          {step.id === 'address' && (
-            <ZoneDetector
-              value={value as string || ''}
-              onChange={(val) => handleAnswerChange(step.id, val)}
-              onZoneDetected={(zone, price) => {
-                handleAnswerChange('zone', zone);
-                handleAnswerChange('deliveryAR', price);
-              }}
-              error={error}
-            />
-          )}
         </div>
 
         {/* Message d'erreur */}

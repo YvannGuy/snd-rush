@@ -208,8 +208,6 @@ export function validateStep(stepId: string, value: any): boolean {
       return ['mariage', 'anniversaire', 'association', 'corporate', 'eglise', 'autre'].includes(value);
     case 'guests':
       return ['0-50', '50-100', '100-200', '200+'].includes(value);
-    case 'address':
-      return typeof value === 'string' && value.trim().length > 0;
     case 'zone':
       return ['paris', 'petite', 'grande', 'retrait'].includes(value);
     case 'environment':
