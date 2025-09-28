@@ -116,6 +116,12 @@ export default function AssistantRefactored({
     const step = STEPS[currentStep];
     const value = answers[step.id as keyof Answers];
     
+    // Pour les étapes optionnelles (comme extras), on peut avoir un tableau vide
+    if (step.id === 'extras') {
+      return validateStep(step.id, value || []);
+    }
+    
+    // Pour les autres étapes, validation stricte
     if (!value || (Array.isArray(value) && value.length === 0)) {
       return false;
     }

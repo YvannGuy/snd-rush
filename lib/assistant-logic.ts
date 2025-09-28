@@ -30,18 +30,17 @@ export function getDeliveryPrice(zone: string): number {
 }
 
 /**
- * Vérifie si un événement est urgent (dans moins de 48h)
+ * Vérifie si un événement est urgent (même jour)
  */
 export function isUrgent(dateStr: string, timeStr?: string): boolean {
   if (!dateStr) return false;
   
   const [y, m, d] = dateStr.split('-').map(Number);
-  const [hh, mm] = (timeStr || "23:59").split(':').map(Number);
-  const event = new Date(y, (m-1), d, hh || 23, mm || 59, 0);
-  const now = new Date();
-  const diffH = (event.getTime() - now.getTime()) / 36e5;
+  const eventDate = new Date(y, (m-1), d);
+  const today = new Date();
   
-  return diffH <= 48;
+  // Comparer seulement les dates (sans l'heure)
+  return eventDate.toDateString() === today.toDateString();
 }
 
 /**
@@ -215,7 +214,7 @@ export function validateStep(stepId: string, value: any): boolean {
     case 'needs':
       return Array.isArray(value) && value.length > 0;
     case 'extras':
-      return Array.isArray(value) && value.length > 0; // Obligatoire maintenant
+      return true; // Optionnel - peut être un tableau vide
     case 'date':
       if (!value) return false;
       const date = new Date(value);
