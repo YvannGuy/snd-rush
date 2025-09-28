@@ -23,7 +23,7 @@ export default function HeroSection({ language, onReservationClick, onPackSelect
   const texts = {
     fr: {
       title1: 'Votre solution sono',
-      title2: 'de dernière minute',
+      title2: 'clé en main de dernière minute',
       subtitle: 'Faites appel à nos spécialistes de l\'urgence sonore ou planifiez votre événement avec Sound Rush, notre service de réservation à l\'avance. Matériel professionnel, intervention express et équipe disponible 24h/24 - 7j/7 sur Paris et région parisienne pour tous vos besoins en matière de son.',
       cta: 'Réserver à l\'avance',
       emergency: 'Urgence ? Appelez maintenant',

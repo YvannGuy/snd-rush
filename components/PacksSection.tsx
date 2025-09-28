@@ -203,11 +203,9 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
 
   const scrollByAmount = (amount: number) => {
     if (listRef.current) {
-      listRef.current.scrollBy({ 
-        left: amount, 
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center'
+      listRef.current.scrollBy({
+        left: amount,
+        behavior: 'smooth'
       });
     }
   };

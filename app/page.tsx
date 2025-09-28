@@ -17,7 +17,7 @@ import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
 import FAQSection from '@/components/FAQSection';
 import CROGear from '@/components/CROGear';
-import AssistantModal from '@/components/AssistantModal';
+import AssistantModal from '@/components/AssistantModalRefactored';
 
 export default function Home() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
