@@ -159,7 +159,7 @@ export function generateCustomConfig(
       id: 'fbt_xsub118',
       label: INVENTORY.speakers.fbt_xsub118.label,
       price: INVENTORY.speakers.fbt_xsub118.unitPrice,
-      qty: 2
+      qty: 1
     });
   }
 
