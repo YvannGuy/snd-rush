@@ -129,6 +129,20 @@ export default function ReservationModal({
                      formData.postalCode.trim() && 
                      cgvAccepted;
 
+  // Debug pour voir pourquoi le bouton est grisé
+  console.log('Form validation:', {
+    firstName: formData.firstName.trim(),
+    lastName: formData.lastName.trim(),
+    email: formData.email.trim(),
+    emailValid: /\S+@\S+\.\S+/.test(formData.email),
+    phone: formData.phone.trim(),
+    date: formData.date.trim(),
+    time: formData.time.trim(),
+    postalCode: formData.postalCode.trim(),
+    cgvAccepted,
+    isFormValid
+  });
+
   if (!isOpen) return null;
 
   return (
@@ -386,7 +400,11 @@ export default function ReservationModal({
           <button
             onClick={handleConfirm}
             disabled={!isFormValid || isLoading}
-            className="flex-1 bg-[#e27431] text-white py-3 rounded-lg font-semibold hover:bg-[#e27431]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
+              isFormValid && !isLoading
+                ? 'bg-[#e27431] text-white hover:bg-[#e27431]/90'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
           >
             {isLoading ? 'Traitement...' : 'Confirmer'}
           </button>
