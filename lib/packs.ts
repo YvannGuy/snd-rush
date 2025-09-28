@@ -101,7 +101,7 @@ export function packMatchesNeeds(pack: Pack, needs: string[], environment: strin
     return false;
   }
   
-  if (needs.includes('micros') && !pack.composition.some(item => item.includes('micro'))) {
+  if ((needs.includes('micros_filaire') || needs.includes('micros_sans_fil')) && !pack.composition.some(item => item.includes('micro'))) {
     return false;
   }
   
@@ -114,7 +114,7 @@ export function packMatchesNeeds(pack: Pack, needs: string[], environment: strin
   }
   
   // Vérifier que le pack ne contient PAS ce qui n'est PAS demandé
-  if (!needs.includes('micros') && pack.composition.some(item => item.includes('micro'))) {
+  if (!needs.includes('micros_filaire') && !needs.includes('micros_sans_fil') && pack.composition.some(item => item.includes('micro'))) {
     return false; // Pack contient des micros mais pas demandé
   }
   

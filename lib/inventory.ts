@@ -180,8 +180,8 @@ export function generateCustomConfig(
     });
   }
 
-  // Micros
-  if (needs.includes('micros')) {
+  // Micros filaires
+  if (needs.includes('micros_filaire')) {
     const micCount = Math.min(Math.ceil(guestCount / 50), 5);
     items.push({
       id: 'shure_sm58',
@@ -191,13 +191,14 @@ export function generateCustomConfig(
     });
   }
 
-  // Micros sans fil si demandé
-  if (extras.includes('mipro_wireless')) {
+  // Micros sans fil
+  if (needs.includes('micros_sans_fil')) {
+    const micCount = Math.min(Math.ceil(guestCount / 50), 3);
     items.push({
       id: 'mipro_wireless',
-      label: INVENTORY.mics.mipro_wireless.label,
+      label: `${INVENTORY.mics.mipro_wireless.label} (${micCount} unités)`,
       price: INVENTORY.mics.mipro_wireless.unitPrice,
-      qty: 1
+      qty: micCount
     });
   }
 

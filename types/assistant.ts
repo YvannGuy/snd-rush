@@ -1,7 +1,7 @@
 // Types stricts pour l'assistant SND Rush
 
 export interface Answers {
-  eventType?: 'mariage' | 'anniversaire' | 'association' | 'corporate' | 'eglise' | 'autre';
+  eventType?: 'mariage' | 'anniversaire' | 'association' | 'corporate' | 'eglise' | 'soiree' | 'autre';
   guests?: '0-50' | '50-100' | '100-200' | '200+';
   address?: string; // adresse ou code postal pour détection zone
   zone?: 'paris' | 'petite' | 'grande' | 'retrait';
@@ -205,6 +205,7 @@ export const STEPS: Step[] = [
       { value: 'association', label: 'Association', icon: '👥' },
       { value: 'corporate', label: 'Corporate', icon: '🏢' },
       { value: 'eglise', label: 'Église', icon: '⛪' },
+      { value: 'soiree', label: 'Soirée', icon: '🌙' },
       { value: 'autre', label: 'Autre', icon: '🎉' },
     ],
     required: true,
@@ -252,7 +253,8 @@ export const STEPS: Step[] = [
     options: [
       { value: 'son', label: 'Son', icon: '🔊' },
       { value: 'lumiere', label: 'Lumière', icon: '💡' },
-      { value: 'micros', label: 'Micros', icon: '🎤' },
+      { value: 'micros_filaire', label: 'Micros filaires (15€)', icon: '🎤' },
+      { value: 'micros_sans_fil', label: 'Micros sans fil (20€)', icon: '🎤' },
       { value: 'dj', label: 'DJ', icon: '🎧' },
     ],
     required: true,
