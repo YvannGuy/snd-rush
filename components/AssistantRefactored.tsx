@@ -90,15 +90,21 @@ export default function AssistantRefactored({
     const step = STEPS[currentStep];
     const value = answers[step.id as keyof Answers];
     
-    // Validation stricte - impossible d'avancer sans réponse valide
-    if (!value || (Array.isArray(value) && value.length === 0)) {
-      setErrors({ ...errors, [step.id]: 'Ce champ est obligatoire' });
-      return;
-    }
+    // Pour les options supplémentaires, on peut passer même si vide
+    if (step.id === 'extras') {
+      // Toujours valide, même si vide
+      setErrors({ ...errors, [step.id]: '' });
+    } else {
+      // Validation stricte pour les autres étapes
+      if (!value || (Array.isArray(value) && value.length === 0)) {
+        setErrors({ ...errors, [step.id]: 'Ce champ est obligatoire' });
+        return;
+      }
 
-    if (!validateStep(step.id, value)) {
-      setErrors({ ...errors, [step.id]: 'Valeur invalide' });
-      return;
+      if (!validateStep(step.id, value)) {
+        setErrors({ ...errors, [step.id]: 'Valeur invalide' });
+        return;
+      }
     }
 
     // Effacer les erreurs si validation OK
