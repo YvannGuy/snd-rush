@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Answers, Step, STEPS, PRICING_CONFIG, ReservationPayload } from '@/types/assistant';
 import { recommendPack, computePrice, isUrgent, validateStep } from '@/lib/assistant-logic';
-import { processReservation, showSuccessNotification, showErrorNotification, testResendAPI, testStripeAPI } from '@/lib/assistant-api';
+import { processReservation, showSuccessNotification, showErrorNotification } from '@/lib/assistant-api';
 import Chip from './assistant/Chip';
 import Radio from './assistant/Radio';
 import Input from './assistant/Input';
@@ -79,15 +79,27 @@ export default function AssistantRefactored({
     const step = STEPS[currentStep];
     const value = answers[step.id as keyof Answers];
     
-    // Validation stricte - impossible d'avancer sans réponse valide
-    if (!value || (Array.isArray(value) && value.length === 0)) {
-      setErrors({ ...errors, [step.id]: 'Ce champ est obligatoire' });
-      return;
-    }
+    // Validation spéciale pour l'étape address
+    if (step.id === 'address') {
+      if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+        setErrors({ ...errors, [step.id]: 'Veuillez saisir une adresse ou un code postal' });
+        return;
+      }
+      if (!answers.zone) {
+        setErrors({ ...errors, [step.id]: 'Veuillez détecter la zone ou sélectionner manuellement' });
+        return;
+      }
+    } else {
+      // Validation stricte pour les autres étapes
+      if (!value || (Array.isArray(value) && value.length === 0)) {
+        setErrors({ ...errors, [step.id]: 'Ce champ est obligatoire' });
+        return;
+      }
 
-    if (!validateStep(step.id, value)) {
-      setErrors({ ...errors, [step.id]: 'Valeur invalide' });
-      return;
+      if (!validateStep(step.id, value)) {
+        setErrors({ ...errors, [step.id]: 'Valeur invalide' });
+        return;
+      }
     }
 
     // Effacer les erreurs si validation OK
@@ -104,6 +116,11 @@ export default function AssistantRefactored({
   const canProceed = () => {
     const step = STEPS[currentStep];
     const value = answers[step.id as keyof Answers];
+    
+    // Pour l'étape address, on doit avoir soit l'adresse soit la zone détectée
+    if (step.id === 'address') {
+      return (value && typeof value === 'string' && value.trim().length > 0) || answers.zone;
+    }
     
     if (!value || (Array.isArray(value) && value.length === 0)) {
       return false;
@@ -433,23 +450,6 @@ export default function AssistantRefactored({
           </div>
         )}
 
-        {/* Boutons de test (dev uniquement) */}
-        {process.env.NODE_ENV !== 'production' && (
-          <div className="flex gap-2 p-4 border-t border-gray-200 bg-gray-50">
-            <button
-              onClick={testResendAPI}
-              className="px-3 py-2 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-            >
-              Test Resend
-            </button>
-            <button
-              onClick={testStripeAPI}
-              className="px-3 py-2 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-            >
-              Test Stripe
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Modal de réservation */}

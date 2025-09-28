@@ -99,7 +99,7 @@ export interface Step {
   id: string;
   title: string;
   subtitle?: string;
-  type: 'single' | 'multiple' | 'date';
+  type: 'single' | 'multiple' | 'date' | 'text';
   options?: Array<{
     value: string;
     label: string;

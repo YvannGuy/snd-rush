@@ -1,6 +1,6 @@
 // Fonctions pures pour l'assistant SND Rush
 
-import { Answers, Pack, Recommendation, PRICING_CONFIG } from '@/types/assistant';
+import { Answers, Pack, Recommendation, PRICING_CONFIG, ReservationPayload } from '@/types/assistant';
 
 /**
  * Détecte la zone à partir d'un texte (adresse ou code postal)
@@ -113,7 +113,7 @@ export function recommendPack(answers: Answers, packs: Pack[]): Recommendation |
     totalPrice,
     breakdown: {
       base: recommendedPack.basePrice,
-      delivery: getDeliveryPrice(answers.zone),
+      delivery: getDeliveryPrice(answers.zone || ''),
       extras: getExtrasPrice(answers.extras || []),
       urgency: isUrgent(answers.date || '') ? totalPrice * 0.2 : 0,
     },
@@ -131,7 +131,7 @@ export function computePrice(
   let total = basePrice;
   
   // Livraison A/R
-  total += getDeliveryPrice(answers.zone);
+  total += getDeliveryPrice(answers.zone || '');
   
   // Options supplémentaires avec concordance besoins
   total += computeOptionsTotal(answers, basePrice);
@@ -208,8 +208,10 @@ export function validateStep(stepId: string, value: any): boolean {
       return ['mariage', 'anniversaire', 'association', 'corporate', 'eglise', 'autre'].includes(value);
     case 'guests':
       return ['0-50', '50-100', '100-200', '200+'].includes(value);
+    case 'address':
+      return typeof value === 'string' && value.trim().length > 0;
     case 'zone':
-      return ['paris', 'petite_couronne', 'grande_couronne', 'retrait'].includes(value);
+      return ['paris', 'petite', 'grande', 'retrait'].includes(value);
     case 'environment':
       return ['interieur', 'exterieur'].includes(value);
     case 'needs':
@@ -221,6 +223,8 @@ export function validateStep(stepId: string, value: any): boolean {
       const date = new Date(value);
       const today = new Date();
       return date >= today;
+    case 'time':
+      return true; // Optionnel
     default:
       return false;
   }
