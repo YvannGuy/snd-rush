@@ -4,20 +4,35 @@ import { useEffect } from 'react';
 
 export default function TrustindexReviews() {
   useEffect(() => {
-    // Charger le script Trustindex
-    const script = document.createElement('script');
-    script.src = 'https://cdn.trustindex.io/loader.js?217fec5556801563a646e40d7b5';
-    script.defer = true;
-    script.async = true;
-    
-    document.head.appendChild(script);
-
-    // Nettoyage du script au démontage du composant
-    return () => {
-      const existingScript = document.querySelector('script[src*="trustindex.io"]');
-      if (existingScript) {
-        document.head.removeChild(existingScript);
+    // Fonction pour charger le script Trustindex
+    const loadTrustindex = () => {
+      // Vérifier si le script est déjà chargé
+      if (document.querySelector('script[src*="trustindex.io"]')) {
+        return;
       }
+
+      // Créer le script
+      const script = document.createElement('script');
+      script.src = 'https://cdn.trustindex.io/loader.js?217fec5556801563a646e40d7b5';
+      script.defer = true;
+      script.async = true;
+      
+      // Ajouter le script au head
+      document.head.appendChild(script);
+      
+      console.log('Trustindex script added to head');
+    };
+
+    // Charger immédiatement
+    loadTrustindex();
+
+    // Recharger après un délai pour s'assurer que le DOM est prêt
+    const timeout = setTimeout(() => {
+      loadTrustindex();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
     };
   }, []);
 
@@ -33,8 +48,20 @@ export default function TrustindexReviews() {
           </p>
         </div>
         
-        {/* Le script Trustindex se chargera ici automatiquement */}
-        <div id="trustindex-reviews"></div>
+        {/* Script Trustindex intégré directement */}
+        <div 
+          dangerouslySetInnerHTML={{
+            __html: `<script defer async src="https://cdn.trustindex.io/loader.js?217fec5556801563a646e40d7b5"></script>`
+          }}
+        />
+        
+        {/* Container pour les avis */}
+        <div className="min-h-[400px]">
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">Chargement des avis clients...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e27431] mx-auto"></div>
+          </div>
+        </div>
       </div>
     </section>
   );
