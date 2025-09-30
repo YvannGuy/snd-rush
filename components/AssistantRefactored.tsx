@@ -148,7 +148,7 @@ export default function AssistantRefactored({
   };
 
   const handleReservation = async (bookingType: 'info' | 'deposit') => {
-    const recommendation = recommendPack(answers, Object.values(PRICING_CONFIG.packs));
+    const recommendation = recommendPack(answers);
     if (!recommendation) {
       showErrorNotification('Impossible de générer une recommandation');
       return;
@@ -271,7 +271,7 @@ export default function AssistantRefactored({
   };
 
   const renderSummary = () => {
-    const recommendation = recommendPack(answers, Object.values(PRICING_CONFIG.packs));
+    const recommendation = recommendPack(answers);
     if (!recommendation) return null;
 
     const isUrgentEvent = isUrgent(answers.date || '');

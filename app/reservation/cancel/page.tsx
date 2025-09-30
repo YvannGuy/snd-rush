@@ -20,7 +20,7 @@ export default function ReservationCancel() {
 
         {/* Message */}
         <p className="text-gray-600 mb-6">
-          Votre paiement a été annulé. Aucun montant n'a été prélevé.
+          Votre paiement a été annulé. Aucun montant n&apos;a été prélevé.
           Vous pouvez recommencer votre réservation à tout moment.
         </p>
 

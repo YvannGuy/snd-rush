@@ -1,7 +1,7 @@
 // Fonctions pures pour l'assistant SND Rush
 
-import { Answers, Pack, Recommendation, PRICING_CONFIG, ReservationPayload } from '@/types/assistant';
-import { PACKS, recommendPackByGuests, packMatchesNeeds } from './packs';
+import { Answers, Recommendation, PRICING_CONFIG } from '@/types/assistant';
+import { recommendPackByGuests, packMatchesNeeds } from './packs';
 import { generateCustomConfig } from './inventory';
 
 /**
@@ -34,7 +34,7 @@ export function getDeliveryPrice(zone: string): number {
 /**
  * Vérifie si un événement est urgent (même jour)
  */
-export function isUrgent(dateStr: string, timeStr?: string): boolean {
+export function isUrgent(dateStr: string): boolean {
   if (!dateStr) return false;
   
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -48,7 +48,7 @@ export function isUrgent(dateStr: string, timeStr?: string): boolean {
 /**
  * Recommande un pack basé sur les réponses (nouvelle logique avec packs fixes + à-la-carte)
  */
-export function recommendPack(answers: Answers, packs: Pack[]): Recommendation | null {
+export function recommendPack(answers: Answers): Recommendation | null {
   if (!answers.guests || !answers.needs) return null;
 
   // 1. Essayer d'abord les packs fixes
@@ -91,7 +91,7 @@ export function recommendPack(answers: Answers, packs: Pack[]): Recommendation |
         base: basePrice,
         delivery: getDeliveryPrice(answers.zone || ''),
         extras: computeOptionsTotal(answers, basePrice),
-        urgency: isUrgent(answers.date || '', answers.time) ? Math.round(totalPrice * 0.2) : 0
+        urgency: isUrgent(answers.date || '') ? Math.round(totalPrice * 0.2) : 0
       },
       compositionFinale
     };
@@ -135,7 +135,7 @@ export function recommendPack(answers: Answers, packs: Pack[]): Recommendation |
       base: basePrice,
       delivery: getDeliveryPrice(answers.zone || ''),
       extras: computeOptionsTotal(answers, basePrice),
-      urgency: isUrgent(answers.date || '', answers.time) ? Math.round(totalPrice * 0.2) : 0
+      urgency: isUrgent(answers.date || '') ? Math.round(totalPrice * 0.2) : 0
     },
     compositionFinale: customConfig.items.map(item => `${item.label} (${item.qty}x)`),
     customConfig: customConfig.items
@@ -159,7 +159,7 @@ export function computePrice(
   total += computeOptionsTotal(answers, basePrice);
   
   // Majoration d'urgence
-  if (isUrgent(answers.date || '', answers.time)) {
+  if (isUrgent(answers.date || '')) {
     total = Math.round(total * pricing.urgencyMultiplier);
   }
   
@@ -267,8 +267,7 @@ export function validateStep(stepId: string, value: any): boolean {
  */
 export function generateReservationMessage(
   recommendation: Recommendation,
-  answers: Answers,
-  personalInfo: ReservationPayload['personalInfo']
+  answers: Answers
 ): string {
   const { pack, totalPrice, breakdown } = recommendation;
   
