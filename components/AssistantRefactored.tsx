@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Answers, Step, STEPS, PRICING_CONFIG, ReservationPayload } from '@/types/assistant';
 import { recommendPack, computePrice, isUrgent, validateStep } from '@/lib/assistant-logic';
 import { processReservation, showSuccessNotification, showErrorNotification } from '@/lib/assistant-api';
+import { trackAssistantEvent } from '@/lib/analytics';
 import Chip from './assistant/Chip';
 import Radio from './assistant/Radio';
 import Input from './assistant/Input';
@@ -61,6 +62,9 @@ export default function AssistantRefactored({
       setAnswers({});
       setErrors({});
       setShowSummary(false);
+      
+      // Track assistant start
+      trackAssistantEvent.started();
     }
   }, [isOpen]);
 
@@ -147,6 +151,9 @@ export default function AssistantRefactored({
       showErrorNotification('Impossible de générer une recommandation');
       return;
     }
+    
+    // Track reservation click
+    trackAssistantEvent.reservationClicked(recommendation.pack.name, bookingType);
 
     setCurrentRecommendation(recommendation);
     setShowReservationModal(true);
@@ -157,6 +164,9 @@ export default function AssistantRefactored({
     
     try {
       await processReservation(payload);
+      
+      // Track reservation completed
+      trackAssistantEvent.reservationCompleted(payload.packName, payload.totalPrice);
       
       if (payload.bookingType === 'info') {
         showSuccessNotification('Merci ! Nous vous rappelons sous 24h.');
@@ -263,6 +273,9 @@ export default function AssistantRefactored({
     if (!recommendation) return null;
 
     const isUrgentEvent = isUrgent(answers.date || '');
+    
+    // Track pack recommendation
+    trackAssistantEvent.packRecommended(recommendation.pack.name, recommendation.confidence);
 
     return (
       <div className="space-y-6">
