@@ -34,21 +34,16 @@ export async function sendInfoRequest(payload: ReservationPayload): Promise<void
  */
 export async function createStripeSession(payload: ReservationPayload): Promise<string> {
   try {
-    const response = await fetch('/api/create-checkout-session', {
+    const response = await fetch('/api/create-stripe-session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        amount: payload.depositAmount,
         packName: payload.packName,
-        depositAmount: payload.depositAmount,
-        email: payload.personalInfo.email,
-        metadata: {
-          packId: payload.packId,
-          priceId: payload.priceId,
-          totalPrice: payload.totalPrice,
-          bookingType: payload.bookingType,
-        },
+        customerEmail: payload.personalInfo.email,
+        customerName: `${payload.personalInfo.firstName} ${payload.personalInfo.lastName}`,
       }),
     });
 
@@ -255,13 +250,14 @@ export async function testStripeAPI(): Promise<void> {
   if (process.env.NODE_ENV === 'production') return;
   
   try {
-    const response = await fetch('/api/create-checkout-session', {
+    const response = await fetch('/api/create-stripe-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        amount: 100,
         packName: 'Test Pack',
-        depositAmount: 100,
-        email: 'test@sndrush.com',
+        customerEmail: 'test@sndrush.com',
+        customerName: 'Test User',
       }),
     });
     
