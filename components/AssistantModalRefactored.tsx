@@ -10,13 +10,15 @@ interface AssistantModalRefactoredProps {
   onClose: () => void;
   language: 'fr' | 'en';
   onPackSelected: (packId: number) => void;
+  onRentalConditionsClick?: () => void;
 }
 
 export default function AssistantModalRefactored({ 
   isOpen, 
   onClose, 
   language, 
-  onPackSelected 
+  onPackSelected,
+  onRentalConditionsClick
 }: AssistantModalRefactoredProps) {
   
   const handleReservationComplete = (payload: ReservationPayload) => {
@@ -37,6 +39,7 @@ export default function AssistantModalRefactored({
       isOpen={isOpen}
       onClose={onClose}
       onReservationComplete={handleReservationComplete}
+      onRentalConditionsClick={onRentalConditionsClick}
     />
   );
 }

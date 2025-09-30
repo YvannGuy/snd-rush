@@ -13,6 +13,7 @@ interface ReservationModalProps {
   answers: any;
   onConfirm: (payload: ReservationPayload) => void;
   isLoading?: boolean;
+  onRentalConditionsClick?: () => void;
 }
 
 export default function ReservationModal({
@@ -21,7 +22,8 @@ export default function ReservationModal({
   recommendation,
   answers,
   onConfirm,
-  isLoading = false
+  isLoading = false,
+  onRentalConditionsClick
 }: ReservationModalProps) {
   const [bookingType, setBookingType] = useState<'info' | 'deposit'>('info');
   const [formData, setFormData] = useState({
@@ -378,9 +380,13 @@ export default function ReservationModal({
                 />
                 <div className="text-sm">
                   <span>J'accepte les </span>
-                  <a href="/cgv" target="_blank" className="text-[#e27431] hover:underline">
+                  <button 
+                    type="button"
+                    onClick={onRentalConditionsClick}
+                    className="text-[#e27431] hover:underline cursor-pointer"
+                  >
                     conditions générales
-                  </a>
+                  </button>
                   <span> *</span>
                 </div>
               </label>

@@ -140,6 +140,7 @@ export default function Home() {
         onClose={() => setAssistantModal(false)}
         language={language}
         onPackSelected={handleReservePack}
+        onRentalConditionsClick={() => setRentalConditionsModal(true)}
       />
 
     </div>

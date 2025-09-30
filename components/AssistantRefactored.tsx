@@ -16,12 +16,14 @@ interface AssistantRefactoredProps {
   isOpen: boolean;
   onClose: () => void;
   onReservationComplete?: (payload: ReservationPayload) => void;
+  onRentalConditionsClick?: () => void;
 }
 
 export default function AssistantRefactored({ 
   isOpen, 
   onClose, 
-  onReservationComplete 
+  onReservationComplete,
+  onRentalConditionsClick
 }: AssistantRefactoredProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
@@ -467,6 +469,7 @@ export default function AssistantRefactored({
           answers={answers}
           onConfirm={handleReservationConfirm}
           isLoading={isLoading}
+          onRentalConditionsClick={onRentalConditionsClick}
         />
       )}
     </div>
