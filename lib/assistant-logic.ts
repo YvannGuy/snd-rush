@@ -216,7 +216,7 @@ function getExtrasPrice(extras: string[]): number {
 export function validateStep(stepId: string, value: any): boolean {
   switch (stepId) {
     case 'eventType':
-      return ['mariage', 'anniversaire', 'association', 'corporate', 'eglise', 'autre'].includes(value);
+      return ['mariage', 'anniversaire', 'association', 'corporate', 'eglise', 'soiree', 'autre'].includes(value);
     case 'guests':
       return ['0-50', '50-100', '100-200', '200+'].includes(value);
     case 'zone':
@@ -283,6 +283,7 @@ function getEventTypeLabel(type?: string): string {
     association: 'Association',
     corporate: 'Corporate',
     eglise: 'Église',
+    soiree: 'Soirée',
     autre: 'Autre',
   };
   return labels[type || ''] || 'Non spécifié';
