@@ -7,7 +7,7 @@ import HeroSection from '@/components/HeroSection';
 import AssistantPromo from '@/components/AssistantPromo';
 import AboutSection from '@/components/AboutSection';
 import PacksSection from '@/components/PacksSection';
-import TestimonialsSection from '@/components/TestimonialsSection';
+import TrustindexReviews from '@/components/TrustindexReviews';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import ScrollToTopButton from '@/components/ScrollToTopButton';
@@ -94,7 +94,7 @@ export default function Home() {
         <AssistantPromo onOpenAssistant={() => setAssistantModal(true)} />
         
         <AboutSection language={language} />
-        <TestimonialsSection language={language} />
+        <TrustindexReviews />
         <FaqInteractive onOpenAssistant={() => setAssistantModal(true)} />
         <ContactSection language={language} />
       </main>
