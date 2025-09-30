@@ -47,8 +47,8 @@ export default function ReservationModal({
         lastName: '',
         email: '',
         phone: '',
-        date: '',
-        time: '',
+        date: answers.date || '', // Pre-remplir avec la date de l'assistant
+        time: answers.time || '', // Pre-remplir avec l'heure de l'assistant
         postalCode: '',
         address: '',
         specialRequests: ''
@@ -56,7 +56,7 @@ export default function ReservationModal({
       setCgvAccepted(false);
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, answers.date, answers.time]); // Dépendre de date et time pour les mettre à jour
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -108,7 +108,7 @@ export default function ReservationModal({
       },
       eventDetails: {
         date: formData.date || answers.date || '',
-        time: formData.time,
+        time: formData.time || answers.time || '',
         postalCode: formData.postalCode,
         address: formData.address,
         specialRequests: formData.specialRequests,
