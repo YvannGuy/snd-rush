@@ -4,36 +4,21 @@ import { useEffect } from 'react';
 
 export default function TrustindexReviews() {
   useEffect(() => {
-    // Fonction pour charger le script Trustindex
-    const loadTrustindex = () => {
-      // Vérifier si le script est déjà chargé
-      if (document.querySelector('script[src*="trustindex.io"]')) {
-        return;
-      }
+    // Vérifier si le script est déjà chargé
+    if (document.querySelector('script[src*="trustindex.io"]')) {
+      return;
+    }
 
-      // Créer le script
-      const script = document.createElement('script');
-      script.src = 'https://cdn.trustindex.io/loader.js?217fec5556801563a646e40d7b5';
-      script.defer = true;
-      script.async = true;
-      
-      // Ajouter le script au head
-      document.head.appendChild(script);
-      
-      console.log('Trustindex script added to head');
-    };
-
-    // Charger immédiatement
-    loadTrustindex();
-
-    // Recharger après un délai pour s'assurer que le DOM est prêt
-    const timeout = setTimeout(() => {
-      loadTrustindex();
-    }, 1000);
-
-    return () => {
-      clearTimeout(timeout);
-    };
+    // Créer le script Trustindex
+    const script = document.createElement('script');
+    script.src = 'https://cdn.trustindex.io/loader.js?217fec5556801563a646e40d7b5';
+    script.defer = true;
+    script.async = true;
+    
+    // Ajouter le script au head
+    document.head.appendChild(script);
+    
+    console.log('Trustindex script loaded');
   }, []);
 
   return (
@@ -55,12 +40,9 @@ export default function TrustindexReviews() {
           }}
         />
         
-        {/* Container pour les avis */}
+        {/* Container pour les avis Trustindex */}
         <div className="min-h-[400px]">
-          <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">Chargement des avis clients...</p>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e27431] mx-auto"></div>
-          </div>
+          {/* Trustindex va s'afficher ici automatiquement */}
         </div>
       </div>
     </section>
