@@ -37,7 +37,7 @@ export default function Header({ language, onLanguageChange, onReservationClick,
 
   const handleCallClick = () => {
     // Ouvrir le lien d'appel
-    window.open('tel:+33123456789', '_self');
+    window.open('tel:+33651084994', '_self');
     setIsMobileMenuOpen(false);
   };
 
