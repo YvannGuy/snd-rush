@@ -35,12 +35,19 @@ export default function Header({ language, onLanguageChange, onReservationClick,
     setIsMobileMenuOpen(false);
   };
 
+  const handleCallClick = () => {
+    // Ouvrir le lien d'appel
+    window.open('tel:+33123456789', '_self');
+    setIsMobileMenuOpen(false);
+  };
+
   const texts = {
     fr: {
       packs: 'Packs',
       faq: 'FAQ',
       contact: 'Contact',
       reserveNow: 'Réservez mon pack',
+      callNow: 'Appelez',
       banner: '1er spécialiste de l\'urgence sonore • Paris et Île-de-France • 24h/24 7j/7 • Intervention rapide • Devis gratuit'
     },
     en: {
@@ -48,6 +55,7 @@ export default function Header({ language, onLanguageChange, onReservationClick,
       faq: 'FAQ',
       contact: 'Contact',
       reserveNow: 'Reserve my pack',
+      callNow: 'Call',
       banner: '1st sound emergency specialist • Paris and Île-de-France • 24/7 • Fast intervention • Free quote'
     }
   };
@@ -115,6 +123,15 @@ export default function Header({ language, onLanguageChange, onReservationClick,
                 <span className="uppercase">{language}</span>
               </button>
 
+              {/* Call Button */}
+              <button
+                onClick={handleCallClick}
+                className="bg-red-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm lg:px-6 rounded-lg font-medium hover:bg-red-700 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1 sm:gap-2 mr-2"
+              >
+                <span className="text-white text-sm sm:text-base">🚨</span>
+                <span className="hidden sm:inline">{texts[language].callNow}</span>
+              </button>
+
               {/* CTA Button */}
               <button
                 onClick={handleReserveClick}
@@ -173,6 +190,24 @@ export default function Header({ language, onLanguageChange, onReservationClick,
                   </div>
                   <span className="uppercase">{language}</span>
                 </button>
+
+                {/* Mobile action buttons */}
+                <div className="px-3 py-2 space-y-2">
+                  <button
+                    onClick={handleCallClick}
+                    className="w-full bg-red-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="text-lg">🚨</span>
+                    <span>{texts[language].callNow}</span>
+                  </button>
+                  <button
+                    onClick={handleReserveClick}
+                    className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="text-lg">🎯</span>
+                    <span>{texts[language].reserveNow}</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
