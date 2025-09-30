@@ -15,7 +15,7 @@ import WhatsAppButton from '@/components/WhatsAppButton';
 import ReservationModal from '@/components/ReservationModal';
 import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
-import FAQSection from '@/components/FAQSection';
+import FaqInteractive from '@/components/FaqInteractive';
 import CROGear from '@/components/CROGear';
 import AssistantModal from '@/components/AssistantModalRefactored';
 
@@ -95,7 +95,7 @@ export default function Home() {
         
         <AboutSection language={language} />
         <TestimonialsSection language={language} />
-        <FAQSection language={language} />
+        <FaqInteractive onOpenAssistant={() => setAssistantModal(true)} />
         <ContactSection language={language} />
       </main>
 
