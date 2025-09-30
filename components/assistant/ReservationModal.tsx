@@ -129,6 +129,20 @@ export default function ReservationModal({
                      formData.postalCode.trim() && 
                      cgvAccepted;
 
+  // Debug temporaire pour voir ce qui pose problème
+  console.log('🔍 DEBUG MODAL RÉSERVATION:', {
+    firstName: formData.firstName.trim(),
+    lastName: formData.lastName.trim(),
+    email: formData.email.trim(),
+    emailValid: /\S+@\S+\.\S+/.test(formData.email),
+    phone: formData.phone.trim(),
+    date: formData.date.trim(),
+    time: formData.time.trim(),
+    postalCode: formData.postalCode.trim(),
+    cgvAccepted,
+    isFormValid
+  });
+
   if (!isOpen) return null;
 
   return (
@@ -393,7 +407,7 @@ export default function ReservationModal({
             }`}
             title={!isFormValid ? 'Veuillez remplir tous les champs obligatoires' : ''}
           >
-            {isLoading ? 'Traitement...' : isFormValid ? 'Confirmer' : 'Champs manquants'}
+            {isLoading ? 'Traitement...' : isFormValid ? 'Confirmer' : `Champs manquants (${!formData.firstName.trim() ? 'Prénom ' : ''}${!formData.lastName.trim() ? 'Nom ' : ''}${!formData.email.trim() ? 'Email ' : ''}${!/\S+@\S+\.\S+/.test(formData.email) ? 'Email invalide ' : ''}${!formData.phone.trim() ? 'Téléphone ' : ''}${!formData.date.trim() ? 'Date ' : ''}${!formData.time.trim() ? 'Horaire ' : ''}${!formData.postalCode.trim() ? 'Code postal ' : ''}${!cgvAccepted ? 'CGV ' : ''})`}
           </button>
         </div>
       </div>
