@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,11 +18,6 @@ export const metadata: Metadata = {
     "location sono immédiate Île-de-France",
     "sono express Paris",
     "location pack sono urgence",
-    "sono urgence 24/7 Paris",
-    "sono urgence 24/7 Île-de-France",
-    "location lumière paris",
-    "location lumière Île-de-France",
-    "location lumière urgence",
 
     // Classique
     "location sono Paris",
@@ -52,7 +48,7 @@ export const metadata: Metadata = {
       "Location sono urgence Paris 24/24 7j/7. Mais aussi packs classiques pour mariages, anniversaires, associations et corporate. Livraison et installation incluses.",
     images: [
       {
-        url: "https://www.sndrush.com/og-image.jpg", // image 1200x630px
+        url: "https://www.sndrush.com/og-image.jpg", // image 1200x630px à mettre
         width: 1200,
         height: 630,
         alt: "SND Rush - Sono Urgence 24/7 Paris",
@@ -106,6 +102,9 @@ export default function RootLayout({
 
         {/* Vercel Analytics */}
         <Analytics />
+
+        {/* Vercel Speed Insights */}
+        <SpeedInsights />
       </body>
     </html>
   );
