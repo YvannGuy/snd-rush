@@ -17,6 +17,30 @@ export async function POST(request: NextRequest) {
       eventDetails
     } = body;
 
+    // Validation des données requises
+    if (!packName || !totalPrice || !depositAmount) {
+      return NextResponse.json(
+        { error: 'Données de réservation manquantes' },
+        { status: 400 }
+      );
+    }
+
+    if (!personalInfo?.email) {
+      return NextResponse.json(
+        { error: 'Email client manquant' },
+        { status: 400 }
+      );
+    }
+
+    // Debug pour voir les données reçues
+    console.log('🔍 Stripe API - Données reçues:', {
+      packName,
+      totalPrice,
+      depositAmount,
+      personalInfo,
+      eventDetails
+    });
+
     // Créer la session Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -38,14 +62,14 @@ export async function POST(request: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}?canceled=true`,
       customer_email: personalInfo.email,
       metadata: {
-        packName,
+        packName: packName || 'Non spécifié',
         totalPrice: totalPrice.toString(),
         depositAmount: depositAmount.toString(),
-        customerName: `${personalInfo.firstName} ${personalInfo.lastName}`,
-        customerPhone: personalInfo.phone,
-        eventDate: eventDetails.date,
-        eventTime: eventDetails.time,
-        postalCode: eventDetails.postalCode,
+        customerName: `${personalInfo.firstName || ''} ${personalInfo.lastName || ''}`.trim(),
+        customerPhone: personalInfo.phone || '',
+        eventDate: eventDetails?.date || '',
+        eventTime: eventDetails?.time || '',
+        postalCode: eventDetails?.postalCode || '',
       },
     });
 
