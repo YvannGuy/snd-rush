@@ -59,6 +59,17 @@ export function recommendPack(answers: Answers, packs: Pack[]): Recommendation |
     const basePrice = recommendedPack.basePrice || 0;
     const totalPrice = computePrice(basePrice, answers, PRICING_CONFIG);
     
+    // Ajouter les micros supplémentaires à la composition
+    const microsCount = getMicrosCount(answers.extras || []);
+    const compositionFinale = [...recommendedPack.composition];
+    
+    if (microsCount.filaire > 0) {
+      compositionFinale.push(`+ ${microsCount.filaire} micro${microsCount.filaire > 1 ? 's' : ''} filaire${microsCount.filaire > 1 ? 's' : ''} (${microsCount.filaire * 10}€)`);
+    }
+    if (microsCount.sansFil > 0) {
+      compositionFinale.push(`+ ${microsCount.sansFil} micro${microsCount.sansFil > 1 ? 's' : ''} sans fil (${microsCount.sansFil * 20}€)`);
+    }
+    
     return {
       pack: {
         id: recommendedPack.id,
@@ -66,8 +77,8 @@ export function recommendPack(answers: Answers, packs: Pack[]): Recommendation |
         priceId: `price_${recommendedPack.id}`,
         basePrice: basePrice,
         capacity: recommendedPack.capacity,
-        description: recommendedPack.composition.join(', '),
-        features: recommendedPack.composition
+        description: compositionFinale.join(', '),
+        features: compositionFinale
       },
       totalPrice,
       confidence: 0.9,
@@ -82,7 +93,7 @@ export function recommendPack(answers: Answers, packs: Pack[]): Recommendation |
         extras: computeOptionsTotal(answers, basePrice),
         urgency: isUrgent(answers.date || '', answers.time) ? Math.round(totalPrice * 0.2) : 0
       },
-      compositionFinale: recommendedPack.composition
+      compositionFinale
     };
   }
   
@@ -202,12 +213,21 @@ function getGuestCount(guests: string): number {
 function getExtrasPrice(extras: string[]): number {
   return extras.reduce((total, extra) => {
     switch (extra) {
-      case 'promix16': return total + PRICING_CONFIG.extras.promix16;
-      case 'lumiere_basique': return total + PRICING_CONFIG.extras.lumiere_basique;
+      case 'micros_filaire': return total + PRICING_CONFIG.extras.micros_filaire;
+      case 'micros_sans_fil': return total + PRICING_CONFIG.extras.micros_sans_fil;
       case 'technicien': return total + PRICING_CONFIG.extras.technicien;
       default: return total;
     }
   }, 0);
+}
+
+/**
+ * Compte les micros supplémentaires sélectionnés
+ */
+export function getMicrosCount(extras: string[]): { filaire: number; sansFil: number } {
+  const filaire = extras.filter(extra => extra === 'micros_filaire').length;
+  const sansFil = extras.filter(extra => extra === 'micros_sans_fil').length;
+  return { filaire, sansFil };
 }
 
 /**
@@ -231,7 +251,10 @@ export function validateStep(stepId: string, value: any): boolean {
       if (!value) return false;
       const date = new Date(value);
       const today = new Date();
-      return date >= today;
+      // Comparer seulement les dates (sans l'heure) pour permettre la sélection d'aujourd'hui
+      const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      return dateOnly >= todayOnly;
     case 'time':
       return true; // Optionnel
     default:

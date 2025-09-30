@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useRef } from 'react';
 
 interface Pack {
   id: number;
@@ -25,22 +25,6 @@ interface PacksSectionProps {
 }
 
 export default function PacksSection({ language, onReservePack }: PacksSectionProps) {
-  const [showSupplementsInfo, setShowSupplementsInfo] = useState<number | null>(null);
-
-  // Fermer la fenêtre d'information quand on clique ailleurs
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.supplements-info-container')) {
-        setShowSupplementsInfo(null);
-      }
-    };
-
-    if (showSupplementsInfo !== null) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showSupplementsInfo]);
 
   const texts = {
     fr: {
@@ -53,8 +37,7 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
       parisPrice: 'Paris intra-muros',
       horsParisPrice: 'Hors Paris',
       transportFee: '+80 € transport',
-      reassurance: '✅ Zéro caution sur les formules clé en main · ✅ Technicien qualifié · ✅ Matériel pro · ✅ Date bloquée avec 30 % d\'acompte',
-      supplementsInfo: 'Les micros filaires et sans fil, accessoires (enrouleurs, prises, RCA, jack) et présence de technicien pendant l\'événement sont en supplément.'
+      reassurance: '✅ Zéro caution sur les formules clé en main · ✅ Technicien qualifié · ✅ Matériel pro · ✅ Date bloquée avec 30 % d\'acompte'
     },
     en: {
       title: 'Personalized packs for',
@@ -66,8 +49,7 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
       parisPrice: 'Paris intra-muros',
       horsParisPrice: 'Outside Paris',
       transportFee: '+80 € transport',
-      reassurance: '✅ Zero deposit on turnkey formulas · ✅ Qualified technician · ✅ Professional equipment · ✅ Date secured with 30% down payment',
-      supplementsInfo: 'Wired and wireless microphones, accessories (cable reels, plugs, RCA, jack) and technician presence during the event are additional.'
+      reassurance: '✅ Zero deposit on turnkey formulas · ✅ Qualified technician · ✅ Professional equipment · ✅ Date secured with 30% down payment'
     }
   };
 
@@ -132,6 +114,26 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
         highlight: "Clé en main",
         ideal: "Jusqu'à 500 personnes",
         note: "Idéal concerts, festivals, spectacles, événements musicaux."
+      },
+      {
+        id: 6,
+        name: "Soirée",
+        tagline: "Fêtes & événements privés",
+        description: "Sonorisation festive et énergique pour vos soirées et événements privés.",
+        priceParis: "À partir de 450 € TTC",
+        priceHorsParis: "530 € TTC",
+        featured: false,
+        image: "/dance.jpg",
+        features: [
+          "Sonorisation festive et énergique",
+          "Musique d'ambiance et DJ",
+          "Livraison & installation",
+          "Technicien pendant la soirée",
+          "Démontage après l'événement"
+        ],
+        highlight: "Clé en main",
+        ideal: "Jusqu'à 200 personnes",
+        note: "Idéal pour soirées privées, anniversaires, fêtes d'entreprise, événements festifs."
       }
     ],
     en: [
@@ -194,6 +196,26 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
         highlight: "Turnkey",
         ideal: "Up to 500 people",
         note: "Large receptions, concerts, worship, festivals."
+      },
+      {
+        id: 6,
+        name: "Party",
+        tagline: "Private parties & events",
+        description: "Festive and energetic sound system for your parties and private events.",
+        priceParis: "À partir de 450 € TTC",
+        priceHorsParis: "530 € TTC",
+        featured: false,
+        image: "/dance.jpg",
+        features: [
+          "Festive and energetic sound system",
+          "Ambient music and DJ",
+          "Delivery & installation",
+          "Technician during the party",
+          "Dismantling after the event"
+        ],
+        highlight: "Turnkey",
+        ideal: "Up to 200 people",
+        note: "Perfect for private parties, birthdays, corporate events, festive occasions."
       }
     ]
   };
@@ -312,40 +334,6 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
                           <h3 className="text-xl sm:text-2xl font-bold text-black transition-all duration-300">
                                 {pack.name}
                               </h3>
-                          <div className="relative supplements-info-container">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowSupplementsInfo(showSupplementsInfo === pack.id ? null : pack.id);
-                              }}
-                              className="text-gray-400 hover:text-blue-600 transition-colors"
-                              aria-label="Informations sur les suppléments"
-                            >
-                              <i className="ri-information-line text-lg"></i>
-                            </button>
-                            {showSupplementsInfo === pack.id && (
-                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-30 w-[300px]">
-                                <div className="text-sm">
-                                  <h4 className="font-semibold text-gray-800 mb-2">
-                                    {language === 'fr' ? 'Suppléments disponibles' : 'Available supplements'}
-                                  </h4>
-                                  <p className="text-gray-600 leading-relaxed mb-3">
-                                    {texts[language].supplementsInfo}
-                                  </p>
-                                  <div className="bg-blue-50 border border-blue-200 rounded p-2">
-                                    <p className="text-xs text-blue-800">
-                                      <i className="ri-information-line mr-1"></i>
-                                      {language === 'fr' 
-                                        ? 'À préciser dans la section détails'
-                                        : 'To be specified in the details section'
-                                      }
-                              </p>
-                            </div>
-                              </div>
-                                <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white border-l border-t border-gray-200 rotate-45"></div>
-                                </div>
-                              )}
-                          </div>
                         </div>
                         <p className="text-[#F2431E] font-medium text-sm sm:text-base transition-all duration-300">
                           {pack.tagline}
@@ -489,6 +477,7 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
               </p>
             </div>
           </div>
+
         </div>
 
         {/* Nouvelle section: Découvrez notre matériel */}
@@ -550,6 +539,21 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Bouton Réservez votre pack */}
+          <div className="text-center mt-12">
+            <button
+              onClick={() => {
+                // Déclencher l'ouverture du modal assistant
+                const event = new CustomEvent('openAssistantModal');
+                window.dispatchEvent(event);
+              }}
+              className="bg-[#F2431E] text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-[#E63A1A] transition-colors shadow-lg hover:shadow-xl"
+            >
+              <i className="ri-robot-line mr-2 text-xl"></i>
+              Réservez votre pack
+            </button>
           </div>
           
         </div>

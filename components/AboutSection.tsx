@@ -19,12 +19,12 @@ export default function AboutSection({ language }: AboutSectionProps) {
       advanceTab: 'Réservation à l\'avance',
       expressTab: 'Intervention express',
       advanceSteps: {
-        step1Title: 'Choisissez votre pack',
-        step1Description: 'Sélectionnez le pack qui correspond à votre événement',
-        step2Title: 'Planifiez votre événement',
-        step2Description: 'Remplissez les détails et choisissez votre date',
-        step3Title: 'Payez et confirmez',
-        step3Description: 'Paiement sécurisé et confirmation par email'
+        step1Title: 'Assistant IA personnalisé',
+        step1Description: 'Notre assistant IA analyse vos besoins et vous guide vers le pack idéal en quelques questions simples',
+        step2Title: 'Formulaire de réservation',
+        step2Description: 'Remplissez vos informations personnelles et choisissez votre date via notre interface intuitive',
+        step3Title: 'Paiement flexible',
+        step3Description: 'Payez un acompte pour confirmer votre réservation ou réglez l\'intégralité - confirmation immédiate'
       },
       expressSteps: {
         step1Title: 'Appelez-nous directement',

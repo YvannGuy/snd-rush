@@ -24,7 +24,7 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
     const q = userQuestion.toLowerCase();
     
     // Packs
-    if (q.includes('pack') || q.includes('formule') || q.includes('tarif')) {
+    if ((q.includes('pack') || q.includes('formule')) && !q.includes('livraison')) {
       if (q.includes('essentiel') || q.includes('petit') || q.includes('50')) {
         return {
           answer: "Le **Pack Essentiel** (349€) est parfait pour les petits événements jusqu'à 50 personnes. Il inclut 2 enceintes Mac Mah AS108, console Promix 8, 1 micro filaire et le câblage complet.",
@@ -62,7 +62,7 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
         };
       }
       return {
-        answer: "Nous proposons 4 packs : **Essentiel** (349€, 0-50 pers), **Standard** (799€, 50-100 pers), **Premium** (1499€, 100-200 pers) et **Prestige** (sur demande, 200+ pers). Chaque pack inclut livraison, installation et démontage.",
+        answer: "Nous proposons 4 packs de sonorisation :\n\n🎵 **Pack Essentiel** (349€) - 0-50 personnes\n🎵 **Pack Standard** (799€) - 50-100 personnes  \n🎵 **Pack Premium** (1499€) - 100-200 personnes\n🎵 **Pack Prestige** (sur demande) - 200+ personnes\n\nChaque pack inclut le matériel, livraison, installation et démontage.",
         cta: onOpenAssistant ? {
           text: "Trouver mon pack",
           action: onOpenAssistant
@@ -71,23 +71,23 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
     }
 
     // Livraison
-    if (q.includes('livraison') || q.includes('transport') || q.includes('déplacement')) {
+    if (q.includes('livraison') || q.includes('transport') || q.includes('déplacement') || q.includes('tarif') && q.includes('livraison')) {
       return {
-        answer: "**Tarifs de livraison A/R** : Paris (75) : 80€ • Petite couronne (92, 93, 94) : 120€ • Grande couronne (77, 78, 91, 95) : 156€ • Retrait sur place : 0€. Livraison incluse dans tous nos packs."
+        answer: "**Tarifs de livraison et reprise** :\n\n📍 **Paris intramuros** (≤ 10 km des Lilas – 93)\n• Livraison + reprise : 80 € TTC\n• Livraison OU reprise : 50 € TTC\n\n📍 **Petite couronne** (≤ 20 km des Lilas – 93)\n• Livraison + reprise : 120 € TTC\n• Livraison OU reprise : 60 € TTC\n\n📍 **Grande couronne / Île-de-France** (≤ 35 km des Lilas – 93)\n• Livraison + reprise : 158 € TTC\n• Livraison OU reprise : 79 € TTC\n\n📍 **Au-delà de 35 km** : devis personnalisé sur demande\n\nℹ️ **Note importante** : Les tarifs sont indépendants de la quantité de matériel loué et valables jusqu'à 4 m³ de matériel."
       };
     }
 
     // Acompte et paiement
     if (q.includes('acompte') || q.includes('paiement') || q.includes('payer')) {
       return {
-        answer: "**Conditions de paiement** : Acompte de 30% à la réservation, solde 72h avant l'événement. Paiement par carte bancaire ou virement. Aucune caution demandée."
+        answer: "**Conditions de paiement** : Vous pouvez payer un acompte pour confirmer votre réservation ou régler l'intégralité. Paiement par carte bancaire sécurisé. Aucune caution demandée - nous faisons confiance à nos clients."
       };
     }
 
     // Urgence
     if (q.includes('urgence') || q.includes('dernière minute') || q.includes('rapide')) {
       return {
-        answer: "**Service d'urgence** : Majoration de +20% pour les réservations de dernière minute (même jour). Nous intervenons 24h/24 et 7j/7 en Île-de-France pour vos urgences sonores.",
+        answer: "**Service d'urgence** : Nous livrons en 30 à 60 minutes dans Paris intra-muros. Pour les urgences critiques, intervention en moins de 30 minutes possible selon la localisation. Nous intervenons 7j/7 de 8h à 2h du matin en Île-de-France.",
         cta: onOpenAssistant ? {
           text: "Réserver en urgence",
           action: onOpenAssistant
@@ -98,7 +98,7 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
     // Caution
     if (q.includes('caution') || q.includes('dépôt') || q.includes('garantie')) {
       return {
-        answer: "**Aucune caution** n'est demandée ! Nous faisons confiance à nos clients. Seul l'acompte de 30% est requis pour bloquer votre date."
+        answer: "**Caution selon le service** :\n\n✅ **Avec technicien sur place** : Aucune caution demandée - notre technicien s'occupe de tout\n\n💳 **Sans technicien** : Empreinte bancaire demandée au moment de la livraison (aucune somme prélevée, levée automatiquement sous 48h après retour du matériel)\n\nCette empreinte est une garantie standard pour la protection du matériel, mais nous ne prélevons jamais d'argent."
       };
     }
 
@@ -119,7 +119,7 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
     // Zone géographique
     if (q.includes('paris') || q.includes('île-de-france') || q.includes('zone')) {
       return {
-        answer: "**Zone d'intervention** : Paris et toute l'Île-de-France (75, 92, 93, 94, 77, 78, 91, 95). Livraison gratuite pour Paris, tarifs dégressifs selon la distance."
+        answer: "**Zone d'intervention** : Paris et toute l'Île-de-France (75, 92, 93, 94, 77, 78, 91, 95). Tarifs de livraison selon la distance : Paris intramuros 80€, Petite couronne 120€, Grande couronne 158€."
       };
     }
 

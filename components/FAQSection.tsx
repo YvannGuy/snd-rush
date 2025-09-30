@@ -27,7 +27,7 @@ const FAQSection = ({ language }: FAQSectionProps) => {
     fr: [
       {
         question: "En combien de temps pouvez-vous livrer?",
-        answer: "Nous proposons deux types de service : réservation à l'avance (jusqu'à plusieurs mois) ou intervention express (moins de 24h jusqu'à moins de 1h selon la distance). Pour les interventions express, nous intervenons dans les plus brefs délais selon votre localisation et vos besoins urgents."
+        answer: "Nous livrons en 30 à 60 minutes dans Paris intra-muros. Pour les urgences critiques, une intervention en moins de 30 minutes est parfois possible selon la localisation, avec un supplément express. En dehors de Paris, les délais de livraison peuvent varier selon la distance, mais nous faisons toujours au plus vite."
       },
       {
         question: "Êtes-vous disponibles 24h/24?",
@@ -47,11 +47,11 @@ const FAQSection = ({ language }: FAQSectionProps) => {
       },
       {
         question: "Puis-je réserver en avance?",
-        answer: "Absolument ! Vous pouvez même réserver jusqu'à plusieurs mois à l'avance pour sécuriser votre créneaux."
+        answer: "Absolument ! Vous pouvez réserver jusqu'à 30 jours à l'avance pour sécuriser votre créneau. Les réservations à l'avance bénéficient de tarifs préférentiels et d'une priorité sur la disponibilité du matériel."
       },
       {
         question: "Que se passe-t-il si j'annule ou modifie ma réservation?",
-        answer: "Politique d'annulation standard (modèle professionnel) : Plus de 7 jours avant la location - 10% de frais d'annulation. De 3 à 6 jours avant - 30% de frais d'annulation. De 24 à 48h avant - 70% de frais d'annulation. Moins de 24h ou le jour-même - 100% non remboursable. Pour les livraisons express : aucune annulation possible une fois la livraison déclenchée. Les modifications restent possibles selon disponibilité du matériel et contraintes logistiques."
+        answer: "Pour les réservations à l'avance : annulation gratuite jusqu'à 72 heures avant l'heure de livraison. Pour les livraisons express : aucune annulation possible une fois la livraison déclenchée. Les modifications restent possibles selon la disponibilité. En cas d'annulation tardive, des frais de 30€ s'appliquent pour couvrir les coûts de préparation."
       }
     ],
     en: [

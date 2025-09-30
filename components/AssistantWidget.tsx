@@ -475,7 +475,9 @@ const AssistantWidget: React.FC = () => {
       {showHelpPopup && (
         <div className="absolute bottom-16 right-0 bg-white rounded-xl shadow-xl border border-gray-200 p-4 max-w-xs animate-bounce z-60">
           <div className="flex items-start gap-3">
-            <div className="text-2xl">🤖</div>
+            <div className="text-2xl text-orange-500">
+              <i className="ri-customer-service-2-line"></i>
+            </div>
             <div>
               <div className="font-semibold text-gray-900 mb-1">Besoin d'aide ?</div>
               <div className="text-sm text-gray-600 mb-3">
@@ -500,13 +502,13 @@ const AssistantWidget: React.FC = () => {
         </div>
       )}
 
-      {/* Icône robot discrète */}
+      {/* Icône assistant discrète */}
       <button
         className="w-12 h-12 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center hover:scale-105 focus:outline-2 focus:outline-orange-500 focus:outline-offset-2"
         onClick={handleRobotClick}
         aria-label="Assistant SND Rush"
       >
-        <span className="text-xl">🤖</span>
+        <i className="ri-customer-service-2-line text-xl"></i>
       </button>
 
       {/* Panneau principal */}

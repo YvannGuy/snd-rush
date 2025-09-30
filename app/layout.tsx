@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import AssistantWidget from "@/components/AssistantWidget";
 
 export const metadata: Metadata = {
   title: "SND Rush - Location Sonorisation Professionnelle",
@@ -33,7 +32,6 @@ export default function RootLayout({
       </head>
       <body>
         {children}
-        <AssistantWidget />
       </body>
     </html>
   );

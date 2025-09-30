@@ -50,6 +50,8 @@ export interface Pricing {
     promix16: number;
     lumiere_basique: number;
     technicien: number;
+    micros_filaire: number;
+    micros_sans_fil: number;
   };
   urgencyMultiplier: number; // 1.2 = +20%
 }
@@ -112,6 +114,7 @@ export interface Step {
     label: string;
     icon?: string;
     price?: number;
+    allowMultiple?: boolean;
   }>;
   required: boolean;
   validation?: (value: any) => boolean;
@@ -185,9 +188,11 @@ export const PRICING_CONFIG: Pricing = {
     retrait: 0,
   },
   extras: {
-    promix16: 50,
+    promix16: 80,
     lumiere_basique: 80,
     technicien: 150,
+    micros_filaire: 10,
+    micros_sans_fil: 20,
   },
   urgencyMultiplier: 1.2,
 };
@@ -253,9 +258,6 @@ export const STEPS: Step[] = [
     options: [
       { value: 'son', label: 'Son', icon: '🔊' },
       { value: 'lumiere', label: 'Lumière', icon: '💡' },
-      { value: 'micros_filaire', label: 'Micros filaires', icon: '🎤' },
-      { value: 'micros_sans_fil', label: 'Micros sans fil', icon: '🎤' },
-      { value: 'dj', label: 'DJ', icon: '🎧' },
     ],
     required: true,
   },
@@ -264,8 +266,8 @@ export const STEPS: Step[] = [
     title: 'Options supplémentaires',
     type: 'multiple',
     options: [
-      { value: 'promix16', label: 'Upgrade Promix 16 (+50 €)', icon: '🎛️', price: 50 },
-      { value: 'lumiere_basique', label: 'Lumières basiques (+80 €)', icon: '💡', price: 80 },
+      { value: 'micros_filaire', label: 'Micros filaires (+10 €)', icon: '🎤', price: 10, allowMultiple: true },
+      { value: 'micros_sans_fil', label: 'Micros sans fil (+20 €)', icon: '🎤', price: 20, allowMultiple: true },
       { value: 'technicien', label: 'Technicien sur place (+150 €)', icon: '👨‍🔧', price: 150 },
     ],
     required: false,
@@ -273,13 +275,16 @@ export const STEPS: Step[] = [
   {
     id: 'date',
     title: 'Quelle est la date de votre événement ?',
-    subtitle: 'Si l\'événement est dans moins de 48 h, une majoration d\'urgence de +20 % s\'applique.',
+    subtitle: 'Si l\'événement est le même jour, une majoration d\'urgence de +20 % s\'applique.',
     type: 'date',
     required: true,
     validation: (value: string) => {
       const date = new Date(value);
       const today = new Date();
-      return date >= today;
+      // Comparer seulement les dates (sans l'heure) pour permettre la sélection d'aujourd'hui
+      const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      return dateOnly >= todayOnly;
     },
   },
   {
