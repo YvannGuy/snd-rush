@@ -177,12 +177,12 @@ export default function Footer({ language }: FooterProps) {
           <div className="mt-12 pt-8 border-t border-gray-800">
             <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
               <div className="flex items-center space-x-6">
-                <a href="https://instagram.com/sndrush" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
+                <a href="https://www.instagram.com/snd_rush?igsh=dTIzYm80cWZma3I5&utm_source=qr" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
                   <div className="w-6 h-6 flex items-center justify-center">
                     <i className="ri-instagram-line text-lg"></i>
                   </div>
                 </a>
-                <a href="https://tiktok.com/@sndrush" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
+                <a href="https://www.tiktok.com/@snd.rush?_t=ZN-90BQyvub7W2&_r=1" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
                   <div className="w-6 h-6 flex items-center justify-center">
                     <i className="ri-tiktok-line text-lg"></i>
                   </div>
