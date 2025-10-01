@@ -5,7 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SND Rush - Location Sono Urgence 24/7 & Événementiel Paris",
+  title: "SND Rush - Location Sono & lumière pack clé en main Urgence 24/24 7/ & Événementiel Paris",
   description:
     "Besoin d'une sono en urgence 24/24 et 7j/7 à Paris et en Île-de-France ? SND Rush vous propose la location express de sonorisation professionnelle, mais aussi des packs classiques pour mariages, anniversaires, associations et événements corporate. Livraison et installation incluses.",
   keywords: [
