@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import AssistantConseil from '@/components/AssistantConseil';
 
 type Zone = 'PARIS' | 'PETITE_COURONNE' | 'GRANDE_COURONNE' | 'RETRAIT';
 
@@ -567,6 +568,38 @@ ${notes ? `Notes : ${notes}` : ''}`;
   return (
     <div style={styles.wrap}>
       <h1 style={styles.h1}>Générateur de prix <span style={styles.badge}>Interne</span></h1>
+
+      {/* ASSISTANT CONSEIL */}
+      <AssistantConseil
+        onApplyToQuote={(rec, zone, urgent, dateStr, postal) => {
+          // Appliquer les recommandations au formulaire
+          if (rec.speakerModel === 'AS108') {
+            setNbEnceintesAS108(rec.speakers);
+            setNbEnceintesAS115(0);
+            setNbEnceintesFBT(0);
+          } else if (rec.speakerModel === 'AS115') {
+            setNbEnceintesAS108(0);
+            setNbEnceintesAS115(rec.speakers);
+            setNbEnceintesFBT(0);
+          } else if (rec.speakerModel === 'FBT115') {
+            setNbEnceintesAS108(0);
+            setNbEnceintesAS115(0);
+            setNbEnceintesFBT(rec.speakers);
+          }
+          
+          setNbCaissons(rec.subwoofers);
+          setConsoleType(rec.console);
+          setMicFil(rec.micWired);
+          setMicSansFil(rec.micWireless);
+          setPostal(postal);
+          setDateStr(dateStr);
+          setZoneOverride(zone);
+          
+          // Ajouter une note avec les recommandations
+          const noteText = `Recommandation Assistant: ${rec.speakerModel} (${rec.speakers} enceintes), ${rec.subwoofers} caisson(s), console ${rec.console}`;
+          setNotes(prev => prev ? `${prev}\n${noteText}` : noteText);
+        }}
+      />
 
       {/* MATÉRIEL SON */}
       <div style={styles.card}>
