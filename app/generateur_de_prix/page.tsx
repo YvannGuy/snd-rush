@@ -369,9 +369,9 @@ export default function PriceGeneratorPage() {
   const [tryPwd, setTryPwd] = useState('');
   
   // Form state – Sono
-  const [nbEnceintes, setNbEnceintes] = useState(2);
+  const [nbEnceintes, setNbEnceintes] = useState(0);
   const [nbCaissons, setNbCaissons] = useState(0);
-  const [consoleType, setConsoleType] = useState<'NONE' | 'PROMIX8' | 'PROMIX16'>('PROMIX8');
+  const [consoleType, setConsoleType] = useState<'NONE' | 'PROMIX8' | 'PROMIX16'>('NONE');
   const [micFil, setMicFil] = useState(0);
   const [micSansFil, setMicSansFil] = useState(0);
 
@@ -380,15 +380,15 @@ export default function PriceGeneratorPage() {
   const [lowFogCount, setLowFogCount] = useState(0);       // fumée lourde
 
   // Services
-  const [withInstallation, setWithInstallation] = useState(true);
+  const [withInstallation, setWithInstallation] = useState(false);
   const [withTechnician, setWithTechnician] = useState(false);
-  const [technicianHours, setTechnicianHours] = useState(2); // min 2h par défaut
+  const [technicianHours, setTechnicianHours] = useState(0);
 
   // Logistique
   const [postal, setPostal] = useState('');
   const [zoneOverride, setZoneOverride] = useState<Zone | ''>('');
   const [dateStr, setDateStr] = useState('');
-  const [duration, setDuration] = useState(1);
+  const [duration, setDuration] = useState(0);
   const [notes, setNotes] = useState('');
 
   // Informations client
@@ -398,7 +398,7 @@ export default function PriceGeneratorPage() {
   const [clientEmail, setClientEmail] = useState('');
 
   // Paramètres de caution
-  const [cautionAmount, setCautionAmount] = useState(500);
+  const [cautionAmount, setCautionAmount] = useState(0);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('sndrush_generator_ok');
@@ -676,7 +676,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
         </div>
         <div style={styles.row}>
           <label>Montant de la caution (€)
-            <input style={styles.input} type="number" min="0" step="50" value={cautionAmount} onChange={(e) => setCautionAmount(parseInt(e.target.value || '500'))} />
+            <input style={styles.input} type="number" min="0" step="50" value={cautionAmount} onChange={(e) => setCautionAmount(parseInt(e.target.value || '0'))} />
           </label>
           <div />
         </div>
