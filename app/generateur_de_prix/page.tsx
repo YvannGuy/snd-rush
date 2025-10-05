@@ -397,6 +397,9 @@ export default function PriceGeneratorPage() {
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
 
+  // Paramètres de caution
+  const [cautionAmount, setCautionAmount] = useState(500);
+
   useEffect(() => {
     const stored = sessionStorage.getItem('sndrush_generator_ok');
     if (stored === '1') setOk(true);
@@ -491,6 +494,7 @@ ${effectsLine ? effectsLine + '\n' : ''}Logistique :
 ${urgent ? '• Urgence +20%\n' : ''}
 
 Total TTC : ${total} €
+Caution : ${cautionAmount} €
 ${notes ? `Notes : ${notes}` : ''}`;
 
   const generatePDF = async () => {
@@ -670,6 +674,12 @@ ${notes ? `Notes : ${notes}` : ''}`;
             <input style={styles.input} placeholder="Ex: contact@maptique.com" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} />
           </label>
         </div>
+        <div style={styles.row}>
+          <label>Montant de la caution (€)
+            <input style={styles.input} type="number" min="0" step="50" value={cautionAmount} onChange={(e) => setCautionAmount(parseInt(e.target.value || '500'))} />
+          </label>
+          <div />
+        </div>
       </div>
 
       {/* RÉCAP / PDF */}
@@ -813,7 +823,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
             <div style={styles.devisConditionsTitle}>Conditions</div>
             <div style={styles.devisConditionsList}>
               <ul>
-                <li>Caution : 500 € (empreinte bancaire obligatoire, non débitée sauf dommage ou perte)</li>
+                <li>Caution : {cautionAmount} € (empreinte bancaire obligatoire, non débitée sauf dommage ou perte)</li>
                 <li>Solde : à régler au plus tard 72h avant l'événement</li>
                 <li>Annulation : voir nos CGV sur www.sndrush.com</li>
                 {notes && <li>Notes : {notes}</li>}
