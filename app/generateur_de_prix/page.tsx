@@ -404,6 +404,11 @@ export default function PriceGeneratorPage() {
   // Paramètres de caution
   const [cautionAmount, setCautionAmount] = useState(0);
 
+  // Lignes personnalisées
+  const [customLines, setCustomLines] = useState<Array<{id: string, designation: string, price: number}>>([]);
+  const [newDesignation, setNewDesignation] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+
   useEffect(() => {
     const stored = sessionStorage.getItem('sndrush_generator_ok');
     if (stored === '1') setOk(true);
@@ -447,6 +452,31 @@ export default function PriceGeneratorPage() {
     } else alert('Mot de passe invalide.');
   };
 
+  // Fonctions pour les lignes personnalisées
+  const addCustomLine = () => {
+    if (newDesignation.trim() && newPrice.trim()) {
+      const price = parseFloat(newPrice);
+      if (!isNaN(price) && price > 0) {
+        const newLine = {
+          id: Date.now().toString(),
+          designation: newDesignation.trim(),
+          price: price
+        };
+        setCustomLines([...customLines, newLine]);
+        setNewDesignation('');
+        setNewPrice('');
+      } else {
+        alert('Veuillez entrer un prix valide');
+      }
+    } else {
+      alert('Veuillez remplir tous les champs');
+    }
+  };
+
+  const removeCustomLine = (id: string) => {
+    setCustomLines(customLines.filter(line => line.id !== id));
+  };
+
   if (!ok) {
     return (
       <div style={styles.loginContainer}>
@@ -475,13 +505,21 @@ export default function PriceGeneratorPage() {
     );
   }
 
-  const subtotal = baseMateriel + transport + install + techCost;
+  const customLinesTotal = useMemo(() => {
+    return customLines.reduce((sum, line) => sum + line.price, 0);
+  }, [customLines]);
+
+  const subtotal = baseMateriel + transport + install + techCost + customLinesTotal;
   const total = Math.round(subtotal * (urgent ? 1.2 : 1));
 
   const effectsLine =
     (sparkularCount > 0 || lowFogCount > 0)
       ? `• Effets spéciaux : ${sparkularCount} Sparkular, ${lowFogCount} fumée lourde (via partenaires)`
       : '';
+
+  const customLinesText = customLines.length > 0 
+    ? customLines.map(line => `• ${line.designation} : ${line.price.toFixed(2)}€`).join('\n') + '\n'
+    : '';
 
   const resumeWhatsApp =
 `SND Rush – Devis rapide
@@ -493,7 +531,7 @@ Matériel :
 • Console : ${consoleType === 'NONE' ? 'Aucune' : consoleType === 'PROMIX8' ? 'HPA Promix 8' : 'HPA Promix 16'}
 • Micros filaires : ${micFil}
 • Micros sans fil : ${micSansFil}
-${effectsLine ? effectsLine + '\n' : ''}Logistique :
+${effectsLine ? effectsLine + '\n' : ''}${customLinesText}Logistique :
 • Zone : ${zone === 'RETRAIT' ? 'Retrait atelier' : zone.replace('_', ' ')}
 • Installation : ${withInstallation ? 'Oui' : 'Non'}
 • Technicien : ${withTechnician ? `${technicianHours}h × ${PRICING.TECHNICIEN_HOURLY}€ = ${technicianHours * PRICING.TECHNICIEN_HOURLY}€` : 'Non'}
@@ -700,6 +738,42 @@ ${notes ? `Notes : ${notes}` : ''}`;
         </div>
       </div>
 
+      {/* LIGNES PERSONNALISÉES */}
+      <div style={styles.card}>
+        <h2 style={styles.h2}>Lignes personnalisées</h2>
+        <div style={styles.row}>
+          <label>Désignation
+            <input style={styles.input} placeholder="Ex: Éclairage LED supplémentaire" value={newDesignation} onChange={(e) => setNewDesignation(e.target.value)} />
+          </label>
+          <label>Prix (€)
+            <input style={styles.input} type="number" min="0" step="0.01" placeholder="Ex: 150" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} />
+          </label>
+        </div>
+        <button style={styles.btn} onClick={addCustomLine}>
+          Ajouter au devis
+        </button>
+        
+        {customLines.length > 0 && (
+          <div style={{marginTop: '16px'}}>
+            <h3 style={{fontSize: '16px', fontWeight: '600', marginBottom: '8px'}}>Lignes ajoutées :</h3>
+            {customLines.map((line) => (
+              <div key={line.id} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#f9f9f9', borderRadius: '6px', marginBottom: '8px'}}>
+                <span>{line.designation}</span>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                  <span style={{fontWeight: '600'}}>{line.price.toFixed(2)} €</span>
+                  <button 
+                    style={{background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', fontSize: '12px'}}
+                    onClick={() => removeCustomLine(line.id)}
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* RÉCAP / PDF */}
       <div style={styles.card} id="pdf-content">
         <div style={styles.devisContainer}>
@@ -783,6 +857,18 @@ ${notes ? `Notes : ${notes}` : ''}`;
                   <td style={styles.devisTableCell}>{effectsPrice.toFixed(2)} €</td>
                 </tr>
               )}
+
+              {/* Lignes personnalisées */}
+              {customLines.map((line) => (
+                <tr key={line.id} style={styles.devisTableRow}>
+                  <td style={styles.devisTableCell}>
+                    <strong>{line.designation}</strong>
+                  </td>
+                  <td style={styles.devisTableCell}>1</td>
+                  <td style={styles.devisTableCell}>{line.price.toFixed(2)} €</td>
+                  <td style={styles.devisTableCell}>{line.price.toFixed(2)} €</td>
+                </tr>
+              ))}
 
               {/* Transport */}
               <tr style={styles.devisTableRow}>
