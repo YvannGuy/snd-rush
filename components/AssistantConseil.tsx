@@ -10,7 +10,7 @@ type Source =
   | 'Instrument (jack)'
   | 'Autre';
 
-type SpeakerModel = 'AS108' | 'AS115' | 'FBT115';
+// type SpeakerModel = 'AS108' | 'AS115' | 'FBT115'; // Utilisé dans Recommendation
 
 type Answers = {
   type: 'Mariage' | 'Anniversaire' | 'Association' | 'Corporate' | 'Église' | 'Concert' | 'Autre' | '';
@@ -131,8 +131,8 @@ export default function AssistantConseil({
     date: '', postal: '', budget: '',
   });
 
-  const zone = useMemo(() => parseZoneFromPostal(a.postal), [a.postal]);
-  const urgent = useMemo(() => isUrgent(a.date), [a.date]);
+  // const zone = useMemo(() => parseZoneFromPostal(a.postal), [a.postal]);
+  // const urgent = useMemo(() => isUrgent(a.date), [a.date]);
   const rec = useMemo(() => (a.type && a.guests && a.venue ? recommend(a) : null), [a]);
 
   const validateStep = (step: number): boolean => {
@@ -166,7 +166,7 @@ export default function AssistantConseil({
     h3: { marginTop:0, fontSize: 18, fontWeight: 600 },
     p: { marginTop:4, color:'#666', fontSize: 14 },
     label: { display: 'block', fontWeight: 500, marginBottom: 8 },
-    buttonGroup: { display:'flex', gap:8, flexWrap:'wrap', margin:'8px 0' },
+    buttonGroup: { display:'flex', gap:8, flexWrap:'wrap' as const, margin:'8px 0' },
     button: { padding:'8px 12px', borderRadius:8, border:'1px solid #ddd', background:'#fff', color:'#111', cursor: 'pointer', fontSize: 14 },
     buttonActive: { padding:'8px 12px', borderRadius:8, border:'1px solid #111', background:'#111', color:'#fff', cursor: 'pointer', fontSize: 14 },
     buttonNav: { padding:'8px 16px', borderRadius:8, border:'1px solid #e27431', background:'#e27431', color:'#fff', cursor: 'pointer', fontSize: 14 },
@@ -183,10 +183,10 @@ export default function AssistantConseil({
     reasons: { fontSize:12, color:'#666', marginTop:8, padding: 8, background: '#f9f9f9', borderRadius: 6 },
     actions: { display:'flex', gap:8, marginTop:12 },
     script: { marginTop:12, fontSize:12, color:'#666', padding: 8, background: '#f0f8ff', borderRadius: 6, border: '1px solid #e3f2fd' },
-    error: { fontSize: 12, color: '#ef4444', marginTop: 8, textAlign: 'center' },
+    error: { fontSize: 12, color: '#ef4444', marginTop: 8, textAlign: 'center' as const },
     help: { fontSize: 12, color: '#666', marginTop: 4, fontStyle: 'italic' },
     alert: { fontSize: 12, color: '#f59e0b', marginTop: 8, padding: 8, background: '#fef3c7', borderRadius: 6, border: '1px solid #fbbf24' },
-    novice: { fontSize: 12, color: '#059669', marginBottom: 12, padding: 8, background: '#d1fae5', borderRadius: 6, border: '1px solid #10b981', textAlign: 'center' }
+    novice: { fontSize: 12, color: '#059669', marginBottom: 12, padding: 8, background: '#d1fae5', borderRadius: 6, border: '1px solid #10b981', textAlign: 'center' as const }
   };
 
   return (
