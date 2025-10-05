@@ -2,10 +2,21 @@ import React, { useMemo, useState } from 'react';
 
 type Zone = 'PARIS' | 'PETITE_COURONNE' | 'GRANDE_COURONNE' | 'RETRAIT';
 
+type Source = 
+  | 'Smartphone (Bluetooth)'
+  | 'Smartphone (câble)'
+  | 'PC / Tablette'
+  | 'DJ Controller / Platines'
+  | 'Instrument (jack)'
+  | 'Autre';
+
+type SpeakerModel = 'AS108' | 'AS115' | 'FBT115';
+
 type Answers = {
   type: 'Mariage' | 'Anniversaire' | 'Association' | 'Corporate' | 'Église' | 'Concert' | 'Autre' | '';
   guests: '0-40' | '40-80' | '80-150' | '150+' | '';
   venue: 'Intérieur' | 'Extérieur' | '';
+  source: Source | '';
   needs: { music:boolean; speeches:boolean; dj:boolean };
   mics: { wired:number; wireless:number };
   date: string;
@@ -61,25 +72,37 @@ function recommend(ans: Answers): Recommendation {
   if (ans.venue === 'Extérieur') {
     speakerModel = 'FBT115';
     R.push('Extérieur → modèle plus puissant (FBT 115A).');
-    if ((ans.guests === '40-80' || ans.guests === '80-150') && subs === 0) {
-      subs = 1; R.push('Extérieur → +1 caisson conseillé dès 80 pers.');
+    if ((ans.guests === '40-80' || ans.guests === '80-150' || ans.guests === '150+') && subs === 0) {
+      subs = Math.max(subs, 1); R.push('Extérieur → +1 caisson conseillé dès 80 pers.');
     }
   } else {
-    // Salle : modèle par défaut selon taille
-    if (ans.guests === '40-80' || ans.guests === '80-150' || ans.type === 'Mariage' || ans.type === 'Corporate') {
-      speakerModel = 'FBT115';
-    } else if (ans.guests === '0-40') {
+    // Intérieur : modèle selon taille et type d'événement
+    if (ans.guests === '0-40') {
       speakerModel = 'AS108';
+    } else if (ans.guests === '40-80' || ans.guests === '80-150') {
+      speakerModel = 'AS115';
+    } else if (ans.type === 'Mariage' || ans.type === 'Corporate') {
+      speakerModel = 'FBT115';
     }
   }
 
-  // Needs → Console
-  if (ans.needs.dj || ans.needs.music || ans.mics.wired + ans.mics.wireless > 1) {
-    console = 'PROMIX8';
-  }
-  if (ans.mics.wired + ans.mics.wireless >= 3 || ans.needs.dj) {
-    console = 'PROMIX16';
-    R.push('Plusieurs sources/micros → console 16 préférable.');
+  // Source & Console
+  const totalMics = ans.mics.wired + ans.mics.wireless;
+  
+  if (ans.source === 'Smartphone (Bluetooth)' && speakerModel === 'AS108' && totalMics <= 1) {
+    console = 'NONE';
+    R.push('Smartphone en Bluetooth + AS108 → console non nécessaire.');
+  } else {
+    if (['Smartphone (câble)', 'PC / Tablette', 'Instrument (jack)'].includes(ans.source)) {
+      console = 'PROMIX8';
+    } else if (ans.source === 'DJ Controller / Platines') {
+      console = 'PROMIX16';
+    }
+    
+    if (totalMics >= 3) {
+      console = 'PROMIX16';
+      R.push('Plusieurs sources/micros → Promix 16 préférable.');
+    }
   }
 
   // Mics
@@ -97,11 +120,12 @@ function recommend(ans: Answers): Recommendation {
 export default function AssistantConseil({
   onApplyToQuote,
 }: {
-  onApplyToQuote: (rec: Recommendation, zone: Zone, urgent: boolean, dateStr: string, postal: string) => void;
+  onApplyToQuote: (rec: Recommendation, zone: Zone, urgent: boolean, dateStr: string, postal: string, source: string) => void;
 }) {
   const [step, setStep] = useState(0);
+  const [error, setError] = useState('');
   const [a, setA] = useState<Answers>({
-    type: '', guests: '', venue: '',
+    type: '', guests: '', venue: '', source: '',
     needs: { music:true, speeches:false, dj:false },
     mics: { wired:0, wireless:0 },
     date: '', postal: '', budget: '',
@@ -111,8 +135,31 @@ export default function AssistantConseil({
   const urgent = useMemo(() => isUrgent(a.date), [a.date]);
   const rec = useMemo(() => (a.type && a.guests && a.venue ? recommend(a) : null), [a]);
 
-  const next = () => setStep((s) => Math.min(6, s + 1));
-  const prev = () => setStep((s) => Math.max(0, s - 1));
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 0: return !!a.type;
+      case 1: return !!a.guests;
+      case 2: return !!a.venue;
+      case 3: return !!a.source;
+      case 4: return true; // Besoins - toujours valide
+      case 5: return !!a.postal;
+      default: return true;
+    }
+  };
+
+  const next = () => {
+    if (validateStep(step)) {
+      setError('');
+      setStep((s) => Math.min(6, s + 1));
+    } else {
+      setError('Veuillez répondre à cette question avant de continuer.');
+    }
+  };
+  
+  const prev = () => {
+    setError('');
+    setStep((s) => Math.max(0, s - 1));
+  };
 
   const styles = {
     container: { border:'1px solid #eee', borderRadius:12, padding:16, background:'#fff', marginBottom: 16 },
@@ -135,7 +182,11 @@ export default function AssistantConseil({
     recItem: { marginBottom: 4 },
     reasons: { fontSize:12, color:'#666', marginTop:8, padding: 8, background: '#f9f9f9', borderRadius: 6 },
     actions: { display:'flex', gap:8, marginTop:12 },
-    script: { marginTop:12, fontSize:12, color:'#666', padding: 8, background: '#f0f8ff', borderRadius: 6, border: '1px solid #e3f2fd' }
+    script: { marginTop:12, fontSize:12, color:'#666', padding: 8, background: '#f0f8ff', borderRadius: 6, border: '1px solid #e3f2fd' },
+    error: { fontSize: 12, color: '#ef4444', marginTop: 8, textAlign: 'center' },
+    help: { fontSize: 12, color: '#666', marginTop: 4, fontStyle: 'italic' },
+    alert: { fontSize: 12, color: '#f59e0b', marginTop: 8, padding: 8, background: '#fef3c7', borderRadius: 6, border: '1px solid #fbbf24' },
+    novice: { fontSize: 12, color: '#059669', marginBottom: 12, padding: 8, background: '#d1fae5', borderRadius: 6, border: '1px solid #10b981', textAlign: 'center' }
   };
 
   return (
@@ -154,6 +205,7 @@ export default function AssistantConseil({
               </button>
             ))}
           </div>
+          {error && <div style={styles.error}>{error}</div>}
           <div style={styles.nav}>
             <span/>
             <button disabled={!a.type} onClick={next} style={!a.type ? styles.buttonNavDisabled : styles.buttonNav}>
@@ -174,6 +226,7 @@ export default function AssistantConseil({
               </button>
             ))}
           </div>
+          {error && <div style={styles.error}>{error}</div>}
           <div style={styles.nav}>
             <button onClick={prev} style={styles.buttonNav}>← Retour</button>
             <button disabled={!a.guests} onClick={next} style={!a.guests ? styles.buttonNavDisabled : styles.buttonNav}>
@@ -194,6 +247,7 @@ export default function AssistantConseil({
               </button>
             ))}
           </div>
+          {error && <div style={styles.error}>{error}</div>}
           <div style={styles.nav}>
             <button onClick={prev} style={styles.buttonNav}>← Retour</button>
             <button disabled={!a.venue} onClick={next} style={!a.venue ? styles.buttonNavDisabled : styles.buttonNav}>
@@ -205,7 +259,34 @@ export default function AssistantConseil({
 
       {step===3 && (
         <div>
-          <label style={styles.label}>4. Besoins</label>
+          <label style={styles.label}>4. Quelle est votre source audio principale ?</label>
+          <div style={styles.help}>Si vous diffusez depuis un smartphone en Bluetooth, l'AS108 peut fonctionner sans console.</div>
+          <div style={styles.buttonGroup}>
+            {['Smartphone (Bluetooth)','Smartphone (câble)','PC / Tablette','DJ Controller / Platines','Instrument (jack)','Autre'].map(t=>(
+              <button key={t} onClick={()=>setA({...a,source:t as any})}
+                style={a.source===t ? styles.buttonActive : styles.button}>
+                {t}
+              </button>
+            ))}
+          </div>
+          {a.source === 'Smartphone (Bluetooth)' && (
+            <div style={styles.alert}>
+              ⚠️ Portée Bluetooth ≈ 8-10 m selon l'environnement. Pour une fiabilité maximale (mariage/corporate), privilégiez le câble ou une console.
+            </div>
+          )}
+          {error && <div style={styles.error}>{error}</div>}
+          <div style={styles.nav}>
+            <button onClick={prev} style={styles.buttonNav}>← Retour</button>
+            <button disabled={!a.source} onClick={next} style={!a.source ? styles.buttonNavDisabled : styles.buttonNav}>
+              Suivant →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step===4 && (
+        <div>
+          <label style={styles.label}>5. Besoins</label>
           <div style={styles.grid}>
             <label style={{display: 'flex', alignItems: 'center'}}>
               <input type="checkbox" checked={a.needs.music} onChange={e=>setA({...a,needs:{...a.needs,music:e.target.checked}})} style={styles.checkbox} />
@@ -228,6 +309,7 @@ export default function AssistantConseil({
               <input type="number" min={0} value={a.mics.wireless} onChange={e=>setA({...a,mics:{...a.mics,wireless:parseInt(e.target.value||'0')}})} style={styles.input} />
             </label>
           </div>
+          {error && <div style={styles.error}>{error}</div>}
           <div style={styles.nav}>
             <button onClick={prev} style={styles.buttonNav}>← Retour</button>
             <button onClick={next} style={styles.buttonNav}>Suivant →</button>
@@ -235,9 +317,9 @@ export default function AssistantConseil({
         </div>
       )}
 
-      {step===4 && (
+      {step===5 && (
         <div>
-          <label style={styles.label}>5. Informations pratiques</label>
+          <label style={styles.label}>6. Informations pratiques</label>
           <label style={styles.label}>Code postal (pour estimer la livraison)
             <input value={a.postal} onChange={e=>setA({...a,postal:e.target.value})} placeholder="Ex: 75008" style={styles.input} />
           </label>
@@ -255,6 +337,7 @@ export default function AssistantConseil({
               </select>
             </label>
           </div>
+          {error && <div style={styles.error}>{error}</div>}
           <div style={styles.nav}>
             <button onClick={prev} style={styles.buttonNav}>← Retour</button>
             <button disabled={!a.postal} onClick={next} style={!a.postal ? styles.buttonNavDisabled : styles.buttonNav}>
@@ -264,16 +347,20 @@ export default function AssistantConseil({
         </div>
       )}
 
-      {step===5 && rec && (
+      {step===6 && rec && (
         <div>
+          <div style={styles.novice}>
+            💡 Ces réglages sont ajustables après un court échange avec notre technicien.
+          </div>
           <h4 style={{marginTop: 0, color: '#e27431'}}>🎯 Recommandation</h4>
-          <ul style={styles.recList}>
-            <li style={styles.recItem}><strong>{rec.speakers} enceinte(s)</strong> {rec.speakerModel==='AS108'?'Mac Mah AS108': rec.speakerModel==='AS115'?'Mac Mah AS115':'FBT X-Lite 115A'}</li>
-            <li style={styles.recItem}><strong>{rec.subwoofers} caisson(s)</strong> de basse</li>
-            <li style={styles.recItem}><strong>Console :</strong> {rec.console==='NONE'?'Aucune': rec.console==='PROMIX8'?'HPA Promix 8':'HPA Promix 16'}</li>
-            <li style={styles.recItem}><strong>Micros :</strong> {rec.micWired} filaire(s), {rec.micWireless} sans fil</li>
-            <li style={styles.recItem}><strong>Zone :</strong> {parseZoneFromPostal(a.postal)} {isUrgent(a.date)?'• Urgence +20%':''}</li>
-          </ul>
+          <div style={{background: '#f8fafc', padding: 12, borderRadius: 8, marginBottom: 12}}>
+            <div><strong>Recommandation :</strong> {rec.speakers} enceinte(s) ({rec.speakerModel==='AS108'?'AS108': rec.speakerModel==='AS115'?'AS115':'FBT115'}), {rec.subwoofers} caisson(s), Console : {rec.console==='NONE'?'Aucune': rec.console==='PROMIX8'?'Promix 8':'Promix 16'}, Micros : {rec.micWired} filaires / {rec.micWireless} sans fil</div>
+            <div><strong>Source :</strong> {a.source}</div>
+            <div><strong>Zone estimée :</strong> {parseZoneFromPostal(a.postal)} {isUrgent(a.date)?'• Urgence +20%':''}</div>
+            <div style={{fontSize: 11, color: '#6b7280', marginTop: 8}}>
+              <em>Repères prix (info interne) : AS108 70€, AS115 80€, FBT115 90€ (TTC/jour)</em>
+            </div>
+          </div>
           {rec.reasons.length>0 && (
             <div style={styles.reasons}>
               <strong>💡 Justification :</strong>
@@ -282,7 +369,7 @@ export default function AssistantConseil({
           )}
 
           <div style={styles.actions}>
-            <button onClick={()=>onApplyToQuote(rec, parseZoneFromPostal(a.postal), isUrgent(a.date), a.date, a.postal)} style={styles.buttonNav}>
+            <button onClick={()=>onApplyToQuote(rec, parseZoneFromPostal(a.postal), isUrgent(a.date), a.date, a.postal, a.source)} style={styles.buttonNav}>
               ✅ Remplir le devis
             </button>
             <button onClick={()=>setStep(0)} style={styles.button}>
@@ -292,10 +379,14 @@ export default function AssistantConseil({
 
           <div style={styles.script}>
             <strong>📞 Script à lire au client :</strong><br/>
-            "Avec {a.guests.replace('+',' plus de ')} personnes {a.venue.toLowerCase()}, je vous conseille {rec.speakers} enceinte(s){rec.subwoofers>0? ' avec caisson pour l\'assise':''}. 
-            {rec.console!=='NONE'?' Je prévois une console pour vos sources.':''}
-            {rec.micWired+rec.micWireless>0?` Et ${rec.micWired+rec.micWireless} micro(s) pour les prises de parole.`:''}
-            Livraison en zone {parseZoneFromPostal(a.postal)}{isUrgent(a.date)?', intervention en urgence':''}."
+            {a.guests === '0-40' && a.venue === 'Intérieur' ? 
+              `"Avec ~30 personnes en intérieur, 1 AS108 suffit. Si vous voulez plus d'ampleur, on passe à 2 enceintes."` :
+            a.venue === 'Extérieur' ?
+              `"En extérieur le son se disperse : on part sur FBT 115A, et au-delà de 80 personnes on ajoute un caisson."` :
+            a.source === 'Smartphone (Bluetooth)' ?
+              `"Si vous diffusez via smartphone en Bluetooth, la console n'est pas nécessaire sur l'AS108. Pour une fiabilité maximale, on peut basculer en câble."` :
+              `"Avec ${a.guests.replace('+',' plus de ')} personnes ${a.venue.toLowerCase()}, je vous conseille ${rec.speakers} enceinte(s)${rec.subwoofers>0? ' avec caisson pour l\'assise':''}. ${rec.console!=='NONE'?' Je prévois une console pour vos sources.':''}${rec.micWired+rec.micWireless>0?` Et ${rec.micWired+rec.micWireless} micro(s) pour les prises de parole.`:''} Livraison en zone ${parseZoneFromPostal(a.postal)}${isUrgent(a.date)?', intervention en urgence':''}."`
+            }
           </div>
         </div>
       )}

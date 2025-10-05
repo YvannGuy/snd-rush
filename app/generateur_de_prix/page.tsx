@@ -571,7 +571,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
 
       {/* ASSISTANT CONSEIL */}
       <AssistantConseil
-        onApplyToQuote={(rec, zone, urgent, dateStr, postal) => {
+        onApplyToQuote={(rec, zone, urgent, dateStr, postal, source) => {
           // Appliquer les recommandations au formulaire
           if (rec.speakerModel === 'AS108') {
             setNbEnceintesAS108(rec.speakers);
@@ -596,7 +596,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
           setZoneOverride(zone);
           
           // Ajouter une note avec les recommandations
-          const noteText = `Recommandation Assistant: ${rec.speakerModel} (${rec.speakers} enceintes), ${rec.subwoofers} caisson(s), console ${rec.console}`;
+          const noteText = `Source: ${source} | Modèle conseillé: ${rec.speakerModel}`;
           setNotes(prev => prev ? `${prev}\n${noteText}` : noteText);
         }}
       />
