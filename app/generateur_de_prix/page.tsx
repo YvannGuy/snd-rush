@@ -32,19 +32,288 @@ const PRICING = {
 };
 
 const styles: Record<string, React.CSSProperties> = {
-  wrap: { maxWidth: 880, margin: '32px auto', padding: '24px', fontFamily: 'Inter, system-ui, sans-serif' },
-  card: { border: '1px solid #eee', borderRadius: 12, padding: 16, marginBottom: 16, background: '#fff' },
-  h1: { fontSize: 28, fontWeight: 700, margin: '0 0 12px' },
-  h2: { fontSize: 18, fontWeight: 700, margin: '0 0 10px' },
-  row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 },
-  input: { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 },
-  select: { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14, background: '#fff' },
-  btn: { display: 'inline-block', padding: '10px 14px', borderRadius: 10, border: '1px solid #e27431', background: '#e27431', color: '#fff', cursor: 'pointer' },
-  ghost: { display: 'inline-block', padding: '10px 14px', borderRadius: 10, border: '1px solid #ddd', background: '#fff', color: '#111', cursor: 'pointer' },
-  total: { fontSize: 24, fontWeight: 800, color: '#e27431', marginTop: 8 },
-  mono: { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.5 },
-  badge: { display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#111', color: '#fff', fontSize: 12, marginLeft: 8 },
-  hint: { fontSize: 12, color: '#666', marginTop: 4 },
+  // Page de connexion - style OneSignal
+  loginContainer: { 
+    minHeight: '100vh', 
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    fontFamily: 'Inter, system-ui, sans-serif' 
+  },
+  loginCard: { 
+    background: '#fff', 
+    borderRadius: '12px', 
+    padding: '40px', 
+    width: '400px', 
+    boxShadow: '0 20px 40px rgba(0,0,0,0.1)', 
+    border: '1px solid #e5e7eb' 
+  },
+  loginLogo: { 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginBottom: '32px' 
+  },
+  loginLogoText: { 
+    fontSize: '28px', 
+    fontWeight: 'bold', 
+    color: '#1f2937',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  loginTitle: { 
+    fontSize: '24px', 
+    fontWeight: 'bold', 
+    color: '#1f2937', 
+    textAlign: 'center', 
+    marginBottom: '32px' 
+  },
+  loginInput: { 
+    width: '100%', 
+    padding: '12px 16px', 
+    border: '1px solid #d1d5db', 
+    borderRadius: '8px', 
+    fontSize: '16px', 
+    marginBottom: '16px',
+    outline: 'none',
+    transition: 'border-color 0.2s'
+  },
+  loginButton: { 
+    width: '100%', 
+    padding: '12px', 
+    background: '#e27431', 
+    color: '#fff', 
+    border: 'none', 
+    borderRadius: '8px', 
+    fontSize: '16px', 
+    fontWeight: '600', 
+    cursor: 'pointer',
+    transition: 'background-color 0.2s'
+  },
+  
+  // Générateur de prix - style moderne
+  wrap: { 
+    maxWidth: '1000px', 
+    margin: '0 auto', 
+    padding: '24px', 
+    fontFamily: 'Inter, system-ui, sans-serif',
+    background: '#f8fafc'
+  },
+  card: { 
+    background: '#fff', 
+    borderRadius: '12px', 
+    padding: '24px', 
+    marginBottom: '24px', 
+    boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+    border: '1px solid #e5e7eb'
+  },
+  h1: { 
+    fontSize: '32px', 
+    fontWeight: '700', 
+    margin: '0 0 8px',
+    color: '#1f2937',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  h2: { 
+    fontSize: '20px', 
+    fontWeight: '600', 
+    margin: '0 0 16px',
+    color: '#374151'
+  },
+  row: { 
+    display: 'grid', 
+    gridTemplateColumns: '1fr 1fr', 
+    gap: '16px', 
+    marginBottom: '16px' 
+  },
+  input: { 
+    width: '100%', 
+    padding: '12px 16px', 
+    border: '1px solid #d1d5db', 
+    borderRadius: '8px', 
+    fontSize: '16px',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+    background: '#fff'
+  },
+  select: { 
+    width: '100%', 
+    padding: '12px 16px', 
+    border: '1px solid #d1d5db', 
+    borderRadius: '8px', 
+    fontSize: '16px', 
+    background: '#fff',
+    outline: 'none',
+    transition: 'border-color 0.2s'
+  },
+  btn: { 
+    display: 'inline-block', 
+    padding: '12px 24px', 
+    borderRadius: '8px', 
+    border: 'none', 
+    background: '#e27431', 
+    color: '#fff', 
+    cursor: 'pointer',
+    fontSize: '16px',
+    fontWeight: '600',
+    transition: 'background-color 0.2s'
+  },
+  ghost: { 
+    display: 'inline-block', 
+    padding: '12px 24px', 
+    borderRadius: '8px', 
+    border: '1px solid #d1d5db', 
+    background: '#fff', 
+    color: '#374151', 
+    cursor: 'pointer',
+    fontSize: '16px',
+    fontWeight: '500',
+    transition: 'all 0.2s'
+  },
+  total: { 
+    fontSize: '28px', 
+    fontWeight: '800', 
+    color: '#e27431', 
+    marginTop: '16px',
+    textAlign: 'center',
+    padding: '16px',
+    background: '#fef3f2',
+    borderRadius: '8px',
+    border: '1px solid #fecaca'
+  },
+  mono: { 
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', 
+    whiteSpace: 'pre-wrap', 
+    fontSize: '14px', 
+    lineHeight: '1.6',
+    background: '#f8fafc',
+    padding: '16px',
+    borderRadius: '8px',
+    border: '1px solid #e5e7eb'
+  },
+  badge: { 
+    display: 'inline-block', 
+    padding: '4px 12px', 
+    borderRadius: '20px', 
+    background: '#e27431', 
+    color: '#fff', 
+    fontSize: '12px', 
+    fontWeight: '600',
+    marginLeft: '8px' 
+  },
+  hint: { 
+    fontSize: '14px', 
+    color: '#6b7280', 
+    marginTop: '8px',
+    fontStyle: 'italic'
+  },
+  
+  // Cartes de sélection - style moderne
+  selectionCards: {
+    display: 'flex',
+    gap: '12px',
+    marginBottom: '24px',
+    flexWrap: 'wrap'
+  },
+  selectionCard: {
+    flex: '1',
+    minWidth: '120px',
+    padding: '16px',
+    border: '1px solid #d1d5db',
+    borderRadius: '8px',
+    background: '#fff',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    textAlign: 'center'
+  },
+  selectionCardActive: {
+    border: '2px solid #e27431',
+    background: '#fef3f2',
+    boxShadow: '0 4px 6px rgba(226, 116, 49, 0.1)'
+  },
+  selectionCardValue: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: '4px'
+  },
+  selectionCardLabel: {
+    fontSize: '14px',
+    color: '#6b7280'
+  },
+  selectionCardActiveValue: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    color: '#e27431',
+    marginBottom: '4px'
+  },
+  selectionCardActiveLabel: {
+    fontSize: '14px',
+    color: '#e27431'
+  },
+  
+  // Slider style
+  sliderContainer: {
+    marginBottom: '24px'
+  },
+  sliderLabel: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: '8px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  slider: {
+    width: '100%',
+    height: '6px',
+    borderRadius: '3px',
+    background: '#e5e7eb',
+    outline: 'none',
+    appearance: 'none'
+  },
+  sliderThumb: {
+    width: '20px',
+    height: '20px',
+    borderRadius: '50%',
+    background: '#e27431',
+    cursor: 'pointer',
+    border: '2px solid #fff',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  
+  // Output values style
+  outputContainer: {
+    background: '#f8fafc',
+    padding: '24px',
+    borderRadius: '12px',
+    border: '1px solid #e5e7eb',
+    marginTop: '24px'
+  },
+  outputLabel: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: '8px'
+  },
+  outputValue: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+    color: '#1f2937',
+    textAlign: 'right'
+  },
+  outputRange: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#6b7280',
+    textAlign: 'right'
+  },
+  
   // Styles pour le devis PDF
   devisContainer: { maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'Arial, sans-serif', backgroundColor: '#fff' },
   devisHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '30px', borderBottom: '2px solid #e27431', paddingBottom: '20px' },
@@ -171,15 +440,27 @@ export default function PriceGeneratorPage() {
 
   if (!ok) {
     return (
-      <div style={{ ...styles.wrap, maxWidth: 420 }}>
-        <div style={styles.card}>
-          <h1 style={styles.h1}>Accès privé</h1>
-          <p>Cette page est réservée. Entrez le mot de passe.</p>
-          <input style={styles.input} type="password" placeholder="Mot de passe"
-            value={tryPwd} onChange={(e) => setTryPwd(e.target.value)} />
-          <div style={{ marginTop: 12 }}>
-            <button style={styles.btn} onClick={check}>Entrer</button>
+      <div style={styles.loginContainer}>
+        <div style={styles.loginCard}>
+          <div style={styles.loginLogo}>
+            <div style={styles.loginLogoText}>
+              snd<span style={{color: '#e27431'}}>●</span>rush
+            </div>
           </div>
+          <h1 style={styles.loginTitle}>Accès privé</h1>
+          <p style={{textAlign: 'center', color: '#6b7280', marginBottom: '24px'}}>
+            Cette page est réservée. Entrez le mot de passe.
+          </p>
+          <input 
+            style={styles.loginInput} 
+            type="password" 
+            placeholder="Mot de passe"
+            value={tryPwd} 
+            onChange={(e) => setTryPwd(e.target.value)} 
+          />
+          <button style={styles.loginButton} onClick={check}>
+            Se connecter
+          </button>
         </div>
       </div>
     );
@@ -250,13 +531,51 @@ ${notes ? `Notes : ${notes}` : ''}`;
           </label>
         </div>
         <div style={styles.row}>
-          <label>Console de mixage
-            <select style={styles.select} value={consoleType} onChange={(e) => setConsoleType(e.target.value as any)}>
-              <option value="PROMIX8">HPA Promix 8 (+{PRICING.PROMIX8}€)</option>
-              <option value="PROMIX16">HPA Promix 16 (+{PRICING.PROMIX8 + PRICING.PROMIX16_UPGRADE}€)</option>
-              <option value="NONE">Aucune</option>
-            </select>
-          </label>
+          <label>Console de mixage</label>
+          <div style={styles.selectionCards}>
+            <div 
+              style={{
+                ...styles.selectionCard,
+                ...(consoleType === 'NONE' ? styles.selectionCardActive : {})
+              }}
+              onClick={() => setConsoleType('NONE')}
+            >
+              <div style={consoleType === 'NONE' ? styles.selectionCardActiveValue : styles.selectionCardValue}>
+                Aucune
+              </div>
+              <div style={consoleType === 'NONE' ? styles.selectionCardActiveLabel : styles.selectionCardLabel}>
+                0 €
+              </div>
+            </div>
+            <div 
+              style={{
+                ...styles.selectionCard,
+                ...(consoleType === 'PROMIX8' ? styles.selectionCardActive : {})
+              }}
+              onClick={() => setConsoleType('PROMIX8')}
+            >
+              <div style={consoleType === 'PROMIX8' ? styles.selectionCardActiveValue : styles.selectionCardValue}>
+                Promix 8
+              </div>
+              <div style={consoleType === 'PROMIX8' ? styles.selectionCardActiveLabel : styles.selectionCardLabel}>
+                +{PRICING.PROMIX8}€
+              </div>
+            </div>
+            <div 
+              style={{
+                ...styles.selectionCard,
+                ...(consoleType === 'PROMIX16' ? styles.selectionCardActive : {})
+              }}
+              onClick={() => setConsoleType('PROMIX16')}
+            >
+              <div style={consoleType === 'PROMIX16' ? styles.selectionCardActiveValue : styles.selectionCardValue}>
+                Promix 16
+              </div>
+              <div style={consoleType === 'PROMIX16' ? styles.selectionCardActiveLabel : styles.selectionCardLabel}>
+                +{PRICING.PROMIX8 + PRICING.PROMIX16_UPGRADE}€
+              </div>
+            </div>
+          </div>
           <label>Durée (jours)
             <input style={styles.input} type="number" min={1} value={duration}
               onChange={(e) => setDuration(parseInt(e.target.value || '1'))} />
@@ -510,8 +829,20 @@ ${notes ? `Notes : ${notes}` : ''}`;
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8 }}>
+      {/* RÉSULTATS */}
+      <div style={styles.outputContainer}>
+        <div style={styles.outputLabel}>Total TTC</div>
+        <div style={styles.outputValue}>{total.toFixed(2)} €</div>
+        {urgent && (
+          <div style={styles.hint}>
+            ⚠️ Majoration urgence +20% appliquée
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: 12, marginTop: '24px' }}>
         <button style={styles.btn} onClick={generatePDF}>Générer le devis PDF</button>
+        <button style={styles.ghost} onClick={() => window.print()}>Imprimer</button>
       </div>
 
       <div style={{ ...styles.card, marginTop: 20 }}>
