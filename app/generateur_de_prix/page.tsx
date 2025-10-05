@@ -6,7 +6,9 @@ type Zone = 'PARIS' | 'PETITE_COURONNE' | 'GRANDE_COURONNE' | 'RETRAIT';
 
 const PRICING = {
   // Matériel TTC (par jour)
-  ENCEINTE: 70,
+  ENCEINTE_AS108: 70,   // AS108 - Entrée de gamme pro
+  ENCEINTE_AS115: 80,    // AS115 - Milieu de gamme équilibré
+  ENCEINTE_FBT: 90,      // FBT X-Lite 115A - Premium fiable
   PROMIX8: 48,
   PROMIX16_UPGRADE: 50,
   CAISSON: 100,
@@ -369,7 +371,9 @@ export default function PriceGeneratorPage() {
   const [tryPwd, setTryPwd] = useState('');
   
   // Form state – Sono
-  const [nbEnceintes, setNbEnceintes] = useState(0);
+  const [nbEnceintesAS108, setNbEnceintesAS108] = useState(0);
+  const [nbEnceintesAS115, setNbEnceintesAS115] = useState(0);
+  const [nbEnceintesFBT, setNbEnceintesFBT] = useState(0);
   const [nbCaissons, setNbCaissons] = useState(0);
   const [consoleType, setConsoleType] = useState<'NONE' | 'PROMIX8' | 'PROMIX16'>('NONE');
   const [micFil, setMicFil] = useState(0);
@@ -412,7 +416,9 @@ export default function PriceGeneratorPage() {
   const baseMateriel = useMemo(() => {
     let total = 0;
     // Sono (par jour)
-    total += nbEnceintes * PRICING.ENCEINTE;
+    total += nbEnceintesAS108 * PRICING.ENCEINTE_AS108;
+    total += nbEnceintesAS115 * PRICING.ENCEINTE_AS115;
+    total += nbEnceintesFBT * PRICING.ENCEINTE_FBT;
     total += nbCaissons * PRICING.CAISSON;
     if (consoleType === 'PROMIX8') total += PRICING.PROMIX8;
     if (consoleType === 'PROMIX16') total += PRICING.PROMIX8 + PRICING.PROMIX16_UPGRADE;
@@ -422,8 +428,8 @@ export default function PriceGeneratorPage() {
     total += sparkularCount * PRICING.SPARKULAR_UNIT;
     total += lowFogCount * PRICING.LOWFOG_UNIT;
 
-    return total * duration;
-  }, [nbEnceintes, nbCaissons, consoleType, micFil, micSansFil, sparkularCount, lowFogCount, duration]);
+    return total * Math.max(duration, 1); // Minimum 1 jour pour afficher le prix
+  }, [nbEnceintesAS108, nbEnceintesAS115, nbEnceintesFBT, nbCaissons, consoleType, micFil, micSansFil, sparkularCount, lowFogCount, duration]);
 
   const transport = useMemo(() => deliveryPrice(zone), [zone]);
   const install = withInstallation ? PRICING.INSTALLATION : 0;
@@ -480,7 +486,9 @@ export default function PriceGeneratorPage() {
   const resumeWhatsApp =
 `SND Rush – Devis rapide
 Matériel :
-• Enceintes : ${nbEnceintes}
+• AS108 (70€) : ${nbEnceintesAS108}
+• AS115 (80€) : ${nbEnceintesAS115}
+• FBT X-Lite 115A (90€) : ${nbEnceintesFBT}
 • Caissons : ${nbCaissons}
 • Console : ${consoleType === 'NONE' ? 'Aucune' : consoleType === 'PROMIX8' ? 'HPA Promix 8' : 'HPA Promix 16'}
 • Micros filaires : ${micFil}
@@ -525,9 +533,19 @@ ${notes ? `Notes : ${notes}` : ''}`;
       <div style={styles.card}>
         <h2 style={styles.h2}>Matériel – Son</h2>
         <div style={styles.row}>
-          <label>Nombre d'enceintes
-            <input style={styles.input} type="number" min={0} value={nbEnceintes}
-              onChange={(e) => setNbEnceintes(parseInt(e.target.value || '0'))} />
+          <label>AS108 (70€) - Entrée de gamme pro
+            <input style={styles.input} type="number" min={0} value={nbEnceintesAS108}
+              onChange={(e) => setNbEnceintesAS108(parseInt(e.target.value || '0'))} />
+          </label>
+          <label>AS115 (80€) - Milieu de gamme équilibré
+            <input style={styles.input} type="number" min={0} value={nbEnceintesAS115}
+              onChange={(e) => setNbEnceintesAS115(parseInt(e.target.value || '0'))} />
+          </label>
+        </div>
+        <div style={styles.row}>
+          <label>FBT X-Lite 115A (90€) - Premium fiable
+            <input style={styles.input} type="number" min={0} value={nbEnceintesFBT}
+              onChange={(e) => setNbEnceintesFBT(parseInt(e.target.value || '0'))} />
           </label>
           <label>Nombre de caissons
             <input style={styles.input} type="number" min={0} value={nbCaissons}
@@ -735,8 +753,10 @@ ${notes ? `Notes : ${notes}` : ''}`;
               {/* Matériel sono */}
               <tr style={styles.devisTableRow}>
                 <td style={styles.devisTableCell}>
-                  <strong>Pack sono ({duration} jour{duration > 1 ? 's' : ''})</strong><br/>
-                  {nbEnceintes} enceinte{nbEnceintes > 1 ? 's' : ''} Mac Mah AS108<br/>
+                  <strong>Pack sono ({Math.max(duration, 1)} jour{Math.max(duration, 1) > 1 ? 's' : ''})</strong><br/>
+                  {nbEnceintesAS108 > 0 && `${nbEnceintesAS108} enceinte${nbEnceintesAS108 > 1 ? 's' : ''} AS108 (70€)`}<br/>
+                  {nbEnceintesAS115 > 0 && `${nbEnceintesAS115} enceinte${nbEnceintesAS115 > 1 ? 's' : ''} AS115 (80€)`}<br/>
+                  {nbEnceintesFBT > 0 && `${nbEnceintesFBT} enceinte${nbEnceintesFBT > 1 ? 's' : ''} FBT X-Lite 115A (90€)`}<br/>
                   {nbCaissons > 0 && `${nbCaissons} caisson${nbCaissons > 1 ? 's' : ''} de basse`}<br/>
                   {consoleType === 'PROMIX8' && 'Console de mixage HPA Promix 8'}<br/>
                   {consoleType === 'PROMIX16' && 'Console de mixage HPA Promix 16'}<br/>
@@ -753,7 +773,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
               {(sparkularCount > 0 || lowFogCount > 0) && (
                 <tr style={styles.devisTableRow}>
                   <td style={styles.devisTableCell}>
-                    <strong>Effets spéciaux ({duration} jour{duration > 1 ? 's' : ''})</strong><br/>
+                    <strong>Effets spéciaux ({Math.max(duration, 1)} jour{Math.max(duration, 1) > 1 ? 's' : ''})</strong><br/>
                     {sparkularCount > 0 && `${sparkularCount} machine${sparkularCount > 1 ? 's' : ''} à étincelles (Sparkular)`}<br/>
                     {lowFogCount > 0 && `${lowFogCount} machine${lowFogCount > 1 ? 's' : ''} fumée lourde`}<br/>
                     <em>Fournis via partenaires techniques certifiés</em>
