@@ -477,6 +477,23 @@ export default function PriceGeneratorPage() {
     setCustomLines(customLines.filter(line => line.id !== id));
   };
 
+  // Tous les hooks doivent être appelés avant le return conditionnel
+  const customLinesTotal = useMemo(() => {
+    return customLines.reduce((sum, line) => sum + line.price, 0);
+  }, [customLines]);
+
+  const subtotal = baseMateriel + transport + install + techCost + customLinesTotal;
+  const total = Math.round(subtotal * (urgent ? 1.2 : 1));
+
+  const effectsLine =
+    (sparkularCount > 0 || lowFogCount > 0)
+      ? `• Effets spéciaux : ${sparkularCount} Sparkular, ${lowFogCount} fumée lourde (via partenaires)`
+      : '';
+
+  const customLinesText = customLines.length > 0 
+    ? customLines.map(line => `• ${line.designation} : ${line.price.toFixed(2)}€`).join('\n') + '\n'
+    : '';
+
   if (!ok) {
     return (
       <div style={styles.loginContainer}>
@@ -504,22 +521,6 @@ export default function PriceGeneratorPage() {
       </div>
     );
   }
-
-  const customLinesTotal = useMemo(() => {
-    return customLines.reduce((sum, line) => sum + line.price, 0);
-  }, [customLines]);
-
-  const subtotal = baseMateriel + transport + install + techCost + customLinesTotal;
-  const total = Math.round(subtotal * (urgent ? 1.2 : 1));
-
-  const effectsLine =
-    (sparkularCount > 0 || lowFogCount > 0)
-      ? `• Effets spéciaux : ${sparkularCount} Sparkular, ${lowFogCount} fumée lourde (via partenaires)`
-      : '';
-
-  const customLinesText = customLines.length > 0 
-    ? customLines.map(line => `• ${line.designation} : ${line.price.toFixed(2)}€`).join('\n') + '\n'
-    : '';
 
   const resumeWhatsApp =
 `SND Rush – Devis rapide
