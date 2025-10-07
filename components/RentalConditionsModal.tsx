@@ -14,411 +14,245 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
 
   const texts = {
     fr: {
-      title: 'Conditions de location',
-      normalTab: 'Location normale',
-      urgentTab: 'Location urgente',
+      title: 'Conditions Générales de Vente',
+      normalTab: 'Conditions générales',
+      urgentTab: 'Service express / Urgence',
       close: 'Fermer',
       normalConditions: {
-        title: 'Conditions de location normale',
-        subtitle: 'Réservation à l\'avance',
+        title: 'CONDITIONS GÉNÉRALES DE VENTE',
+        subtitle: 'En vigueur au 07/10/2025',
         conditions: [
           {
-            title: 'Disponibilité des produits',
+            title: 'ARTICLE 1 - Champ d\'application',
             items: [
-              'Le stock présenté sur notre site internet est indicatif et non garanti',
-              'Nous nous efforçons de maintenir des informations à jour, mais des erreurs peuvent survenir',
-              'Après validation de votre commande, nous vous confirmons sa disponibilité dans les 48 heures',
-              'Si un produit est hors stock, nous vous proposerons une alternative ou procéderons à l\'annulation'
+              'Les présentes CGV s\'appliquent à tout achat de services de location, livraison et installation express d\'équipements audio',
+              'Guy Location Events propose un service clé en main pour tous vos événements',
+              'Ces CGV prévaudront sur tout autre document',
+              'Prestataire : guy location events, SIRET 799596176000217, 78 avenue des champs élysées 75008 Paris'
             ]
           },
           {
-            title: 'Conditions pour la location',
+            title: 'ARTICLE 2 - Prix',
             items: [
-              'Documents requis : Une pièce d\'identité valide et un justificatif de domicile de moins de 2 mois sont obligatoires',
-              'Sans ces documents, la location sera refusée',
-              'Garantie financière : Une caution peut être demandée, réglée par empreinte bancaire',
-              'Matériel de haute valeur : Pour une valeur supérieure à 2 500 €, deux pièces d\'identité sont exigées'
+              'Les prix sont exprimés en Euros, HT et TTC',
+              'Les tarifs tiennent compte d\'éventuelles réductions',
+              'Les frais de traitement, transport et livraison sont facturés en supplément',
+              'Une facture est établie et remise au Client lors de la fourniture des Services',
+              'Les devis sont valables 7 jours après leur établissement'
             ]
           },
           {
-            title: 'Retour et restitution',
+            title: 'ARTICLE 3 - Commandes',
             items: [
-              'Si le matériel revient en bon état la caution est restituée après vérification (95 % des cas)',
-              'En cas de dommages une expertise sous 48 heures déterminera les réparations nécessaires',
-              'Vous pouvez confier les réparations à snd rush ou choisir un prestataire sous 5 jours',
-              'Dans le cas d\'une attente de 5 jours pour les réparations, le matériel vous sera facturé sur 5 jours de location'
+              '1. Demande par e-mail/téléphone précisant : matériel, date, lieu, durée, services',
+              '2. Devis personnalisé envoyé (validité 7 jours)',
+              '3. Commande ferme après signature du devis + acompte de 30%',
+              '4. Solde (70%) à régler le jour de la prestation ou 24h avant',
+              '5. Livraison, installation et désinstallation assurées par nos équipes',
+              '6. Facturation transmise après la prestation',
+              'Toute réclamation sous 48h après la livraison'
             ]
           },
           {
-            title: 'Durée et retard',
+            title: 'ARTICLE 4 - Conditions de paiement',
             items: [
-              'Les durées de location sont fixées dans le contrat',
-              'Tout retard de restitution sera facturé au tarif d\'une journée supplémentaire par jour de retard'
+              'Acompte de 30% à la commande (signature du devis)',
+              'Solde de 70% à la livraison ou le jour de la prestation',
+              'Paiement par carte bancaire sécurisée',
+              'En cas de retard de paiement : pénalités au taux légal',
+              'Le Prestataire se réserve le droit de suspendre la fourniture en cas de non-paiement'
             ]
           },
           {
-            title: 'État des produits',
+            title: 'ARTICLE 5 - Fourniture des Prestations',
             items: [
-              'Si le déplacement était dû à une mauvaise installation ou utilisation du matériel, il sera facturé 90,00€ TTC'
+              'Services : location, livraison, installation, assistance technique',
+              'Délai standard : 3 à 7 jours ouvrés après validation et acompte',
+              'Interventions du lundi au samedi entre 8h et 20h',
+              'Zone : Paris, Île-de-France et zones limitrophes',
+              'Le client signe un bon de livraison attestant la conformité',
+              'Reprise du matériel à la date prévue (dégradation = facturation)'
             ]
           },
           {
-            title: 'Réservation et délais',
+            title: 'ARTICLE 6 - Droit de rétractation',
             items: [
-              'Réservation possible jusqu\'à plusieurs mois à l\'avance',
-              'Confirmation automatique par email'
+              'Compte tenu de la nature des Services fournis, les commandes ne bénéficient pas du droit de rétractation',
+              'Le contrat est conclu de façon définitive dès la passation de la commande'
             ]
           },
           {
-            title: 'Livraison et installation',
+            title: 'ARTICLE 7 - Responsabilité - Garanties',
             items: [
-              'Livraison + reprise : 80€ Paris intramuros, 120€ petite couronne, 158€ grande couronne',
-              'Livraison OU reprise : 50€ Paris intramuros, 60€ petite couronne, 79€ grande couronne',
-              'Installation et technicien en option'
+              'Garantie de conformité et vice caché selon dispositions légales',
+              'Réclamation par écrit à contact@guylocationevents.com',
+              'Remboursement, réparation ou remplacement sous 15 jours',
+              'Garantie non applicable en cas de mauvaise utilisation',
+              'Responsabilité limitée au montant total de la prestation'
+            ]
+          },
+          {
+            title: 'ARTICLE 8 - Données personnelles',
+            items: [
+              'Données collectées : nom, prénom, adresse, email, téléphone, paiement',
+              'Conservation : 5 ans',
+              'Droits : accès, modification, suppression via contact@guylocationevents.com',
+              'Traitement dans un délai de 30 jours',
+              'Destinataires : prestataires de paiement et techniciens (dans la limite nécessaire)'
+            ]
+          },
+          {
+            title: 'ARTICLE 9 - Propriété intellectuelle',
+            items: [
+              'Le contenu du site www.sndrush.com est la propriété du Vendeur',
+              'Toute reproduction est strictement interdite'
+            ]
+          },
+          {
+            title: 'ARTICLE 10 - Droit applicable',
+            items: [
+              'CGV régies par le droit français',
+              'Rédigées en langue française uniquement'
+            ]
+          },
+          {
+            title: 'ARTICLE 11 - Litiges',
+            items: [
+              'Réclamation à contact@guylocationevents.com',
+              'Médiation : CNPM - MEDIATION DE LA CONSOMMATION',
+              'Adresse : 3 rue J. Constant Milleret - 42000 SAINT-ETIENNE',
+              'Email : contact-admin@cnpm-mediation-consommation.eu',
+              'Plateforme RLL : https://webgate.ec.europa.eu/odr/'
             ]
           }
         ]
       },
       urgentConditions: {
-        title: 'Conditions de location urgente',
-        subtitle: 'Intervention express (moins de 2h)',
-        conditions: [
+        title: 'SERVICE EXPRESS / URGENCE',
+        subtitle: 'Intervention rapide - Délai 2 à 6 heures',
+        sections: [
           {
-            title: 'Disponibilité et délais',
-            items: [
-              'Service disponible 7j/7 de 8h à 2h du matin',
-              'Intervention en 30 à 60 minutes maximum',
-              'Possibilité d\'intervention sous 30 minutes avec supplément'
+            title: '1. DÉLAIS ET DISPONIBILITÉ',
+            content: [
+              '⚡ Service express disponible selon disponibilité du matériel et du personnel',
+              '⏱️ Livraison et installation possibles dans un délai de 2 à 6 heures après confirmation',
+              '📞 Contacter l\'équipe pour confirmer la faisabilité avant le paiement',
+              '🕒 Service assuré du lundi au samedi selon disponibilité',
+              '📧 Confirmation immédiate par email ou SMS dès réception du paiement'
             ]
           },
           {
-            title: 'Tarification express',
-            items: [
-              'Supplément urgence de 20% sur le tarif normal',
-              'Paiement intégral à la livraison',
-              'Tarif dégressif selon la durée de location'
+            title: '2. TARIFICATION EXPRESS',
+            content: [
+              '💰 Supplément urgence : +20% sur le tarif normal',
+              '⚡ Majoration urgence appliquée si délai < 48h',
+              '💳 Paiement intégral exigé avant la livraison pour les commandes express',
+              '📋 Frais supplémentaires mentionnés sur le devis',
+              '✅ Devis envoyé dans l\'heure suivant la demande pour les urgences'
             ]
           },
           {
-            title: 'Caution et garantie',
-            items: [
-              'Empreinte bancaire obligatoire ',
-              'Montant dépend du type de pack réservé',
-              'Libération selon les délais bancaires, généralement sous 7 jours maximum'
+            title: '3. COMMANDE EXPRESS',
+            content: [
+              '📝 Demande à préciser : matériel, date, lieu, durée, services souhaités',
+              '⏰ Validation immédiate requise après réception du devis',
+              '💳 Paiement complet peut être exigé avant la livraison',
+              '✅ Confirmation de commande envoyée par e-mail ou SMS',
+              '🚚 Livraison et installation le jour même possibles (selon disponibilité)'
             ]
           },
           {
-            title: 'Annulation urgente',
-            items: [
-              'Aucune annulation possible une fois la livraison déclenchée',
-              'Frais de déplacement facturés en cas d\'annulation tardive',
-              'Modifications limitées selon les contraintes logistiques'
+            title: '4. ANNULATION ET MODIFICATION',
+            content: [
+              '⚠️ Modification du lieu possible 48h avant (sous réserve d\'accord écrit)',
+              '❌ Annulation : si retard > 48h non justifié, remboursement intégral sous 14 jours',
+              '⏱️ Service express : retard > 2h = droit à annulation et remboursement',
+              '🚫 Aucune annulation en cas de force majeure ou erreur du client',
+              '📧 Demande d\'annulation par email ou courrier recommandé'
+            ]
+          },
+          {
+            title: '5. RÉCLAMATIONS',
+            content: [
+              '⏰ Délai : 48 heures maximum après la prestation',
+              '📧 Par écrit à contact@guylocationevents.com (photos justificatives appréciées)',
+              '📬 Ou par courrier recommandé : 78 avenue des Champs Elysée 75008 Paris',
+              '✅ Accusé de réception sous 5 jours ouvrés',
+              '🔧 Réponse ou solution sous 15 jours ouvrés maximum'
+            ]
+          },
+          {
+            title: '6. GARANTIES ET RESPONSABILITÉ',
+            content: [
+              '✅ Matériel garanti en bon état de fonctionnement à la livraison',
+              '🔧 Réparation, remplacement ou remboursement partiel sous 15 jours',
+              '❌ Garantie non applicable si mauvaise utilisation, branchements non conformes',
+              '⚠️ Responsabilité limitée au montant total de la prestation',
+              '🚫 Aucune responsabilité pour dommages indirects (perte de bénéfice, etc.)'
             ]
           }
-        ]
-      },
-      reservationDeadlines: {
-        title: 'Réservation et délais',
-        items: [
-          'Réservation possible jusqu\'à plusieurs mois à l\'avance',
-          'Confirmation automatique par email'
         ]
       }
     },
     en: {
-      title: 'Rental Conditions',
-      normalTab: 'Normal rental',
-      urgentTab: 'Urgent rental',
+      title: 'Terms and Conditions',
+      normalTab: 'General conditions',
+      urgentTab: 'Express service / Urgent',
       close: 'Close',
       normalConditions: {
-        title: 'Normal rental conditions',
-        subtitle: 'Advance booking',
+        title: 'GENERAL TERMS AND CONDITIONS',
+        subtitle: 'Effective as of 07/10/2025',
         conditions: [
           {
-            title: 'Product availability',
+            title: 'ARTICLE 1 - Scope of application',
             items: [
-              'Stock shown on our website is indicative and not guaranteed',
-              'We strive to maintain up-to-date information, but errors may occur',
-              'After validating your order, we confirm availability within 48 hours',
-              'If a product is out of stock, we will offer an alternative or proceed with cancellation'
+              'These T&C apply to all purchases of rental, delivery and express installation services',
+              'Guy Location Events offers a turnkey service for all your events',
+              'These T&C will prevail over any other document',
+              'Provider: guy location events, SIRET 799596176000217, 78 avenue des champs élysées 75008 Paris'
             ]
           },
           {
-            title: 'Rental conditions',
+            title: 'ARTICLE 2 - Prices',
             items: [
-              'Required documents: Valid ID and proof of address less than 2 months old are mandatory',
-              'Without these documents, rental will be refused',
-              'Financial guarantee: A deposit may be required, paid by bank imprint',
-              'High-value equipment: For values exceeding €2,500, two pieces of ID are required'
-            ]
-          },
-          {
-            title: 'Return and restitution',
-            items: [
-              'If equipment returns in good condition, deposit is refunded after verification (95% of cases)',
-              'In case of damage, expert assessment within 48 hours will determine necessary repairs',
-              'You can entrust repairs to snd rush or choose a provider within 5 days',
-              'In case of 5-day wait for repairs, equipment will be charged for 5 days of rental'
-            ]
-          },
-          {
-            title: 'Duration and delay',
-            items: [
-              'Rental durations are fixed in the contract',
-              'Any delay in return will be charged at the rate of one additional day per day of delay'
-            ]
-          },
-          {
-            title: 'Product condition',
-            items: [
-              'If travel was due to poor installation or equipment misuse, it will be charged €90.00 including tax'
-            ]
-          },
-          {
-            title: 'Booking and deadlines',
-            items: [
-              'Booking possible up to several months in advance',
-              'Automatic confirmation by email'
-            ]
-          },
-          {
-            title: 'Delivery and installation',
-            items: [
-              'Delivery €40 central Paris, €80 Paris region',
-              'Installation and technician optional'
+              'Prices are expressed in Euros, excluding tax and including tax',
+              'Rates take into account any discounts',
+              'Processing, transport and delivery fees are charged extra',
+              'An invoice is issued and delivered to the Customer',
+              'Quotes are valid for 7 days'
             ]
           }
         ]
       },
       urgentConditions: {
-        title: 'Urgent rental conditions',
-        subtitle: 'Express intervention (less than 2h)',
-        conditions: [
+        title: 'EXPRESS SERVICE / URGENT',
+        subtitle: 'Fast intervention - 2 to 6 hours delay',
+        sections: [
           {
-            title: 'Availability and deadlines',
-            items: [
-              'Service available 7 days a week from 8am to 2am',
-              'Intervention within 30 to 60 minutes maximum',
-              'Possible intervention under 30 minutes with supplement'
+            title: '1. DEADLINES AND AVAILABILITY',
+            content: [
+              '⚡ Express service available subject to equipment and personnel availability',
+              '⏱️ Delivery and installation possible within 2 to 6 hours',
+              '📞 Contact the team to confirm feasibility before payment',
+              '📧 Immediate confirmation by email or SMS'
             ]
           },
           {
-            title: 'Express pricing',
-            items: [
-              '20% urgency supplement on normal rate',
-              'Full payment upon delivery',
-              'Decreasing rate according to rental duration'
-            ]
-          },
-          {
-            title: 'Deposit and guarantee',
-            items: [
-              'Bank imprint required upon delivery',
-              'Amount depends on selected pack type',
-              'Release according to bank processing times, generally within 7 days maximum'
-            ]
-          },
-          {
-            title: 'Urgent cancellation',
-            items: [
-              'No cancellation possible once delivery is triggered',
-              'Travel costs charged in case of late cancellation',
-              'Limited modifications according to logistical constraints'
+            title: '2. EXPRESS PRICING',
+            content: [
+              '💰 Urgency supplement: +20% on normal rate',
+              '💳 Full payment required before delivery',
+              '📋 Additional fees mentioned in the quote'
             ]
           }
         ]
-      },
-      reservationDeadlines: {
-        title: 'Booking and deadlines',
-        items: [
-          'Booking possible up to several months in advance',
-          'Automatic confirmation by email'
-        ]
       }
-    }
-  };
-
-  const conditions = {
-    fr: {
-      title: 'Conditions de location',
-      sections: [
-        {
-          title: 'Matériel et qualité',
-          items: [
-            'Matériel professionnel testé et certifié',
-            'Équipements récents et entretenus régulièrement',
-            'Garantie de fonctionnement pendant toute la durée de location',
-            'Remplacement immédiat en cas de dysfonctionnement'
-          ]
-        },
-        {
-          title: 'Livraison et installation',
-          items: [
-            'Livraison + reprise : 80€ Paris intramuros, 120€ petite couronne, 158€ grande couronne',
-            'Livraison OU reprise : 50€ Paris intramuros, 60€ petite couronne, 79€ grande couronne',
-            'Installation et technicien en option',
-            'Respect des créneaux horaires convenus',
-            'Enlèvement du matériel à la fin de l\'événement'
-          ]
-        },
-        {
-          title: 'Caution',
-          items: [
-            'Empreinte bancaire équivalente à 3x le prix de location',
-            'Aucun prélèvement effectué si matériel rendu en bon état',
-            'Libération selon les délais bancaires, généralement sous 7 jours maximum',
-            'Caution retenue uniquement en cas de dommage ou perte'
-          ]
-        },
-        {
-          title: 'Annulation et modification',
-          items: [
-            'Politique d\'annulation standard : Plus de 7 jours avant la location 10% de frais d\'annulation',
-            'De 3 à 6 jours avant 30% de frais d\'annulation',
-            'De 24 à 48h avant 70% de frais d\'annulation',
-            'Moins de 24h ou le jour-même 100% non remboursable',
-            'Pour les livraisons express : aucune annulation possible une fois la livraison déclenchée',
-            'Les modifications restent possibles selon disponibilité du matériel et contraintes logistiques'
-          ]
-        },
-        {
-          title: 'Responsabilité',
-          items: [
-            'Le locataire est responsable du matériel pendant la location',
-            'Utilisation conforme aux instructions fournies',
-            'Signalement immédiat de tout problème',
-            'Assurance responsabilité civile recommandée'
-          ]
-        }
-      ]
-    },
-    en: {
-      title: 'Rental Conditions',
-      sections: [
-        {
-          title: 'Equipment and quality',
-          items: [
-            'Professional equipment tested and certified',
-            'Recent equipment regularly maintained',
-            'Operating guarantee throughout the rental period',
-            'Immediate replacement in case of malfunction'
-          ]
-        },
-        {
-          title: 'Delivery and installation',
-          items: [
-            'Delivery + pickup: 80€ Paris intramuros, 120€ inner suburbs, 158€ outer suburbs',
-            'Delivery OR pickup: 50€ Paris intramuros, 60€ inner suburbs, 79€ outer suburbs',
-            'Express service available for urgent needs',
-            'Professional installation included',
-            'Equipment pickup at the end of the event'
-          ]
-        },
-        {
-          title: 'Deposit',
-          items: [
-            'Bank imprint equivalent to 3x the rental price',
-            'No charge if equipment returned in good condition',
-            'Release within 48 hours after return',
-            'Deposit retained only in case of damage or loss'
-          ]
-        },
-        {
-          title: 'Cancellation and modification',
-          items: [
-            'Free cancellation up to 72 hours before delivery',
-            'No cancellation possible for express deliveries once triggered',
-            'Modifications possible subject to availability',
-            'Late cancellation fee of €30 applies'
-          ]
-        },
-        {
-          title: 'Responsibility',
-          items: [
-            'Renter is responsible for equipment during rental',
-            'Use in accordance with provided instructions',
-            'Immediate reporting of any issues',
-            'Civil liability insurance recommended'
-          ]
-        }
-      ]
-    }
-  };
-
-  const urgent = {
-    fr: {
-      title: 'Conditions de location urgente',
-      sections: [
-        {
-          title: '1. DISPONIBILITÉ ET DÉLAIS',
-          content: [
-            'Paiement par carte bancaire obligatoire',
-            'Livraison et installation express incluses',
-            'Service client dédié 24h/7j'
-          ]
-        },
-        {
-          title: '2. TARIFICATION EXPRESS',
-          content: [
-            'Paiement intégral requis avant intervention'
-          ]
-        },
-        {
-          title: '3. CAUTION ET GARANTIE',
-          content: [
-            'Empreinte bancaire obligatoire',
-            'Montant dépend du type de pack réservé',
-            'Libération selon les délais bancaires, généralement sous 7 jours maximum'
-          ]
-        },
-        {
-          title: '4. ANNULATION URGENTE',
-          content: [
-            'Aucune annulation possible une fois la livraison déclenchée',
-            'Modifications limitées selon les contraintes logistiques'
-          ]
-        }
-      ]
-    },
-    en: {
-      title: 'Urgent rental conditions',
-      sections: [
-        {
-          title: '1. AVAILABILITY AND DEADLINES',
-          content: [
-            'Mandatory credit card payment',
-            'Express delivery and installation included',
-            'Dedicated 24/7 customer service'
-          ]
-        },
-        {
-          title: '2. EXPRESS PRICING',
-          content: [
-            'Full payment required before intervention'
-          ]
-        },
-        {
-          title: '3. DEPOSIT AND GUARANTEE',
-          content: [
-            'Bank imprint required upon delivery',
-            'Amount depends on selected pack type',
-            'Release according to bank processing times, generally within 7 days maximum'
-          ]
-        },
-        {
-          title: '4. URGENT CANCELLATION',
-          content: [
-            'No cancellation possible once delivery is triggered',
-            'Limited modifications according to logistical constraints'
-          ]
-        }
-      ]
     }
   };
 
   if (!isOpen) return null;
 
-  const currentConditions = activeTab === 'normal' ? texts[language].normalConditions : urgent[language];
+  const currentConditions = activeTab === 'normal' ? texts[language].normalConditions : texts[language].urgentConditions;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -462,42 +296,38 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
         <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-6">
           <div className="mb-6">
             <h3 className="text-xl font-bold text-black mb-2">{currentConditions.title}</h3>
-            {activeTab === 'normal' && <p className="text-gray-600">{texts[language].normalConditions.subtitle}</p>}
+            <p className="text-gray-600">{currentConditions.subtitle}</p>
           </div>
 
           <div className="space-y-8">
             {activeTab === 'normal' && 'conditions' in currentConditions
               ? (currentConditions.conditions as { title: string; items: string[] }[]).map((section, index) => (
                   <div key={index} className="bg-gray-50 rounded-xl p-6">
-                    <h4 className="text-lg font-semibold text-black mb-4 flex items-center">
-                      <div className="w-6 h-6 bg-[#F2431E] rounded-full flex items-center justify-center mr-3">
+                    <h4 className="text-lg font-semibold text-black mb-4 flex items-start">
+                      <div className="w-6 h-6 bg-[#F2431E] rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
                         <span className="text-white text-sm font-bold">{index + 1}</span>
                       </div>
-                      {section.title}
+                      <span>{section.title}</span>
                     </h4>
                     <ul className="space-y-2">
                       {section.items.map((item: string, itemIndex: number) => (
                         <li key={itemIndex} className="flex items-start">
                           <div className="w-2 h-2 bg-[#F2431E] rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                          <span className="text-gray-700">{item}</span>
+                          <span className="text-gray-700 text-sm">{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 ))
               : 'sections' in currentConditions && (currentConditions.sections as { title: string; content: string[] }[]).map((section, index) => (
-                  <div key={index} className="bg-gray-50 rounded-xl p-6">
-                    <h4 className="text-lg font-semibold text-black mb-4 flex items-center">
-                      <div className="w-6 h-6 bg-[#F2431E] rounded-full flex items-center justify-center mr-3">
-                        <span className="text-white text-sm font-bold">{index + 1}</span>
-                      </div>
-                      {section.title}
+                  <div key={index} className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6 border-l-4 border-[#F2431E]">
+                    <h4 className="text-lg font-bold text-black mb-4 flex items-start">
+                      <span className="text-[#F2431E] mr-2">{section.title}</span>
                     </h4>
-                    <ul className="space-y-2">
+                    <ul className="space-y-3">
                       {section.content.map((item: string, itemIndex: number) => (
                         <li key={itemIndex} className="flex items-start">
-                          <div className="w-2 h-2 bg-[#F2431E] rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                          <span className="text-gray-700">{item}</span>
+                          <span className="text-gray-800 text-sm leading-relaxed">{item}</span>
                         </li>
                       ))}
                     </ul>
@@ -507,7 +337,7 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
 
           {/* Contact info */}
           <div className="mt-8 p-6 bg-black rounded-xl">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
                 <h4 className="text-white font-semibold mb-2">Des questions ?</h4>
                 <p className="text-gray-300 text-sm">Notre équipe est disponible 7j/7 pour vous conseiller</p>
