@@ -408,6 +408,9 @@ export default function PriceGeneratorPage() {
   // Paramètres de caution
   const [cautionAmount, setCautionAmount] = useState(0);
 
+  // Mode document : devis ou facture
+  const [documentMode, setDocumentMode] = useState<'devis' | 'facture'>('devis');
+
   // Lignes personnalisées
   const [customLines, setCustomLines] = useState<Array<{id: string, designation: string, price: number}>>([]);
   const [newDesignation, setNewDesignation] = useState('');
@@ -481,7 +484,7 @@ export default function PriceGeneratorPage() {
     setCustomLines(customLines.filter(line => line.id !== id));
   };
 
-  // Fonction d'envoi du devis
+  // Fonction d'envoi du document (devis ou facture)
   const sendQuote = async () => {
     if (!clientFirstName || !clientLastName || !clientEmail) {
       alert('Veuillez remplir au minimum le prénom, nom et email');
@@ -489,15 +492,17 @@ export default function PriceGeneratorPage() {
     }
 
     try {
-      console.log('🔄 Début de l\'envoi du devis...');
+      const docType = documentMode === 'devis' ? 'devis' : 'facture';
+      console.log(`🔄 Début de l'envoi du ${docType}...`);
       
       // Générer le PDF d'abord
       console.log('📄 Génération du PDF...');
       const pdfBlob = await generatePDFBlob();
       console.log('✅ PDF généré:', pdfBlob.size, 'bytes');
       
-      // Préparer les données du devis
+      // Préparer les données du document
       const quoteData = {
+        documentType: documentMode,
         client: {
           firstName: clientFirstName,
           lastName: clientLastName,
@@ -550,8 +555,12 @@ export default function PriceGeneratorPage() {
         const result = await response.json();
         console.log('✅ Succès:', result);
         
-        // Notification de succès simple
-        alert(`✅ Devis envoyé avec succès !\n\n📧 Email envoyé à : ${clientEmail}\n🔗 Lien de signature : ${result.signatureUrl}`);
+        // Notification de succès adaptée au type de document
+        if (documentMode === 'devis') {
+          alert(`✅ Devis envoyé avec succès !\n\n📧 Email envoyé à : ${clientEmail}\n🔗 Lien de signature : ${result.signatureUrl}`);
+        } else {
+          alert(`✅ Facture envoyée avec succès !\n\n📧 Email envoyé à : ${clientEmail}`);
+        }
         
         // Reset automatique de tout le formulaire
         setNbEnceintesAS108(0);
@@ -573,6 +582,7 @@ export default function PriceGeneratorPage() {
         setPostal('');
         setNotes('');
         setCustomLines([]);
+        setDocumentMode('devis'); // Retour en mode devis par défaut
         console.log('🔄 Formulaire automatiquement réinitialisé');
       } else {
         const errorText = await response.text();
@@ -581,7 +591,7 @@ export default function PriceGeneratorPage() {
       }
     } catch (error) {
       console.error('Erreur:', error);
-      alert('❌ Erreur lors de l\'envoi du devis. Veuillez réessayer.');
+      alert(`❌ Erreur lors de l'envoi ${documentMode === 'devis' ? 'du devis' : 'de la facture'}. Veuillez réessayer.`);
     }
   };
 
@@ -617,7 +627,7 @@ export default function PriceGeneratorPage() {
 
     const opt = {
       margin: 10,
-      filename: `devis-snd-rush-${clientLastName}-${quoteId}.pdf`,
+      filename: `${documentMode}-snd-rush-${clientLastName}-${quoteId}.pdf`,
       image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
@@ -710,7 +720,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
     try {
       const html2pdf = (await import('html2pdf.js')).default;
       html2pdf().from(element).set({
-        filename: `devis_sndrush_${Date.now()}.pdf`,
+        filename: `${documentMode}_sndrush_${Date.now()}.pdf`,
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       }).save();
@@ -726,6 +736,40 @@ ${notes ? `Notes : ${notes}` : ''}`;
   return (
     <div style={styles.wrap}>
       <h1 style={styles.h1}>Générateur de prix <span style={styles.badge}>Interne</span></h1>
+
+      {/* SÉLECTION MODE DOCUMENT */}
+      <div style={{...styles.card, textAlign: 'center'}}>
+        <div style={styles.selectionCards}>
+          <div 
+            style={{
+              ...styles.selectionCard,
+              ...(documentMode === 'devis' ? styles.selectionCardActive : {})
+            }}
+            onClick={() => setDocumentMode('devis')}
+          >
+            <div style={documentMode === 'devis' ? styles.selectionCardActiveValue : styles.selectionCardValue}>
+              📄 Devis
+            </div>
+            <div style={documentMode === 'devis' ? styles.selectionCardActiveLabel : styles.selectionCardLabel}>
+              Estimation commerciale
+            </div>
+          </div>
+          <div 
+            style={{
+              ...styles.selectionCard,
+              ...(documentMode === 'facture' ? styles.selectionCardActive : {})
+            }}
+            onClick={() => setDocumentMode('facture')}
+          >
+            <div style={documentMode === 'facture' ? styles.selectionCardActiveValue : styles.selectionCardValue}>
+              🧾 Facture
+            </div>
+            <div style={documentMode === 'facture' ? styles.selectionCardActiveLabel : styles.selectionCardLabel}>
+              Document de paiement
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* ASSISTANT CONSEIL */}
       <AssistantConseil
@@ -937,7 +981,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
           <div />
         </div>
         
-        {/* Bouton d'envoi du devis */}
+        {/* Bouton d'envoi du document */}
         <div style={{marginTop: '20px', textAlign: 'center'}}>
           <button 
             style={{
@@ -951,7 +995,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
             disabled={!clientFirstName || !clientLastName || !clientEmail}
             onClick={sendQuote}
           >
-            📧 Envoyer le devis par email
+            📧 Envoyer {documentMode === 'devis' ? 'le devis' : 'la facture'} par email
           </button>
           {(!clientFirstName || !clientLastName || !clientEmail) && (
             <p style={{fontSize: '12px', color: '#ef4444', marginTop: '8px'}}>
@@ -1017,8 +1061,10 @@ ${notes ? `Notes : ${notes}` : ''}`;
             </div>
           </div>
 
-          {/* Titre du devis */}
-          <div style={styles.devisTitle}>Devis N°{Math.floor(Math.random() * 1000) + 1}</div>
+          {/* Titre du document */}
+          <div style={styles.devisTitle}>
+            {documentMode === 'devis' ? 'Devis' : 'Facture'} N°{Math.floor(Math.random() * 1000) + 1}
+          </div>
 
           {/* Informations client */}
           {clientName && (
@@ -1180,7 +1226,9 @@ ${notes ? `Notes : ${notes}` : ''}`;
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginTop: '24px' }}>
-        <button style={styles.btn} onClick={generatePDF}>Générer le devis PDF</button>
+        <button style={styles.btn} onClick={generatePDF}>
+          Générer {documentMode === 'devis' ? 'le devis' : 'la facture'} PDF
+        </button>
         <button style={styles.ghost} onClick={() => window.print()}>Imprimer</button>
       </div>
 
