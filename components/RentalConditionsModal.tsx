@@ -34,7 +34,7 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
           {
             title: 'ARTICLE 2 - Prix',
             items: [
-              'Les prix sont exprimés en Euros, HT et TTC',
+              'Les prix sont exprimés en TTC',
               'Les tarifs tiennent compte d\'éventuelles réductions',
               'Les frais de traitement, transport et livraison sont facturés en supplément',
               'Une facture est établie et remise au Client lors de la fourniture des Services',
@@ -129,15 +129,15 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
       },
       urgentConditions: {
         title: 'SERVICE EXPRESS / URGENCE',
-        subtitle: 'Intervention rapide - Délai 2 à 6 heures',
+        subtitle: 'Délai de 30min et jusqu\'à 2 heures (selon la zone)',
         sections: [
           {
             title: '1. DÉLAIS ET DISPONIBILITÉ',
             content: [
               '⚡ Service express disponible selon disponibilité du matériel et du personnel',
-              '⏱️ Livraison et installation possibles dans un délai de 2 à 6 heures après confirmation',
+              '⏱️ Livraison et installation possibles dans un délai de 30min à 2 heures après confirmation',
               '📞 Contacter l\'équipe pour confirmer la faisabilité avant le paiement',
-              '🕒 Service assuré du lundi au samedi selon disponibilité',
+              '🕒 Service assuré 24h/24 et 7j/7',
               '📧 Confirmation immédiate par email ou SMS dès réception du paiement'
             ]
           },
@@ -145,10 +145,10 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
             title: '2. TARIFICATION EXPRESS',
             content: [
               '💰 Supplément urgence : +20% sur le tarif normal',
-              '⚡ Majoration urgence appliquée si délai < 48h',
+              '⚡ Majoration urgence appliquée si délai < 24h',
               '💳 Paiement intégral exigé avant la livraison pour les commandes express',
               '📋 Frais supplémentaires mentionnés sur le devis',
-              '✅ Devis envoyé dans l\'heure suivant la demande pour les urgences'
+              '✅ Devis envoyé dans la minute suivant la demande pour les urgences'
             ]
           },
           {
@@ -164,11 +164,13 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
           {
             title: '4. ANNULATION ET MODIFICATION',
             content: [
-              '⚠️ Modification du lieu possible 48h avant (sous réserve d\'accord écrit)',
-              '❌ Annulation : si retard > 48h non justifié, remboursement intégral sous 14 jours',
-              '⏱️ Service express : retard > 2h = droit à annulation et remboursement',
-              '🚫 Aucune annulation en cas de force majeure ou erreur du client',
-              '📧 Demande d\'annulation par email ou courrier recommandé'
+              '🚫 Annulation par le client : Pour toute prestation réservée en urgence (moins de 24h avant la date prévue), aucune annulation ni remboursement ne sera accepté, sauf en cas de force majeure dûment justifiée',
+              '⚠️ Cas de force majeure (définition stricte) - Sont uniquement considérés : Décès, hospitalisation ou accident grave du client, Catastrophe naturelle, incendie, tempête, inondation, Interdiction administrative ou événement exceptionnel rendant la prestation impossible (ex : confinement, arrêté préfectoral, grève générale bloquante)',
+              '❌ Ne sont PAS considérés comme force majeure : Retard, absence ou changement d\'avis du client, Problème de transport personnel, Intempéries légères (pluie, froid, etc.), Conflit d\'agenda, manque d\'organisation ou erreur de commande',
+              '💸 Le montant total du devis reste dû, même si la prestation n\'a pas lieu, car les moyens matériels et humains auront déjà été mobilisés',
+              '⚠️ Modification du lieu ou de l\'horaire : Possible uniquement avec accord écrit du prestataire, et sous réserve de la disponibilité du matériel et du personnel',
+              '💰 Annulation par le prestataire : En cas d\'impossibilité exceptionnelle (panne, accident, impossibilité de transport), une solution de remplacement sera proposée en priorité',
+              '✅ Si aucune alternative n\'est possible, un remboursement intégral sera effectué sous 14 jours'
             ]
           },
           {
@@ -227,19 +229,19 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
       urgentConditions: {
         title: 'EXPRESS SERVICE / URGENT',
         subtitle: 'Fast intervention - 2 to 6 hours delay',
-        sections: [
-          {
+      sections: [
+        {
             title: '1. DEADLINES AND AVAILABILITY',
-            content: [
+          content: [
               '⚡ Express service available subject to equipment and personnel availability',
               '⏱️ Delivery and installation possible within 2 to 6 hours',
               '📞 Contact the team to confirm feasibility before payment',
               '📧 Immediate confirmation by email or SMS'
-            ]
-          },
-          {
-            title: '2. EXPRESS PRICING',
-            content: [
+          ]
+        },
+        {
+          title: '2. EXPRESS PRICING',
+          content: [
               '💰 Urgency supplement: +20% on normal rate',
               '💳 Full payment required before delivery',
               '📋 Additional fees mentioned in the quote'
