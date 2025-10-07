@@ -560,34 +560,65 @@ export default function PriceGeneratorPage() {
         
         // Notification de succès adaptée au type de document
         if (documentMode === 'devis') {
-          alert(`✅ Devis envoyé avec succès !\n\n📧 Email envoyé à : ${clientEmail}\n🔗 Lien de signature : ${result.signatureUrl}`);
+          const switchToInvoice = confirm(`✅ Devis envoyé avec succès !\n\n📧 Email envoyé à : ${clientEmail}\n📄 Le client doit renvoyer le devis signé pour validation\n\n💡 Voulez-vous créer la facture maintenant ?\n(Les informations seront conservées)`);
+          
+          if (switchToInvoice) {
+            // Basculer en mode facture et générer un nouveau numéro
+            setDocumentMode('facture');
+            setDocumentNumber(Math.floor(Math.random() * 1000) + 1);
+            console.log('🔄 Basculement en mode facture');
+          } else {
+            // Reset complet si l'utilisateur ne veut pas créer la facture
+            setNbEnceintesAS108(0);
+            setNbEnceintesAS115(0);
+            setNbEnceintesFBT(0);
+            setNbCaissons(0);
+            setConsoleType('NONE');
+            setMicFil(0);
+            setMicSansFil(0);
+            setClientFirstName('');
+            setClientLastName('');
+            setClientCompany('');
+            setClientEmail('');
+            setClientPhone('');
+            setClientAddress('');
+            setCautionAmount(0);
+            setDuration(0);
+            setDateStr('');
+            setPostal('');
+            setNotes('');
+            setCustomLines([]);
+            setDocumentMode('devis');
+            setDocumentNumber(Math.floor(Math.random() * 1000) + 1);
+            console.log('🔄 Formulaire réinitialisé');
+          }
         } else {
           alert(`✅ Facture envoyée avec succès !\n\n📧 Email envoyé à : ${clientEmail}`);
+          
+          // Après l'envoi de la facture, réinitialiser complètement
+          setNbEnceintesAS108(0);
+          setNbEnceintesAS115(0);
+          setNbEnceintesFBT(0);
+          setNbCaissons(0);
+          setConsoleType('NONE');
+          setMicFil(0);
+          setMicSansFil(0);
+          setClientFirstName('');
+          setClientLastName('');
+          setClientCompany('');
+          setClientEmail('');
+          setClientPhone('');
+          setClientAddress('');
+          setCautionAmount(0);
+          setDuration(0);
+          setDateStr('');
+          setPostal('');
+          setNotes('');
+          setCustomLines([]);
+          setDocumentMode('devis');
+          setDocumentNumber(Math.floor(Math.random() * 1000) + 1);
+          console.log('🔄 Formulaire réinitialisé après envoi de la facture');
         }
-        
-        // Reset automatique de tout le formulaire
-        setNbEnceintesAS108(0);
-        setNbEnceintesAS115(0);
-        setNbEnceintesFBT(0);
-        setNbCaissons(0);
-        setConsoleType('NONE');
-        setMicFil(0);
-        setMicSansFil(0);
-        setClientFirstName('');
-        setClientLastName('');
-        setClientCompany('');
-        setClientEmail('');
-        setClientPhone('');
-        setClientAddress('');
-        setCautionAmount(0);
-        setDuration(0);
-        setDateStr('');
-        setPostal('');
-        setNotes('');
-        setCustomLines([]);
-        setDocumentMode('devis'); // Retour en mode devis par défaut
-        setDocumentNumber(Math.floor(Math.random() * 1000) + 1); // Nouveau numéro
-        console.log('🔄 Formulaire automatiquement réinitialisé');
       } else {
         const errorText = await response.text();
         console.error('❌ Erreur API:', response.status, errorText);

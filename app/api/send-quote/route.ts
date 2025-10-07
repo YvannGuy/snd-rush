@@ -58,42 +58,16 @@ export async function POST(request: NextRequest) {
           <p>Bonjour ${quoteData.client.firstName} ${quoteData.client.lastName},</p>
           
           ${isInvoice 
-            ? `<p>Merci pour votre confiance ! Veuillez trouver votre facture en pièce jointe.</p>` 
-            : `<p>Merci pour votre demande ! Nous avons préparé votre devis personnalisé pour votre événement sonore.</p>`
+            ? `<p>Merci pour votre confiance ! Veuillez trouver votre facture en pièce jointe.</p>
+               <p>Montant total : <strong>${quoteData.quote.total} €</strong></p>
+               <p>La facture est en pièce jointe.</p>` 
+            : `<p>Veuillez trouver ci-joint votre devis personnalisé.</p>
+               <p>Merci de nous renvoyer le devis signé pour valider votre commande.</p>
+               <p>Le devis est en pièce jointe.</p>`
           }
           
-          <div class="quote-info">
-            <h3>📋 Résumé ${isInvoice ? 'de la facture' : 'du devis'}</h3>
-            <p><strong>Total TTC :</strong> ${quoteData.quote.total} €</p>
-            ${!isInvoice ? `<p><strong>Caution :</strong> ${quoteData.quote.caution} €</p>` : ''}
-            <p><strong>Durée :</strong> ${quoteData.quote.duration} jour(s)</p>
-            <p><strong>Date :</strong> ${quoteData.quote.date || 'À définir'}</p>
-          </div>
-          
-          ${!isInvoice ? `
-          <div class="signature-section">
-            <h3>✍️ Signature électronique requise</h3>
-            <p>Pour valider ce devis, veuillez le signer électroniquement en cliquant sur le bouton ci-dessous :</p>
-            <a href="${signatureUrl}" class="signature-btn">
-              ✍️ Signer le devis
-            </a>
-            <p style="font-size: 12px; margin-top: 10px;">
-              <em>Ce lien est personnel et sécurisé. Il expire dans 7 jours.</em>
-            </p>
-          </div>
-          ` : ''}
-          
-          <p>${isInvoice ? 'La facture détaillée est' : 'Le devis détaillé est'} en pièce jointe de cet email.</p>
-          
-          <p>Si vous avez des questions, n'hésitez pas à nous contacter :</p>
-          <ul>
-            <li>📞 Téléphone : 01 23 45 67 89</li>
-            <li>📧 Email : contact@sndrush.com</li>
-            <li>🌐 Site : www.sndrush.com</li>
-          </ul>
-          
-          <p>Merci pour votre confiance !</p>
-          <p><strong>L'équipe SND Rush</strong></p>
+          <p>Merci pour votre confiance !<br/>
+          <strong>L'équipe SND Rush</strong></p>
         </div>
         
         <div class="footer">
@@ -134,7 +108,7 @@ export async function POST(request: NextRequest) {
         <p><strong>Total :</strong> ${quoteData.quote.total} €</p>
         ${!isInvoice ? `<p><strong>Caution :</strong> ${quoteData.quote.caution} €</p>` : ''}
         <p><strong>ID ${documentType} :</strong> ${quoteId}</p>
-        ${!isInvoice ? `<p><strong>Lien de signature :</strong> <a href="${signatureUrl}">${signatureUrl}</a></p>` : ''}
+        ${!isInvoice ? `<p><em>Le client doit renvoyer le devis signé pour validation</em></p>` : ''}
       `
     });
 
