@@ -411,6 +411,9 @@ export default function PriceGeneratorPage() {
   // Mode document : devis ou facture
   const [documentMode, setDocumentMode] = useState<'devis' | 'facture'>('devis');
 
+  // Numéro de document (généré une seule fois)
+  const [documentNumber, setDocumentNumber] = useState<number>(Math.floor(Math.random() * 1000) + 1);
+
   // Lignes personnalisées
   const [customLines, setCustomLines] = useState<Array<{id: string, designation: string, price: number}>>([]);
   const [newDesignation, setNewDesignation] = useState('');
@@ -583,6 +586,7 @@ export default function PriceGeneratorPage() {
         setNotes('');
         setCustomLines([]);
         setDocumentMode('devis'); // Retour en mode devis par défaut
+        setDocumentNumber(Math.floor(Math.random() * 1000) + 1); // Nouveau numéro
         console.log('🔄 Formulaire automatiquement réinitialisé');
       } else {
         const errorText = await response.text();
@@ -1063,7 +1067,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
 
           {/* Titre du document */}
           <div style={styles.devisTitle}>
-            {documentMode === 'devis' ? 'Devis' : 'Facture'} N°{Math.floor(Math.random() * 1000) + 1}
+            {documentMode === 'devis' ? 'Devis' : 'Facture'} N°{documentNumber}
           </div>
 
           {/* Informations client */}
