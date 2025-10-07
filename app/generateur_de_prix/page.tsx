@@ -401,6 +401,9 @@ export default function PriceGeneratorPage() {
   const [clientAddress, setClientAddress] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
+  const [clientFirstName, setClientFirstName] = useState('');
+  const [clientLastName, setClientLastName] = useState('');
+  const [clientCompany, setClientCompany] = useState('');
 
   // Paramètres de caution
   const [cautionAmount, setCautionAmount] = useState(0);
@@ -478,6 +481,156 @@ export default function PriceGeneratorPage() {
     setCustomLines(customLines.filter(line => line.id !== id));
   };
 
+  // Fonction d'envoi du devis
+  const sendQuote = async () => {
+    if (!clientFirstName || !clientLastName || !clientEmail) {
+      alert('Veuillez remplir au minimum le prénom, nom et email');
+      return;
+    }
+
+    try {
+      console.log('🔄 Début de l\'envoi du devis...');
+      
+      // Générer le PDF d'abord
+      console.log('📄 Génération du PDF...');
+      const pdfBlob = await generatePDFBlob();
+      console.log('✅ PDF généré:', pdfBlob.size, 'bytes');
+      
+      // Préparer les données du devis
+      const quoteData = {
+        client: {
+          firstName: clientFirstName,
+          lastName: clientLastName,
+          company: clientCompany,
+          email: clientEmail,
+          phone: clientPhone,
+          address: clientAddress
+        },
+        quote: {
+          total: total,
+          caution: cautionAmount,
+          duration: duration,
+          date: dateStr,
+          notes: notes
+        },
+        equipment: {
+          speakers: {
+            AS108: nbEnceintesAS108,
+            AS115: nbEnceintesAS115,
+            FBT: nbEnceintesFBT
+          },
+          subwoofers: nbCaissons,
+          console: consoleType,
+          mics: {
+            wired: micFil,
+            wireless: micSansFil
+          }
+        }
+      };
+
+      // Envoyer l'email avec le PDF
+      console.log('📧 Envoi de l\'email...');
+      const pdfBase64 = await blobToBase64(pdfBlob);
+      console.log('📄 PDF en base64:', pdfBase64.substring(0, 50) + '...');
+      
+      const response = await fetch('/api/send-quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          quoteData,
+          pdfBase64
+        })
+      });
+
+      console.log('📡 Réponse API:', response.status, response.statusText);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Succès:', result);
+        
+        // Notification de succès simple
+        alert(`✅ Devis envoyé avec succès !\n\n📧 Email envoyé à : ${clientEmail}\n🔗 Lien de signature : ${result.signatureUrl}`);
+        
+        // Reset automatique de tout le formulaire
+        setNbEnceintesAS108(0);
+        setNbEnceintesAS115(0);
+        setNbEnceintesFBT(0);
+        setNbCaissons(0);
+        setConsoleType('NONE');
+        setMicFil(0);
+        setMicSansFil(0);
+        setClientFirstName('');
+        setClientLastName('');
+        setClientCompany('');
+        setClientEmail('');
+        setClientPhone('');
+        setClientAddress('');
+        setCautionAmount(0);
+        setDuration(0);
+        setDateStr('');
+        setPostal('');
+        setNotes('');
+        setCustomLines([]);
+        console.log('🔄 Formulaire automatiquement réinitialisé');
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Erreur API:', response.status, errorText);
+        throw new Error(`Erreur API: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('❌ Erreur lors de l\'envoi du devis. Veuillez réessayer.');
+    }
+  };
+
+  // Fonction utilitaire pour convertir blob en base64
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  // Fonction pour générer le PDF en blob
+  const generatePDFBlob = async (): Promise<Blob> => {
+    if (typeof window === 'undefined') {
+      throw new Error('html2pdf ne peut être utilisé que côté client');
+    }
+    
+    const html2pdf = (await import('html2pdf.js')).default;
+    
+    const element = document.getElementById('pdf-content');
+    if (!element) throw new Error('Élément devis non trouvé');
+
+    // Générer un ID unique pour le devis
+    const quoteId = `SND-${Date.now()}`;
+    
+    // Ajouter l'ID du devis au PDF
+    const quoteIdElement = document.createElement('div');
+    quoteIdElement.style.cssText = 'position: absolute; top: 10px; right: 10px; font-size: 10px; color: #666;';
+    quoteIdElement.textContent = `ID: ${quoteId}`;
+    element.appendChild(quoteIdElement);
+
+    const opt = {
+      margin: 10,
+      filename: `devis-snd-rush-${clientLastName}-${quoteId}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+    };
+
+    const blob = await html2pdf().set(opt).from(element).outputPdf('blob');
+    
+    // Nettoyer l'élément ajouté
+    element.removeChild(quoteIdElement);
+    
+    return blob;
+  };
+
   // Tous les hooks doivent être appelés avant le return conditionnel
   const customLinesTotal = useMemo(() => {
     return customLines.reduce((sum, line) => sum + line.price, 0);
@@ -546,6 +699,11 @@ Caution : ${cautionAmount} €
 ${notes ? `Notes : ${notes}` : ''}`;
 
   const generatePDF = async () => {
+    if (typeof window === 'undefined') {
+      alert('Cette fonction n\'est disponible que côté client');
+      return;
+    }
+    
     const element = document.getElementById('pdf-content');
     if (!element) return;
     
@@ -749,19 +907,27 @@ ${notes ? `Notes : ${notes}` : ''}`;
       <div style={styles.card}>
         <h2 style={styles.h2}>Informations client</h2>
         <div style={styles.row}>
-          <label>Nom de l'entreprise/client
-            <input style={styles.input} placeholder="Ex: The Maptique Srl" value={clientName} onChange={(e) => setClientName(e.target.value)} />
+          <label>Prénom
+            <input style={styles.input} placeholder="Ex: Jean" value={clientFirstName} onChange={(e) => setClientFirstName(e.target.value)} />
           </label>
-          <label>Téléphone
-            <input style={styles.input} placeholder="Ex: 0768306888" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} />
+          <label>Nom
+            <input style={styles.input} placeholder="Ex: Dupont" value={clientLastName} onChange={(e) => setClientLastName(e.target.value)} />
+          </label>
+        </div>
+        <div style={styles.row}>
+          <label>Entreprise (optionnel)
+            <input style={styles.input} placeholder="Ex: The Maptique Srl" value={clientCompany} onChange={(e) => setClientCompany(e.target.value)} />
+          </label>
+          <label>Email
+            <input style={styles.input} type="email" placeholder="Ex: contact@maptique.com" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} />
           </label>
         </div>
         <div style={styles.row}>
           <label>Adresse
             <input style={styles.input} placeholder="Ex: Via Cesare correnti 7, 20122 Milano" value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} />
           </label>
-          <label>Email
-            <input style={styles.input} placeholder="Ex: contact@maptique.com" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} />
+          <label>Téléphone
+            <input style={styles.input} placeholder="Ex: 0768306888" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} />
           </label>
         </div>
         <div style={styles.row}>
@@ -769,6 +935,29 @@ ${notes ? `Notes : ${notes}` : ''}`;
             <input style={styles.input} type="number" min="0" step="50" value={cautionAmount} onChange={(e) => setCautionAmount(parseInt(e.target.value || '0'))} />
           </label>
           <div />
+        </div>
+        
+        {/* Bouton d'envoi du devis */}
+        <div style={{marginTop: '20px', textAlign: 'center'}}>
+          <button 
+            style={{
+              ...styles.btn,
+              background: '#10b981',
+              fontSize: '16px',
+              padding: '12px 24px',
+              opacity: (!clientFirstName || !clientLastName || !clientEmail) ? 0.5 : 1,
+              cursor: (!clientFirstName || !clientLastName || !clientEmail) ? 'not-allowed' : 'pointer'
+            }}
+            disabled={!clientFirstName || !clientLastName || !clientEmail}
+            onClick={sendQuote}
+          >
+            📧 Envoyer le devis par email
+          </button>
+          {(!clientFirstName || !clientLastName || !clientEmail) && (
+            <p style={{fontSize: '12px', color: '#ef4444', marginTop: '8px'}}>
+              Veuillez remplir au minimum le prénom, nom et email
+            </p>
+          )}
         </div>
       </div>
 
