@@ -1360,7 +1360,7 @@ export default function PageEtatMateriel() {
                 <strong>État général:</strong> {item.analyseIAApres.etatGeneral}
               </p>
               
-              {item.analyseIAApres.nouveauxDommages && item.analyseIAApres.nouveauxDommages.length > 0 && (
+              {item.analyseIAApres.nouveauxDommages && item.analyseIAApres.nouveauxDommages.length > 0 ? (
                 <div style={{ marginTop: 8 }}>
                   <strong style={{ fontSize: 13, color: '#dc2626' }}>⚠️ Nouveaux dommages détectés:</strong>
                   <ul style={{ marginTop: 4, marginLeft: 20, fontSize: 12 }}>
@@ -1373,6 +1373,10 @@ export default function PageEtatMateriel() {
                     ))}
                   </ul>
                 </div>
+              ) : (
+                <p style={{ fontSize: 12, color: '#10b981', marginTop: 6 }}>
+                  ✅ Aucune différence visible entre l'état à la livraison et l'état à la reprise.
+                </p>
               )}
               
               {item.analyseIAApres.commentaireComparatif && (
@@ -1382,7 +1386,7 @@ export default function PageEtatMateriel() {
               )}
               
               <p style={{ fontSize: 10, color: '#999', marginTop: 8 }}>
-                Analysé le {new Date(item.analyseIAApres.timestamp).toLocaleString('fr-FR')} - {item.analyseIAApres.model}
+                Analysé le {item.analyseIAApres.timestamp ? new Date(item.analyseIAApres.timestamp).toLocaleString('fr-FR') : new Date().toLocaleString('fr-FR')} - {item.analyseIAApres.model || 'gpt-4o'}
               </p>
             </div>
           )}
@@ -1644,7 +1648,7 @@ export default function PageEtatMateriel() {
                     <strong>Recommandation:</strong> {it.analyseIAApres.recommandation}
                   </p>
                   
-                  {it.analyseIAApres.nouveauxDommages && it.analyseIAApres.nouveauxDommages.length > 0 && (
+                  {it.analyseIAApres.nouveauxDommages && it.analyseIAApres.nouveauxDommages.length > 0 ? (
                     <div style={{ marginTop: 6 }}>
                       <strong style={{ fontSize: 11, color: '#dc2626' }}>⚠️ NOUVEAUX DOMMAGES DÉTECTÉS:</strong>
                       <ul style={{ marginTop: 4, marginLeft: 16, fontSize: 10 }}>
@@ -1657,6 +1661,10 @@ export default function PageEtatMateriel() {
                         ))}
                       </ul>
                     </div>
+                  ) : (
+                    <p style={{ fontSize: 11, color: '#10b981', margin: '4px 0' }}>
+                      ✅ Aucune différence visible entre l'état à la livraison et l'état à la reprise.
+                    </p>
                   )}
                   
                   {it.analyseIAApres.commentaireComparatif && (
@@ -1666,9 +1674,9 @@ export default function PageEtatMateriel() {
                   )}
                   
                   <p style={{ fontSize: 9, color: '#666', marginTop: 6, borderTop: '1px solid #ddd', paddingTop: 4 }}>
-                    Rapport généré automatiquement le {new Date(it.analyseIAApres.timestamp).toLocaleString('fr-FR')}
+                    Rapport généré automatiquement le {it.analyseIAApres.timestamp ? new Date(it.analyseIAApres.timestamp).toLocaleString('fr-FR') : new Date().toLocaleString('fr-FR')}
                     <br />
-                    Modèle: {it.analyseIAApres.model} - Ce rapport fait foi comme preuve contractuelle objective
+                    Modèle: {it.analyseIAApres.model || 'gpt-4o'} - Ce rapport fait foi comme preuve contractuelle objective
                   </p>
                 </div>
               )}
