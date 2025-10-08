@@ -362,6 +362,15 @@ export default function PageEtatMateriel() {
 
     // Lancer l'analyse IA automatiquement pour les photos APRÈS
     if (kind === 'apres' && arr.length > 0) {
+      // Vérifier que les photos sont uploadées sur Supabase (pas base64)
+      const isSupabasePhoto = arr.some(p => !p.url.startsWith('data:'));
+      
+      if (!isSupabasePhoto) {
+        console.warn('⚠️ Analyse IA désactivée: photos en base64 (Supabase non configuré)');
+        console.log('💡 Configurez Supabase Storage pour activer l\'analyse IA automatique');
+        return; // Ne pas tenter d'analyser les photos base64
+      }
+      
       console.log('🤖 Lancement analyse IA automatique...');
       
       // Récupérer l'item pour avoir les photos AVANT
@@ -371,14 +380,22 @@ export default function PageEtatMateriel() {
       // Prendre la première photo AVANT comme référence (s'il y en a)
       const photoAvant = currentItem?.photosAvant[0]?.url || null;
       
-      // Analyser chaque photo APRÈS uploadée
+      // Si photoAvant est en base64, on la met à null
+      const photoAvantURL = photoAvant && !photoAvant.startsWith('data:') ? photoAvant : null;
+      
+      // Analyser chaque photo APRÈS uploadée (seulement les URLs Supabase)
       for (const photo of arr) {
+        if (photo.url.startsWith('data:')) {
+          console.log('⏭️ Saut analyse pour photo base64');
+          continue; // Ignorer les photos base64
+        }
+        
         try {
           const response = await fetch('/api/analyze-photo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              photoAvant,
+              photoAvant: photoAvantURL,
               photoApres: photo.url,
               nomMateriel
             })
@@ -419,7 +436,11 @@ export default function PageEtatMateriel() {
               console.log('✅ Aucun dommage détecté par l\'IA');
             }
           } else {
-            console.error('❌ Erreur API analyse:', await response.text());
+            const errorData = await response.json();
+            console.error('❌ Erreur API analyse:', errorData);
+            if (errorData.recommendation) {
+              console.log('💡', errorData.recommendation);
+            }
           }
         } catch (err) {
           console.error('❌ Erreur lors de l\'analyse IA:', err);

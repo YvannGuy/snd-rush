@@ -13,6 +13,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Photo APRÈS requise' }, { status: 400 });
     }
 
+    // Vérifier que les photos ne sont pas en base64 (non supporté par OpenAI sans transformation)
+    if (photoApres.startsWith('data:')) {
+      console.warn('⚠️ Photo en base64 détectée, OpenAI nécessite une URL publique');
+      return NextResponse.json({ 
+        error: 'Format non supporté', 
+        message: 'L\'analyse IA nécessite que les photos soient uploadées sur Supabase Storage. Les photos en base64 ne peuvent pas être analysées.',
+        recommendation: 'Configurez Supabase Storage pour activer l\'analyse IA automatique.'
+      }, { status: 400 });
+    }
+
+    if (photoAvant && photoAvant.startsWith('data:')) {
+      console.warn('⚠️ Photo AVANT en base64, analyse uniquement de la photo APRÈS');
+      // On continue sans photo AVANT si elle est en base64
+    }
+
     // Si pas de photo AVANT, analyser seulement l'état actuel
     if (!photoAvant) {
       const response = await openai.chat.completions.create({
