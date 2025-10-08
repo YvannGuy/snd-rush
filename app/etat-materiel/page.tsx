@@ -1000,6 +1000,19 @@ export default function PageEtatMateriel() {
             <p style={{ fontSize: 14, color: '#666' }}>
               SND Rush – Accès restreint
             </p>
+            
+            {/* Indicateur de statut Supabase (visible sur mobile) */}
+            <div style={{ 
+              marginTop: 12, 
+              padding: '8px 12px', 
+              borderRadius: 6, 
+              fontSize: 12,
+              backgroundColor: isSupabaseConfigured() ? '#d1fae5' : '#fecaca',
+              border: `1px solid ${isSupabaseConfigured() ? '#10b981' : '#dc2626'}`,
+              color: isSupabaseConfigured() ? '#065f46' : '#991b1b'
+            }}>
+              <strong>📡 Statut Supabase :</strong> {isSupabaseConfigured() ? '✅ Configuré (photos + IA actifs)' : '❌ Non configuré (mode fallback base64, IA désactivée)'}
+            </div>
           </div>
           
           <form onSubmit={handleLogin}>
@@ -1124,10 +1137,24 @@ export default function PageEtatMateriel() {
       <div style={styles.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
         <h1 style={styles.h1}>État du matériel – SND Rush <span style={styles.badge}>Interne</span></h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ fontSize: 11, color: '#10b981', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span>💾</span>
               <span>Sauvegarde auto</span>
+            </div>
+            <div style={{ 
+              fontSize: 11, 
+              color: isSupabaseConfigured() ? '#10b981' : '#dc2626', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 4,
+              padding: '4px 8px',
+              borderRadius: 4,
+              backgroundColor: isSupabaseConfigured() ? '#d1fae5' : '#fecaca',
+              border: `1px solid ${isSupabaseConfigured() ? '#10b981' : '#dc2626'}`
+            }}>
+              <span>{isSupabaseConfigured() ? '📡' : '⚠️'}</span>
+              <span>{isSupabaseConfigured() ? 'Supabase + IA OK' : 'Supabase NON configuré'}</span>
             </div>
             <button
               onClick={() => {
