@@ -35,33 +35,40 @@ CREATE INDEX IF NOT EXISTS idx_rapports_created_at ON rapports_materiel(created_
 -- 5. Enable Row Level Security (RLS)
 ALTER TABLE rapports_materiel ENABLE ROW LEVEL SECURITY;
 
--- 6. Créer une policy pour permettre les insertions (publique pour l'instant)
+-- 6. Supprimer les anciennes politiques si elles existent
+DROP POLICY IF EXISTS "Permettre insertion rapports" ON rapports_materiel;
+DROP POLICY IF EXISTS "Permettre lecture rapports" ON rapports_materiel;
+
+-- 7. Créer une policy pour permettre les insertions (publique pour l'instant)
 CREATE POLICY "Permettre insertion rapports" ON rapports_materiel
   FOR INSERT WITH CHECK (true);
 
--- 7. Créer une policy pour permettre la lecture (publique pour l'instant)
+-- 8. Créer une policy pour permettre la lecture (publique pour l'instant)
 CREATE POLICY "Permettre lecture rapports" ON rapports_materiel
   FOR SELECT USING (true);
 
--- 8. Créer le bucket pour les photos (PUBLIC obligatoire pour OpenAI Vision API)
+-- 9. Créer le bucket pour les photos (PUBLIC obligatoire pour OpenAI Vision API)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('materiel-photos', 'materiel-photos', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
--- 9. Supprimer les anciennes politiques si elles existent
+-- 10. Supprimer les anciennes politiques si elles existent
 DROP POLICY IF EXISTS "Permettre upload photos" ON storage.objects;
 DROP POLICY IF EXISTS "Permettre lecture photos" ON storage.objects;
 DROP POLICY IF EXISTS "Permettre suppression photos" ON storage.objects;
+DROP POLICY IF EXISTS "Public upload photos" ON storage.objects;
+DROP POLICY IF EXISTS "Public read photos" ON storage.objects;
+DROP POLICY IF EXISTS "Public delete photos" ON storage.objects;
 
--- 10. Créer des politiques PUBLIQUES pour l'upload
+-- 11. Créer des politiques PUBLIQUES pour l'upload
 CREATE POLICY "Public upload photos" ON storage.objects
   FOR INSERT WITH CHECK (bucket_id = 'materiel-photos');
 
--- 11. Créer des politiques PUBLIQUES pour la lecture (requis pour OpenAI)
+-- 12. Créer des politiques PUBLIQUES pour la lecture (requis pour OpenAI)
 CREATE POLICY "Public read photos" ON storage.objects
   FOR SELECT USING (bucket_id = 'materiel-photos');
 
--- 12. Créer des politiques PUBLIQUES pour la suppression (optionnel)
+-- 13. Créer des politiques PUBLIQUES pour la suppression (optionnel)
 CREATE POLICY "Public delete photos" ON storage.objects
   FOR DELETE USING (bucket_id = 'materiel-photos');
 
