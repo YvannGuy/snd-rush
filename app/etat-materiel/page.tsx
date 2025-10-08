@@ -124,6 +124,18 @@ export default function PageEtatMateriel() {
     
     for (const f of Array.from(files)) {
       try {
+        // Créer un timestamp horodaté pour chaque photo
+        const now = new Date();
+        const timestamp = now.toLocaleString('fr-FR', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric',
+          hour: '2-digit', 
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        const photoLabel = `${f.name} - ${timestamp}`;
+        
         // Upload vers Supabase Storage si configuré
         if (isSupabaseConfigured() && supabase) {
           const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${f.name}`;
@@ -147,7 +159,7 @@ export default function PageEtatMateriel() {
             
             // Fallback: utiliser base64 si l'upload échoue
             const url = await fileToDataURL(f);
-            arr.push({ url, label: f.name });
+            arr.push({ url, label: photoLabel });
           } else {
             uploadSuccessCount++;
             console.log(`✅ Photo uploadée vers Supabase: ${filePath}`);
@@ -157,27 +169,28 @@ export default function PageEtatMateriel() {
               .from('materiel-photos')
               .getPublicUrl(filePath);
             
-            arr.push({ url: urlData.publicUrl, label: f.name });
+            arr.push({ url: urlData.publicUrl, label: photoLabel });
           }
         } else {
           // Si Supabase n'est pas configuré, utiliser base64
           console.log('ℹ️ Supabase non configuré, utilisation de base64');
           const url = await fileToDataURL(f);
-          arr.push({ url, label: f.name });
+          arr.push({ url, label: photoLabel });
         }
       } catch (err) {
         console.error('Erreur traitement photo:', err);
         uploadFailCount++;
         // Fallback: base64
         const url = await fileToDataURL(f);
-        arr.push({ url, label: f.name });
+        const timestamp = new Date().toLocaleString('fr-FR');
+        arr.push({ url, label: `${f.name} - ${timestamp}` });
       }
     }
     
     // Afficher un résumé de l'upload
     if (isSupabaseConfigured() && supabase) {
       if (uploadSuccessCount > 0 && uploadFailCount === 0) {
-        console.log(`✅ ${uploadSuccessCount} photo(s) sauvegardée(s) dans Supabase`);
+        console.log(`✅ ${uploadSuccessCount} photo(s) sauvegardée(s) dans Supabase avec horodatage`);
       } else if (uploadFailCount > 0) {
         console.warn(`⚠️ ${uploadSuccessCount} réussie(s), ${uploadFailCount} échouée(s). Photos en base64 comme fallback.`);
       }
@@ -208,19 +221,38 @@ export default function PageEtatMateriel() {
     if (!ctx) return;
 
     const startDrawing = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault(); // Empêcher le scroll sur mobile
       setIsDrawingAvant(true);
       const rect = canvas.getBoundingClientRect();
-      const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-      const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      const x = 'touches' in e 
+        ? (e.touches[0].clientX - rect.left) * scaleX
+        : (e.clientX - rect.left) * scaleX;
+      const y = 'touches' in e 
+        ? (e.touches[0].clientY - rect.top) * scaleY
+        : (e.clientY - rect.top) * scaleY;
+      
       ctx.beginPath();
       ctx.moveTo(x, y);
     };
 
     const draw = (e: MouseEvent | TouchEvent) => {
       if (!isDrawingAvant) return;
+      e.preventDefault(); // Empêcher le scroll pendant le dessin
+      
       const rect = canvas.getBoundingClientRect();
-      const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-      const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      const x = 'touches' in e 
+        ? (e.touches[0].clientX - rect.left) * scaleX
+        : (e.clientX - rect.left) * scaleX;
+      const y = 'touches' in e 
+        ? (e.touches[0].clientY - rect.top) * scaleY
+        : (e.clientY - rect.top) * scaleY;
+      
       ctx.lineTo(x, y);
       ctx.stroke();
     };
@@ -233,21 +265,26 @@ export default function PageEtatMateriel() {
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('touchstart', startDrawing);
-    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('mouseleave', stopDrawing);
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchcancel', stopDrawing);
 
     ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     return () => {
       canvas.removeEventListener('mousedown', startDrawing);
       canvas.removeEventListener('mousemove', draw);
       canvas.removeEventListener('mouseup', stopDrawing);
+      canvas.removeEventListener('mouseleave', stopDrawing);
       canvas.removeEventListener('touchstart', startDrawing);
       canvas.removeEventListener('touchmove', draw);
       canvas.removeEventListener('touchend', stopDrawing);
+      canvas.removeEventListener('touchcancel', stopDrawing);
     };
   }, [isDrawingAvant]);
 
@@ -260,19 +297,38 @@ export default function PageEtatMateriel() {
     if (!ctx) return;
 
     const startDrawing = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault(); // Empêcher le scroll sur mobile
       setIsDrawingApres(true);
       const rect = canvas.getBoundingClientRect();
-      const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-      const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      const x = 'touches' in e 
+        ? (e.touches[0].clientX - rect.left) * scaleX
+        : (e.clientX - rect.left) * scaleX;
+      const y = 'touches' in e 
+        ? (e.touches[0].clientY - rect.top) * scaleY
+        : (e.clientY - rect.top) * scaleY;
+      
       ctx.beginPath();
       ctx.moveTo(x, y);
     };
 
     const draw = (e: MouseEvent | TouchEvent) => {
       if (!isDrawingApres) return;
+      e.preventDefault(); // Empêcher le scroll pendant le dessin
+      
       const rect = canvas.getBoundingClientRect();
-      const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-      const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      const x = 'touches' in e 
+        ? (e.touches[0].clientX - rect.left) * scaleX
+        : (e.clientX - rect.left) * scaleX;
+      const y = 'touches' in e 
+        ? (e.touches[0].clientY - rect.top) * scaleY
+        : (e.clientY - rect.top) * scaleY;
+      
       ctx.lineTo(x, y);
       ctx.stroke();
     };
@@ -285,21 +341,26 @@ export default function PageEtatMateriel() {
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('touchstart', startDrawing);
-    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('mouseleave', stopDrawing);
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchcancel', stopDrawing);
 
     ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     return () => {
       canvas.removeEventListener('mousedown', startDrawing);
       canvas.removeEventListener('mousemove', draw);
       canvas.removeEventListener('mouseup', stopDrawing);
+      canvas.removeEventListener('mouseleave', stopDrawing);
       canvas.removeEventListener('touchstart', startDrawing);
       canvas.removeEventListener('touchmove', draw);
       canvas.removeEventListener('touchend', stopDrawing);
+      canvas.removeEventListener('touchcancel', stopDrawing);
     };
   }, [isDrawingApres]);
 
@@ -558,6 +619,12 @@ export default function PageEtatMateriel() {
           [style*="border: 1px solid #e6e6e6"] {
             padding: 12px !important;
           }
+          /* Canvas de signature adapté mobile */
+          canvas {
+            max-height: 150px !important;
+            border-width: 3px !important;
+            border-color: #e27431 !important;
+          }
         }
         .responsive-grid {
           display: grid;
@@ -596,6 +663,12 @@ export default function PageEtatMateriel() {
             font-size: 14px !important;
             padding: 8px 12px !important;
           }
+        }
+        /* Style du canvas amélioré */
+        canvas {
+          touch-action: none;
+          -webkit-user-select: none;
+          user-select: none;
         }
       `}</style>
       <div style={styles.card}>
@@ -953,7 +1026,10 @@ export default function PageEtatMateriel() {
               {it.photosAvant.length > 0 && (
                 <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
                   {it.photosAvant.map((p, idx) => (
-                    <img key={idx} src={p.url} style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 6, border: '1px solid #ddd' }} alt={`Photo avant ${idx + 1} - ${it.nom}`} />
+                    <div key={idx} style={{ textAlign: 'center' }}>
+                      <img src={p.url} style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 6, border: '1px solid #ddd' }} alt={`Photo avant ${idx + 1} - ${it.nom}`} />
+                      {p.label && <div style={{ fontSize: 9, color: '#666', marginTop: 2 }}>{p.label}</div>}
+                    </div>
                   ))}
                 </div>
               )}
@@ -989,7 +1065,10 @@ export default function PageEtatMateriel() {
               {it.photosApres.length > 0 && (
                 <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
                   {it.photosApres.map((p, idx) => (
-                    <img key={idx} src={p.url} style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 6, border: '1px solid #ddd' }} alt={`Photo après ${idx + 1} - ${it.nom}`} />
+                    <div key={idx} style={{ textAlign: 'center' }}>
+                      <img src={p.url} style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 6, border: '1px solid #ddd' }} alt={`Photo après ${idx + 1} - ${it.nom}`} />
+                      {p.label && <div style={{ fontSize: 9, color: '#666', marginTop: 2 }}>{p.label}</div>}
+                    </div>
                   ))}
                 </div>
               )}
