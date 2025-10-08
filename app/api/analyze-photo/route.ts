@@ -23,6 +23,16 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Vérifier le format de fichier (OpenAI ne supporte pas HEIC)
+    if (photoApres.includes('.HEIC') || photoApres.includes('.heic') || photoApres.includes('.HEIF') || photoApres.includes('.heif')) {
+      console.warn('⚠️ Format HEIC détecté (iPhone), non supporté par OpenAI Vision');
+      return NextResponse.json({ 
+        error: 'Format HEIC non supporté', 
+        message: 'Les photos au format HEIC (iPhone) ne peuvent pas être analysées par l\'IA. OpenAI Vision supporte uniquement : PNG, JPEG, GIF, WEBP.',
+        recommendation: 'Sur iPhone : Réglages → Appareil photo → Formats → Choisir "Plus compatible" pour prendre des photos en JPEG au lieu de HEIC.'
+      }, { status: 400 });
+    }
+
     if (photoAvant && photoAvant.startsWith('data:')) {
       console.warn('⚠️ Photo AVANT en base64, analyse uniquement de la photo APRÈS');
       // On continue sans photo AVANT si elle est en base64

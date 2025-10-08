@@ -441,6 +441,11 @@ export default function PageEtatMateriel() {
             if (errorData.recommendation) {
               console.log('💡', errorData.recommendation);
             }
+            
+            // Afficher un message utilisateur si format HEIC
+            if (errorData.error === 'Format HEIC non supporté') {
+              alert(`⚠️ Format photo incompatible\n\n${errorData.message}\n\n💡 ${errorData.recommendation}`);
+            }
           }
         } catch (err) {
           console.error('❌ Erreur lors de l\'analyse IA:', err);
@@ -1305,15 +1310,19 @@ export default function PageEtatMateriel() {
                 {ETATS_AVANT.map(e => <option key={e} value={e}>{e}</option>)}
               </select>
             </label>
-            <label>Photos AVANT
+            <label>
+              Photos AVANT
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
                 capture="environment"
                 multiple
                 onChange={(e) => onPhoto(item.id, 'avant', e.target.files)}
                 style={{ ...styles.input, padding: 8 }}
               />
+              <p style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
+                💡 Pour l'analyse IA : JPEG/PNG recommandé (pas HEIC)
+              </p>
             </label>
             <div>
               <div>Prévisualisations AVANT</div>
@@ -1336,15 +1345,22 @@ export default function PageEtatMateriel() {
                 {ETATS_APRES.map(e => <option key={e} value={e}>{e}</option>)}
               </select>
             </label>
-            <label>Photos APRÈS
+            <label>
+              Photos APRÈS 
+              <span style={{ fontSize: 11, color: '#f59e0b', marginLeft: 8 }}>
+                🤖 IA auto (JPEG/PNG uniquement)
+              </span>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
                 capture="environment"
                 multiple
                 onChange={(e) => onPhoto(item.id, 'apres', e.target.files)}
                 style={{ ...styles.input, padding: 8 }}
               />
+              <p style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
+                📱 iPhone : Activez "Plus compatible" dans Réglages → Appareil photo → Formats pour analyse IA
+              </p>
             </label>
             <div>
               <div>Prévisualisations APRÈS</div>
