@@ -41,7 +41,7 @@ export default function AboutSection({ language }: AboutSectionProps) {
       processTitle: 'How it works?',
       processSubtitle: 'According to the type of reservation',
       advanceTab: 'Advance booking',
-      expressTab: 'Express intervention',
+      expressTab: 'Intervention Express',
       advanceSteps: {
         step1Title: 'Choose your pack',
         step1Description: 'Select the pack that matches your event',

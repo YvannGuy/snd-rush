@@ -127,7 +127,7 @@ export default function HeroSection({ language, onReservationClick, onPackSelect
                     <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
                       <i className="ri-flashlight-line text-lg sm:text-xl"></i>
                     </div>
-                    <span>Express intervention</span>
+                    <span>Intervention Express</span>
                   </div>
                 </div>
               </div>
