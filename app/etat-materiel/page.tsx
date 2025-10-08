@@ -442,9 +442,13 @@ export default function PageEtatMateriel() {
               console.log('💡', errorData.recommendation);
             }
             
-            // Afficher un message utilisateur si format HEIC
-            if (errorData.error === 'Format HEIC non supporté') {
+            // Afficher un message utilisateur selon le type d'erreur
+            if (errorData.code === 'SUPABASE_BUCKET_NOT_PUBLIC') {
+              alert(`🔓 Configuration Supabase requise\n\n${errorData.message}\n\n📄 Voir: SUPABASE_BUCKET_PUBLIC.md pour la solution complète`);
+            } else if (errorData.error === 'Format HEIC non supporté') {
               alert(`⚠️ Format photo incompatible\n\n${errorData.message}\n\n💡 ${errorData.recommendation}`);
+            } else if (errorData.code === 'INVALID_FORMAT') {
+              alert(`⚠️ ${errorData.error}\n\n${errorData.message}\n\n💡 ${errorData.recommendation}`);
             }
           }
         } catch (err) {

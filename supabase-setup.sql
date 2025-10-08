@@ -43,20 +43,25 @@ CREATE POLICY "Permettre insertion rapports" ON rapports_materiel
 CREATE POLICY "Permettre lecture rapports" ON rapports_materiel
   FOR SELECT USING (true);
 
--- 8. Créer le bucket pour les photos (PUBLIC pour faciliter l'accès)
+-- 8. Créer le bucket pour les photos (PUBLIC obligatoire pour OpenAI Vision API)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('materiel-photos', 'materiel-photos', true)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET public = true;
 
--- 9. Créer une policy pour permettre l'upload des photos
-CREATE POLICY IF NOT EXISTS "Permettre upload photos" ON storage.objects
+-- 9. Supprimer les anciennes politiques si elles existent
+DROP POLICY IF EXISTS "Permettre upload photos" ON storage.objects;
+DROP POLICY IF EXISTS "Permettre lecture photos" ON storage.objects;
+DROP POLICY IF EXISTS "Permettre suppression photos" ON storage.objects;
+
+-- 10. Créer des politiques PUBLIQUES pour l'upload
+CREATE POLICY "Public upload photos" ON storage.objects
   FOR INSERT WITH CHECK (bucket_id = 'materiel-photos');
 
--- 10. Créer une policy pour permettre la lecture des photos
-CREATE POLICY IF NOT EXISTS "Permettre lecture photos" ON storage.objects
+-- 11. Créer des politiques PUBLIQUES pour la lecture (requis pour OpenAI)
+CREATE POLICY "Public read photos" ON storage.objects
   FOR SELECT USING (bucket_id = 'materiel-photos');
 
--- 11. Créer une policy pour permettre la suppression des photos (optionnel)
-CREATE POLICY IF NOT EXISTS "Permettre suppression photos" ON storage.objects
+-- 12. Créer des politiques PUBLIQUES pour la suppression (optionnel)
+CREATE POLICY "Public delete photos" ON storage.objects
   FOR DELETE USING (bucket_id = 'materiel-photos');
 

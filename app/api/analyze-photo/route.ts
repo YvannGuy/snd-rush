@@ -190,10 +190,46 @@ Réponds au format JSON strict:
       photoApresUrl: photoApres
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur analyse GPT-4:', error);
+    
+    // Détecter erreur spécifique OpenAI
+    if (error?.code === 'invalid_image_url') {
+      console.error('❌ OpenAI ne peut pas télécharger l\'image depuis Supabase');
+      console.error('💡 SOLUTION: Rendez le bucket "materiel-photos" PUBLIC dans Supabase');
+      console.error('   1. Dashboard Supabase → Storage → materiel-photos');
+      console.error('   2. ... (3 points) → Edit bucket → Cocher "Public bucket"');
+      console.error('   3. Ou exécutez: UPDATE storage.buckets SET public = true WHERE id = \'materiel-photos\'');
+      
+      return NextResponse.json(
+        { 
+          error: 'Bucket Supabase non accessible',
+          message: 'OpenAI ne peut pas télécharger l\'image. Le bucket "materiel-photos" doit être configuré comme PUBLIC dans Supabase.',
+          recommendation: 'Voir le fichier SUPABASE_BUCKET_PUBLIC.md pour les instructions complètes.',
+          code: 'SUPABASE_BUCKET_NOT_PUBLIC'
+        },
+        { status: 400 }
+      );
+    }
+    
+    if (error?.code === 'invalid_image_format') {
+      return NextResponse.json(
+        { 
+          error: 'Format d\'image non supporté',
+          message: error.message || 'Format non reconnu par OpenAI Vision API',
+          recommendation: 'Utilisez uniquement JPEG, PNG, GIF ou WEBP. Évitez HEIC (iPhone).',
+          code: 'INVALID_FORMAT'
+        },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Erreur lors de l\'analyse', details: error instanceof Error ? error.message : 'Erreur inconnue' },
+      { 
+        error: 'Erreur lors de l\'analyse', 
+        details: error instanceof Error ? error.message : 'Erreur inconnue',
+        code: error?.code || 'UNKNOWN_ERROR'
+      },
       { status: 500 }
     );
   }
