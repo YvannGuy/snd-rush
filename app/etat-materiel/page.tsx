@@ -97,9 +97,76 @@ export default function PageEtatMateriel() {
   const canvasApresRef = useRef<HTMLCanvasElement>(null);
   const [isDrawingAvant, setIsDrawingAvant] = useState(false);
   const [isDrawingApres, setIsDrawingApres] = useState(false);
+  const [showRestoreMessage, setShowRestoreMessage] = useState(false);
 
-  // Ne pas sauvegarder dans localStorage (trop volumineux avec les photos base64)
-  // Les données seront perdues au rechargement, mais c'est normal pour une session de travail
+  // Sauvegarde automatique dans localStorage pour éviter la perte de données
+  useEffect(() => {
+    // Charger les données au démarrage
+    const savedData = localStorage.getItem('etat-materiel-draft');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        const hasData = parsed.client || parsed.contact || parsed.items?.length > 0;
+        
+        if (hasData) {
+          setClient(parsed.client || '');
+          setContact(parsed.contact || '');
+          setAdresse(parsed.adresse || '');
+          setCodePostal(parsed.codePostal || '');
+          setHeureDepot(parsed.heureDepot || '');
+          setHeureRecup(parsed.heureRecup || '');
+          setNotes(parsed.notes || '');
+          setItems(parsed.items || []);
+          setSignatureAvant(parsed.signatureAvant || '');
+          setSignatureApres(parsed.signatureApres || '');
+          
+          // Afficher le message de restauration
+          setShowRestoreMessage(true);
+          setTimeout(() => setShowRestoreMessage(false), 5000);
+          
+          console.log('✅ Données restaurées depuis la dernière session');
+        }
+      } catch (err) {
+        console.error('Erreur lors de la restauration des données:', err);
+      }
+    }
+  }, []);
+
+  // Sauvegarder automatiquement à chaque modification
+  useEffect(() => {
+    const dataToSave = {
+      client,
+      contact,
+      adresse,
+      codePostal,
+      heureDepot,
+      heureRecup,
+      notes,
+      items,
+      signatureAvant,
+      signatureApres,
+      lastSaved: new Date().toISOString()
+    };
+    
+    try {
+      localStorage.setItem('etat-materiel-draft', JSON.stringify(dataToSave));
+    } catch (err) {
+      console.warn('⚠️ Impossible de sauvegarder (localStorage plein?)', err);
+    }
+  }, [client, contact, adresse, codePostal, heureDepot, heureRecup, notes, items, signatureAvant, signatureApres]);
+
+  // Avertir avant de quitter la page si des données sont présentes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (client || contact || items.length > 0 || signatureAvant || signatureApres) {
+        e.preventDefault();
+        e.returnValue = ''; // Chrome nécessite returnValue vide
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [client, contact, items, signatureAvant, signatureApres]);
 
   const addItem = (id: string, nom: string) => {
     // Générer un ID unique pour chaque instance d'équipement
@@ -382,6 +449,36 @@ export default function PageEtatMateriel() {
     setSignatureApres('');
   };
 
+  // Redessiner la signature AVANT sur le canvas après restauration
+  useEffect(() => {
+    if (!signatureAvant || !canvasAvantRef.current) return;
+    const canvas = canvasAvantRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = signatureAvant;
+  }, [signatureAvant]);
+
+  // Redessiner la signature APRÈS sur le canvas après restauration
+  useEffect(() => {
+    if (!signatureApres || !canvasApresRef.current) return;
+    const canvas = canvasApresRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = signatureApres;
+  }, [signatureApres]);
+
   const validateClientInfo = () => {
     if (!client.trim()) {
       alert('⚠️ Veuillez renseigner le nom du client');
@@ -591,6 +688,10 @@ export default function PageEtatMateriel() {
       clearSignatureAvant();
       clearSignatureApres();
       
+      // Effacer la sauvegarde localStorage
+      localStorage.removeItem('etat-materiel-draft');
+      console.log('✅ Sauvegarde automatique effacée');
+      
     } catch (err) {
       console.error('Erreur génération PDF:', err);
       alert(`❌ Erreur lors de la génération du PDF: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
@@ -672,7 +773,31 @@ export default function PageEtatMateriel() {
         }
       `}</style>
       <div style={styles.card}>
-        <h1 style={styles.h1}>État du matériel – SND Rush <span style={styles.badge}>Interne</span></h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <h1 style={styles.h1}>État du matériel – SND Rush <span style={styles.badge}>Interne</span></h1>
+          <div style={{ fontSize: 11, color: '#10b981', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span>💾</span>
+            <span>Sauvegarde auto</span>
+          </div>
+        </div>
+        
+        {showRestoreMessage && (
+          <div style={{
+            background: '#d4edda',
+            border: '1px solid #10b981',
+            borderRadius: 8,
+            padding: 12,
+            marginBottom: 12,
+            fontSize: 14,
+            color: '#065f46',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}>
+            <span>✅</span>
+            <span>Vos données ont été restaurées depuis votre dernière session. Vous pouvez continuer là où vous vous êtes arrêté.</span>
+          </div>
+        )}
         <div className="responsive-grid responsive-grid-3">
           <label>Client / Organisation <span style={{ color: '#ef4444' }}>*</span>
             <input 
@@ -972,6 +1097,8 @@ export default function PageEtatMateriel() {
               setNotes('');
               clearSignatureAvant();
               clearSignatureApres();
+              localStorage.removeItem('etat-materiel-draft');
+              console.log('✅ Formulaire et sauvegarde réinitialisés');
             }
           }}
         >
