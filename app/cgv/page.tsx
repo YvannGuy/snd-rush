@@ -439,7 +439,15 @@ export default function CGVPage() {
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>En cas d'absence du client ou de son représentant lors de la reprise du matériel, des frais d'attente de <strong>50 € par heure</strong> pourront être facturés à compter de l'heure prévue de récupération.</span>
+                      <span>En cas d'absence du client ou de son représentant lors de la reprise du matériel, des frais d'attente de <strong>25 € par tranche de 30 minutes (soit 50 € par heure)</strong> pourront être facturés à compter de l'heure prévue de récupération.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Le client doit notifier par écrit à Guy Location Events (par e-mail, SMS ou message signé) le nom, prénom et numéro de téléphone du représentant autorisé à assister à la reprise du matériel.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span><strong>Si aucune notification préalable n'a été faite, la personne présente sur place ne sera pas considérée comme représentant officiel et l'état des lieux réalisé par l'équipe Guy Location Events fera foi sans possibilité de contestation ultérieure.</strong></span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -759,7 +767,9 @@ export default function CGVPage() {
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
               <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 8 - FRAIS D'ATTENTE, ABSENCE ET RESPONSABILITÉ DU MATÉRIEL</h2>
               <ul className="space-y-3 text-gray-700">
-                <li>• En cas d'absence du client ou de son représentant lors de la reprise du matériel, des frais d'attente de <strong>50 € par heure</strong> pourront être facturés à compter de l'heure prévue de récupération.</li>
+                <li>• En cas d'absence du client ou de son représentant lors de la reprise du matériel, des frais d'attente de <strong>25 € par tranche de 30 minutes (soit 50 € par heure)</strong> pourront être facturés à compter de l'heure prévue de récupération.</li>
+                <li>• Le client doit notifier par écrit à Guy Location Events (par e-mail, SMS ou message signé) le nom, prénom et numéro de téléphone du représentant autorisé à assister à la reprise du matériel.</li>
+                <li>• <strong>Si aucune notification préalable n'a été faite, la personne présente sur place ne sera pas considérée comme représentant officiel et l'état des lieux réalisé par l'équipe Guy Location Events fera foi sans possibilité de contestation ultérieure.</strong></li>
                 <li>• Si le client reste injoignable ou ne permet pas la récupération du matériel dans un délai de 2 heures, un forfait de déplacement supplémentaire de <strong>80 €</strong> sera appliqué pour un nouveau passage.</li>
                 <li>• Le matériel reste sous la responsabilité du client jusqu'à sa restitution effective.</li>
                 <li>• En cas de contestation sur l'heure réelle de disponibilité du matériel (coursier, retard imputé à un tiers, etc.), le client devra fournir un justificatif daté, vérifiable et opposable (ex. bordereau de retrait, facture transporteur, SMS ou e-mail horodaté).</li>
