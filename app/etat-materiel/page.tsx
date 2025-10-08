@@ -122,64 +122,97 @@ export default function PageEtatMateriel() {
     }
   };
 
-  // Sauvegarde automatique dans localStorage pour éviter la perte de données
-  useEffect(() => {
-    if (!isAuthenticated) return; // Ne charger que si authentifié
-    
-    // Charger les données au démarrage
-    const savedData = localStorage.getItem('etat-materiel-draft');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        const hasData = parsed.client || parsed.contact || parsed.items?.length > 0;
-        
-        if (hasData) {
-          setClient(parsed.client || '');
-          setContact(parsed.contact || '');
-          setAdresse(parsed.adresse || '');
-          setCodePostal(parsed.codePostal || '');
-          setHeureDepot(parsed.heureDepot || '');
-          setHeureRecup(parsed.heureRecup || '');
-          setNotes(parsed.notes || '');
-          setItems(parsed.items || []);
-          setSignatureAvant(parsed.signatureAvant || '');
-          setSignatureApres(parsed.signatureApres || '');
-          
-          // Afficher le message de restauration
-          setShowRestoreMessage(true);
-          setTimeout(() => setShowRestoreMessage(false), 5000);
-          
-          console.log('✅ Données restaurées depuis la dernière session');
+  // Fonction pour ouvrir/créer la base IndexedDB
+  const openDB = (): Promise<IDBDatabase> => {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('EtatMaterielDB', 1);
+      
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+      
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains('drafts')) {
+          db.createObjectStore('drafts');
         }
+      };
+    });
+  };
+
+  // Sauvegarde automatique dans IndexedDB pour gérer les gros volumes (photos + signatures)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const loadData = async () => {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(['drafts'], 'readonly');
+        const store = tx.objectStore('drafts');
+        const request = store.get('current-draft');
+        
+        request.onsuccess = () => {
+          const savedData = request.result;
+          
+          if (savedData) {
+            const hasData = savedData.client || savedData.contact || savedData.items?.length > 0;
+            
+            if (hasData) {
+              setClient(savedData.client || '');
+              setContact(savedData.contact || '');
+              setAdresse(savedData.adresse || '');
+              setCodePostal(savedData.codePostal || '');
+              setHeureDepot(savedData.heureDepot || '');
+              setHeureRecup(savedData.heureRecup || '');
+              setNotes(savedData.notes || '');
+              setItems(savedData.items || []);
+              setSignatureAvant(savedData.signatureAvant || '');
+              setSignatureApres(savedData.signatureApres || '');
+              
+              setShowRestoreMessage(true);
+              setTimeout(() => setShowRestoreMessage(false), 5000);
+              
+              console.log('✅ Données restaurées (photos et signatures incluses)');
+            }
+          }
+        };
       } catch (err) {
-        console.error('Erreur lors de la restauration des données:', err);
+        console.error('Erreur lors de la restauration:', err);
       }
-    }
+    };
+    
+    loadData();
   }, [isAuthenticated]);
 
   // Sauvegarder automatiquement à chaque modification
   useEffect(() => {
-    if (!isAuthenticated) return; // Ne sauvegarder que si authentifié
+    if (!isAuthenticated) return;
     
-    const dataToSave = {
-      client,
-      contact,
-      adresse,
-      codePostal,
-      heureDepot,
-      heureRecup,
-      notes,
-      items,
-      signatureAvant,
-      signatureApres,
-      lastSaved: new Date().toISOString()
+    const saveData = async () => {
+      const dataToSave = {
+        client,
+        contact,
+        adresse,
+        codePostal,
+        heureDepot,
+        heureRecup,
+        notes,
+        items,
+        signatureAvant,
+        signatureApres,
+        lastSaved: new Date().toISOString()
+      };
+      
+      try {
+        const db = await openDB();
+        const tx = db.transaction(['drafts'], 'readwrite');
+        const store = tx.objectStore('drafts');
+        store.put(dataToSave, 'current-draft');
+      } catch (err) {
+        console.warn('⚠️ Erreur sauvegarde:', err);
+      }
     };
     
-    try {
-      localStorage.setItem('etat-materiel-draft', JSON.stringify(dataToSave));
-    } catch (err) {
-      console.warn('⚠️ Impossible de sauvegarder (localStorage plein?)', err);
-    }
+    saveData();
   }, [isAuthenticated, client, contact, adresse, codePostal, heureDepot, heureRecup, notes, items, signatureAvant, signatureApres]);
 
   // Avertir avant de quitter la page si des données sont présentes
@@ -717,9 +750,19 @@ export default function PageEtatMateriel() {
       clearSignatureAvant();
       clearSignatureApres();
       
-      // Effacer la sauvegarde localStorage
-      localStorage.removeItem('etat-materiel-draft');
-      console.log('✅ Sauvegarde automatique effacée');
+      // Effacer la sauvegarde IndexedDB
+      try {
+        const db = await openDB();
+        const tx = db.transaction(['drafts'], 'readwrite');
+        const store = tx.objectStore('drafts');
+        store.delete('current-draft');
+        
+        tx.oncomplete = () => {
+          console.log('✅ Sauvegarde automatique effacée');
+        };
+      } catch (err) {
+        console.error('Erreur nettoyage sauvegarde:', err);
+      }
       
     } catch (err) {
       console.error('Erreur génération PDF:', err);
@@ -1232,21 +1275,33 @@ export default function PageEtatMateriel() {
         <button
           type="button"
           style={{ ...styles.ghost, borderColor: '#dc2626', color: '#dc2626' }}
-          onClick={(e) => {
+          onClick={async (e) => {
             e.preventDefault();
             if (confirm('⚠️ Êtes-vous sûr de vouloir réinitialiser TOUS les champs (y compris les signatures) ?')) {
-            setItems([]); 
-            setClient('');
-            setContact('');
-            setAdresse('');
-            setCodePostal('');
-            setHeureDepot('');
-            setHeureRecup('');
-            setNotes('');
+              setItems([]); 
+              setClient('');
+              setContact('');
+              setAdresse('');
+              setCodePostal('');
+              setHeureDepot('');
+              setHeureRecup('');
+              setNotes('');
               clearSignatureAvant();
               clearSignatureApres();
-              localStorage.removeItem('etat-materiel-draft');
-              console.log('✅ Formulaire et sauvegarde réinitialisés');
+              
+              // Effacer la sauvegarde IndexedDB
+              try {
+                const db = await openDB();
+                const tx = db.transaction(['drafts'], 'readwrite');
+                const store = tx.objectStore('drafts');
+                store.delete('current-draft');
+                
+                tx.oncomplete = () => {
+                  console.log('✅ Formulaire et sauvegarde réinitialisés');
+                };
+              } catch (err) {
+                console.error('Erreur nettoyage:', err);
+              }
             }
           }}
         >
