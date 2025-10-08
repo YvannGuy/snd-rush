@@ -2,6 +2,27 @@
 
 Ce document explique le nouveau processus de génération des rapports d'état du matériel avec les deux signatures.
 
+## 💾 Sauvegarde automatique
+
+**Vos données sont protégées !**
+- ✅ **Sauvegarde automatique** à chaque modification (localStorage)
+- ✅ **Restauration automatique** si vous fermez puis rouvrez la page
+- ✅ **Avertissement** si vous tentez de fermer la page avec des données non sauvegardées
+- ✅ **Indicateur visuel** : 💾 Sauvegarde auto (en haut à droite)
+- ✅ **Message de confirmation** : Si des données sont restaurées, un message vert s'affiche pendant 5 secondes
+
+**Ce qui est sauvegardé :**
+- Informations client (nom, contact, adresse, etc.)
+- Liste du matériel ajouté
+- États (AVANT et APRÈS)
+- Commentaires
+- Photos (URLs Supabase ou base64)
+- Signatures (AVANT et APRÈS)
+
+**Nettoyage automatique :**
+- ✅ Lors de la génération du PDF final
+- ✅ Lors du clic sur "Réinitialiser tout"
+
 ## 🔄 Processus en 2 étapes
 
 ### Étape 1 : LIVRAISON (À la mise à disposition du matériel)
@@ -144,9 +165,23 @@ Pour chaque matériel :
 1. Livraison le lundi à 14h → Génère PDF livraison → **Garde les données**
 2. Reprise le mardi à 18h → Complète état APRÈS → Génère PDF final → **Reset**
 
+### Cas avec interruption (sauvegarde automatique)
+1. **Lundi 14h** : Remplir infos client, ajouter matériel, prendre photos AVANT
+2. **Fermeture accidentelle** de la page (navigateur, onglet, etc.)
+3. **Rouvrir la page** → ✅ Message vert : "Vos données ont été restaurées"
+4. Continuer où vous vous êtes arrêté → Signature AVANT → PDF livraison
+5. **Mardi 18h** : Page déjà remplie avec toutes les infos de la livraison
+6. Compléter état APRÈS → Signature APRÈS → PDF final → **Reset**
+
+### Si vous fermez entre livraison et reprise
+1. **Lundi** : PDF livraison généré ✅
+2. Fermer la page → Toutes les données sont sauvegardées
+3. **Mardi** : Rouvrir la page → Tout est restauré (infos, matériel, signature AVANT)
+4. Juste à compléter la partie APRÈS !
+
 ### Si vous devez recommencer
 - Utilisez le bouton **"🗑️ Réinitialiser tout (urgence)"**
-- ⚠️ Cela effacera TOUT (y compris les signatures)
+- ⚠️ Cela effacera TOUT (y compris les signatures ET la sauvegarde)
 - À utiliser uniquement en cas d'erreur
 
 ---
