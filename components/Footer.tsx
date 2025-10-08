@@ -3,7 +3,6 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import RentalConditionsModal from './RentalConditionsModal';
 import LegalNoticeModal from './LegalNoticeModal';
 
 interface FooterProps {
@@ -13,7 +12,6 @@ interface FooterProps {
 }
 
 export default function Footer({ language }: FooterProps) {
-  const [isRentalConditionsOpen, setIsRentalConditionsOpen] = useState(false);
   const [isLegalNoticeOpen, setIsLegalNoticeOpen] = useState(false);
 
   const texts = {
@@ -106,12 +104,12 @@ export default function Footer({ language }: FooterProps) {
                 >
                   {texts[language].packs}
                 </button>
-                <button 
-                  onClick={() => setIsRentalConditionsOpen(true)}
-                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
+                <Link 
+                  href="/cgv"
+                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm cursor-pointer"
                 >
                   {texts[language].rentalConditions}
-                </button>
+                </Link>
                 <button 
                   onClick={() => setIsLegalNoticeOpen(true)}
                   className="text-gray-300 hover:text-white transition-colors text-sm text-left cursor-pointer"
@@ -196,11 +194,6 @@ export default function Footer({ language }: FooterProps) {
         </div>
       </footer>
 
-      <RentalConditionsModal
-        isOpen={isRentalConditionsOpen}
-        onClose={() => setIsRentalConditionsOpen(false)}
-        language={language}
-      />
 
       <LegalNoticeModal
         isOpen={isLegalNoticeOpen}

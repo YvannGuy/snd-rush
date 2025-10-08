@@ -14,7 +14,7 @@ export default function CGVPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Conditions Générales de Vente</h1>
-              <p className="text-sm text-gray-600 mt-1">En vigueur au 07/10/2025</p>
+              <p className="text-sm text-gray-600 mt-1">En vigueur au 07/03/2025</p>
             </div>
             <Link 
               href="/"

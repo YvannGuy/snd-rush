@@ -411,8 +411,8 @@ export default function PriceGeneratorPage() {
   // Mode document : devis ou facture
   const [documentMode, setDocumentMode] = useState<'devis' | 'facture'>('devis');
 
-  // Numéro de document (généré une seule fois)
-  const [documentNumber, setDocumentNumber] = useState<number>(Math.floor(Math.random() * 1000) + 1);
+  // Numéro de document (incrémenté à chaque nouveau document)
+  const [documentNumber, setDocumentNumber] = useState<number>(0);
 
   // Lignes personnalisées
   const [customLines, setCustomLines] = useState<Array<{id: string, designation: string, price: number}>>([]);
@@ -565,7 +565,7 @@ export default function PriceGeneratorPage() {
           if (switchToInvoice) {
             // Basculer en mode facture et générer un nouveau numéro
             setDocumentMode('facture');
-            setDocumentNumber(Math.floor(Math.random() * 1000) + 1);
+            setDocumentNumber(prev => prev + 1);
             console.log('🔄 Basculement en mode facture');
           } else {
             // Reset complet si l'utilisateur ne veut pas créer la facture
@@ -589,7 +589,7 @@ export default function PriceGeneratorPage() {
             setNotes('');
             setCustomLines([]);
             setDocumentMode('devis');
-            setDocumentNumber(Math.floor(Math.random() * 1000) + 1);
+            setDocumentNumber(prev => prev + 1);
             console.log('🔄 Formulaire réinitialisé');
           }
         } else {
@@ -616,7 +616,7 @@ export default function PriceGeneratorPage() {
           setNotes('');
           setCustomLines([]);
           setDocumentMode('devis');
-          setDocumentNumber(Math.floor(Math.random() * 1000) + 1);
+          setDocumentNumber(prev => prev + 1);
           console.log('🔄 Formulaire réinitialisé après envoi de la facture');
         }
       } else {
@@ -1237,7 +1237,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
                   <ul>
                     <li>Caution : {cautionAmount} € (empreinte bancaire obligatoire, non débitée sauf dommage ou perte)</li>
                     <li>Solde : à régler au plus tard 72h avant l'événement</li>
-                    <li>Annulation : voir nos CGV sur www.sndrush.com</li>
+                    <li>En signant ce devis, vous reconnaissez avoir pris connaissance et accepté nos Conditions Générales de Vente.</li>
                     {notes && <li>Notes : {notes}</li>}
                   </ul>
                 </div>
@@ -1260,273 +1260,16 @@ ${notes ? `Notes : ${notes}` : ''}`;
 
           {/* Pied de page */}
           <div style={styles.devisFooter}>
-            <div>www.sndrush.com</div>
+            <div>
+              <a href="/cgv" target="_blank" rel="noopener noreferrer" style={{color: '#e27431', textDecoration: 'underline'}}>
+                conditions générales de vente
+              </a>
+            </div>
             <div>TVA non applicable, art. 293B du CGI</div>
           </div>
         </div>
 
-        {/* PAGE 2 - CONDITIONS GÉNÉRALES DE VENTE */}
-        <div style={{pageBreakBefore: 'always', padding: '20px', fontSize: '10px', lineHeight: '1.5'}}>
-          <h1 style={{fontSize: '20px', fontWeight: 'bold', color: '#e27431', marginBottom: '12px', textAlign: 'center', borderBottom: '2px solid #e27431', paddingBottom: '10px'}}>
-            CONDITIONS GÉNÉRALES DE VENTE
-          </h1>
-          <p style={{fontSize: '9px', textAlign: 'center', marginBottom: '15px', color: '#666'}}>En vigueur au 07/10/2025</p>
-
-          {/* Article 1 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>1. ARTICLE 1 - Champ d'application</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Les présentes CGV s'appliquent à tout achat de services de location, livraison et installation express d'équipements audio</li>
-              <li>Guy Location Events propose un service clé en main pour tous vos événements</li>
-              <li>Ces CGV prévaudront sur tout autre document</li>
-              <li>Prestataire : guy location events, SIRET 799596176000217, 78 avenue des champs élysées 75008 Paris</li>
-            </ul>
-          </div>
-
-          {/* Article 2 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>2. ARTICLE 2 - Prix</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Les prix sont exprimés en TTC</li>
-              <li>Les tarifs tiennent compte d'éventuelles réductions</li>
-              <li>Les frais de traitement, transport et livraison sont facturés en supplément</li>
-              <li>Une facture est établie et remise au Client lors de la fourniture des Services</li>
-              <li>Les devis sont valables 7 jours après leur établissement</li>
-            </ul>
-          </div>
-
-          {/* Article 3 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>3. ARTICLE 3 - Commandes</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>1. Demande par e-mail/téléphone précisant : matériel, date, lieu, durée, services</li>
-              <li>2. Devis personnalisé envoyé (validité 7 jours)</li>
-              <li>3. Commande ferme après signature du devis + acompte de 30%</li>
-              <li>4. Solde (70%) à régler le jour de la prestation ou 24h avant</li>
-              <li>5. Livraison, installation et désinstallation assurées par nos équipes</li>
-              <li>6. Facturation transmise après la prestation</li>
-              <li>Toute réclamation sous 48h après la livraison</li>
-            </ul>
-          </div>
-
-          {/* Article 4 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>4. ARTICLE 4 - Conditions de paiement</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Acompte de 30% à la commande (signature du devis)</li>
-              <li>Solde de 70% à la livraison ou le jour de la prestation</li>
-              <li>Paiement par carte bancaire sécurisée</li>
-              <li>En cas de retard de paiement : pénalités au taux légal</li>
-              <li>Le Prestataire se réserve le droit de suspendre la fourniture en cas de non-paiement</li>
-            </ul>
-          </div>
-
-          {/* Article 5 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>5. ARTICLE 5 - Fourniture des Prestations</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Services : location, livraison, installation, assistance technique</li>
-              <li>Délai standard : 3 à 7 jours ouvrés après validation et acompte</li>
-              <li>Interventions du lundi au samedi entre 8h et 20h</li>
-              <li>Zone : Paris, Île-de-France et zones limitrophes</li>
-              <li>Le client signe un bon de livraison attestant la conformité</li>
-              <li>Reprise du matériel à la date prévue (dégradation = facturation)</li>
-            </ul>
-          </div>
-
-          {/* Article 6 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>6. ARTICLE 6 - Droit de rétractation</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Compte tenu de la nature des Services fournis, les commandes ne bénéficient pas du droit de rétractation</li>
-              <li>Le contrat est conclu de façon définitive dès la passation de la commande</li>
-            </ul>
-          </div>
-
-          {/* Article 7 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>7. ARTICLE 7 - Responsabilité - Garanties</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Garantie de conformité et vice caché selon dispositions légales</li>
-              <li>Réclamation par écrit à contact@guylocationevents.com</li>
-              <li>Remboursement, réparation ou remplacement sous 15 jours</li>
-              <li>Garantie non applicable en cas de mauvaise utilisation</li>
-              <li>Responsabilité limitée au montant total de la prestation</li>
-            </ul>
-          </div>
-
-          {/* Article 8 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>8. ARTICLE 8 - Données personnelles</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Données collectées : nom, prénom, adresse, email, téléphone, paiement</li>
-              <li>Conservation : 5 ans</li>
-              <li>Droits : accès, modification, suppression via contact@guylocationevents.com</li>
-              <li>Traitement dans un délai de 30 jours</li>
-              <li>Destinataires : prestataires de paiement et techniciens (dans la limite nécessaire)</li>
-            </ul>
-          </div>
-
-          {/* Article 9 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>9. ARTICLE 9 - Propriété intellectuelle</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Le contenu du site www.sndrush.com est la propriété du Vendeur</li>
-              <li>Toute reproduction est strictement interdite</li>
-            </ul>
-          </div>
-
-          {/* Article 10 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>10. ARTICLE 10 - Droit applicable</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>CGV régies par le droit français</li>
-              <li>Rédigées en langue française uniquement</li>
-            </ul>
-          </div>
-
-          {/* Article 11 */}
-          <div style={{marginBottom: '15px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>11. ARTICLE 11 - Litiges</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Réclamation à contact@guylocationevents.com</li>
-              <li>Médiation : CNPM - MEDIATION DE LA CONSOMMATION</li>
-              <li>Adresse : 3 rue J. Constant Milleret - 42000 SAINT-ETIENNE</li>
-              <li>Email : contact-admin@cnpm-mediation-consommation.eu</li>
-              <li>Plateforme RLL : https://webgate.ec.europa.eu/odr/</li>
-            </ul>
-          </div>
-
-          <div style={{marginTop: '15px', fontSize: '8px', textAlign: 'center', color: '#999', borderTop: '1px solid #ddd', paddingTop: '8px'}}>
-            Guy Location Events - SIRET 799596176000217 - contact@guylocationevents.com - www.sndrush.com - TVA non applicable, art. 293B du CGI
-          </div>
-        </div>
-
-        {/* PAGE 3 - CONDITIONS SERVICE EXPRESS / URGENCE */}
-        <div style={{pageBreakBefore: 'always', padding: '20px', fontSize: '10px', lineHeight: '1.5'}}>
-          <h1 style={{fontSize: '20px', fontWeight: 'bold', color: '#e27431', marginBottom: '12px', textAlign: 'center', borderBottom: '2px solid #e27431', paddingBottom: '10px'}}>
-            CONDITIONS SERVICE EXPRESS / URGENCE
-          </h1>
-          {urgent && (
-            <p style={{fontSize: '11px', marginBottom: '15px', fontStyle: 'italic', color: '#e27431', textAlign: 'center', fontWeight: 'bold', background: '#fff3e0', padding: '8px', borderRadius: '5px'}}>
-              ⚠️ Votre prestation est en urgence (délai &lt; 24h) - Les conditions ci-dessous s'appliquent
-            </p>
-          )}
-
-          {/* Section 1 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>1. DÉLAIS ET DISPONIBILITÉ</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Service express disponible selon disponibilité du matériel et du personnel</li>
-              <li>Livraison et installation possibles dans un délai de 30min à 2 heures après confirmation</li>
-              <li>Contacter l'équipe pour confirmer la faisabilité avant le paiement</li>
-              <li>Service assuré 24h/24 et 7j/7</li>
-              <li>Confirmation immédiate par email ou SMS dès réception du paiement</li>
-            </ul>
-          </div>
-
-          {/* Section 2 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>2. TARIFICATION EXPRESS</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Supplément urgence : +20% sur le tarif normal{urgent ? ' (DÉJÀ APPLIQUÉ)' : ''}</li>
-              <li>Majoration urgence appliquée si délai &lt; 24h</li>
-              <li>Paiement intégral exigé avant la livraison pour les commandes express</li>
-              <li>Frais supplémentaires mentionnés sur le devis</li>
-              <li>Devis envoyé dans la minute suivant la demande pour les urgences</li>
-            </ul>
-          </div>
-
-          {/* Section 3 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>3. COMMANDE EXPRESS</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Demande à préciser : matériel, date, lieu, durée, services souhaités</li>
-              <li>Validation immédiate requise après réception du devis</li>
-              <li>Paiement complet peut être exigé avant la livraison</li>
-              <li>Confirmation de commande envoyée par e-mail ou SMS</li>
-              <li>Livraison et installation le jour même possibles (selon disponibilité)</li>
-            </ul>
-          </div>
-
-          {/* Section 4 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>4. ANNULATION ET MODIFICATION</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li><strong>Annulation par le client :</strong> Pour toute prestation réservée en urgence (moins de 24h avant), aucune annulation ni remboursement ne sera accepté, sauf cas de force majeure dûment justifiée</li>
-              <li><strong>Cas de force majeure :</strong> Décès, hospitalisation ou accident grave, Catastrophe naturelle, incendie, tempête, inondation, Interdiction administrative rendant la prestation impossible</li>
-              <li><strong>Ne sont PAS considérés comme force majeure :</strong> Retard, absence ou changement d'avis, Problème de transport personnel, Intempéries légères (pluie, froid), Conflit d'agenda, manque d'organisation</li>
-              <li>Le montant total du devis reste dû, même si la prestation n'a pas lieu (moyens matériels et humains déjà mobilisés)</li>
-              <li><strong>Modification :</strong> Possible uniquement avec accord écrit du prestataire, et sous réserve de disponibilité</li>
-              <li><strong>Annulation par le prestataire :</strong> Solution de remplacement proposée en priorité. Si impossible, remboursement intégral sous 14 jours</li>
-            </ul>
-          </div>
-
-          {/* Section 5 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>5. RÉCLAMATIONS</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Délai : 48 heures maximum après la prestation</li>
-              <li>Par écrit à contact@guylocationevents.com (photos justificatives appréciées)</li>
-              <li>Ou par courrier recommandé : 78 avenue des Champs Elysée 75008 Paris</li>
-              <li>Accusé de réception sous 5 jours ouvrés</li>
-              <li>Réponse ou solution sous 15 jours ouvrés maximum</li>
-            </ul>
-          </div>
-
-          {/* Section 6 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>6. GARANTIES ET RESPONSABILITÉ</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Matériel garanti en bon état de fonctionnement à la livraison</li>
-              <li>Réparation, remplacement ou remboursement partiel sous 15 jours</li>
-              <li>Garantie non applicable si mauvaise utilisation, branchements non conformes</li>
-              <li>Responsabilité limitée au montant total de la prestation</li>
-              <li>Aucune responsabilité pour dommages indirects (perte de bénéfice, etc.)</li>
-            </ul>
-          </div>
-
-          {/* Section 7 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>7. FRAIS D'ATTENTE / ABSENCE LORS DE LA REPRISE</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>En cas d'absence du client lors de la reprise : frais d'attente de <strong>50 € par heure</strong></li>
-              <li>Si injoignable après 2h : forfait de déplacement de <strong>80 €</strong> pour un nouveau passage</li>
-              <li>Le matériel reste sous la responsabilité du client jusqu'à sa restitution effective</li>
-            </ul>
-          </div>
-
-          {/* Section 8 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>8. RESPONSABILITÉ SUR LES DÉLAIS LIÉS AU CLIENT</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Le prestataire ne peut être tenu responsable d'un retard dû à un accès difficile (stationnement, codes d'accès, escaliers non indiqués)</li>
-              <li>Ces contraintes doivent être communiquées avant la prestation</li>
-            </ul>
-          </div>
-
-          {/* Section 9 */}
-          <div style={{marginBottom: '12px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>9. PRIORITÉ DE DISPONIBILITÉ</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>En cas de forte demande, prestations express traitées par ordre de validation complète (paiement reçu)</li>
-              <li>Un devis non réglé ne constitue pas une réservation</li>
-            </ul>
-          </div>
-
-          {/* Section 10 */}
-          <div style={{marginBottom: '15px'}}>
-            <h3 style={{fontSize: '12px', fontWeight: 'bold', marginBottom: '5px'}}>10. CONDITIONS MÉTÉO</h3>
-            <ul style={{marginLeft: '15px', fontSize: '10px', lineHeight: '1.4'}}>
-              <li>Pour les prestations extérieures express, le client doit s'assurer que le lieu est abrité et sécurisé</li>
-              <li>En cas d'intempéries empêchant la prestation, aucun remboursement ne sera effectué, sauf force majeure avérée</li>
-            </ul>
-          </div>
-
-          <div style={{marginTop: '15px', fontSize: '8px', textAlign: 'center', color: '#999', borderTop: '1px solid #ddd', paddingTop: '8px'}}>
-            Guy Location Events - SIRET 799596176000217 - contact@guylocationevents.com - www.sndrush.com - TVA non applicable, art. 293B du CGI
-          </div>
-        </div>
+        {/* CGV SUPPRIMÉES - Les conditions générales sont disponibles sur www.sndrush.com/cgv */}
       </div>
 
       {/* RÉSULTATS */}
