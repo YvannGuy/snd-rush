@@ -1043,13 +1043,23 @@ export default function PageEtatMateriel() {
             📄 Générer le rapport de LIVRAISON
           </button>
         </div>
+        <p style={{ fontSize: 11, color: '#666', marginTop: 8, fontStyle: 'italic' }}>
+          En signant, vous acceptez automatiquement les{' '}
+          <a 
+            href="/cgv" 
+            target="_blank" 
+            style={{ color: '#e27431', textDecoration: 'underline' }}
+          >
+            conditions de location
+          </a>
+        </p>
       </div>
 
       {/* Section Signature à la reprise (APRÈS) */}
       <div style={styles.card}>
         <h2 style={styles.h2}>🔄 Signature du client - À la reprise (APRÈS)</h2>
         <p style={{ fontSize: 14, color: '#666', marginBottom: 8 }}>
-          "Matériel restitué et contrôlé par Guy Location Events le {heureRecup ? new Date(heureRecup).toLocaleString('fr-FR') : '[date / heure]'}"
+          "Matériel restitué et contrôlé par Guy Location Events"
         </p>
         <canvas
           ref={canvasApresRef}
@@ -1078,6 +1088,16 @@ export default function PageEtatMateriel() {
             📄 Générer le rapport FINAL (avec reset)
           </button>
         </div>
+        <p style={{ fontSize: 11, color: '#666', marginTop: 8, fontStyle: 'italic' }}>
+          En signant, vous acceptez automatiquement les{' '}
+          <a 
+            href="/cgv" 
+            target="_blank" 
+            style={{ color: '#e27431', textDecoration: 'underline' }}
+          >
+            conditions de location
+          </a>
+        </p>
       </div>
 
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
@@ -1218,6 +1238,9 @@ export default function PageEtatMateriel() {
               <p style={{ fontSize: 11, color: '#666', marginTop: 4 }}>
                 Signé le {heureDepot ? new Date(heureDepot).toLocaleString('fr-FR') : ''}
               </p>
+              <p style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
+                En signant, vous acceptez automatiquement les conditions de location (disponibles sur www.sndrush.com/cgv)
+              </p>
             </div>
           )}
           
@@ -1225,11 +1248,14 @@ export default function PageEtatMateriel() {
             <div style={{ marginBottom: 20 }}>
               <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Signature du client - À la reprise :</p>
               <p style={{ fontSize: 12, fontStyle: 'italic', color: '#555', marginBottom: 8 }}>
-                "Matériel restitué et contrôlé par Guy Location Events le {heureRecup ? new Date(heureRecup).toLocaleString('fr-FR') : '[date / heure]'}"
+                "Matériel restitué et contrôlé par Guy Location Events"
               </p>
               <img src={signatureApres} alt="Signature du client à la reprise" style={{ maxWidth: 300, border: '1px solid #ddd', borderRadius: 6 }} />
               <p style={{ fontSize: 11, color: '#666', marginTop: 4 }}>
                 Signé le {heureRecup ? new Date(heureRecup).toLocaleString('fr-FR') : ''}
+              </p>
+              <p style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
+                En signant, vous acceptez automatiquement les conditions de location (disponibles sur www.sndrush.com/cgv)
               </p>
             </div>
           )}
@@ -1238,6 +1264,24 @@ export default function PageEtatMateriel() {
         <p style={{ marginTop: 20, fontSize: 11, color: '#999', textAlign: 'center' }}>
           Rapport généré le {new Date().toLocaleString('fr-FR')} – SND Rush / Guy Location Events
         </p>
+        
+        <div style={{ 
+          marginTop: 16, 
+          padding: 12, 
+          background: '#f9fafb', 
+          border: '1px solid #e5e7eb', 
+          borderRadius: 8,
+          textAlign: 'center'
+        }}>
+          <p style={{ fontSize: 11, color: '#374151', fontStyle: 'italic' }}>
+            En signant ce document, le client certifie avoir pris connaissance et accepté l'intégralité des{' '}
+            <strong style={{ color: '#e27431' }}>Conditions Générales de Vente et de Location</strong>{' '}
+            disponibles sur <strong>www.sndrush.com/cgv</strong>
+          </p>
+          <p style={{ fontSize: 10, color: '#6b7280', marginTop: 6 }}>
+            Ces conditions sont opposables et font partie intégrante du contrat de location.
+          </p>
+        </div>
       </div>
     </div>
   );
