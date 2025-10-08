@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS rapports_materiel (
   heure_depot TIMESTAMPTZ,
   heure_recup TIMESTAMPTZ,
   notes TEXT,
-  items JSONB NOT NULL DEFAULT '[]',
+  items JSONB NOT NULL DEFAULT '[]', -- Inclut photos + analyses IA
   signature_avant TEXT,
   signature_apres TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()

@@ -7,7 +7,31 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 type EtatAvant = 'Bon' | 'Traces légères' | 'Rayures' | 'Choc' | 'Dégradation' | 'Non-fonctionnel';
 type EtatApres = 'Bon' | 'Usure normale' | 'Dégradation visible' | 'Matériel manquant' | 'Casse' | 'Salissure importante';
 
-type Photo = { url: string; label?: string };
+type Dommage = {
+  type: 'rayure' | 'choc' | 'salissure' | 'liquide' | 'casse' | 'manquant';
+  localisation: string;
+  gravite: 'légère' | 'moyenne' | 'grave';
+  description: string;
+  visible_avant: boolean;
+};
+
+type AnalyseIA = {
+  etatGeneral: string;
+  changementsDetectes?: boolean;
+  nouveauxDommages?: Dommage[];
+  commentaireComparatif?: string;
+  recommandation: 'OK' | 'USURE_NORMALE' | 'FACTURATION_LEGERE' | 'FACTURATION_IMPORTANTE';
+  montantEstime?: number;
+  timestamp: string;
+  model: string;
+};
+
+type Photo = { 
+  url: string; 
+  label?: string;
+  analyseIA?: AnalyseIA;
+};
+
 type ItemEtat = {
   id: string;
   nom: string;
@@ -17,6 +41,8 @@ type ItemEtat = {
   photosAvant: Photo[];
   photosApres: Photo[];
   commentaires?: string;
+  analyseIAAvant?: AnalyseIA;
+  analyseIAApres?: AnalyseIA;
 };
 
 type Dossier = {
@@ -327,11 +353,79 @@ export default function PageEtatMateriel() {
       }
     }
     
+    // Mettre à jour les photos d'abord
     setItems(prev => prev.map(i => {
       if (i.id !== id) return i;
       if (kind === 'avant') return { ...i, photosAvant: [...i.photosAvant, ...arr] };
       return { ...i, photosApres: [...i.photosApres, ...arr] };
     }));
+
+    // Lancer l'analyse IA automatiquement pour les photos APRÈS
+    if (kind === 'apres' && arr.length > 0) {
+      console.log('🤖 Lancement analyse IA automatique...');
+      
+      // Récupérer l'item pour avoir les photos AVANT
+      const currentItem = items.find(i => i.id === id);
+      const nomMateriel = currentItem?.nom || 'équipement';
+      
+      // Prendre la première photo AVANT comme référence (s'il y en a)
+      const photoAvant = currentItem?.photosAvant[0]?.url || null;
+      
+      // Analyser chaque photo APRÈS uploadée
+      for (const photo of arr) {
+        try {
+          const response = await fetch('/api/analyze-photo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              photoAvant,
+              photoApres: photo.url,
+              nomMateriel
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Analyse IA reçue:', data);
+            
+            // Mettre à jour l'item avec l'analyse
+            setItems(prev => prev.map(i => {
+              if (i.id !== id) return i;
+              
+              // Mettre à jour la photo avec son analyse
+              const updatedPhotosApres = i.photosApres.map(p => {
+                if (p.url === photo.url) {
+                  return { ...p, analyseIA: data.analysis };
+                }
+                return p;
+              });
+              
+              // Mettre à jour l'analyse globale de l'item
+              return { 
+                ...i, 
+                photosApres: updatedPhotosApres,
+                analyseIAApres: data.analysis,
+                // Auto-remplir l'état si recommandation négative
+                etatApres: data.analysis.recommandation === 'OK' ? 'Bon' : 
+                          data.analysis.recommandation === 'USURE_NORMALE' ? 'Usure normale' : 
+                          data.analysis.etatGeneral as EtatApres || i.etatApres
+              };
+            }));
+
+            // Afficher notification de résultat
+            if (data.analysis.changementsDetectes && data.analysis.nouveauxDommages?.length > 0) {
+              console.warn(`⚠️ ${data.analysis.nouveauxDommages.length} dommage(s) détecté(s) par l'IA`);
+            } else {
+              console.log('✅ Aucun dommage détecté par l\'IA');
+            }
+          } else {
+            console.error('❌ Erreur API analyse:', await response.text());
+          }
+        } catch (err) {
+          console.error('❌ Erreur lors de l\'analyse IA:', err);
+        }
+      }
+    }
   };
 
   const setEtatAvant = (id: string, val: EtatAvant) =>
@@ -1239,6 +1333,60 @@ export default function PageEtatMateriel() {
             </div>
           </div>
 
+          {/* Analyse IA APRÈS */}
+          {item.analyseIAApres && (
+            <div style={{ 
+              marginTop: 12, 
+              padding: 12, 
+              background: item.analyseIAApres.changementsDetectes ? '#fef3c7' : '#d1fae5',
+              border: `2px solid ${item.analyseIAApres.changementsDetectes ? '#f59e0b' : '#10b981'}`,
+              borderRadius: 10
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 20 }}>🤖</span>
+                <strong style={{ fontSize: 14 }}>Analyse IA automatique</strong>
+                <span style={{ 
+                  fontSize: 11, 
+                  padding: '2px 8px', 
+                  borderRadius: 999, 
+                  background: item.analyseIAApres.changementsDetectes ? '#dc2626' : '#10b981',
+                  color: '#fff'
+                }}>
+                  {item.analyseIAApres.recommandation}
+                </span>
+              </div>
+              
+              <p style={{ fontSize: 13, color: '#374151', marginBottom: 8 }}>
+                <strong>État général:</strong> {item.analyseIAApres.etatGeneral}
+              </p>
+              
+              {item.analyseIAApres.nouveauxDommages && item.analyseIAApres.nouveauxDommages.length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  <strong style={{ fontSize: 13, color: '#dc2626' }}>⚠️ Nouveaux dommages détectés:</strong>
+                  <ul style={{ marginTop: 4, marginLeft: 20, fontSize: 12 }}>
+                    {item.analyseIAApres.nouveauxDommages.map((d, i) => (
+                      <li key={i} style={{ marginBottom: 4 }}>
+                        <strong>{d.type}</strong> ({d.gravite}) - {d.localisation}
+                        <br />
+                        <span style={{ color: '#666', fontSize: 11 }}>{d.description}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {item.analyseIAApres.commentaireComparatif && (
+                <p style={{ fontSize: 12, color: '#666', marginTop: 8, fontStyle: 'italic' }}>
+                  💬 {item.analyseIAApres.commentaireComparatif}
+                </p>
+              )}
+              
+              <p style={{ fontSize: 10, color: '#999', marginTop: 8 }}>
+                Analysé le {new Date(item.analyseIAApres.timestamp).toLocaleString('fr-FR')} - {item.analyseIAApres.model}
+              </p>
+            </div>
+          )}
+
           <div style={{ marginTop: 8 }}>
             <label>Commentaires
               <textarea
@@ -1472,6 +1620,56 @@ export default function PageEtatMateriel() {
                       {p.label && <div style={{ fontSize: 9, color: '#666', marginTop: 2 }}>{p.label}</div>}
                     </div>
                   ))}
+                </div>
+              )}
+              
+              {/* Analyse IA dans le PDF */}
+              {it.analyseIAApres && (
+                <div style={{
+                  marginTop: 10,
+                  padding: 10,
+                  background: it.analyseIAApres.changementsDetectes ? '#fff3cd' : '#d4edda',
+                  border: `2px solid ${it.analyseIAApres.changementsDetectes ? '#f59e0b' : '#10b981'}`,
+                  borderRadius: 6
+                }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                    🤖 ANALYSE AUTOMATIQUE PAR INTELLIGENCE ARTIFICIELLE
+                  </div>
+                  
+                  <p style={{ fontSize: 11, margin: '4px 0' }}>
+                    <strong>État général:</strong> {it.analyseIAApres.etatGeneral}
+                  </p>
+                  
+                  <p style={{ fontSize: 11, margin: '4px 0' }}>
+                    <strong>Recommandation:</strong> {it.analyseIAApres.recommandation}
+                  </p>
+                  
+                  {it.analyseIAApres.nouveauxDommages && it.analyseIAApres.nouveauxDommages.length > 0 && (
+                    <div style={{ marginTop: 6 }}>
+                      <strong style={{ fontSize: 11, color: '#dc2626' }}>⚠️ NOUVEAUX DOMMAGES DÉTECTÉS:</strong>
+                      <ul style={{ marginTop: 4, marginLeft: 16, fontSize: 10 }}>
+                        {it.analyseIAApres.nouveauxDommages.map((d, idx) => (
+                          <li key={idx} style={{ marginBottom: 3 }}>
+                            <strong>{d.type.toUpperCase()}</strong> ({d.gravite}) - {d.localisation}
+                            <br />
+                            {d.description}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {it.analyseIAApres.commentaireComparatif && (
+                    <p style={{ fontSize: 10, color: '#555', marginTop: 6, fontStyle: 'italic' }}>
+                      {it.analyseIAApres.commentaireComparatif}
+                    </p>
+                  )}
+                  
+                  <p style={{ fontSize: 9, color: '#666', marginTop: 6, borderTop: '1px solid #ddd', paddingTop: 4 }}>
+                    Rapport généré automatiquement le {new Date(it.analyseIAApres.timestamp).toLocaleString('fr-FR')}
+                    <br />
+                    Modèle: {it.analyseIAApres.model} - Ce rapport fait foi comme preuve contractuelle objective
+                  </p>
                 </div>
               )}
             </div>
