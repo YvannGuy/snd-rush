@@ -249,6 +249,9 @@ export default function PageEtatMateriel() {
     let uploadSuccessCount = 0;
     let uploadFailCount = 0;
     
+    console.log(`📸 Traitement de ${files.length} photo(s)`);
+    console.log('🔍 Supabase configuré:', isSupabaseConfigured());
+    
     for (const f of Array.from(files)) {
       try {
         // Créer un timestamp horodaté pour chaque photo
@@ -265,6 +268,7 @@ export default function PageEtatMateriel() {
         
         // Upload vers Supabase Storage si configuré
         if (isSupabaseConfigured() && supabase) {
+          console.log('🚀 Tentative upload vers Supabase Storage...');
           const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${f.name}`;
           const filePath = `etat-materiel/${fileName}`;
           
