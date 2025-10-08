@@ -336,14 +336,52 @@ export default function CGVPage() {
               </div>
             </div>
 
-            {/* Article 8 */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            {/* Article 8 - Dégradations et facturation */}
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
                   8
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 8 - Annulation et modification</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 8 - Dégradations et facturation des dommages esthétiques</h2>
+                  <ul className="space-y-2 text-gray-700">
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Tout dommage constaté lors de la reprise du matériel (rayures, chocs, traces, salissures, casse, déformation, oxydation, etc.) fera l'objet d'une évaluation selon le barème interne de dégradation établi par Guy Location Events.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Ce barème classe les dégradations par niveaux de gravité (mineure, moyenne, majeure) et détermine le montant forfaitaire applicable.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span><strong>Une rayure légère mais visible ou toute marque esthétique non présente avant la location peut entraîner une facturation de remise en état, même si le matériel reste fonctionnel.</strong></span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>En cas de contestation, les photos ou vidéos datées réalisées avant et après la prestation feront foi.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Les coûts de réparation, nettoyage ou remplacement sont déductibles de la caution (empreinte bancaire) et pourront être accompagnés d'un justificatif de coût (devis fournisseur, ticket de réparation).</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>En cas de détérioration majeure ou de perte du matériel, le client sera facturé à hauteur de la valeur à neuf ou de remplacement du matériel concerné.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Article 9 */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
+                  9
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 9 - Annulation et modification</h2>
                   
                   <div className="mb-4">
                     <h3 className="font-semibold text-gray-900 mb-2">➤ Annulation par le client</h3>
@@ -393,14 +431,14 @@ export default function CGVPage() {
               </div>
             </div>
 
-            {/* Article 9 */}
+            {/* Article 10 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  9
+                  10
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 9 - Réclamations</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 10 - Réclamations</h2>
                   <p className="text-gray-700 mb-3">Toute réclamation doit être adressée dans un délai maximum de 48 h après la prestation :</p>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
@@ -428,14 +466,14 @@ export default function CGVPage() {
               </div>
             </div>
 
-            {/* Article 10 */}
+            {/* Article 11 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  10
+                  11
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 10 - Frais d'attente, absence et responsabilité du matériel</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 11 - Frais d'attente, absence et responsabilité du matériel</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -504,10 +542,10 @@ export default function CGVPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  11
+                  12
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 11 - Données personnelles</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 12 - Données personnelles</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -542,10 +580,10 @@ export default function CGVPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  12
+                  13
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 12 - Propriété intellectuelle</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 13 - Propriété intellectuelle</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -564,10 +602,10 @@ export default function CGVPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  13
+                  14
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 13 - Droit applicable et juridiction compétente</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 14 - Droit applicable et juridiction compétente</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -586,10 +624,10 @@ export default function CGVPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  14
+                  15
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 14 - Litiges et médiation</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 15 - Litiges et médiation</h2>
                   <p className="text-gray-700 mb-3">Avant toute procédure, les parties s'engagent à rechercher une solution amiable.</p>
                   <p className="text-gray-700 mb-2">En cas de désaccord persistant :</p>
                   <ul className="space-y-2 text-gray-700 mb-4">
@@ -759,9 +797,22 @@ export default function CGVPage() {
               </ul>
             </div>
 
-            {/* Article 8 - Frais d'attente */}
+            {/* Article 8 - Dégradations et facturation */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 8 - FRAIS D'ATTENTE, ABSENCE ET RESPONSABILITÉ DU MATÉRIEL</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 8 - DÉGRADATIONS ET FACTURATION DES DOMMAGES ESTHÉTIQUES</h2>
+              <ul className="space-y-3 text-gray-700">
+                <li>• Tout dommage constaté lors de la reprise du matériel (rayures, chocs, traces, salissures, casse, déformation, oxydation, etc.) fera l'objet d'une évaluation selon le barème interne de dégradation établi par Guy Location Events.</li>
+                <li>• Ce barème classe les dégradations par niveaux de gravité (mineure, moyenne, majeure) et détermine le montant forfaitaire applicable.</li>
+                <li>• <strong>Une rayure légère mais visible ou toute marque esthétique non présente avant la location peut entraîner une facturation de remise en état, même si le matériel reste fonctionnel.</strong></li>
+                <li>• En cas de contestation, les photos ou vidéos datées réalisées avant et après la prestation feront foi.</li>
+                <li>• Les coûts de réparation, nettoyage ou remplacement sont déductibles de la caution (empreinte bancaire) et pourront être accompagnés d'un justificatif de coût (devis fournisseur, ticket de réparation).</li>
+                <li>• En cas de détérioration majeure ou de perte du matériel, le client sera facturé à hauteur de la valeur à neuf ou de remplacement du matériel concerné.</li>
+              </ul>
+            </div>
+
+            {/* Article 9 - Frais d'attente */}
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 9 - FRAIS D'ATTENTE, ABSENCE ET RESPONSABILITÉ DU MATÉRIEL</h2>
               <ul className="space-y-3 text-gray-700">
                 <li>• En cas d'absence du client ou de son représentant lors de la reprise du matériel, des frais d'attente de <strong>25 € par tranche de 30 minutes (soit 50 € par heure)</strong> pourront être facturés à compter de l'heure prévue de récupération.</li>
                 <li>• Le client doit notifier par écrit à Guy Location Events (par e-mail, SMS ou message signé) le nom, prénom et numéro de téléphone du représentant autorisé à assister à la reprise du matériel.</li>
@@ -778,7 +829,7 @@ export default function CGVPage() {
 
             {/* Article 9 - Responsabilité délais */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 9 - RESPONSABILITÉ SUR LES DÉLAIS LIÉS AU CLIENT</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 10 - RESPONSABILITÉ SUR LES DÉLAIS LIÉS AU CLIENT</h2>
               <ul className="space-y-3 text-gray-700">
                 <li>• Le prestataire ne peut être tenu responsable d'un retard dû à un accès difficile au lieu (absence de stationnement, code d'accès non communiqué, escaliers, ascenseur en panne, etc.).</li>
                 <li>• Ces contraintes doivent être signalées avant la prestation. Tout manquement pourra entraîner un surcoût ou un report de la prestation sans remboursement.</li>
@@ -787,7 +838,7 @@ export default function CGVPage() {
 
             {/* Article 10 - Priorité */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 10 - PRIORITÉ DE DISPONIBILITÉ</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 11 - PRIORITÉ DE DISPONIBILITÉ</h2>
               <ul className="space-y-3 text-gray-700">
                 <li>• En cas de forte demande, les prestations express sont traitées par ordre de validation complète (paiement reçu).</li>
                 <li>• Un devis non réglé ne constitue pas une réservation ferme.</li>
@@ -796,7 +847,7 @@ export default function CGVPage() {
 
             {/* Article 11 - Météo */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 11 - CONDITIONS MÉTÉO</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 12 - CONDITIONS MÉTÉO</h2>
               <ul className="space-y-3 text-gray-700">
                 <li>• Pour toute prestation extérieure express, le client doit s'assurer que le lieu est abrité, sécurisé et adapté.</li>
                 <li>• En cas d'intempéries rendant la prestation impossible ou dangereuse, aucun remboursement ne sera effectué, sauf force majeure avérée.</li>
