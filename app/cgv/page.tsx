@@ -605,10 +605,6 @@ export default function CGVPage() {
                       <span className="text-[#F2431E] mr-2">•</span>
                       <span>Email : contact-admin@cnpm-mediation-consommation.eu</span>
                     </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Plateforme RLL : <a href="https://webgate.ec.europa.eu/odr/" target="_blank" rel="noopener noreferrer" className="text-[#F2431E] hover:underline">https://webgate.ec.europa.eu/odr/</a></span>
-                    </li>
                   </ul>
                   <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <p className="text-gray-700 text-sm">
