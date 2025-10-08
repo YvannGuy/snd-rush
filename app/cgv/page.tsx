@@ -289,15 +289,23 @@ export default function CGVPage() {
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Un état des lieux contradictoire et des tests de fonctionnement sont réalisés à la livraison et à la reprise du matériel, en présence du client ou de son représentant.</span>
+                      <span>Un état des lieux contradictoire et des tests de fonctionnement sont réalisés à la livraison et à la reprise, <strong>en présence du client uniquement si une installation est prévue</strong>.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Avant chaque livraison, Guy Location Events effectue un test complet du matériel (son, vidéo, alimentation, câbles, connexions, fonctionnement général) afin de garantir sa conformité.</span>
+                      <span>Si le client n'a pas choisi l'option installation, les tests sont effectués en atelier avant le départ du matériel. Un rapport de test ou des photos peuvent être produits à titre de preuve.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Le client s'engage à vérifier le matériel lors de la réception, à procéder à un essai rapide et à signaler immédiatement tout défaut ou anomalie constaté.</span>
+                      <span>Le matériel est réputé livré en parfait état de fonctionnement dès sa remise au client ou à son représentant.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Le client s'engage à vérifier le contenu au moment de la réception et à signaler immédiatement toute anomalie visible (manque, casse, erreur de modèle, etc.).</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span><strong>En l'absence de signalement dans l'heure suivant la réception, le matériel est réputé conforme et en bon état.</strong></span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -305,19 +313,19 @@ export default function CGVPage() {
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>À la reprise, un nouveau test de contrôle est effectué par le prestataire.</span>
+                      <span>À la reprise, un test de contrôle est réalisé par le prestataire.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Tout élément manquant, détérioré, sale, non conforme ou présentant un dysfonctionnement non signalé à la livraison donnera lieu à facturation selon le barème en vigueur.</span>
+                      <span>Tout élément manquant, détérioré, sale ou non fonctionnel sera facturé selon le barème en vigueur, sauf si un vice préexistant est prouvé.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>En cas d'absence du client ou de son représentant lors de la reprise, l'état des lieux et les tests effectués par l'équipe de Guy Location Events feront foi.</span>
+                      <span>En cas d'absence du client lors de la reprise, l'état des lieux réalisé par l'équipe Guy Location Events fera foi.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Les photos, vidéos et rapports techniques réalisés par le prestataire peuvent servir de preuve contractuelle en cas de litige.</span>
+                      <span>Les photos, vidéos et rapports techniques réalisés par le prestataire pourront servir de preuve contractuelle en cas de litige.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -736,14 +744,14 @@ export default function CGVPage() {
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
               <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 7 - ÉTAT DES LIEUX, TESTS ET RESTITUTION DU MATÉRIEL (SERVICE EXPRESS)</h2>
               <ul className="space-y-3 text-gray-700">
-                <li>• En raison du caractère urgent de la prestation, l'état des lieux est réduit et simplifié, mais inclut un test rapide de bon fonctionnement effectué avant la livraison.</li>
-                <li>• Le technicien vérifie le matériel avant départ (alimentation, câbles, fonctionnement général) et réalise un contrôle visuel à la remise.</li>
-                <li>• Le client confirme la bonne réception du matériel par signature électronique, e-mail ou SMS.</li>
-                <li>• À la reprise, le technicien ou l'équipe logistique effectue un test immédiat de vérification pour s'assurer du bon état et du fonctionnement.</li>
+                <li>• En raison du caractère urgent de la prestation, l'état des lieux est simplifié, mais inclut un test technique complet effectué avant départ dans les locaux de Guy Location Events.</li>
+                <li>• Si un technicien installe le matériel sur place, un contrôle visuel et fonctionnel est effectué à la livraison et validé par le client (signature, SMS ou e-mail).</li>
+                <li>• Si le matériel est livré sans installation, le rapport de test atelier fera foi comme preuve du bon fonctionnement au moment du départ.</li>
+                <li>• À la reprise, le technicien ou l'équipe logistique effectue un test immédiat pour vérifier l'état et le fonctionnement du matériel.</li>
                 <li>• <strong>Tout élément endommagé, mal utilisé, manquant ou non restitué sera facturé selon le barème en vigueur.</strong></li>
-                <li>• Si le client ou son représentant est absent lors de la reprise, le constat et les tests effectués par le prestataire feront foi, appuyés de photos ou vidéos datées.</li>
+                <li>• En cas d'absence du client lors de la reprise, le constat et les tests réalisés par Guy Location Events feront foi, appuyés de photos ou vidéos datées.</li>
                 <li>• En cas de contestation, le client devra fournir un justificatif daté, vérifiable et opposable.</li>
-                <li>• <strong>Le matériel reste sous la responsabilité du client jusqu'à sa récupération effective par Guy Location Events.</strong></li>
+                <li>• <strong>Le matériel reste sous la responsabilité du client jusqu'à sa récupération effective par le prestataire.</strong></li>
               </ul>
             </div>
 
