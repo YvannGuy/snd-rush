@@ -32,18 +32,15 @@ type Dossier = {
 };
 
 const styles: Record<string, React.CSSProperties> = {
-  wrap: { maxWidth: 960, margin: '24px auto', padding: 16, fontFamily: 'Inter, system-ui, sans-serif' },
+  wrap: { maxWidth: 960, margin: '0 auto', padding: '16px', fontFamily: 'Inter, system-ui, sans-serif' },
   card: { border: '1px solid #e6e6e6', borderRadius: 12, padding: 16, marginBottom: 16, background: '#fff' },
   h1: { fontSize: 24, fontWeight: 800, margin: '0 0 12px' },
   h2: { fontSize: 18, fontWeight: 700, margin: '0 0 10px' },
   input: { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 10, fontSize: 14 },
   select: { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 10, fontSize: 14, background: '#fff' },
-  row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 },
-  row3: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginTop: 8 },
   btn: { padding: '10px 14px', borderRadius: 10, border: '1px solid #e27431', background: '#e27431', color: '#fff', cursor: 'pointer' },
   ghost: { padding: '10px 14px', borderRadius: 10, border: '1px solid #ddd', background: '#fff', color: '#111', cursor: 'pointer' },
   tag: { display: 'inline-block', padding: '4px 8px', borderRadius: 999, border: '1px solid #ddd', marginRight: 6, fontSize: 12 },
-  grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
   thumb: { width: 84, height: 84, objectFit: 'cover', borderRadius: 8, border: '1px solid #eee' },
   badge: { display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: '#111', color: '#fff', fontSize: 12, marginLeft: 8 },
   total: { fontSize: 18, fontWeight: 700, color: '#e27431' },
@@ -546,9 +543,64 @@ export default function PageEtatMateriel() {
 
   return (
     <div style={styles.wrap}>
+      <style>{`
+        @media (max-width: 639px) {
+          body {
+            font-size: 14px;
+          }
+          h1 {
+            font-size: 20px !important;
+          }
+          h2 {
+            font-size: 16px !important;
+          }
+          /* Réduire le padding des cards sur mobile */
+          [style*="border: 1px solid #e6e6e6"] {
+            padding: 12px !important;
+          }
+        }
+        .responsive-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+          margin-top: 8px;
+        }
+        @media (min-width: 640px) {
+          .responsive-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+        @media (min-width: 768px) {
+          .responsive-grid-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+          }
+        }
+        .label-text {
+          display: block;
+          margin-bottom: 4px;
+          font-size: 14px;
+          font-weight: 500;
+          color: #374151;
+        }
+        @media (max-width: 639px) {
+          .responsive-grid {
+            gap: 16px;
+          }
+          /* Améliorer l'espacement des labels sur mobile */
+          label {
+            display: block;
+            font-size: 13px;
+          }
+          /* Réduire la taille des boutons sur mobile pour mieux s'adapter */
+          button {
+            font-size: 14px !important;
+            padding: 8px 12px !important;
+          }
+        }
+      `}</style>
       <div style={styles.card}>
         <h1 style={styles.h1}>État du matériel – SND Rush <span style={styles.badge}>Interne</span></h1>
-        <div style={styles.row3}>
+        <div className="responsive-grid responsive-grid-3">
           <label>Client / Organisation <span style={{ color: '#ef4444' }}>*</span>
             <input 
               style={styles.input} 
@@ -574,7 +626,7 @@ export default function PageEtatMateriel() {
             />
           </label>
         </div>
-        <div style={styles.row3}>
+        <div className="responsive-grid responsive-grid-3">
           <label>Code postal
             <input 
               style={styles.input} 
@@ -686,7 +738,7 @@ export default function PageEtatMateriel() {
               <button style={styles.ghost} onClick={() => removeItem(item.id)}>Retirer</button>
             </div>
 
-          <div style={styles.row3}>
+          <div className="responsive-grid responsive-grid-3">
             <label>État constaté à la livraison
               <select
                 style={styles.select}
@@ -717,7 +769,7 @@ export default function PageEtatMateriel() {
 
           <div style={{ height: 8 }} />
 
-          <div style={styles.row3}>
+          <div className="responsive-grid responsive-grid-3">
             <label>État constaté à la reprise
               <select
                 style={styles.select}
