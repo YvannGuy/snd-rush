@@ -342,10 +342,18 @@ export default function PageEtatMateriel() {
   // Gestion du canvas de signature AVANT
   useEffect(() => {
     const canvas = canvasAvantRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.log('❌ Canvas AVANT non trouvé');
+      return;
+    }
     
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.log('❌ Contexte 2d AVANT non disponible');
+      return;
+    }
+
+    console.log('✅ Canvas AVANT initialisé');
 
     // Configuration du contexte
     ctx.strokeStyle = '#000';
@@ -355,28 +363,26 @@ export default function PageEtatMateriel() {
 
     let drawing = false;
 
-    const getCoordinates = (e: MouseEvent | TouchEvent) => {
+    const startDrawing = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      drawing = true;
+      console.log('🖊️ Début dessin AVANT');
+      
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
       
-      if ('touches' in e) {
-        return {
-          x: (e.touches[0].clientX - rect.left) * scaleX,
-          y: (e.touches[0].clientY - rect.top) * scaleY
-        };
+      let x, y;
+      if ('touches' in e && e.touches.length > 0) {
+        x = (e.touches[0].clientX - rect.left) * scaleX;
+        y = (e.touches[0].clientY - rect.top) * scaleY;
+      } else if ('clientX' in e) {
+        x = (e.clientX - rect.left) * scaleX;
+        y = (e.clientY - rect.top) * scaleY;
       } else {
-        return {
-          x: (e.clientX - rect.left) * scaleX,
-          y: (e.clientY - rect.top) * scaleY
-        };
+        return;
       }
-    };
-
-    const startDrawing = (e: MouseEvent | TouchEvent) => {
-      e.preventDefault();
-      drawing = true;
-      const { x, y } = getCoordinates(e);
+      
       ctx.beginPath();
       ctx.moveTo(x, y);
     };
@@ -384,7 +390,22 @@ export default function PageEtatMateriel() {
     const draw = (e: MouseEvent | TouchEvent) => {
       if (!drawing) return;
       e.preventDefault();
-      const { x, y } = getCoordinates(e);
+      
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      let x, y;
+      if ('touches' in e && e.touches.length > 0) {
+        x = (e.touches[0].clientX - rect.left) * scaleX;
+        y = (e.touches[0].clientY - rect.top) * scaleY;
+      } else if ('clientX' in e) {
+        x = (e.clientX - rect.left) * scaleX;
+        y = (e.clientY - rect.top) * scaleY;
+      } else {
+        return;
+      }
+      
       ctx.lineTo(x, y);
       ctx.stroke();
     };
@@ -393,6 +414,7 @@ export default function PageEtatMateriel() {
       if (!drawing) return;
       drawing = false;
       setSignatureAvant(canvas.toDataURL());
+      console.log('✅ Signature AVANT enregistrée');
     };
 
     // Mouse events
@@ -406,6 +428,8 @@ export default function PageEtatMateriel() {
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
     canvas.addEventListener('touchcancel', stopDrawing);
+
+    console.log('✅ Event listeners AVANT attachés');
 
     return () => {
       canvas.removeEventListener('mousedown', startDrawing);
@@ -422,10 +446,18 @@ export default function PageEtatMateriel() {
   // Gestion du canvas de signature APRÈS
   useEffect(() => {
     const canvas = canvasApresRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.log('❌ Canvas APRÈS non trouvé');
+      return;
+    }
     
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.log('❌ Contexte 2d APRÈS non disponible');
+      return;
+    }
+
+    console.log('✅ Canvas APRÈS initialisé');
 
     // Configuration du contexte
     ctx.strokeStyle = '#000';
@@ -435,28 +467,26 @@ export default function PageEtatMateriel() {
 
     let drawing = false;
 
-    const getCoordinates = (e: MouseEvent | TouchEvent) => {
+    const startDrawing = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      drawing = true;
+      console.log('🖊️ Début dessin APRÈS');
+      
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
       
-      if ('touches' in e) {
-        return {
-          x: (e.touches[0].clientX - rect.left) * scaleX,
-          y: (e.touches[0].clientY - rect.top) * scaleY
-        };
+      let x, y;
+      if ('touches' in e && e.touches.length > 0) {
+        x = (e.touches[0].clientX - rect.left) * scaleX;
+        y = (e.touches[0].clientY - rect.top) * scaleY;
+      } else if ('clientX' in e) {
+        x = (e.clientX - rect.left) * scaleX;
+        y = (e.clientY - rect.top) * scaleY;
       } else {
-        return {
-          x: (e.clientX - rect.left) * scaleX,
-          y: (e.clientY - rect.top) * scaleY
-        };
+        return;
       }
-    };
-
-    const startDrawing = (e: MouseEvent | TouchEvent) => {
-      e.preventDefault();
-      drawing = true;
-      const { x, y } = getCoordinates(e);
+      
       ctx.beginPath();
       ctx.moveTo(x, y);
     };
@@ -464,7 +494,22 @@ export default function PageEtatMateriel() {
     const draw = (e: MouseEvent | TouchEvent) => {
       if (!drawing) return;
       e.preventDefault();
-      const { x, y } = getCoordinates(e);
+      
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      let x, y;
+      if ('touches' in e && e.touches.length > 0) {
+        x = (e.touches[0].clientX - rect.left) * scaleX;
+        y = (e.touches[0].clientY - rect.top) * scaleY;
+      } else if ('clientX' in e) {
+        x = (e.clientX - rect.left) * scaleX;
+        y = (e.clientY - rect.top) * scaleY;
+      } else {
+        return;
+      }
+      
       ctx.lineTo(x, y);
       ctx.stroke();
     };
@@ -473,6 +518,7 @@ export default function PageEtatMateriel() {
       if (!drawing) return;
       drawing = false;
       setSignatureApres(canvas.toDataURL());
+      console.log('✅ Signature APRÈS enregistrée');
     };
 
     // Mouse events
@@ -486,6 +532,8 @@ export default function PageEtatMateriel() {
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
     canvas.addEventListener('touchcancel', stopDrawing);
+
+    console.log('✅ Event listeners APRÈS attachés');
 
     return () => {
       canvas.removeEventListener('mousedown', startDrawing);
