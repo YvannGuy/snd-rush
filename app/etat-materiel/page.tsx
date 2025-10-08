@@ -341,6 +341,8 @@ export default function PageEtatMateriel() {
 
   // Gestion du canvas de signature AVANT
   useEffect(() => {
+    if (!isAuthenticated) return; // Attendre d'être authentifié
+    
     const canvas = canvasAvantRef.current;
     if (!canvas) {
       console.log('❌ Canvas AVANT non trouvé');
@@ -441,10 +443,12 @@ export default function PageEtatMateriel() {
       canvas.removeEventListener('touchend', stopDrawing);
       canvas.removeEventListener('touchcancel', stopDrawing);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   // Gestion du canvas de signature APRÈS
   useEffect(() => {
+    if (!isAuthenticated) return; // Attendre d'être authentifié
+    
     const canvas = canvasApresRef.current;
     if (!canvas) {
       console.log('❌ Canvas APRÈS non trouvé');
@@ -545,7 +549,7 @@ export default function PageEtatMateriel() {
       canvas.removeEventListener('touchend', stopDrawing);
       canvas.removeEventListener('touchcancel', stopDrawing);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   const clearSignatureAvant = () => {
     const canvas = canvasAvantRef.current;
