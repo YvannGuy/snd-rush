@@ -74,6 +74,9 @@ function fileToDataURL(file: File): Promise<string> {
 }
 
 export default function PageEtatMateriel() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  
   const [client, setClient] = useState('');
   const [contact, setContact] = useState('');
   const [adresse, setAdresse] = useState('');
@@ -99,8 +102,30 @@ export default function PageEtatMateriel() {
   const [isDrawingApres, setIsDrawingApres] = useState(false);
   const [showRestoreMessage, setShowRestoreMessage] = useState(false);
 
+  // Vérifier l'authentification au démarrage
+  useEffect(() => {
+    const authToken = sessionStorage.getItem('etat-materiel-auth');
+    if (authToken === 'sndrush2025') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === 'sndrush2025') {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('etat-materiel-auth', 'sndrush2025');
+      setPassword('');
+    } else {
+      alert('❌ Mot de passe incorrect');
+      setPassword('');
+    }
+  };
+
   // Sauvegarde automatique dans localStorage pour éviter la perte de données
   useEffect(() => {
+    if (!isAuthenticated) return; // Ne charger que si authentifié
+    
     // Charger les données au démarrage
     const savedData = localStorage.getItem('etat-materiel-draft');
     if (savedData) {
@@ -130,10 +155,12 @@ export default function PageEtatMateriel() {
         console.error('Erreur lors de la restauration des données:', err);
       }
     }
-  }, []);
+  }, [isAuthenticated]);
 
   // Sauvegarder automatiquement à chaque modification
   useEffect(() => {
+    if (!isAuthenticated) return; // Ne sauvegarder que si authentifié
+    
     const dataToSave = {
       client,
       contact,
@@ -153,10 +180,12 @@ export default function PageEtatMateriel() {
     } catch (err) {
       console.warn('⚠️ Impossible de sauvegarder (localStorage plein?)', err);
     }
-  }, [client, contact, adresse, codePostal, heureDepot, heureRecup, notes, items, signatureAvant, signatureApres]);
+  }, [isAuthenticated, client, contact, adresse, codePostal, heureDepot, heureRecup, notes, items, signatureAvant, signatureApres]);
 
   // Avertir avant de quitter la page si des données sont présentes
   useEffect(() => {
+    if (!isAuthenticated) return; // Seulement si authentifié
+    
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (client || contact || items.length > 0 || signatureAvant || signatureApres) {
         e.preventDefault();
@@ -166,7 +195,7 @@ export default function PageEtatMateriel() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [client, contact, items, signatureAvant, signatureApres]);
+  }, [isAuthenticated, client, contact, items, signatureAvant, signatureApres]);
 
   const addItem = (id: string, nom: string) => {
     // Générer un ID unique pour chaque instance d'équipement
@@ -703,6 +732,84 @@ export default function PageEtatMateriel() {
     }
   };
 
+  // Écran de connexion si non authentifié
+  if (!isAuthenticated) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: 16
+      }}>
+        <div style={{ 
+          background: '#fff', 
+          borderRadius: 16, 
+          padding: 32, 
+          maxWidth: 400, 
+          width: '100%',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: '#111', marginBottom: 8 }}>
+              🔒 État du Matériel
+            </h1>
+            <p style={{ fontSize: 14, color: '#666' }}>
+              SND Rush – Accès restreint
+            </p>
+          </div>
+          
+          <form onSubmit={handleLogin}>
+            <label style={{ display: 'block', marginBottom: 16 }}>
+              <span style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#374151' }}>
+                Mot de passe
+              </span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Entrez le mot de passe"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: 10,
+                  fontSize: 16,
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+                autoFocus
+              />
+            </label>
+            
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: '#e27431',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 10,
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+            >
+              🔓 Accéder
+            </button>
+          </form>
+          
+          <p style={{ fontSize: 12, color: '#999', marginTop: 16, textAlign: 'center' }}>
+            Cette page est réservée à l'équipe SND Rush
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.wrap}>
       <style>{`
@@ -773,11 +880,32 @@ export default function PageEtatMateriel() {
         }
       `}</style>
       <div style={styles.card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h1 style={styles.h1}>État du matériel – SND Rush <span style={styles.badge}>Interne</span></h1>
-          <div style={{ fontSize: 11, color: '#10b981', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span>💾</span>
-            <span>Sauvegarde auto</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+        <h1 style={styles.h1}>État du matériel – SND Rush <span style={styles.badge}>Interne</span></h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 11, color: '#10b981', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span>💾</span>
+              <span>Sauvegarde auto</span>
+            </div>
+            <button
+              onClick={() => {
+                if (confirm('⚠️ Voulez-vous vraiment vous déconnecter ? Vos données seront sauvegardées.')) {
+                  sessionStorage.removeItem('etat-materiel-auth');
+                  window.location.reload();
+                }
+              }}
+              style={{
+                padding: '4px 10px',
+                fontSize: 11,
+                background: '#fff',
+                border: '1px solid #ddd',
+                borderRadius: 6,
+                cursor: 'pointer',
+                color: '#666'
+              }}
+            >
+              🔒 Déconnexion
+            </button>
           </div>
         </div>
         
@@ -877,8 +1005,8 @@ export default function PageEtatMateriel() {
           {filtered.map(i => {
             const count = items.filter(item => item.nom === i.nom).length;
             return (
-              <button key={i.id} style={styles.ghost} onClick={() => addItem(i.id, i.nom)}>
-                + {i.nom}
+            <button key={i.id} style={styles.ghost} onClick={() => addItem(i.id, i.nom)}>
+              + {i.nom}
                 {count > 0 && (
                   <span style={{ 
                     marginLeft: 6, 
@@ -892,7 +1020,7 @@ export default function PageEtatMateriel() {
                     {count}
                   </span>
                 )}
-              </button>
+            </button>
             );
           })}
         </div>
@@ -918,10 +1046,10 @@ export default function PageEtatMateriel() {
         const totalSameItems = items.filter(i => i.nom === item.nom).length;
         
         return (
-          <div key={item.id} style={styles.card}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <div key={item.id} style={styles.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h2 style={styles.h2}>{item.nom}</h2>
+            <h2 style={styles.h2}>{item.nom}</h2>
                 {totalSameItems > 1 && (
                   <span style={{ 
                     ...styles.badge, 
@@ -933,8 +1061,8 @@ export default function PageEtatMateriel() {
                   </span>
                 )}
               </div>
-              <button style={styles.ghost} onClick={() => removeItem(item.id)}>Retirer</button>
-            </div>
+            <button style={styles.ghost} onClick={() => removeItem(item.id)}>Retirer</button>
+          </div>
 
           <div className="responsive-grid responsive-grid-3">
             <label>État constaté à la livraison
@@ -1077,7 +1205,7 @@ export default function PageEtatMateriel() {
         />
         <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
           <button style={styles.ghost} onClick={clearSignatureApres}>Effacer la signature</button>
-          <button 
+        <button
             type="button"
             style={{ ...styles.btn, background: '#ef4444', borderColor: '#ef4444' }} 
             onClick={(e) => {
@@ -1107,14 +1235,14 @@ export default function PageEtatMateriel() {
           onClick={(e) => {
             e.preventDefault();
             if (confirm('⚠️ Êtes-vous sûr de vouloir réinitialiser TOUS les champs (y compris les signatures) ?')) {
-              setItems([]); 
-              setClient('');
-              setContact('');
-              setAdresse('');
-              setCodePostal('');
-              setHeureDepot('');
-              setHeureRecup('');
-              setNotes('');
+            setItems([]); 
+            setClient('');
+            setContact('');
+            setAdresse('');
+            setCodePostal('');
+            setHeureDepot('');
+            setHeureRecup('');
+            setNotes('');
               clearSignatureAvant();
               clearSignatureApres();
               localStorage.removeItem('etat-materiel-draft');
@@ -1227,7 +1355,7 @@ export default function PageEtatMateriel() {
         <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid #ddd' }} />
 
         {/* Signatures client dans le PDF */}
-        <div style={{ marginTop: 20 }}>
+          <div style={{ marginTop: 20 }}>
           {signatureAvant && (
             <div style={{ marginBottom: 20 }}>
               <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Signature du client - À la livraison :</p>
@@ -1240,9 +1368,9 @@ export default function PageEtatMateriel() {
               </p>
               <p style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
                 En signant, vous acceptez automatiquement les conditions de location (disponibles sur www.sndrush.com/cgv)
-              </p>
-            </div>
-          )}
+            </p>
+          </div>
+        )}
           
           {signatureApres && (
             <div style={{ marginBottom: 20 }}>
