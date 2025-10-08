@@ -349,9 +349,16 @@ export default function PageEtatMateriel() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Configuration initiale du contexte
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
     const startDrawing = (e: MouseEvent | TouchEvent) => {
       e.preventDefault(); // Empêcher le scroll sur mobile
       setIsDrawingAvant(true);
+      
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
@@ -400,11 +407,6 @@ export default function PageEtatMateriel() {
     canvas.addEventListener('touchend', stopDrawing);
     canvas.addEventListener('touchcancel', stopDrawing);
 
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
     return () => {
       canvas.removeEventListener('mousedown', startDrawing);
       canvas.removeEventListener('mousemove', draw);
@@ -425,9 +427,16 @@ export default function PageEtatMateriel() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Configuration initiale du contexte
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
     const startDrawing = (e: MouseEvent | TouchEvent) => {
       e.preventDefault(); // Empêcher le scroll sur mobile
       setIsDrawingApres(true);
+      
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
@@ -476,11 +485,6 @@ export default function PageEtatMateriel() {
     canvas.addEventListener('touchend', stopDrawing);
     canvas.addEventListener('touchcancel', stopDrawing);
 
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
     return () => {
       canvas.removeEventListener('mousedown', startDrawing);
       canvas.removeEventListener('mousemove', draw);
@@ -522,6 +526,11 @@ export default function PageEtatMateriel() {
     img.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
+      // Reconfigurer le contexte après redessinage
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
     };
     img.src = signatureAvant;
   }, [signatureAvant]);
@@ -537,6 +546,11 @@ export default function PageEtatMateriel() {
     img.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
+      // Reconfigurer le contexte après redessinage
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
     };
     img.src = signatureApres;
   }, [signatureApres]);
