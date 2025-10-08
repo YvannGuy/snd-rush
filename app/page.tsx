@@ -84,6 +84,30 @@ export default function Home() {
           onReservationClick={() => setAssistantModal(true)}
         />
 
+        {/* Section Titre Choix Solution */}
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '60px 20px 40px', 
+          background: 'linear-gradient(to bottom, #fff, #f9fafb)'
+        }}>
+          <h2 style={{ 
+            fontSize: 'clamp(24px, 5vw, 36px)', 
+            fontWeight: 700, 
+            color: '#111',
+            marginBottom: 12
+          }}>
+            Choisissez la solution adaptée pour vous
+          </h2>
+          <p style={{ 
+            fontSize: 'clamp(14px, 3vw, 18px)', 
+            color: '#666',
+            maxWidth: 600,
+            margin: '0 auto'
+          }}>
+            Des formules flexibles pour tous vos événements
+          </p>
+        </div>
+
         {/* Packs: "Le bon son. Sans compromis." juste sous le Hero */}
         <PacksSection 
           language={language} 
