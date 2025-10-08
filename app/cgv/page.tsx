@@ -285,7 +285,57 @@ export default function CGVPage() {
                   7
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 7 - Annulation et modification</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 7 - État des lieux, tests et restitution du matériel</h2>
+                  <ul className="space-y-2 text-gray-700">
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Un état des lieux contradictoire et des tests de fonctionnement sont réalisés à la livraison et à la reprise du matériel, en présence du client ou de son représentant.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Avant chaque livraison, Guy Location Events effectue un test complet du matériel (son, vidéo, alimentation, câbles, connexions, fonctionnement général) afin de garantir sa conformité.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Le client s'engage à vérifier le matériel lors de la réception, à procéder à un essai rapide et à signaler immédiatement tout défaut ou anomalie constaté.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span><strong>La signature du bon de livraison vaut acceptation du matériel en bon état de fonctionnement et conforme au devis.</strong></span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>À la reprise, un nouveau test de contrôle est effectué par le prestataire.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Tout élément manquant, détérioré, sale, non conforme ou présentant un dysfonctionnement non signalé à la livraison donnera lieu à facturation selon le barème en vigueur.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>En cas d'absence du client ou de son représentant lors de la reprise, l'état des lieux et les tests effectués par l'équipe de Guy Location Events feront foi.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Les photos, vidéos et rapports techniques réalisés par le prestataire peuvent servir de preuve contractuelle en cas de litige.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span><strong>Le client reste pleinement responsable du matériel jusqu'à sa restitution effective au prestataire.</strong></span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Article 8 */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
+                  8
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 8 - Annulation et modification</h2>
                   
                   <div className="mb-4">
                     <h3 className="font-semibold text-gray-900 mb-2">➤ Annulation par le client</h3>
@@ -335,14 +385,14 @@ export default function CGVPage() {
               </div>
             </div>
 
-            {/* Article 8 */}
+            {/* Article 9 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  8
+                  9
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 8 - Réclamations</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 9 - Réclamations</h2>
                   <p className="text-gray-700 mb-3">Toute réclamation doit être adressée dans un délai maximum de 48 h après la prestation :</p>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
@@ -370,14 +420,14 @@ export default function CGVPage() {
               </div>
             </div>
 
-            {/* Article 9 */}
+            {/* Article 10 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  9
+                  10
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 9 - Frais d'attente, absence et responsabilité du matériel</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 10 - Frais d'attente, absence et responsabilité du matériel</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -434,14 +484,14 @@ export default function CGVPage() {
               </div>
             </div>
 
-            {/* Article 10 */}
+            {/* Article 11 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  10
+                  11
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 10 - Données personnelles</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 11 - Données personnelles</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -472,14 +522,14 @@ export default function CGVPage() {
               </div>
             </div>
 
-            {/* Article 11 */}
+            {/* Article 12 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  11
+                  12
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 11 - Propriété intellectuelle</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 12 - Propriété intellectuelle</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -494,14 +544,14 @@ export default function CGVPage() {
               </div>
             </div>
 
-            {/* Article 12 */}
+            {/* Article 13 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  12
+                  13
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 12 - Droit applicable et juridiction compétente</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 13 - Droit applicable et juridiction compétente</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -516,14 +566,14 @@ export default function CGVPage() {
               </div>
             </div>
 
-            {/* Article 13 */}
+            {/* Article 14 */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  13
+                  14
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 13 - Litiges et médiation</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 14 - Litiges et médiation</h2>
                   <p className="text-gray-700 mb-3">Avant toute procédure, les parties s'engagent à rechercher une solution amiable.</p>
                   <p className="text-gray-700 mb-2">En cas de désaccord persistant :</p>
                   <ul className="space-y-2 text-gray-700 mb-4">
@@ -679,6 +729,21 @@ export default function CGVPage() {
                 <li>• La garantie ne s'applique pas en cas de mauvaise utilisation, branchements non conformes ou négligence du client.</li>
                 <li>• La responsabilité du prestataire est limitée au montant total de la prestation.</li>
                 <li>• Aucun dommage indirect (perte de bénéfice, préjudice d'image, etc.) ne pourra être réclamé.</li>
+              </ul>
+            </div>
+
+            {/* Article 7 - État des lieux Express */}
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 7 - ÉTAT DES LIEUX, TESTS ET RESTITUTION DU MATÉRIEL (SERVICE EXPRESS)</h2>
+              <ul className="space-y-3 text-gray-700">
+                <li>• En raison du caractère urgent de la prestation, l'état des lieux est réduit et simplifié, mais inclut un test rapide de bon fonctionnement effectué avant la livraison.</li>
+                <li>• Le technicien vérifie le matériel avant départ (alimentation, câbles, fonctionnement général) et réalise un contrôle visuel à la remise.</li>
+                <li>• Le client confirme la bonne réception du matériel par signature électronique, e-mail ou SMS.</li>
+                <li>• À la reprise, le technicien ou l'équipe logistique effectue un test immédiat de vérification pour s'assurer du bon état et du fonctionnement.</li>
+                <li>• <strong>Tout élément endommagé, mal utilisé, manquant ou non restitué sera facturé selon le barème en vigueur.</strong></li>
+                <li>• Si le client ou son représentant est absent lors de la reprise, le constat et les tests effectués par le prestataire feront foi, appuyés de photos ou vidéos datées.</li>
+                <li>• En cas de contestation, le client devra fournir un justificatif daté, vérifiable et opposable.</li>
+                <li>• <strong>Le matériel reste sous la responsabilité du client jusqu'à sa récupération effective par Guy Location Events.</strong></li>
               </ul>
             </div>
 
