@@ -38,7 +38,7 @@ export default function CGVPage() {
                   : 'text-gray-500 border-transparent hover:text-gray-700'
               }`}
             >
-              📋 Conditions Générales
+              • Conditions Générales
             </button>
             <button
               onClick={() => setActiveTab('urgence')}
@@ -48,7 +48,7 @@ export default function CGVPage() {
                   : 'text-gray-500 border-transparent hover:text-gray-700'
               }`}
             >
-              ⚡ Service Express / Urgence
+              • Service Express / Urgence
             </button>
           </div>
         </div>
@@ -69,19 +69,19 @@ export default function CGVPage() {
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Les présentes CGV s'appliquent à tout achat de services de location, livraison et installation express d'équipements audio</span>
+                      <span>Les présentes Conditions Générales de Vente (CGV) s'appliquent à toute prestation de location, livraison, installation et assistance technique d'équipements audiovisuels proposée par Guy Location Events, agissant sous la marque SND Rush.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Guy Location Events propose un service clé en main pour tous vos événements</span>
+                      <span>Elles prévalent sur tout autre document, sauf accord écrit contraire du prestataire.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Ces CGV prévaudront sur tout autre document</span>
+                      <span>Prestataire : Guy Location Events – SIRET 799596176000217 – 78 avenue des Champs-Élysées, 75008 Paris.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Prestataire : guy location events, SIRET 799596176000217, 78 avenue des champs élysées 75008 Paris</span>
+                      <span>La signature d'un devis et le versement de l'acompte valent acceptation pleine et entière des présentes CGV.</span>
                     </li>
                   </ul>
                 </div>
@@ -99,23 +99,27 @@ export default function CGVPage() {
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Les prix sont exprimés en TTC</span>
+                      <span>Les prix sont exprimés en euros TTC.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Les tarifs tiennent compte d'éventuelles réductions</span>
+                      <span>Ils tiennent compte d'éventuelles réductions ou promotions applicables au jour de la commande.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Les frais de traitement, transport et livraison sont facturés en supplément</span>
+                      <span>Les frais de traitement, transport et livraison sont facturés en supplément et précisés sur le devis.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Une facture est établie et remise au Client lors de la fourniture des Services</span>
+                      <span>Une facture est établie et remise au client à la fourniture des services.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Les devis sont valables 7 jours après leur établissement</span>
+                      <span>Les devis sont valables 7 jours après leur établissement.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Les tarifs sont susceptibles d'être ajustés avant validation du devis, notamment en cas de variation des coûts de transport, carburant ou main-d'œuvre.</span>
                     </li>
                   </ul>
                 </div>
@@ -132,32 +136,32 @@ export default function CGVPage() {
                   <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 3 - Commandes</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">1.</span>
-                      <span>Demande par e-mail/téléphone précisant : matériel, date, lieu, durée, services</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">2.</span>
-                      <span>Devis personnalisé envoyé (validité 7 jours)</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">3.</span>
-                      <span>Commande ferme après signature du devis + acompte de 30%</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">4.</span>
-                      <span>Solde (70%) à régler le jour de la prestation ou 24h avant</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">5.</span>
-                      <span>Livraison, installation et désinstallation assurées par nos équipes</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">6.</span>
-                      <span>Facturation transmise après la prestation</span>
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Demande par e-mail ou téléphone précisant : matériel, date, lieu, durée, services souhaités.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Toute réclamation sous 48h après la livraison</span>
+                      <span>Envoi d'un devis personnalisé, valable 7 jours.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Commande ferme après signature du devis et versement de 30 % d'acompte.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Solde de 70 % à régler au plus tard 24 h avant la prestation ou le jour même.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Livraison, installation et désinstallation assurées par nos équipes.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Facturation transmise après la prestation.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Toute réclamation doit être formulée dans un délai maximum de 48 h après la livraison, sauf vice caché dûment prouvé.</span>
                     </li>
                   </ul>
                 </div>
@@ -175,23 +179,31 @@ export default function CGVPage() {
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Acompte de 30% à la commande (signature du devis)</span>
+                      <span>Acompte de 30 % à la commande (signature du devis).</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Solde de 70% à la livraison ou le jour de la prestation</span>
+                      <span>Solde de 70 % à la livraison ou au plus tard le jour de la prestation.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Paiement par carte bancaire sécurisée</span>
+                      <span>Paiement exclusivement par carte bancaire sécurisée.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>En cas de retard de paiement : pénalités au taux légal</span>
+                      <span>Aucun paiement par chèque n'est accepté.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Le Prestataire se réserve le droit de suspendre la fourniture en cas de non-paiement</span>
+                      <span>En cas de retard de paiement, des pénalités au taux légal en vigueur seront appliquées.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Tout rejet de paiement entraînera des frais de gestion de 25 €.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Le prestataire se réserve le droit de suspendre la prestation en cas de non-paiement du solde.</span>
                     </li>
                   </ul>
                 </div>
@@ -205,31 +217,23 @@ export default function CGVPage() {
                   5
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 5 - Fourniture des Prestations</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 5 - Caution</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Services : location, livraison, installation, assistance technique</span>
+                      <span>Une empreinte bancaire est demandée à titre de caution de sécurité, équivalente à la valeur totale du matériel confié (indiquée sur le devis).</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Délai standard : 3 à 7 jours ouvrés après validation et acompte</span>
+                      <span>Cette empreinte n'est pas prélevée, sauf en cas de perte, casse, dégradation du matériel ou de non-respect des conditions de location.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Interventions du lundi au samedi entre 8h et 20h</span>
+                      <span>Aucune caution par chèque ou espèces ne sera acceptée.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Zone : Paris, Île-de-France et zones limitrophes</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Le client signe un bon de livraison attestant la conformité</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Reprise du matériel à la date prévue (dégradation = facturation)</span>
+                      <span><strong>Exception :</strong> en cas de choix de l'option "installation par technicien" ou de pack clé en main, aucune caution ne sera demandée, la présence du technicien sur place garantissant la sécurité du matériel.</span>
                     </li>
                   </ul>
                 </div>
@@ -243,15 +247,31 @@ export default function CGVPage() {
                   6
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 6 - Droit de rétractation</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 6 - Fourniture des prestations</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Compte tenu de la nature des Services fournis, les commandes ne bénéficient pas du droit de rétractation</span>
+                      <span>Services concernés : location, livraison, installation, assistance technique.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Le contrat est conclu de façon définitive dès la passation de la commande</span>
+                      <span>Délai standard : 3 à 7 jours ouvrés après validation du devis et versement de l'acompte.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Interventions possibles du lundi au samedi, entre 8h et 20h.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Zone d'intervention : Paris, Île-de-France et zones limitrophes.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Le client signe un bon de livraison attestant la conformité du matériel.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Un état du matériel est effectué à la livraison et à la reprise. Toute dégradation constatée donnera lieu à facturation selon le barème du prestataire.</span>
                     </li>
                   </ul>
                 </div>
@@ -265,29 +285,52 @@ export default function CGVPage() {
                   7
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 7 - Responsabilité - Garanties</h2>
-                  <ul className="space-y-2 text-gray-700">
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Garantie de conformité et vice caché selon dispositions légales</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Réclamation par écrit à contact@guylocationevents.com</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Remboursement, réparation ou remplacement sous 15 jours</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Garantie non applicable en cas de mauvaise utilisation</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Responsabilité limitée au montant total de la prestation</span>
-                    </li>
-                  </ul>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 7 - Annulation et modification</h2>
+                  
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-gray-900 mb-2">➤ Annulation par le client</h3>
+                    <ul className="space-y-2 text-gray-700 ml-4">
+                      <li className="flex items-start">
+                        <span className="text-[#F2431E] mr-2">•</span>
+                        <span>Plus de 7 jours avant la date prévue : remboursement intégral du montant versé.</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-[#F2431E] mr-2">•</span>
+                        <span>Entre 3 et 7 jours avant : remboursement à hauteur de 50 %.</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-[#F2431E] mr-2">•</span>
+                        <span>Moins de 3 jours avant : aucun remboursement ne sera accordé.</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-[#F2431E] mr-2">•</span>
+                        <span>Le client est invité à prévenir le plus tôt possible en cas de changement d'avis ou d'imprévu afin de libérer la date.</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-gray-900 mb-2">➤ Modification du lieu ou de l'horaire</h3>
+                    <p className="text-gray-700">Possible jusqu'à 5 jours avant la prestation, uniquement avec accord écrit du prestataire, et sous réserve de disponibilité du matériel et du personnel.</p>
+                  </div>
+
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-gray-900 mb-2">➤ Annulation par le prestataire</h3>
+                    <ul className="space-y-2 text-gray-700">
+                      <li className="flex items-start">
+                        <span className="text-[#F2431E] mr-2">•</span>
+                        <span>En cas d'imprévu exceptionnel (panne, indisponibilité du personnel ou du matériel), Guy Location Events s'engage à proposer une solution de remplacement équivalente.</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-[#F2431E] mr-2">•</span>
+                        <span>Si aucune alternative n'est possible, un remboursement intégral sera effectué sous 14 jours.</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="text-sm text-gray-600 italic mt-4">
+                    <p>Conformément à l'article L221-28 du Code de la consommation, le délai de rétractation de 14 jours ne s'applique pas aux prestations de services datées ou personnalisées.</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -299,27 +342,28 @@ export default function CGVPage() {
                   8
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 8 - Données personnelles</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 8 - Réclamations</h2>
+                  <p className="text-gray-700 mb-3">Toute réclamation doit être adressée dans un délai maximum de 48 h après la prestation :</p>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Données collectées : nom, prénom, adresse, email, téléphone, paiement</span>
+                      <span>Par e-mail à contact@guylocationevents.com (photos justificatives appréciées).</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Conservation : 5 ans</span>
+                      <span>Ou par courrier recommandé à : 78 avenue des Champs-Élysées, 75008 Paris.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Droits : accès, modification, suppression via contact@guylocationevents.com</span>
+                      <span>Un accusé de réception sera envoyé sous 5 jours ouvrés.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Traitement dans un délai de 30 jours</span>
+                      <span>Réponse ou solution sous 15 jours ouvrés maximum.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Destinataires : prestataires de paiement et techniciens (dans la limite nécessaire)</span>
+                      <span>La date de réception de la réclamation fera foi.</span>
                     </li>
                   </ul>
                 </div>
@@ -333,17 +377,59 @@ export default function CGVPage() {
                   9
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 9 - Propriété intellectuelle</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 9 - Frais d'attente, absence et responsabilité du matériel</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Le contenu du site www.sndrush.com est la propriété du Vendeur</span>
+                      <span>En cas d'absence du client ou de son représentant lors de la reprise du matériel, des frais d'attente de <strong>50 € par heure</strong> pourront être facturés à compter de l'heure prévue de récupération.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Toute reproduction est strictement interdite</span>
+                      <span>Si le client reste injoignable ou ne permet pas la récupération du matériel dans un délai de 2 heures, un forfait de déplacement supplémentaire de <strong>80 €</strong> sera appliqué pour un nouveau passage.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Le matériel reste sous la responsabilité du client jusqu'à sa restitution effective à Guy Location Events.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>En cas de contestation sur l'heure réelle de disponibilité du matériel (coursier, retard, etc.), le client devra fournir un justificatif daté, vérifiable et opposable.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Guy Location Events se réserve le droit de refuser tout justificatif non fiable, falsifié ou non vérifiable.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>À défaut de preuve recevable, l'heure initialement prévue de récupération fera foi.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Toute décision du prestataire en la matière est souveraine et ne pourra donner lieu à compensation, sauf erreur manifeste dûment prouvée.</span>
                     </li>
                   </ul>
+                  
+                  <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <h3 className="font-semibold text-gray-900 mb-2">Responsabilité du matériel en période d'attente</h3>
+                    <ul className="space-y-2 text-gray-700">
+                      <li className="flex items-start">
+                        <span className="text-[#F2431E] mr-2">•</span>
+                        <span>Le matériel demeure sous la garde et la responsabilité exclusive du client tant qu'il n'a pas été récupéré.</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-[#F2431E] mr-2">•</span>
+                        <span>Toute perte, casse, vol, dégradation ou disparition survenant pendant la période d'attente reste entièrement à la charge du client.</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-[#F2431E] mr-2">•</span>
+                        <span>Les frais de réparation, de remplacement ou de nettoyage seront facturés sur justificatif.</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-[#F2431E] mr-2">•</span>
+                        <span>En cas de litige, les relevés internes de Guy Location Events (horodatages, appels, SMS, présence sur site, etc.) feront foi.</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -355,15 +441,31 @@ export default function CGVPage() {
                   10
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 10 - Droit applicable</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 10 - Données personnelles</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>CGV régies par le droit français</span>
+                      <span>Données collectées : nom, prénom, adresse, email, téléphone, informations de paiement.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Rédigées en langue française uniquement</span>
+                      <span>Conservation : 5 ans.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Droits d'accès, de rectification et de suppression via : contact@guylocationevents.com.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Traitement sous 30 jours.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Les données sont hébergées dans l'Union Européenne et ne font l'objet d'aucun transfert hors UE.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Destinataires : prestataires de paiement et techniciens, dans la limite nécessaire à l'exécution du service.</span>
                     </li>
                   </ul>
                 </div>
@@ -377,19 +479,61 @@ export default function CGVPage() {
                   11
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 11 - Litiges</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 11 - Propriété intellectuelle</h2>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Réclamation à contact@guylocationevents.com</span>
+                      <span>Le contenu du site www.sndrush.com (textes, visuels, logo, éléments graphiques) est la propriété exclusive de Guy Location Events.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Médiation : CNPM - MEDIATION DE LA CONSOMMATION</span>
+                      <span>Toute reproduction ou utilisation non autorisée est strictement interdite et pourra donner lieu à poursuites judiciaires.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Article 12 */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
+                  12
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 12 - Droit applicable et juridiction compétente</h2>
+                  <ul className="space-y-2 text-gray-700">
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Les présentes CGV sont régies par le droit français.</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
-                      <span>Adresse : 3 rue J. Constant Milleret - 42000 SAINT-ETIENNE</span>
+                      <span>Tout différend relatif à leur interprétation ou à leur exécution relève de la compétence exclusive des tribunaux de Paris.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Article 13 */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-[#F2431E] text-white rounded-full flex items-center justify-center font-bold text-lg">
+                  13
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-3">ARTICLE 13 - Litiges et médiation</h2>
+                  <p className="text-gray-700 mb-3">Avant toute procédure, les parties s'engagent à rechercher une solution amiable.</p>
+                  <p className="text-gray-700 mb-2">En cas de désaccord persistant :</p>
+                  <ul className="space-y-2 text-gray-700 mb-4">
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Médiation : CNPM – Médiation de la Consommation</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-[#F2431E] mr-2">•</span>
+                      <span>Adresse : 3 rue J. Constant Milleret, 42000 Saint-Étienne</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#F2431E] mr-2">•</span>
@@ -400,120 +544,183 @@ export default function CGVPage() {
                       <span>Plateforme RLL : <a href="https://webgate.ec.europa.eu/odr/" target="_blank" rel="noopener noreferrer" className="text-[#F2431E] hover:underline">https://webgate.ec.europa.eu/odr/</a></span>
                     </li>
                   </ul>
+                  <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-gray-700 text-sm">
+                      Pour tout litige non éligible à la médiation (client professionnel, impayé, contentieux juridique, etc.), Guy Location Events bénéficie d'une assurance protection juridique auprès d'Orus, pouvant fournir assistance et représentation légale si nécessaire.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Section 1 - Délais */}
+            {/* Article 1 - Délais */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">1. DÉLAIS ET DISPONIBILITÉ</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 1 - DÉLAIS ET DISPONIBILITÉ</h2>
               <ul className="space-y-3 text-gray-700">
-                <li>⚡ Service express disponible selon disponibilité du matériel et du personnel</li>
-                <li>⏱️ Livraison et installation possibles dans un délai de 30min à 2 heures après confirmation</li>
-                <li>📞 Contacter l'équipe pour confirmer la faisabilité avant le paiement</li>
-                <li>🕒 Service assuré 24h/24 et 7j/7</li>
-                <li>📧 Confirmation immédiate par email ou SMS dès réception du paiement</li>
+                <li>• Le service express est proposé sous réserve de la disponibilité du matériel et du personnel.</li>
+                <li>• La livraison et l'installation peuvent être assurées dans un délai de 30 minutes à 2 heures après confirmation.</li>
+                <li>• Le client doit contacter l'équipe pour confirmer la faisabilité avant tout paiement.</li>
+                <li>• Service disponible 24 h/24 et 7 j/7, y compris les week-ends et jours fériés.</li>
+                <li>• Une confirmation immédiate par e-mail ou SMS est envoyée dès réception du paiement.</li>
               </ul>
             </div>
 
-            {/* Section 2 - Tarification */}
+            {/* Article 2 - Tarification */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">2. TARIFICATION EXPRESS</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 2 - TARIFICATION EXPRESS</h2>
               <ul className="space-y-3 text-gray-700">
-                <li>💰 Supplément urgence : +20% sur le tarif normal</li>
-                <li>⚡ Majoration urgence appliquée si délai &lt; 24h</li>
-                <li>💳 Paiement intégral exigé avant la livraison pour les commandes express</li>
-                <li>📋 Frais supplémentaires mentionnés sur le devis</li>
-                <li>✅ Devis envoyé dans la minute suivant la demande pour les urgences</li>
+                <li>• Un supplément urgence de +20 % s'applique sur le tarif normal.</li>
+                <li>• La majoration express est appliquée pour toute commande effectuée moins de 24 h avant la prestation.</li>
+                <li>• Le paiement intégral est exigé avant la livraison pour toute commande express.</li>
+                <li>• Tous les frais supplémentaires (déplacement, installation spéciale, horaires de nuit, etc.) sont précisés sur le devis.</li>
+                <li>• Un devis express est envoyé dans la minute suivant la demande pour les commandes urgentes.</li>
               </ul>
             </div>
 
-            {/* Section 3 - Commande */}
+            {/* Article 3 - Commande */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">3. COMMANDE EXPRESS</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 3 - COMMANDE EXPRESS</h2>
               <ul className="space-y-3 text-gray-700">
-                <li>📝 Demande à préciser : matériel, date, lieu, durée, services souhaités</li>
-                <li>⏰ Validation immédiate requise après réception du devis</li>
-                <li>💳 Paiement complet peut être exigé avant la livraison</li>
-                <li>✅ Confirmation de commande envoyée par e-mail ou SMS</li>
-                <li>🚚 Livraison et installation le jour même possibles (selon disponibilité)</li>
+                <li>• Le client doit préciser dans sa demande : le matériel souhaité, la date, le lieu, la durée et les services associés.</li>
+                <li>• Une validation immédiate est requise après réception du devis.</li>
+                <li>• Une confirmation de commande est transmise par e-mail ou SMS.</li>
+                <li>• La livraison et l'installation le jour même sont possibles, sous réserve de disponibilité du matériel et du personnel.</li>
               </ul>
             </div>
 
-            {/* Section 4 - Annulation */}
+            {/* Article 4 - Caution */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">4. ANNULATION ET MODIFICATION</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 4 - CAUTION</h2>
               <ul className="space-y-3 text-gray-700">
-                <li>🚫 <strong>Annulation par le client :</strong> Pour toute prestation réservée en urgence (moins de 24h avant la date prévue), aucune annulation ni remboursement ne sera accepté, sauf en cas de force majeure dûment justifiée</li>
-                <li>⚠️ <strong>Cas de force majeure (définition stricte) :</strong> Décès, hospitalisation ou accident grave du client, Catastrophe naturelle, incendie, tempête, inondation, Interdiction administrative ou événement exceptionnel rendant la prestation impossible (ex : confinement, arrêté préfectoral, grève générale bloquante)</li>
-                <li>❌ <strong>Ne sont PAS considérés comme force majeure :</strong> Retard, absence ou changement d'avis du client, Problème de transport personnel, Intempéries légères (pluie, froid, etc.), Conflit d'agenda, manque d'organisation ou erreur de commande</li>
-                <li>💸 Le montant total du devis reste dû, même si la prestation n'a pas lieu, car les moyens matériels et humains auront déjà été mobilisés</li>
-                <li>⚠️ <strong>Modification du lieu ou de l'horaire :</strong> Possible uniquement avec accord écrit du prestataire, et sous réserve de la disponibilité du matériel et du personnel</li>
-                <li>💰 <strong>Annulation par le prestataire :</strong> En cas d'impossibilité exceptionnelle (panne, accident, impossibilité de transport), une solution de remplacement sera proposée en priorité</li>
-                <li>✅ Si aucune alternative n'est possible, un remboursement intégral sera effectué sous 14 jours</li>
+                <li>• Une empreinte bancaire est demandée à titre de caution de sécurité.</li>
+                <li>• Cette empreinte n'est pas prélevée, sauf en cas de perte, casse, dégradation du matériel ou non-respect des conditions de location.</li>
+                <li>• Aucune caution par chèque ou en espèces ne sera acceptée.</li>
+                <li>• <strong>Exception :</strong> en cas de choix de l'option "installation par technicien" ou de pack clé en main, aucune caution ne sera demandée, la présence du technicien sur place garantissant la sécurité du matériel.</li>
               </ul>
             </div>
 
-            {/* Section 5 - Réclamations */}
+            {/* Article 5 - Annulation */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">5. RÉCLAMATIONS</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 5 - ANNULATION ET MODIFICATION</h2>
+              
+              <div className="mb-4">
+                <h3 className="font-semibold text-gray-900 mb-2">➤ Annulation par le client</h3>
+                <ul className="space-y-2 text-gray-700 ml-4">
+                  <li>• Pour toute prestation réservée en urgence (moins de 24 h avant la date prévue), aucune annulation ni remboursement ne sera accepté, sauf en cas de force majeure dûment justifiée.</li>
+                </ul>
+              </div>
+
+              <div className="mb-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Cas de force majeure (définition stricte) :</h3>
+                <ul className="space-y-2 text-gray-700 ml-4">
+                  <li>• Décès, hospitalisation ou accident grave du client.</li>
+                  <li>• Catastrophe naturelle (incendie, tempête, inondation).</li>
+                  <li>• Interdiction administrative ou événement exceptionnel rendant la prestation impossible (ex. confinement, arrêté préfectoral, grève générale bloquante).</li>
+                </ul>
+              </div>
+
+              <div className="mb-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Ne sont pas considérés comme cas de force majeure :</h3>
+                <ul className="space-y-2 text-gray-700 ml-4">
+                  <li>• Retard, absence ou changement d'avis du client.</li>
+                  <li>• Problème de transport personnel.</li>
+                  <li>• Intempéries légères (pluie, vent, froid, etc.).</li>
+                  <li>• Conflit d'agenda, manque d'organisation ou erreur de commande.</li>
+                </ul>
+              </div>
+
+              <div className="mb-4">
+                <h3 className="font-semibold text-gray-900 mb-2">Justificatif obligatoire en cas de force majeure :</h3>
+                <ul className="space-y-2 text-gray-700 ml-4">
+                  <li>• Toute demande d'annulation pour cause de force majeure devra être accompagnée d'un justificatif officiel (certificat médical, document administratif, attestation, ou tout autre élément probant).</li>
+                  <li>• À défaut de justificatif, l'annulation ne pourra être considérée comme valide, et le montant total du devis restera dû.</li>
+                </ul>
+              </div>
+
               <ul className="space-y-3 text-gray-700">
-                <li>⏰ Délai : 48 heures maximum après la prestation</li>
-                <li>📧 Par écrit à contact@guylocationevents.com (photos justificatives appréciées)</li>
-                <li>📬 Ou par courrier recommandé : 78 avenue des Champs Elysée 75008 Paris</li>
-                <li>✅ Accusé de réception sous 5 jours ouvrés</li>
-                <li>🔧 Réponse ou solution sous 15 jours ouvrés maximum</li>
+                <li>• Le montant total du devis reste dû, même si la prestation n'a pas lieu, car les moyens matériels et humains auront été mobilisés.</li>
+              </ul>
+
+              <div className="mt-4">
+                <h3 className="font-semibold text-gray-900 mb-2">➤ Modification du lieu ou de l'horaire</h3>
+                <p className="text-gray-700">Possible uniquement avec accord écrit du prestataire et sous réserve de la disponibilité du matériel et du personnel.</p>
+              </div>
+
+              <div className="mt-4">
+                <h3 className="font-semibold text-gray-900 mb-2">➤ Annulation par le prestataire</h3>
+                <ul className="space-y-2 text-gray-700">
+                  <li>• En cas d'impossibilité exceptionnelle (panne, accident, impossibilité de transport), Guy Location Events proposera une solution de remplacement prioritaire.</li>
+                  <li>• Si aucune alternative n'est possible, un remboursement intégral sera effectué dans un délai de 14 jours.</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Article 6 - Réclamations */}
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 6 - RÉCLAMATIONS</h2>
+              <ul className="space-y-3 text-gray-700">
+                <li>• Délai : 48 h maximum après la prestation.</li>
+                <li>• Par e-mail à contact@guylocationevents.com (photos justificatives appréciées).</li>
+                <li>• Ou par courrier recommandé à : 78 avenue des Champs-Élysées, 75008 Paris.</li>
+                <li>• Un accusé de réception sera envoyé sous 5 jours ouvrés.</li>
+                <li>• Réponse ou solution apportée dans un délai de 15 jours ouvrés maximum.</li>
+                <li>• Seule la date de réception de la réclamation fera foi.</li>
               </ul>
             </div>
 
-            {/* Section 6 - Garanties */}
+            {/* Article 7 - Garanties */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">6. GARANTIES ET RESPONSABILITÉ</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 7 - GARANTIES ET RESPONSABILITÉ</h2>
               <ul className="space-y-3 text-gray-700">
-                <li>✅ Matériel garanti en bon état de fonctionnement à la livraison</li>
-                <li>🔧 Réparation, remplacement ou remboursement partiel sous 15 jours</li>
-                <li>❌ Garantie non applicable si mauvaise utilisation, branchements non conformes</li>
-                <li>⚠️ Responsabilité limitée au montant total de la prestation</li>
-                <li>🚫 Aucune responsabilité pour dommages indirects (perte de bénéfice, etc.)</li>
+                <li>• Le matériel est garanti en bon état de fonctionnement à la livraison.</li>
+                <li>• En cas de dysfonctionnement avéré non imputable au client, réparation, remplacement ou remboursement partiel seront proposés sous 15 jours.</li>
+                <li>• La garantie ne s'applique pas en cas de mauvaise utilisation, branchements non conformes ou négligence du client.</li>
+                <li>• La responsabilité du prestataire est limitée au montant total de la prestation.</li>
+                <li>• Aucun dommage indirect (perte de bénéfice, préjudice d'image, etc.) ne pourra être réclamé.</li>
               </ul>
             </div>
 
-            {/* Section 7 - Frais d'attente */}
+            {/* Article 8 - Frais d'attente */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">7. FRAIS D'ATTENTE / ABSENCE LORS DE LA REPRISE</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 8 - FRAIS D'ATTENTE, ABSENCE ET RESPONSABILITÉ DU MATÉRIEL</h2>
               <ul className="space-y-3 text-gray-700">
-                <li>🔸 En cas d'absence du client ou de son représentant lors de la reprise du matériel, un frais d'attente de <strong>50 € par heure</strong> pourra être facturé à compter de l'heure prévue de récupération</li>
-                <li>⏰ Si le client reste injoignable ou ne permet pas la récupération du matériel dans un délai de 2 heures, un forfait de déplacement supplémentaire de <strong>80 €</strong> sera appliqué pour un nouveau passage</li>
-                <li>⚠️ Le matériel reste sous la responsabilité du client jusqu'à sa restitution effective</li>
+                <li>• En cas d'absence du client ou de son représentant lors de la reprise du matériel, des frais d'attente de <strong>50 € par heure</strong> pourront être facturés à compter de l'heure prévue de récupération.</li>
+                <li>• Si le client reste injoignable ou ne permet pas la récupération du matériel dans un délai de 2 heures, un forfait de déplacement supplémentaire de <strong>80 €</strong> sera appliqué pour un nouveau passage.</li>
+                <li>• Le matériel reste sous la responsabilité du client jusqu'à sa restitution effective.</li>
+                <li>• En cas de contestation sur l'heure réelle de disponibilité du matériel (coursier, retard imputé à un tiers, etc.), le client devra fournir un justificatif daté, vérifiable et opposable (ex. bordereau de retrait, facture transporteur, SMS ou e-mail horodaté).</li>
+                <li>• Guy Location Events se réserve le droit de refuser tout justificatif jugé non fiable, falsifié ou non vérifiable.</li>
+                <li>• À défaut de preuve recevable, l'heure initialement prévue de récupération fera foi.</li>
+                <li>• Le matériel demeure sous la garde et la responsabilité du client tant qu'il n'a pas été repris.</li>
+                <li>• Toute perte, casse, vol ou dégradation survenant pendant cette période reste à la charge du client.</li>
               </ul>
             </div>
 
-            {/* Section 8 - Responsabilité délais */}
+            {/* Article 9 - Responsabilité délais */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">8. RESPONSABILITÉ SUR LES DÉLAIS LIÉS AU CLIENT</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 9 - RESPONSABILITÉ SUR LES DÉLAIS LIÉS AU CLIENT</h2>
               <ul className="space-y-3 text-gray-700">
-                <li>🚗 Le prestataire ne peut être tenu responsable d'un retard dû à un accès difficile au lieu (stationnement, codes d'accès, escaliers non indiqués, etc.)</li>
-                <li>📋 Ces contraintes doivent être communiquées avant la prestation</li>
+                <li>• Le prestataire ne peut être tenu responsable d'un retard dû à un accès difficile au lieu (absence de stationnement, code d'accès non communiqué, escaliers, ascenseur en panne, etc.).</li>
+                <li>• Ces contraintes doivent être signalées avant la prestation. Tout manquement pourra entraîner un surcoût ou un report de la prestation sans remboursement.</li>
               </ul>
             </div>
 
-            {/* Section 9 - Priorité */}
+            {/* Article 10 - Priorité */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">9. PRIORITÉ DE DISPONIBILITÉ</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 10 - PRIORITÉ DE DISPONIBILITÉ</h2>
               <ul className="space-y-3 text-gray-700">
-                <li>⚡ En cas de forte demande, les prestations express sont traitées par ordre de validation complète (paiement reçu)</li>
-                <li>❌ Un devis non réglé ne constitue pas une réservation</li>
+                <li>• En cas de forte demande, les prestations express sont traitées par ordre de validation complète (paiement reçu).</li>
+                <li>• Un devis non réglé ne constitue pas une réservation ferme.</li>
               </ul>
             </div>
 
-            {/* Section 10 - Météo */}
+            {/* Article 11 - Météo */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border-l-4 border-[#F2431E] p-6 hover:shadow-md transition-shadow">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">10. CONDITIONS MÉTÉO</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">ARTICLE 11 - CONDITIONS MÉTÉO</h2>
               <ul className="space-y-3 text-gray-700">
-                <li>🌧️ Pour les prestations extérieures express, le client doit s'assurer que le lieu est abrité et sécurisé</li>
-                <li>⛈️ En cas d'intempéries empêchant la prestation, aucun remboursement ne sera effectué, sauf force majeure avérée</li>
+                <li>• Pour toute prestation extérieure express, le client doit s'assurer que le lieu est abrité, sécurisé et adapté.</li>
+                <li>• En cas d'intempéries rendant la prestation impossible ou dangereuse, aucun remboursement ne sera effectué, sauf force majeure avérée.</li>
               </ul>
             </div>
           </div>
@@ -531,13 +738,13 @@ export default function CGVPage() {
                 href="mailto:contact@guylocationevents.com"
                 className="bg-[#F2431E] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors"
               >
-                📧 Nous contacter
+                • Nous contacter
               </a>
               <a
                 href="tel:+33651084994"
                 className="bg-white text-black px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors"
               >
-                📞 06 51 08 49 94
+                • 06 51 08 49 94
               </a>
             </div>
           </div>
