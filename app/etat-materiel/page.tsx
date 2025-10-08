@@ -13,14 +13,17 @@ type Dommage = {
   gravite: 'légère' | 'moyenne' | 'grave';
   description: string;
   visible_avant: boolean;
+  niveauBareme?: 'usure_normale' | 'mineure' | 'moyenne' | 'majeure';
 };
 
 type AnalyseIA = {
   etatGeneral: string;
   changementsDetectes?: boolean;
+  niveauBareme?: 'usure_normale' | 'mineure' | 'moyenne' | 'majeure';
   nouveauxDommages?: Dommage[];
   commentaireComparatif?: string;
   recommandation: 'OK' | 'USURE_NORMALE' | 'FACTURATION_LEGERE' | 'FACTURATION_IMPORTANTE';
+  facturationEstimee?: string;
   montantEstime?: number;
   timestamp: string;
   model: string;
@@ -1689,6 +1692,18 @@ export default function PageEtatMateriel() {
                     <strong>Recommandation:</strong> {it.analyseIAApres.recommandation}
                   </p>
                   
+                  {it.analyseIAApres.niveauBareme && (
+                    <p style={{ fontSize: 11, margin: '4px 0', padding: '4px 8px', backgroundColor: it.analyseIAApres.niveauBareme === 'usure_normale' ? '#d1fae5' : it.analyseIAApres.niveauBareme === 'mineure' ? '#fef3c7' : it.analyseIAApres.niveauBareme === 'moyenne' ? '#fed7aa' : '#fecaca', borderRadius: 4 }}>
+                      <strong>Niveau barème:</strong> {it.analyseIAApres.niveauBareme.replace('_', ' ').toUpperCase()}
+                    </p>
+                  )}
+                  
+                  {it.analyseIAApres.facturationEstimee && (
+                    <p style={{ fontSize: 11, margin: '4px 0', fontWeight: 'bold', color: it.analyseIAApres.facturationEstimee === '0€' ? '#10b981' : '#dc2626' }}>
+                      💰 Facturation estimée: {it.analyseIAApres.facturationEstimee}
+                    </p>
+                  )}
+                  
                   {it.analyseIAApres.nouveauxDommages && it.analyseIAApres.nouveauxDommages.length > 0 ? (
                     <div style={{ marginTop: 6 }}>
                       <strong style={{ fontSize: 11, color: '#dc2626' }}>⚠️ NOUVEAUX DOMMAGES DÉTECTÉS:</strong>
@@ -1696,6 +1711,9 @@ export default function PageEtatMateriel() {
                         {it.analyseIAApres.nouveauxDommages.map((d, idx) => (
                           <li key={idx} style={{ marginBottom: 3 }}>
                             <strong>{d.type.toUpperCase()}</strong> ({d.gravite}) - {d.localisation}
+                            {d.niveauBareme && <span style={{ marginLeft: 6, fontSize: 9, padding: '1px 4px', backgroundColor: d.niveauBareme === 'usure_normale' ? '#d1fae5' : d.niveauBareme === 'mineure' ? '#fef3c7' : d.niveauBareme === 'moyenne' ? '#fed7aa' : '#fecaca', borderRadius: 3 }}>
+                              {d.niveauBareme.replace('_', ' ')}
+                            </span>}
                             <br />
                             {d.description}
                           </li>

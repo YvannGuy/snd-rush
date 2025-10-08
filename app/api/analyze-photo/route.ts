@@ -5,6 +5,26 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Barème officiel de facturation des dégradations
+const BAREME_DEGRADATIONS = {
+  "usure_normale": {
+    "description": "micro-rayures, traces d'usage légères, sans impact esthétique ni fonctionnel",
+    "facturation": "0€"
+  },
+  "mineure": {
+    "description": "rayures visibles mais superficielles, frottements sur boîtier, sans altération du matériau",
+    "facturation": "20-50€"
+  },
+  "moyenne": {
+    "description": "rayures profondes, chocs esthétiques, déformation partielle du boîtier",
+    "facturation": "60-150€"
+  },
+  "majeure": {
+    "description": "fissure, pièce cassée, panne due à un choc, matériel inutilisable",
+    "facturation": "remplacement ou valeur à neuf"
+  }
+};
+
 export async function POST(request: NextRequest) {
   try {
     const { photoAvant, photoApres, nomMateriel } = await request.json();
@@ -124,29 +144,36 @@ Identifie TOUS les changements, même minimes:
 Pour CHAQUE différence détectée, indique:
 - Type de dommage
 - Localisation PRÉCISE
-- Gravité (légère/moyenne/grave)
+- Gravité selon le BARÈME ci-dessous
 - Comparaison AVANT/APRÈS
+
+📋 BARÈME OFFICIEL DE FACTURATION:
+${JSON.stringify(BAREME_DEGRADATIONS, null, 2)}
 
 IMPORTANT:
 - Si AUCUNE différence: le dire clairement
 - Ne mentionne PAS les différences d'angle/éclairage
 - Focus uniquement sur les DOMMAGES PHYSIQUES
+- Utilise le barème pour estimer la facturation
 
 Réponds au format JSON strict:
 {
   "etatGeneral": "Bon" | "Usure normale" | "Dégradation visible" | "Matériel endommagé" | "Casse",
   "changementsDetectes": true | false,
+  "niveauBareme": "usure_normale" | "mineure" | "moyenne" | "majeure",
   "nouveauxDommages": [
     {
       "type": "rayure" | "choc" | "salissure" | "liquide" | "casse" | "manquant",
       "localisation": "description précise",
       "gravite": "légère" | "moyenne" | "grave",
       "description": "description détaillée",
-      "visible_avant": false
+      "visible_avant": false,
+      "niveauBareme": "usure_normale" | "mineure" | "moyenne" | "majeure"
     }
   ],
   "commentaireComparatif": "Résumé de la comparaison",
   "recommandation": "OK" | "USURE_NORMALE" | "FACTURATION_LEGERE" | "FACTURATION_IMPORTANTE",
+  "facturationEstimee": "0€" | "20-50€" | "60-150€" | "remplacement ou valeur à neuf",
   "montantEstime": 0
 }`
             },
