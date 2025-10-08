@@ -98,8 +98,6 @@ export default function PageEtatMateriel() {
   const pdfRef = useRef<HTMLDivElement>(null);
   const canvasAvantRef = useRef<HTMLCanvasElement>(null);
   const canvasApresRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawingAvant, setIsDrawingAvant] = useState(false);
-  const [isDrawingApres, setIsDrawingApres] = useState(false);
   const [showRestoreMessage, setShowRestoreMessage] = useState(false);
 
   // Vérifier l'authentification au démarrage
@@ -349,59 +347,61 @@ export default function PageEtatMateriel() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Configuration initiale du contexte
+    // Configuration du contexte
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    const startDrawing = (e: MouseEvent | TouchEvent) => {
-      e.preventDefault(); // Empêcher le scroll sur mobile
-      setIsDrawingAvant(true);
-      
+    let drawing = false;
+
+    const getCoordinates = (e: MouseEvent | TouchEvent) => {
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
       
-      const x = 'touches' in e 
-        ? (e.touches[0].clientX - rect.left) * scaleX
-        : (e.clientX - rect.left) * scaleX;
-      const y = 'touches' in e 
-        ? (e.touches[0].clientY - rect.top) * scaleY
-        : (e.clientY - rect.top) * scaleY;
-      
+      if ('touches' in e) {
+        return {
+          x: (e.touches[0].clientX - rect.left) * scaleX,
+          y: (e.touches[0].clientY - rect.top) * scaleY
+        };
+      } else {
+        return {
+          x: (e.clientX - rect.left) * scaleX,
+          y: (e.clientY - rect.top) * scaleY
+        };
+      }
+    };
+
+    const startDrawing = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      drawing = true;
+      const { x, y } = getCoordinates(e);
       ctx.beginPath();
       ctx.moveTo(x, y);
     };
 
     const draw = (e: MouseEvent | TouchEvent) => {
-      if (!isDrawingAvant) return;
-      e.preventDefault(); // Empêcher le scroll pendant le dessin
-      
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      
-      const x = 'touches' in e 
-        ? (e.touches[0].clientX - rect.left) * scaleX
-        : (e.clientX - rect.left) * scaleX;
-      const y = 'touches' in e 
-        ? (e.touches[0].clientY - rect.top) * scaleY
-        : (e.clientY - rect.top) * scaleY;
-      
+      if (!drawing) return;
+      e.preventDefault();
+      const { x, y } = getCoordinates(e);
       ctx.lineTo(x, y);
       ctx.stroke();
     };
 
     const stopDrawing = () => {
-      setIsDrawingAvant(false);
+      if (!drawing) return;
+      drawing = false;
       setSignatureAvant(canvas.toDataURL());
     };
 
+    // Mouse events
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseleave', stopDrawing);
+    
+    // Touch events
     canvas.addEventListener('touchstart', startDrawing, { passive: false });
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
@@ -417,7 +417,7 @@ export default function PageEtatMateriel() {
       canvas.removeEventListener('touchend', stopDrawing);
       canvas.removeEventListener('touchcancel', stopDrawing);
     };
-  }, [isDrawingAvant]);
+  }, []);
 
   // Gestion du canvas de signature APRÈS
   useEffect(() => {
@@ -427,59 +427,61 @@ export default function PageEtatMateriel() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Configuration initiale du contexte
+    // Configuration du contexte
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    const startDrawing = (e: MouseEvent | TouchEvent) => {
-      e.preventDefault(); // Empêcher le scroll sur mobile
-      setIsDrawingApres(true);
-      
+    let drawing = false;
+
+    const getCoordinates = (e: MouseEvent | TouchEvent) => {
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
       
-      const x = 'touches' in e 
-        ? (e.touches[0].clientX - rect.left) * scaleX
-        : (e.clientX - rect.left) * scaleX;
-      const y = 'touches' in e 
-        ? (e.touches[0].clientY - rect.top) * scaleY
-        : (e.clientY - rect.top) * scaleY;
-      
+      if ('touches' in e) {
+        return {
+          x: (e.touches[0].clientX - rect.left) * scaleX,
+          y: (e.touches[0].clientY - rect.top) * scaleY
+        };
+      } else {
+        return {
+          x: (e.clientX - rect.left) * scaleX,
+          y: (e.clientY - rect.top) * scaleY
+        };
+      }
+    };
+
+    const startDrawing = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      drawing = true;
+      const { x, y } = getCoordinates(e);
       ctx.beginPath();
       ctx.moveTo(x, y);
     };
 
     const draw = (e: MouseEvent | TouchEvent) => {
-      if (!isDrawingApres) return;
-      e.preventDefault(); // Empêcher le scroll pendant le dessin
-      
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      
-      const x = 'touches' in e 
-        ? (e.touches[0].clientX - rect.left) * scaleX
-        : (e.clientX - rect.left) * scaleX;
-      const y = 'touches' in e 
-        ? (e.touches[0].clientY - rect.top) * scaleY
-        : (e.clientY - rect.top) * scaleY;
-      
+      if (!drawing) return;
+      e.preventDefault();
+      const { x, y } = getCoordinates(e);
       ctx.lineTo(x, y);
       ctx.stroke();
     };
 
     const stopDrawing = () => {
-      setIsDrawingApres(false);
+      if (!drawing) return;
+      drawing = false;
       setSignatureApres(canvas.toDataURL());
     };
 
+    // Mouse events
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseleave', stopDrawing);
+    
+    // Touch events
     canvas.addEventListener('touchstart', startDrawing, { passive: false });
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
@@ -495,7 +497,7 @@ export default function PageEtatMateriel() {
       canvas.removeEventListener('touchend', stopDrawing);
       canvas.removeEventListener('touchcancel', stopDrawing);
     };
-  }, [isDrawingApres]);
+  }, []);
 
   const clearSignatureAvant = () => {
     const canvas = canvasAvantRef.current;
