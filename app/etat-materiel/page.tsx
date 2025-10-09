@@ -215,6 +215,19 @@ export default function PageEtatMateriel() {
     if (!isAuthenticated) return;
     
     const saveData = async () => {
+      // Nettoyer les analyses IA avant sauvegarde (trop volumineuses pour IndexedDB)
+      const itemsWithoutIA = items.map(item => {
+        const { analyseIAApres, ...itemWithoutAnalyse } = item;
+        const photosApresWithoutIA = item.photosApres?.map(p => {
+          const { analyseIA, ...photoWithoutAnalyse } = p;
+          return photoWithoutAnalyse;
+        }) || [];
+        return {
+          ...itemWithoutAnalyse,
+          photosApres: photosApresWithoutIA
+        };
+      });
+      
       const dataToSave = {
         client,
         contact,
@@ -223,7 +236,7 @@ export default function PageEtatMateriel() {
         heureDepot,
         heureRecup,
         notes,
-        items,
+        items: itemsWithoutIA, // Sans analyses IA pour économiser espace
         signatureAvant,
         signatureApres,
         lastSaved: new Date().toISOString()
@@ -296,6 +309,19 @@ export default function PageEtatMateriel() {
       
       console.log(`📸 Traitement de ${files.length} photo(s)`);
       console.log('🔍 Supabase configuré:', isSupabaseConfigured());
+      
+      // LIMITE: 4 photos maximum par type (AVANT ou APRÈS)
+      const currentItem = items.find(i => i.id === id);
+      const currentPhotosCount = kind === 'avant' 
+        ? (currentItem?.photosAvant?.length || 0)
+        : (currentItem?.photosApres?.length || 0);
+      
+      const totalAfterUpload = currentPhotosCount + files.length;
+      
+      if (totalAfterUpload > 4) {
+        alert(`⚠️ Maximum 4 photos ${kind === 'avant' ? 'AVANT' : 'APRÈS'}\n\nVous avez déjà ${currentPhotosCount} photo(s).\nVous essayez d'en ajouter ${files.length}.\n\nTotal: ${totalAfterUpload} photos (max: 4)\n\n💡 Supprimez des photos existantes ou prenez moins de photos.`);
+        return;
+      }
       
       // Vérifier si on est en mode base64 et alerter l'utilisateur sur mobile
       if (!isSupabaseConfigured()) {
@@ -1388,7 +1414,10 @@ export default function PageEtatMateriel() {
               </select>
             </label>
             <label>
-              Photos AVANT
+              Photos AVANT 
+              <span style={{ fontSize: 11, color: item.photosAvant.length >= 4 ? '#dc2626' : '#10b981', marginLeft: 8, fontWeight: 600 }}>
+                ({item.photosAvant.length}/4)
+              </span>
               <input
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
@@ -1396,6 +1425,7 @@ export default function PageEtatMateriel() {
                 multiple
                 onChange={(e) => onPhoto(item.id, 'avant', e.target.files)}
                 style={{ ...styles.input, padding: 8 }}
+                disabled={item.photosAvant.length >= 4}
               />
               <p style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
                 💡 Pour l'analyse IA : JPEG/PNG recommandé (pas HEIC)
@@ -1424,6 +1454,9 @@ export default function PageEtatMateriel() {
             </label>
             <label>
               Photos APRÈS 
+              <span style={{ fontSize: 11, color: item.photosApres.length >= 4 ? '#dc2626' : '#10b981', marginLeft: 8, fontWeight: 600 }}>
+                ({item.photosApres.length}/4)
+              </span>
               <span style={{ fontSize: 11, color: '#f59e0b', marginLeft: 8 }}>
                 🤖 IA auto (JPEG/PNG uniquement)
               </span>
@@ -1434,6 +1467,7 @@ export default function PageEtatMateriel() {
                 multiple
                 onChange={(e) => onPhoto(item.id, 'apres', e.target.files)}
                 style={{ ...styles.input, padding: 8 }}
+                disabled={item.photosApres.length >= 4}
               />
               <p style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
                 📱 iPhone : Activez "Plus compatible" dans Réglages → Appareil photo → Formats pour analyse IA
