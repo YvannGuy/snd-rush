@@ -290,7 +290,7 @@ export default function PageEtatMateriel() {
     if (!files || !files.length) return;
     
     try {
-      const arr: Photo[] = [];
+    const arr: Photo[] = [];
       let uploadSuccessCount = 0;
       let uploadFailCount = 0;
       
@@ -308,22 +308,22 @@ export default function PageEtatMateriel() {
     
     for (const f of Array.from(files)) {
       try {
-        // Créer un timestamp horodaté pour chaque photo
-        const now = new Date();
-        const timestamp = now.toLocaleString('fr-FR', { 
-          day: '2-digit', 
-          month: '2-digit', 
-          year: 'numeric',
-          hour: '2-digit', 
-          minute: '2-digit',
-          second: '2-digit'
-        });
-        const photoLabel = `${f.name} - ${timestamp}`;
-        
+          // Créer un timestamp horodaté pour chaque photo
+          const now = new Date();
+          const timestamp = now.toLocaleString('fr-FR', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric',
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          const photoLabel = `${f.name} - ${timestamp}`;
+          
         // Upload vers Supabase Storage si configuré
         if (isSupabaseConfigured() && supabase) {
-          console.log('🚀 Tentative upload vers Supabase Storage...');
-          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${f.name}`;
+            console.log('🚀 Tentative upload vers Supabase Storage...');
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${f.name}`;
           const filePath = `etat-materiel/${fileName}`;
           
           const { error } = await supabase.storage
@@ -335,161 +335,161 @@ export default function PageEtatMateriel() {
 
           if (error) {
             console.error('Erreur upload Supabase:', error);
-            uploadFailCount++;
-            
-            // Message d'erreur détaillé
-            if (error.message.includes('not found') || error.message.includes('bucket')) {
-              console.error('❌ Le bucket "materiel-photos" n\'existe pas. Exécutez le script supabase-setup.sql');
-            }
-            
+              uploadFailCount++;
+              
+              // Message d'erreur détaillé
+              if (error.message.includes('not found') || error.message.includes('bucket')) {
+                console.error('❌ Le bucket "materiel-photos" n\'existe pas. Exécutez le script supabase-setup.sql');
+              }
+              
             // Fallback: utiliser base64 si l'upload échoue
             const url = await fileToDataURL(f);
-            arr.push({ url, label: photoLabel });
+              arr.push({ url, label: photoLabel });
           } else {
-            uploadSuccessCount++;
-            console.log(`✅ Photo uploadée vers Supabase: ${filePath}`);
-            
+              uploadSuccessCount++;
+              console.log(`✅ Photo uploadée vers Supabase: ${filePath}`);
+              
             // Récupérer l'URL publique
             const { data: urlData } = supabase.storage
               .from('materiel-photos')
               .getPublicUrl(filePath);
             
-            arr.push({ url: urlData.publicUrl, label: photoLabel });
+              arr.push({ url: urlData.publicUrl, label: photoLabel });
           }
         } else {
           // Si Supabase n'est pas configuré, utiliser base64
-          console.log('ℹ️ Supabase non configuré, utilisation de base64');
+            console.log('ℹ️ Supabase non configuré, utilisation de base64');
           const url = await fileToDataURL(f);
-          arr.push({ url, label: photoLabel });
+            arr.push({ url, label: photoLabel });
         }
       } catch (err) {
         console.error('Erreur traitement photo:', err);
-        uploadFailCount++;
+          uploadFailCount++;
         // Fallback: base64
         const url = await fileToDataURL(f);
-        const timestamp = new Date().toLocaleString('fr-FR');
-        arr.push({ url, label: `${f.name} - ${timestamp}` });
+          const timestamp = new Date().toLocaleString('fr-FR');
+          arr.push({ url, label: `${f.name} - ${timestamp}` });
+        }
       }
-    }
-    
-    // Afficher un résumé de l'upload
-    if (isSupabaseConfigured() && supabase) {
-      if (uploadSuccessCount > 0 && uploadFailCount === 0) {
-        console.log(`✅ ${uploadSuccessCount} photo(s) sauvegardée(s) dans Supabase avec horodatage`);
-      } else if (uploadFailCount > 0) {
-        console.warn(`⚠️ ${uploadSuccessCount} réussie(s), ${uploadFailCount} échouée(s). Photos en base64 comme fallback.`);
+      
+      // Afficher un résumé de l'upload
+      if (isSupabaseConfigured() && supabase) {
+        if (uploadSuccessCount > 0 && uploadFailCount === 0) {
+          console.log(`✅ ${uploadSuccessCount} photo(s) sauvegardée(s) dans Supabase avec horodatage`);
+        } else if (uploadFailCount > 0) {
+          console.warn(`⚠️ ${uploadSuccessCount} réussie(s), ${uploadFailCount} échouée(s). Photos en base64 comme fallback.`);
+        }
       }
-    }
-    
-    // Mettre à jour les photos d'abord
+      
+      // Mettre à jour les photos d'abord
     setItems(prev => prev.map(i => {
       if (i.id !== id) return i;
       if (kind === 'avant') return { ...i, photosAvant: [...i.photosAvant, ...arr] };
       return { ...i, photosApres: [...i.photosApres, ...arr] };
     }));
 
-    // Lancer l'analyse IA automatiquement pour les photos APRÈS
-    if (kind === 'apres' && arr.length > 0) {
-      // Vérifier que les photos sont uploadées sur Supabase (pas base64)
-      const isSupabasePhoto = arr.some(p => !p.url.startsWith('data:'));
-      
-      if (!isSupabasePhoto) {
-        console.warn('⚠️ Analyse IA désactivée: photos en base64 (Supabase non configuré)');
-        console.log('💡 Configurez Supabase Storage pour activer l\'analyse IA automatique');
-        return; // Ne pas tenter d'analyser les photos base64
-      }
-      
-      console.log('🤖 Lancement analyse IA automatique...');
-      
-      // Récupérer l'item pour avoir les photos AVANT
-      const currentItem = items.find(i => i.id === id);
-      const nomMateriel = currentItem?.nom || 'équipement';
-      
-      // Prendre la première photo AVANT comme référence (s'il y en a)
-      const photoAvant = currentItem?.photosAvant[0]?.url || null;
-      
-      // Si photoAvant est en base64, on la met à null
-      const photoAvantURL = photoAvant && !photoAvant.startsWith('data:') ? photoAvant : null;
-      
-      // Collecter toutes les analyses avant de mettre à jour l'état (évite les conflits React)
-      const analysesResults: { photoUrl: string; analysis: any }[] = [];
-      
-      // Analyser chaque photo APRÈS uploadée (seulement les URLs Supabase)
-      for (const photo of arr) {
-        if (photo.url.startsWith('data:')) {
-          console.log('⏭️ Saut analyse pour photo base64');
-          continue; // Ignorer les photos base64
+      // Lancer l'analyse IA automatiquement pour les photos APRÈS
+      if (kind === 'apres' && arr.length > 0) {
+        // Vérifier que les photos sont uploadées sur Supabase (pas base64)
+        const isSupabasePhoto = arr.some(p => !p.url.startsWith('data:'));
+        
+        if (!isSupabasePhoto) {
+          console.warn('⚠️ Analyse IA désactivée: photos en base64 (Supabase non configuré)');
+          console.log('💡 Configurez Supabase Storage pour activer l\'analyse IA automatique');
+          return; // Ne pas tenter d'analyser les photos base64
         }
         
-        try {
-          const response = await fetch('/api/analyze-photo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              photoAvant: photoAvantURL,
-              photoApres: photo.url,
-              nomMateriel
-            })
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log('✅ Analyse IA reçue:', data);
-            analysesResults.push({ photoUrl: photo.url, analysis: data.analysis });
-            
-            // Afficher notification de résultat
-            if (data.analysis.changementsDetectes && data.analysis.nouveauxDommages?.length > 0) {
-              console.warn(`⚠️ ${data.analysis.nouveauxDommages.length} dommage(s) détecté(s) par l'IA`);
-            } else {
-              console.log('✅ Aucun dommage détecté par l\'IA');
-            }
-          } else {
-            const errorData = await response.json();
-            console.error('❌ Erreur API analyse:', errorData);
-            if (errorData.recommendation) {
-              console.log('💡', errorData.recommendation);
-            }
-            
-            // Afficher un message utilisateur selon le type d'erreur
-            if (errorData.code === 'SUPABASE_BUCKET_NOT_PUBLIC') {
-              alert(`🔓 Configuration Supabase requise\n\n${errorData.message}\n\n📄 Voir: SUPABASE_BUCKET_PUBLIC.md pour la solution complète`);
-            } else if (errorData.error === 'Format HEIC non supporté') {
-              alert(`⚠️ Format photo incompatible\n\n${errorData.message}\n\n💡 ${errorData.recommendation}`);
-            } else if (errorData.code === 'INVALID_FORMAT') {
-              alert(`⚠️ ${errorData.error}\n\n${errorData.message}\n\n💡 ${errorData.recommendation}`);
-            }
+        console.log('🤖 Lancement analyse IA automatique...');
+        
+        // Récupérer l'item pour avoir les photos AVANT
+        const currentItem = items.find(i => i.id === id);
+        const nomMateriel = currentItem?.nom || 'équipement';
+        
+        // Prendre la première photo AVANT comme référence (s'il y en a)
+        const photoAvant = currentItem?.photosAvant[0]?.url || null;
+        
+        // Si photoAvant est en base64, on la met à null
+        const photoAvantURL = photoAvant && !photoAvant.startsWith('data:') ? photoAvant : null;
+        
+        // Collecter toutes les analyses avant de mettre à jour l'état (évite les conflits React)
+        const analysesResults: { photoUrl: string; analysis: any }[] = [];
+        
+        // Analyser chaque photo APRÈS uploadée (seulement les URLs Supabase)
+        for (const photo of arr) {
+          if (photo.url.startsWith('data:')) {
+            console.log('⏭️ Saut analyse pour photo base64');
+            continue; // Ignorer les photos base64
           }
-        } catch (err) {
-          console.error('❌ Erreur lors de l\'analyse IA:', err);
+          
+          try {
+            const response = await fetch('/api/analyze-photo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                photoAvant: photoAvantURL,
+                photoApres: photo.url,
+                nomMateriel
+              })
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              console.log('✅ Analyse IA reçue:', data);
+              analysesResults.push({ photoUrl: photo.url, analysis: data.analysis });
+              
+              // Afficher notification de résultat
+              if (data.analysis.changementsDetectes && data.analysis.nouveauxDommages?.length > 0) {
+                console.warn(`⚠️ ${data.analysis.nouveauxDommages.length} dommage(s) détecté(s) par l'IA`);
+              } else {
+                console.log('✅ Aucun dommage détecté par l\'IA');
+              }
+            } else {
+              const errorData = await response.json();
+              console.error('❌ Erreur API analyse:', errorData);
+              if (errorData.recommendation) {
+                console.log('💡', errorData.recommendation);
+              }
+              
+              // Afficher un message utilisateur selon le type d'erreur
+              if (errorData.code === 'SUPABASE_BUCKET_NOT_PUBLIC') {
+                alert(`🔓 Configuration Supabase requise\n\n${errorData.message}\n\n📄 Voir: SUPABASE_BUCKET_PUBLIC.md pour la solution complète`);
+              } else if (errorData.error === 'Format HEIC non supporté') {
+                alert(`⚠️ Format photo incompatible\n\n${errorData.message}\n\n💡 ${errorData.recommendation}`);
+              } else if (errorData.code === 'INVALID_FORMAT') {
+                alert(`⚠️ ${errorData.error}\n\n${errorData.message}\n\n💡 ${errorData.recommendation}`);
+              }
+            }
+          } catch (err) {
+            console.error('❌ Erreur lors de l\'analyse IA:', err);
+          }
+        }
+        
+        // Mettre à jour l'état UNE SEULE FOIS avec toutes les analyses (évite les conflits)
+        if (analysesResults.length > 0) {
+          setItems(prev => prev.map(i => {
+            if (i.id !== id) return i;
+            
+            // Mettre à jour toutes les photos avec leurs analyses
+            const updatedPhotosApres = i.photosApres.map(p => {
+              const analysis = analysesResults.find(a => a.photoUrl === p.url);
+              return analysis ? { ...p, analyseIA: analysis.analysis } : p;
+            });
+            
+            // Utiliser la première analyse comme analyse globale
+            const firstAnalysis = analysesResults[0].analysis;
+            
+            return { 
+              ...i, 
+              photosApres: updatedPhotosApres,
+              analyseIAApres: firstAnalysis,
+              // Auto-remplir l'état si recommandation négative
+              etatApres: firstAnalysis.recommandation === 'OK' ? 'Bon' : 
+                        firstAnalysis.recommandation === 'USURE_NORMALE' ? 'Usure normale' : 
+                        firstAnalysis.etatGeneral as EtatApres || i.etatApres
+            };
+          }));
         }
       }
-      
-      // Mettre à jour l'état UNE SEULE FOIS avec toutes les analyses (évite les conflits)
-      if (analysesResults.length > 0) {
-        setItems(prev => prev.map(i => {
-          if (i.id !== id) return i;
-          
-          // Mettre à jour toutes les photos avec leurs analyses
-          const updatedPhotosApres = i.photosApres.map(p => {
-            const analysis = analysesResults.find(a => a.photoUrl === p.url);
-            return analysis ? { ...p, analyseIA: analysis.analysis } : p;
-          });
-          
-          // Utiliser la première analyse comme analyse globale
-          const firstAnalysis = analysesResults[0].analysis;
-          
-          return { 
-            ...i, 
-            photosApres: updatedPhotosApres,
-            analyseIAApres: firstAnalysis,
-            // Auto-remplir l'état si recommandation négative
-            etatApres: firstAnalysis.recommandation === 'OK' ? 'Bon' : 
-                      firstAnalysis.recommandation === 'USURE_NORMALE' ? 'Usure normale' : 
-                      firstAnalysis.etatGeneral as EtatApres || i.etatApres
-          };
-        }));
-      }
-    }
     } catch (error) {
       console.error('❌ Erreur critique dans onPhoto:', error);
       alert('⚠️ Erreur lors du chargement de la photo\n\nLa photo est peut-être trop volumineuse ou votre navigateur a bloqué le stockage.\n\nEssayez avec une photo plus petite ou configurez Supabase en production.');
@@ -1608,14 +1608,14 @@ export default function PageEtatMateriel() {
           onClick={async (e) => {
             e.preventDefault();
             if (confirm('⚠️ Êtes-vous sûr de vouloir réinitialiser TOUS les champs (y compris les signatures) ?')) {
-              setItems([]); 
-              setClient('');
-              setContact('');
-              setAdresse('');
-              setCodePostal('');
-              setHeureDepot('');
-              setHeureRecup('');
-              setNotes('');
+            setItems([]); 
+            setClient('');
+            setContact('');
+            setAdresse('');
+            setCodePostal('');
+            setHeureDepot('');
+            setHeureRecup('');
+            setNotes('');
               clearSignatureAvant();
               clearSignatureApres();
               
@@ -1744,7 +1744,7 @@ export default function PageEtatMateriel() {
                 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
                     🤖 ANALYSE AUTOMATIQUE PAR INTELLIGENCE ARTIFICIELLE
-                  </div>
+            </div>
                   
                   <p style={{ fontSize: 11, margin: '4px 0' }}>
                     <strong>État général:</strong> {it.analyseIAApres.etatGeneral}
