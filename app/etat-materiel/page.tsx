@@ -402,13 +402,18 @@ export default function PageEtatMateriel() {
           const photoAvantURL = photoAvant && !photoAvant.startsWith('data:') ? photoAvant : null;
           
           // Analyser chaque photo APRÈS uploadée (seulement les URLs Supabase)
-          for (const photo of arr) {
+          console.log(`🔍 Début analyse de ${arr.length} photo(s)`);
+          for (let photoIndex = 0; photoIndex < arr.length; photoIndex++) {
+            const photo = arr[photoIndex];
+            console.log(`📷 Analyse photo ${photoIndex + 1}/${arr.length}`);
+            
             if (photo.url.startsWith('data:')) {
               console.log('⏭️ Saut analyse pour photo base64');
               continue; // Ignorer les photos base64
             }
             
             try {
+              console.log(`🚀 Envoi requête analyse photo ${photoIndex + 1}`);
               const response = await fetch('/api/analyze-photo', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -421,8 +426,9 @@ export default function PageEtatMateriel() {
 
               if (response.ok) {
                 const data = await response.json();
-                console.log('✅ Analyse IA reçue:', data);
+                console.log(`✅ Analyse IA ${photoIndex + 1} reçue`);
                 analysesResults.push({ photoUrl: photo.url, analysis: data.analysis });
+                console.log(`📊 Total analyses collectées: ${analysesResults.length}`);
                 
                 // Afficher notification de résultat
                 if (data.analysis.changementsDetectes && data.analysis.nouveauxDommages?.length > 0) {
@@ -457,7 +463,10 @@ export default function PageEtatMateriel() {
       }
       
       // MISE À JOUR UNIQUE de l'état avec photos + analyses IA (évite les conflits)
-    setItems(prev => prev.map(i => {
+      console.log(`💾 Mise à jour état: ${arr.length} photo(s), ${analysesResults.length} analyse(s)`);
+      setItems(prev => {
+        console.log('💾 Début setItems callback');
+        return prev.map(i => {
       if (i.id !== id) return i;
         
         // Ajouter les nouvelles photos
@@ -485,8 +494,10 @@ export default function PageEtatMateriel() {
         }
         
         // Sinon, juste ajouter les photos
-        return { ...i, ...newPhotos };
-      }));
+          return { ...i, ...newPhotos };
+        });
+      });
+      console.log('✅ setItems terminé avec succès');
     } catch (error) {
       console.error('❌ Erreur critique dans onPhoto:', error);
       alert('⚠️ Erreur lors du chargement de la photo\n\nLa photo est peut-être trop volumineuse ou votre navigateur a bloqué le stockage.\n\nEssayez avec une photo plus petite ou configurez Supabase en production.');
