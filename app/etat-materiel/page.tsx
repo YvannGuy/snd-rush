@@ -382,7 +382,7 @@ export default function PageEtatMateriel() {
       }
       
       // Lancer l'analyse IA automatiquement pour les photos APRÈS (AVANT de mettre à jour l'état)
-      let analysesResults: { photoUrl: string; analysis: any }[] = [];
+      const analysesResults: { photoUrl: string; analysis: any }[] = [];
       
       if (kind === 'apres' && arr.length > 0) {
         // Vérifier que les photos sont uploadées sur Supabase (pas base64)
