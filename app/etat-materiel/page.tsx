@@ -411,6 +411,9 @@ export default function PageEtatMateriel() {
       // Si photoAvant est en base64, on la met à null
       const photoAvantURL = photoAvant && !photoAvant.startsWith('data:') ? photoAvant : null;
       
+      // Collecter toutes les analyses avant de mettre à jour l'état (évite les conflits React)
+      const analysesResults: { photoUrl: string; analysis: any }[] = [];
+      
       // Analyser chaque photo APRÈS uploadée (seulement les URLs Supabase)
       for (const photo of arr) {
         if (photo.url.startsWith('data:')) {
@@ -432,31 +435,8 @@ export default function PageEtatMateriel() {
           if (response.ok) {
             const data = await response.json();
             console.log('✅ Analyse IA reçue:', data);
+            analysesResults.push({ photoUrl: photo.url, analysis: data.analysis });
             
-            // Mettre à jour l'item avec l'analyse
-            setItems(prev => prev.map(i => {
-              if (i.id !== id) return i;
-              
-              // Mettre à jour la photo avec son analyse
-              const updatedPhotosApres = i.photosApres.map(p => {
-                if (p.url === photo.url) {
-                  return { ...p, analyseIA: data.analysis };
-                }
-                return p;
-              });
-              
-              // Mettre à jour l'analyse globale de l'item
-              return { 
-                ...i, 
-                photosApres: updatedPhotosApres,
-                analyseIAApres: data.analysis,
-                // Auto-remplir l'état si recommandation négative
-                etatApres: data.analysis.recommandation === 'OK' ? 'Bon' : 
-                          data.analysis.recommandation === 'USURE_NORMALE' ? 'Usure normale' : 
-                          data.analysis.etatGeneral as EtatApres || i.etatApres
-              };
-            }));
-
             // Afficher notification de résultat
             if (data.analysis.changementsDetectes && data.analysis.nouveauxDommages?.length > 0) {
               console.warn(`⚠️ ${data.analysis.nouveauxDommages.length} dommage(s) détecté(s) par l'IA`);
@@ -482,6 +462,32 @@ export default function PageEtatMateriel() {
         } catch (err) {
           console.error('❌ Erreur lors de l\'analyse IA:', err);
         }
+      }
+      
+      // Mettre à jour l'état UNE SEULE FOIS avec toutes les analyses (évite les conflits)
+      if (analysesResults.length > 0) {
+        setItems(prev => prev.map(i => {
+          if (i.id !== id) return i;
+          
+          // Mettre à jour toutes les photos avec leurs analyses
+          const updatedPhotosApres = i.photosApres.map(p => {
+            const analysis = analysesResults.find(a => a.photoUrl === p.url);
+            return analysis ? { ...p, analyseIA: analysis.analysis } : p;
+          });
+          
+          // Utiliser la première analyse comme analyse globale
+          const firstAnalysis = analysesResults[0].analysis;
+          
+          return { 
+            ...i, 
+            photosApres: updatedPhotosApres,
+            analyseIAApres: firstAnalysis,
+            // Auto-remplir l'état si recommandation négative
+            etatApres: firstAnalysis.recommandation === 'OK' ? 'Bon' : 
+                      firstAnalysis.recommandation === 'USURE_NORMALE' ? 'Usure normale' : 
+                      firstAnalysis.etatGeneral as EtatApres || i.etatApres
+          };
+        }));
       }
     }
     } catch (error) {
