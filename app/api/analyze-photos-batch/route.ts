@@ -143,7 +143,15 @@ Réponds au format JSON strict avec le même format que ci-dessus.`;
       throw new Error('Aucune réponse de GPT-4');
     }
 
-    const analysis = JSON.parse(content);
+    // Nettoyer la réponse (parfois GPT répond avec ```json...```)
+    let cleanedContent = content.trim();
+    if (cleanedContent.startsWith('```json')) {
+      cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/```\s*$/, '');
+    } else if (cleanedContent.startsWith('```')) {
+      cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/```\s*$/, '');
+    }
+
+    const analysis = JSON.parse(cleanedContent);
 
     console.log(`✅ Analyse BATCH terminée : ${photosApres.length} photo(s)`);
 
