@@ -233,9 +233,23 @@ export default function PageEtatMateriel() {
         const db = await openDB();
         const tx = db.transaction(['drafts'], 'readwrite');
         const store = tx.objectStore('drafts');
-        store.put(dataToSave, 'current-draft');
-      } catch (err) {
-        console.warn('⚠️ Erreur sauvegarde:', err);
+        const request = store.put(dataToSave, 'current-draft');
+        
+        request.onerror = (event) => {
+          const error = (event.target as any)?.error;
+          if (error?.name === 'QuotaExceededError') {
+            console.error('❌ QUOTA IndexedDB dépassé - Trop de données (photos base64)');
+            console.warn('💡 SOLUTION: Configurez Supabase en production pour éviter le stockage base64');
+          } else {
+            console.warn('⚠️ Erreur sauvegarde IndexedDB:', error);
+          }
+        };
+      } catch (err: any) {
+        if (err?.name === 'QuotaExceededError') {
+          console.error('❌ QUOTA DÉPASSÉ: Trop de photos en base64. Supprimez certaines photos ou configurez Supabase.');
+        } else {
+          console.warn('⚠️ Erreur sauvegarde:', err);
+        }
       }
     };
     
@@ -274,12 +288,23 @@ export default function PageEtatMateriel() {
 
   const onPhoto = async (id: string, kind: 'avant' | 'apres', files: FileList | null) => {
     if (!files || !files.length) return;
-    const arr: Photo[] = [];
-    let uploadSuccessCount = 0;
-    let uploadFailCount = 0;
     
-    console.log(`📸 Traitement de ${files.length} photo(s)`);
-    console.log('🔍 Supabase configuré:', isSupabaseConfigured());
+    try {
+      const arr: Photo[] = [];
+      let uploadSuccessCount = 0;
+      let uploadFailCount = 0;
+      
+      console.log(`📸 Traitement de ${files.length} photo(s)`);
+      console.log('🔍 Supabase configuré:', isSupabaseConfigured());
+      
+      // Vérifier si on est en mode base64 et alerter l'utilisateur sur mobile
+      if (!isSupabaseConfigured()) {
+        console.warn('⚠️ ATTENTION: Supabase non configuré, photos en base64 (limité sur mobile)');
+        if (files.length > 2) {
+          alert('⚠️ Trop de photos en mode hors ligne\n\nLimitez-vous à 1-2 photos par équipement.\n\nPour plus de photos, configurez Supabase en production.');
+          return;
+        }
+      }
     
     for (const f of Array.from(files)) {
       try {
@@ -458,6 +483,10 @@ export default function PageEtatMateriel() {
           console.error('❌ Erreur lors de l\'analyse IA:', err);
         }
       }
+    }
+    } catch (error) {
+      console.error('❌ Erreur critique dans onPhoto:', error);
+      alert('⚠️ Erreur lors du chargement de la photo\n\nLa photo est peut-être trop volumineuse ou votre navigateur a bloqué le stockage.\n\nEssayez avec une photo plus petite ou configurez Supabase en production.');
     }
   };
 
