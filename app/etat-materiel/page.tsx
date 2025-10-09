@@ -397,7 +397,10 @@ export default function PageEtatMateriel() {
       // Lancer l'analyse IA automatiquement pour les photos APRÈS (AVANT de mettre à jour l'état)
       const analysesResults: { photoUrl: string; analysis: any }[] = [];
       
-      if (kind === 'apres' && arr.length > 0) {
+      // 🔴 ANALYSE IA DÉSACTIVÉE (pour réactivation ultérieure)
+      const AI_ENABLED = false;
+      
+      if (AI_ENABLED && kind === 'apres' && arr.length > 0) {
         // Vérifier que les photos sont uploadées sur Supabase (pas base64)
         const isSupabasePhoto = arr.some(p => !p.url.startsWith('data:'));
         
@@ -1210,7 +1213,7 @@ export default function PageEtatMateriel() {
               border: `1px solid ${isSupabaseConfigured() ? '#10b981' : '#dc2626'}`
             }}>
               <span>{isSupabaseConfigured() ? '📡' : '⚠️'}</span>
-              <span>{isSupabaseConfigured() ? 'Supabase + IA OK' : 'Supabase NON configuré'}</span>
+              <span>{isSupabaseConfigured() ? 'Supabase OK' : 'Supabase NON configuré'}</span>
             </div>
             <button
               onClick={() => {
@@ -1436,10 +1439,7 @@ export default function PageEtatMateriel() {
               </select>
             </label>
             <label>
-              Photos APRÈS 
-              <span style={{ fontSize: 11, color: '#10b981', marginLeft: 8, fontWeight: 600 }}>
-                🤖 IA auto (toutes les photos)
-              </span>
+              Photos APRÈS
               <input
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
@@ -1450,8 +1450,6 @@ export default function PageEtatMateriel() {
               />
               <p style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
                 📱 iPhone : JPEG/PNG requis (Réglages → Appareil photo → Formats → "Plus compatible")
-                <br />
-                🤖 Analyse rapide par IA de toutes vos photos en 1 seule requête (~15s)
               </p>
             </label>
             <div>
