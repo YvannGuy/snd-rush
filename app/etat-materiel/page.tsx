@@ -63,7 +63,7 @@ type Dossier = {
 const styles: Record<string, React.CSSProperties> = {
   wrap: { maxWidth: 960, margin: '0 auto', padding: '16px', fontFamily: 'Inter, system-ui, sans-serif' },
   card: { border: '1px solid #e6e6e6', borderRadius: 12, padding: 16, marginBottom: 16, background: '#fff' },
-    h1: { fontSize: 24, fontWeight: 800, margin: '0 0 12px', color: '#000' },
+    h1: { fontSize: 24, fontWeight: 800, margin: '0 0 12px', color: '#F2431E' },
   h2: { fontSize: 18, fontWeight: 700, margin: '0 0 10px' },
   input: { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 10, fontSize: 14 },
   select: { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 10, fontSize: 14, background: '#fff' },
