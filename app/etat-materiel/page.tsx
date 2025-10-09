@@ -415,7 +415,12 @@ export default function PageEtatMateriel() {
         const isSupabasePhoto = arr.some(p => !p.url.startsWith('data:'));
         
         if (isSupabasePhoto) {
-          console.log('🤖 Lancement analyse IA automatique...');
+          console.log(`🤖 Lancement analyse IA pour ${arr.length} photo(s)...`);
+          
+          // Message si plusieurs photos (temps d'attente)
+          if (arr.length > 2) {
+            console.warn(`⏱️ ${arr.length} photos à analyser, cela peut prendre ${arr.length * 10} secondes...`);
+          }
           
           // Récupérer l'item pour avoir les photos AVANT
           const currentItem = items.find(i => i.id === id);
@@ -461,6 +466,12 @@ export default function PageEtatMateriel() {
                   console.warn(`⚠️ ${data.analysis.nouveauxDommages.length} dommage(s) détecté(s) par l'IA`);
                 } else {
                   console.log('✅ Aucun dommage détecté par l\'IA');
+                }
+                
+                // Délai de 300ms entre chaque analyse pour éviter surcharge mobile
+                if (photoIndex < arr.length - 1) {
+                  console.log('⏸️ Pause 300ms avant analyse suivante...');
+                  await new Promise(resolve => setTimeout(resolve, 300));
                 }
               } else {
                 const errorData = await response.json();
