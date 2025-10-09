@@ -402,14 +402,10 @@ export default function PageEtatMateriel() {
         const isSupabasePhoto = arr.some(p => !p.url.startsWith('data:'));
         
         if (isSupabasePhoto) {
-          // LIMITE: Analyser seulement les 2 premières photos pour éviter crash mobile
-          const photosToAnalyze = arr.filter(p => !p.url.startsWith('data:')).slice(0, 2);
+          // ANALYSE BATCH: Toutes les photos en 1 seule requête (plus rapide et stable)
+          const photosUrls = arr.filter(p => !p.url.startsWith('data:')).map(p => p.url);
           
-          console.log(`🤖 Analyse IA : ${photosToAnalyze.length}/${arr.length} photo(s)`);
-          
-          if (arr.length > 2) {
-            console.warn(`⚠️ ${arr.length} photos uploadées, seulement les 2 premières seront analysées par l'IA`);
-          }
+          console.log(`🤖 Analyse IA BATCH : ${photosUrls.length} photo(s) en 1 requête`);
           
           // Récupérer l'item pour avoir les photos AVANT
           const currentItem = items.find(i => i.id === id);
@@ -417,65 +413,61 @@ export default function PageEtatMateriel() {
           
           // Prendre la première photo AVANT comme référence (s'il y en a)
           const photoAvant = currentItem?.photosAvant[0]?.url || null;
-          
-          // Si photoAvant est en base64, on la met à null
           const photoAvantURL = photoAvant && !photoAvant.startsWith('data:') ? photoAvant : null;
           
-          // Analyser SEULEMENT les 2 premières photos APRÈS
-          console.log(`🔍 Début analyse de ${photosToAnalyze.length} photo(s)`);
-          for (let photoIndex = 0; photoIndex < photosToAnalyze.length; photoIndex++) {
-            const photo = photosToAnalyze[photoIndex];
-            console.log(`📷 Analyse photo ${photoIndex + 1}/${photosToAnalyze.length}`);
-            
-            try {
-              console.log(`🚀 Envoi requête analyse photo ${photoIndex + 1}`);
-              const response = await fetch('/api/analyze-photo', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  photoAvant: photoAvantURL,
-                  photoApres: photo.url,
-                  nomMateriel
-                })
-              });
+          try {
+            console.log('🚀 Envoi requête analyse BATCH...');
+            const response = await fetch('/api/analyze-photos-batch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                photoAvant: photoAvantURL,
+                photosApres: photosUrls,
+                nomMateriel
+              })
+            });
 
-              if (response.ok) {
-                const data = await response.json();
-                console.log(`✅ Analyse IA ${photoIndex + 1} reçue`);
-                analysesResults.push({ photoUrl: photo.url, analysis: data.analysis });
-                console.log(`📊 Total analyses collectées: ${analysesResults.length}`);
-                
-                // Afficher notification de résultat
-                if (data.analysis.changementsDetectes && data.analysis.nouveauxDommages?.length > 0) {
-                  console.warn(`⚠️ ${data.analysis.nouveauxDommages.length} dommage(s) détecté(s) par l'IA`);
-                } else {
-                  console.log('✅ Aucun dommage détecté par l\'IA');
-                }
-                
-                // Délai de 300ms entre chaque analyse pour éviter surcharge mobile
-                if (photoIndex < photosToAnalyze.length - 1) {
-                  console.log('⏸️ Pause 300ms avant analyse suivante...');
-                  await new Promise(resolve => setTimeout(resolve, 300));
-                }
+            if (response.ok) {
+              const data = await response.json();
+              console.log(`✅ Analyse BATCH reçue : ${data.analyses.length} photo(s) analysées`);
+              
+              // Associer chaque analyse à sa photo
+              data.analyses.forEach((analysis: any, index: number) => {
+                analysesResults.push({ 
+                  photoUrl: photosUrls[index], 
+                  analysis: {
+                    ...analysis,
+                    timestamp: data.timestamp,
+                    model: data.model
+                  }
+                });
+              });
+              
+              console.log(`📊 Total analyses collectées: ${analysesResults.length}`);
+              
+              // Afficher notification globale
+              const totalDommages = data.analyses.reduce((sum: number, a: any) => 
+                sum + (a.nouveauxDommages?.length || 0), 0
+              );
+              
+              if (totalDommages > 0) {
+                console.warn(`⚠️ ${totalDommages} dommage(s) détecté(s) au total par l'IA`);
               } else {
-                const errorData = await response.json();
-                console.error('❌ Erreur API analyse:', errorData);
-                if (errorData.recommendation) {
-                  console.log('💡', errorData.recommendation);
-                }
-                
-                // Afficher un message utilisateur selon le type d'erreur
-                if (errorData.code === 'SUPABASE_BUCKET_NOT_PUBLIC') {
-                  alert(`🔓 Configuration Supabase requise\n\n${errorData.message}\n\n📄 Voir: SUPABASE_BUCKET_PUBLIC.md pour la solution complète`);
-                } else if (errorData.error === 'Format HEIC non supporté') {
-                  alert(`⚠️ Format photo incompatible\n\n${errorData.message}\n\n💡 ${errorData.recommendation}`);
-                } else if (errorData.code === 'INVALID_FORMAT') {
-                  alert(`⚠️ ${errorData.error}\n\n${errorData.message}\n\n💡 ${errorData.recommendation}`);
-                }
+                console.log('✅ Aucun dommage détecté par l\'IA');
               }
-            } catch (err) {
-              console.error('❌ Erreur lors de l\'analyse IA:', err);
+            } else {
+              const errorData = await response.json();
+              console.error('❌ Erreur API analyse BATCH:', errorData);
+              
+              // Afficher un message utilisateur selon le type d'erreur
+              if (errorData.code === 'SUPABASE_BUCKET_NOT_PUBLIC') {
+                alert(`🔓 Configuration Supabase requise\n\n${errorData.message}\n\n📄 Voir: SUPABASE_BUCKET_PUBLIC.md`);
+              } else if (errorData.error) {
+                alert(`⚠️ ${errorData.error}\n\n${errorData.message || ''}`);
+              }
             }
+          } catch (err) {
+            console.error('❌ Erreur lors de l\'analyse IA BATCH:', err);
           }
         } else {
           console.warn('⚠️ Analyse IA désactivée: photos en base64 (Supabase non configuré)');
@@ -1445,8 +1437,8 @@ export default function PageEtatMateriel() {
             </label>
             <label>
               Photos APRÈS 
-              <span style={{ fontSize: 11, color: '#f59e0b', marginLeft: 8 }}>
-                🤖 IA auto (2 premières seulement)
+              <span style={{ fontSize: 11, color: '#10b981', marginLeft: 8, fontWeight: 600 }}>
+                🤖 IA auto (toutes les photos)
               </span>
               <input
                 type="file"
@@ -1459,7 +1451,7 @@ export default function PageEtatMateriel() {
               <p style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
                 📱 iPhone : JPEG/PNG requis (Réglages → Appareil photo → Formats → "Plus compatible")
                 <br />
-                🤖 Seules les 2 premières photos seront analysées par l'IA (anti-crash)
+                🤖 Analyse rapide par IA de toutes vos photos en 1 seule requête (~15s)
               </p>
             </label>
             <div>
