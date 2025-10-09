@@ -310,19 +310,6 @@ export default function PageEtatMateriel() {
       console.log(`📸 Traitement de ${files.length} photo(s)`);
       console.log('🔍 Supabase configuré:', isSupabaseConfigured());
       
-      // LIMITE: 4 photos maximum par type (AVANT ou APRÈS)
-      const currentItem = items.find(i => i.id === id);
-      const currentPhotosCount = kind === 'avant' 
-        ? (currentItem?.photosAvant?.length || 0)
-        : (currentItem?.photosApres?.length || 0);
-      
-      const totalAfterUpload = currentPhotosCount + files.length;
-      
-      if (totalAfterUpload > 4) {
-        alert(`⚠️ Maximum 4 photos ${kind === 'avant' ? 'AVANT' : 'APRÈS'}\n\nVous avez déjà ${currentPhotosCount} photo(s).\nVous essayez d'en ajouter ${files.length}.\n\nTotal: ${totalAfterUpload} photos (max: 4)\n\n💡 Supprimez des photos existantes ou prenez moins de photos.`);
-        return;
-      }
-      
       // Vérifier si on est en mode base64 et alerter l'utilisateur sur mobile
       if (!isSupabaseConfigured()) {
         console.warn('⚠️ ATTENTION: Supabase non configuré, photos en base64 (limité sur mobile)');
@@ -415,11 +402,13 @@ export default function PageEtatMateriel() {
         const isSupabasePhoto = arr.some(p => !p.url.startsWith('data:'));
         
         if (isSupabasePhoto) {
-          console.log(`🤖 Lancement analyse IA pour ${arr.length} photo(s)...`);
+          // LIMITE: Analyser seulement les 2 premières photos pour éviter crash mobile
+          const photosToAnalyze = arr.filter(p => !p.url.startsWith('data:')).slice(0, 2);
           
-          // Message si plusieurs photos (temps d'attente)
+          console.log(`🤖 Analyse IA : ${photosToAnalyze.length}/${arr.length} photo(s)`);
+          
           if (arr.length > 2) {
-            console.warn(`⏱️ ${arr.length} photos à analyser, cela peut prendre ${arr.length * 10} secondes...`);
+            console.warn(`⚠️ ${arr.length} photos uploadées, seulement les 2 premières seront analysées par l'IA`);
           }
           
           // Récupérer l'item pour avoir les photos AVANT
@@ -432,16 +421,11 @@ export default function PageEtatMateriel() {
           // Si photoAvant est en base64, on la met à null
           const photoAvantURL = photoAvant && !photoAvant.startsWith('data:') ? photoAvant : null;
           
-          // Analyser chaque photo APRÈS uploadée (seulement les URLs Supabase)
-          console.log(`🔍 Début analyse de ${arr.length} photo(s)`);
-          for (let photoIndex = 0; photoIndex < arr.length; photoIndex++) {
-            const photo = arr[photoIndex];
-            console.log(`📷 Analyse photo ${photoIndex + 1}/${arr.length}`);
-            
-            if (photo.url.startsWith('data:')) {
-              console.log('⏭️ Saut analyse pour photo base64');
-              continue; // Ignorer les photos base64
-            }
+          // Analyser SEULEMENT les 2 premières photos APRÈS
+          console.log(`🔍 Début analyse de ${photosToAnalyze.length} photo(s)`);
+          for (let photoIndex = 0; photoIndex < photosToAnalyze.length; photoIndex++) {
+            const photo = photosToAnalyze[photoIndex];
+            console.log(`📷 Analyse photo ${photoIndex + 1}/${photosToAnalyze.length}`);
             
             try {
               console.log(`🚀 Envoi requête analyse photo ${photoIndex + 1}`);
@@ -469,7 +453,7 @@ export default function PageEtatMateriel() {
                 }
                 
                 // Délai de 300ms entre chaque analyse pour éviter surcharge mobile
-                if (photoIndex < arr.length - 1) {
+                if (photoIndex < photosToAnalyze.length - 1) {
                   console.log('⏸️ Pause 300ms avant analyse suivante...');
                   await new Promise(resolve => setTimeout(resolve, 300));
                 }
@@ -1425,10 +1409,7 @@ export default function PageEtatMateriel() {
               </select>
             </label>
             <label>
-              Photos AVANT 
-              <span style={{ fontSize: 11, color: item.photosAvant.length >= 4 ? '#dc2626' : '#10b981', marginLeft: 8, fontWeight: 600 }}>
-                ({item.photosAvant.length}/4)
-              </span>
+              Photos AVANT
               <input
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
@@ -1436,7 +1417,6 @@ export default function PageEtatMateriel() {
                 multiple
                 onChange={(e) => onPhoto(item.id, 'avant', e.target.files)}
                 style={{ ...styles.input, padding: 8 }}
-                disabled={item.photosAvant.length >= 4}
               />
               <p style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
                 💡 Pour l'analyse IA : JPEG/PNG recommandé (pas HEIC)
@@ -1465,11 +1445,8 @@ export default function PageEtatMateriel() {
             </label>
             <label>
               Photos APRÈS 
-              <span style={{ fontSize: 11, color: item.photosApres.length >= 4 ? '#dc2626' : '#10b981', marginLeft: 8, fontWeight: 600 }}>
-                ({item.photosApres.length}/4)
-              </span>
               <span style={{ fontSize: 11, color: '#f59e0b', marginLeft: 8 }}>
-                🤖 IA auto (JPEG/PNG uniquement)
+                🤖 IA auto (2 premières seulement)
               </span>
               <input
                 type="file"
@@ -1478,10 +1455,11 @@ export default function PageEtatMateriel() {
                 multiple
                 onChange={(e) => onPhoto(item.id, 'apres', e.target.files)}
                 style={{ ...styles.input, padding: 8 }}
-                disabled={item.photosApres.length >= 4}
               />
               <p style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
-                📱 iPhone : Activez "Plus compatible" dans Réglages → Appareil photo → Formats pour analyse IA
+                📱 iPhone : JPEG/PNG requis (Réglages → Appareil photo → Formats → "Plus compatible")
+                <br />
+                🤖 Seules les 2 premières photos seront analysées par l'IA (anti-crash)
               </p>
             </label>
             <div>
