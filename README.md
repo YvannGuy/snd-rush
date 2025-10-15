@@ -6,7 +6,9 @@ Site web officiel de **SND Rush**, spécialiste de la location de matériel de s
 
 ## 🖼️ Aperçu du site
 
-![SND Rush - Page d'accueil](https://via.placeholder.com/1200x600/1f2937/ffffff?text=SND+Rush+-+Location+Sono+%26+Lumi%C3%A8re+Paris)
+![SND Rush - Page d'accueil](public/cap1.gif)
+
+![SND Rush - Interface](public/cap2.gif)
 
 *Interface moderne et professionnelle avec design sombre, couleurs orange vif et navigation intuitive*
 
