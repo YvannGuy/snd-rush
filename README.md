@@ -319,7 +319,7 @@ Assurez-vous de configurer toutes les variables d'environnement dans :
 ## 📞 Contact & Support
 
 - **Site web** : [www.sndrush.com](https://www.sndrush.com)
-- **Email** : contact@guylocationevents.com
+- **Email** : contact@sndrush.com
 
 ### Réseaux sociaux
 - **Instagram** : [@snd_rush](https://www.instagram.com/snd_rush)
