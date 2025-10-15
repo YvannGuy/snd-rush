@@ -46,6 +46,7 @@ Site web officiel de **SND Rush**, spécialiste de la location de matériel de s
 - Section FAQ interactive avec recherche intelligente
 - Témoignages clients (Trustindex integration)
 - Call-to-action optimisés pour la conversion
+- **Support multilingue** : Interface disponible en français et anglais 🇫🇷🇬🇧
 
 ### 2. **Assistant Conseil IA** (`/generateur_de_prix`)
 - Questionnaire guidé en 6 étapes
