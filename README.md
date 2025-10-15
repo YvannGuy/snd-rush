@@ -6,6 +6,10 @@ Site web officiel de **SND Rush**, spécialiste de la location de matériel de s
 
 ## 🖼️ Aperçu du site
 
+<div align="center">
+  <img src="./public/sndrushrecto1.png" alt="SND Rush Logo" width="200" style="margin-bottom: 20px;">
+</div>
+
 ![SND Rush - Page d'accueil](./public/pro1.png)
 
 ![SND Rush - Interface](./public/pro2.png)
@@ -18,17 +22,19 @@ Site web officiel de **SND Rush**, spécialiste de la location de matériel de s
 
 ## 🎯 À propos
 
-SND Rush propose des solutions de location de matériel audiovisuel professionnel avec deux formules principales :
+**SND Rush** est le leader français de la location de matériel de sonorisation et d'éclairage en urgence. Depuis notre création, nous nous positionnons comme le partenaire de confiance pour tous vos événements, qu'ils soient professionnels ou privés.
 
+### 🚀 Nos formules
 - **Service Express** : Intervention d'urgence 24h/24 - 7j/7 pour vos besoins de dernière minute
 - **Réservation à l'avance** : Packs clé en main pour mariages, anniversaires, conférences, concerts et événements corporate
 
-### Notre engagement
-- ✅ Matériel professionnel testé et certifié
-- ✅ Livraison et installation incluses
-- ✅ Technicien disponible pendant l'événement
-- ✅ Couverture complète Paris & Île-de-France
-- ✅ Réponse garantie en moins de 5 minutes
+### 🎯 Notre engagement
+- ✅ **Matériel professionnel** : Enceintes FBT, caissons de basses, tables de mixage Promix, micros Shure, éclairage LED
+- ✅ **Livraison et installation** : Techniciens qualifiés et expérimentés
+- ✅ **Support technique 24/7** : Assistance disponible en permanence
+- ✅ **Couverture complète** : Paris & Île-de-France, même les weekends et jours fériés
+- ✅ **Réponse garantie** : En moins de 5 minutes pour toutes vos demandes
+- ✅ **Qualité certifiée** : Matériel testé et certifié avant chaque location
 
 ---
 
@@ -313,7 +319,6 @@ Assurez-vous de configurer toutes les variables d'environnement dans :
 ## 📞 Contact & Support
 
 - **Site web** : [www.sndrush.com](https://www.sndrush.com)
-- **WhatsApp** : [wa.me/33651084994](https://wa.me/33651084994)
 - **Email** : contact@guylocationevents.com
 
 ### Réseaux sociaux
