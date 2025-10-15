@@ -2,7 +2,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
 interface HeaderProps {
@@ -78,13 +77,11 @@ export default function Header({ language, onLanguageChange, onReservationClick,
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center">
-              <Image 
+              <img 
                 src="/sndrushrecto1.png" 
                 alt="SND Rush" 
-                width={120}
-                height={40}
-                className="h-8 sm:h-10 w-auto"
-                priority
+                className="h-24 sm:h-32 w-auto"
+                style={{ maxHeight: '128px' }}
               />
             </Link>
 
