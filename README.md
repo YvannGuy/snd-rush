@@ -313,7 +313,6 @@ Assurez-vous de configurer toutes les variables d'environnement dans :
 ## 📞 Contact & Support
 
 - **Site web** : [www.sndrush.com](https://www.sndrush.com)
-- **Téléphone** : +33 6 51 08 49 94
 - **WhatsApp** : [wa.me/33651084994](https://wa.me/33651084994)
 - **Email** : contact@guylocationevents.com
 
