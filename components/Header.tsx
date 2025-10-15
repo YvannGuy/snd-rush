@@ -77,11 +77,11 @@ export default function Header({ language, onLanguageChange, onReservationClick,
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center">
-              <span className="text-2xl sm:text-3xl font-bold tracking-tight">
-                <span className="text-[#F2431E]">snd</span>
-                <span className="text-black">•</span>
-                <span className="text-[#F2431E]">rush</span>
-              </span>
+              <img 
+                src="/sndrushrecto1.png" 
+                alt="SND Rush" 
+                className="h-8 sm:h-10 w-auto"
+              />
             </Link>
 
             {/* Navigation - Encore plus décalée à droite */}
