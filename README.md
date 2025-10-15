@@ -6,9 +6,9 @@ Site web officiel de **SND Rush**, spécialiste de la location de matériel de s
 
 ## 🖼️ Aperçu du site
 
-![SND Rush - Page d'accueil](public/cap1.gif)
+![SND Rush - Page d'accueil](./public/cap1.gif)
 
-![SND Rush - Interface](public/cap2.gif)
+![SND Rush - Interface](./public/cap2.gif)
 
 *Interface moderne et professionnelle avec design sombre, couleurs orange vif et navigation intuitive*
 
