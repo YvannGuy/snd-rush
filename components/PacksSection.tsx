@@ -1,7 +1,6 @@
 
 'use client';
 
-import Link from 'next/link';
 import { useRef } from 'react';
 
 interface Pack {
@@ -21,10 +20,9 @@ interface Pack {
 
 interface PacksSectionProps {
   language: 'fr' | 'en';
-  onReservePack?: (packId: number) => void;
 }
 
-export default function PacksSection({ language, onReservePack }: PacksSectionProps) {
+export default function PacksSection({ language }: PacksSectionProps) {
 
   const texts = {
     fr: {
@@ -232,11 +230,6 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
     }
   };
 
-  const handleReservePack = (packId: number) => {
-    if (onReservePack) {
-      onReservePack(packId);
-    }
-  };
 
   return (
     <section id="packs" className="py-20 lg:py-32 bg-gradient-to-b from-gray-50 to-white transition-all duration-1000 ease-in-out relative mx-4 mb-8 rounded-3xl">
@@ -299,7 +292,7 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
         </div>
 
           <div ref={listRef} className="flex gap-6 sm:gap-8 lg:gap-12 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 scrollbar-hide" style={{ scrollBehavior: 'smooth', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {currentPacks.map((pack, index) => (
+            {currentPacks.map((pack) => (
                     <div
                       key={pack.id}
                 className={`snap-start min-w-[280px] sm:min-w-[360px] lg:min-w-[400px] group transition-all duration-300 ease-out`}
@@ -480,83 +473,6 @@ export default function PacksSection({ language, onReservePack }: PacksSectionPr
 
         </div>
 
-        {/* Nouvelle section: Découvrez notre matériel */}
-        <div className="mt-20 lg:mt-28">
-          <div className="text-center mb-12 lg:mb-16">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black leading-tight">
-              Découvrez notre{' '}
-              <span className="text-[#F2431E]">matériel</span>
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Du matériel professionnel sélectionné pour sa fiabilité, sa puissance et sa clarté
-            </p>
-          </div>
-
-          {/* Carrousel de matériel */}
-          <div className="relative">
-            <div ref={listRef} className="flex gap-4 sm:gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 scrollbar-hide" style={{ scrollBehavior: 'smooth', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {[
-                { 
-                  name: 'Enceinte amplifiée', 
-                  image: '/enceintefbt.png',
-                  specs: 'Son puissant et clair pour tous vos événements'
-                },
-                { 
-                  name: 'Micro sans fil', 
-                  image: '/microshure.png',
-                  specs: 'Liberté de mouvement, qualité professionnelle'
-                },
-                { 
-                  name: 'Caisson de basse', 
-                  image: '/caissonbasse.png',
-                  specs: 'Ajoutez de la profondeur à votre son'
-                },
-                { 
-                  name: 'Console de mixage', 
-                  image: '/tablemixage16.png',
-                  specs: 'Contrôle total de votre sonorisation'
-                },
-              ].map((item, index) => (
-                <div
-                  key={index}
-                  className="snap-start w-[200px] sm:w-[240px] lg:w-[280px] group transition-all duration-300 ease-out flex-shrink-0"
-                >
-                  <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out overflow-hidden border border-gray-100 h-[320px] sm:h-[360px] lg:h-[400px] flex flex-col">
-                    <div className="relative h-[200px] sm:h-[240px] lg:h-[280px] overflow-hidden rounded-t-2xl flex-shrink-0">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover object-center transition-transform duration-300 ease-in-out group-hover:scale-105"
-                        style={{ objectPosition: 'center' }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
-                    </div>
-                    <div className="p-6 flex-1 flex flex-col justify-center text-center">
-                      <h3 className="text-xl font-bold text-[#F2431E] mb-3 leading-tight">{item.name}</h3>
-                      <p className="text-gray-600 leading-relaxed">{item.specs}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Bouton Réservez votre pack */}
-          <div className="text-center mt-12">
-            <button
-              onClick={() => {
-                // Déclencher l'ouverture du modal assistant
-                const event = new CustomEvent('openAssistantModal');
-                window.dispatchEvent(event);
-              }}
-              className="bg-[#F2431E] text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-[#E63A1A] transition-colors shadow-lg hover:shadow-xl"
-            >
-              <i className="ri-robot-line mr-2 text-xl"></i>
-              Réservez votre pack
-            </button>
-          </div>
-          
-        </div>
 
       </div>
     </section>

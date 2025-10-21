@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
+import PackFinderSection from '@/components/PackFinderSection';
 import AssistantPromo from '@/components/AssistantPromo';
 import AboutSection from '@/components/AboutSection';
 import PacksSection from '@/components/PacksSection';
@@ -82,6 +83,12 @@ export default function Home() {
         <HeroSection 
           language={language}
           onReservationClick={() => setAssistantModal(true)}
+        />
+
+        {/* Section Trouvez votre pack idéal */}
+        <PackFinderSection 
+          language={language}
+          onOpenAssistant={() => setAssistantModal(true)}
         />
 
         {/* Section Titre Choix Solution */}
