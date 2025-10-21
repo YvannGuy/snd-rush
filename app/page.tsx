@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
-import PackFinderSection from '@/components/PackFinderSection';
+import AskBox from '@/components/AskBox/AskBox';
 import AssistantPromo from '@/components/AssistantPromo';
 import AboutSection from '@/components/AboutSection';
 import PacksSection from '@/components/PacksSection';
@@ -85,11 +85,8 @@ export default function Home() {
           onReservationClick={() => setAssistantModal(true)}
         />
 
-        {/* Section Trouvez votre pack idéal */}
-        <PackFinderSection 
-          language={language}
-          onOpenAssistant={() => setAssistantModal(true)}
-        />
+        {/* Section AI Box - Trouvez votre pack idéal */}
+        <AskBox />
 
         {/* Section Titre Choix Solution */}
         <div style={{ 

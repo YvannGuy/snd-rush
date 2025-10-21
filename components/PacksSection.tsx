@@ -2,6 +2,7 @@
 'use client';
 
 import { useRef } from 'react';
+import Image from 'next/image';
 
 interface Pack {
   id: number;
@@ -307,10 +308,11 @@ export default function PacksSection({ language }: PacksSectionProps) {
 
                         {/* Image */}
                         <div className="relative aspect-[16/10] overflow-hidden">
-                          <img
+                          <Image
                             src={pack.image}
                             alt={pack.name}
-                            className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
+                            fill
+                            className="object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
                             style={{
                               filter:
                                 'grayscale(100%) contrast(110%) brightness(95%) sepia(10%) hue-rotate(345deg) saturate(130%)'
@@ -364,10 +366,11 @@ export default function PacksSection({ language }: PacksSectionProps) {
 
                 {/* Image */}
                 <div className="relative aspect-[16/10] overflow-hidden">
-                  <img
+                  <Image
                     src="/anniversaire.jpg"
                     alt={language === 'fr' ? 'Anniversaire' : 'Birthday'}
-                    className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
+                    fill
+                    className="object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
                     style={{
                       filter: 'grayscale(100%) contrast(110%) brightness(95%) sepia(10%) hue-rotate(345deg) saturate(130%)'
                     }}

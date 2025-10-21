@@ -1,16 +1,14 @@
 
 'use client';
 
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 interface HeroSectionProps {
   language: 'fr' | 'en';
   onReservationClick?: () => void;
-  onPackSelected?: (packId: number) => void;
 }
 
-export default function HeroSection({ language, onReservationClick, onPackSelected }: HeroSectionProps) {
+export default function HeroSection({ language, onReservationClick }: HeroSectionProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const backgroundImages = [
@@ -47,7 +45,7 @@ export default function HeroSection({ language, onReservationClick, onPackSelect
     }, 5000);
 
     return () => clearInterval(imageInterval);
-  }, []);
+  }, [backgroundImages.length]);
 
   const handleReserveNow = () => {
     const element = document.getElementById('packs');
