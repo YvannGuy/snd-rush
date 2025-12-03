@@ -98,6 +98,12 @@ export default function RootLayout({
           `}
         </Script>
 
+        {/* Elfsight Platform Script */}
+        <Script
+          src="https://elfsightcdn.com/platform.js"
+          strategy="lazyOnload"
+        />
+
         {children}
 
         {/* Vercel Analytics */}

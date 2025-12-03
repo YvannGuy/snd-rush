@@ -3,6 +3,7 @@
 
 import { useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface Pack {
   id: number;
@@ -294,12 +295,13 @@ export default function PacksSection({ language }: PacksSectionProps) {
 
           <div ref={listRef} className="flex gap-6 sm:gap-8 lg:gap-12 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 scrollbar-hide" style={{ scrollBehavior: 'smooth', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {currentPacks.map((pack) => (
-                    <div
+                    <Link
                       key={pack.id}
-                className={`snap-start min-w-[280px] sm:min-w-[360px] lg:min-w-[400px] group transition-all duration-300 ease-out`}
+                      href={`/packs/${pack.id}`}
+                      className={`snap-start min-w-[280px] sm:min-w-[360px] lg:min-w-[400px] group transition-all duration-300 ease-out block`}
                     >
                       <div
-                  className={`bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 ease-in-out overflow-visible border h-full ${
+                  className={`bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 ease-in-out overflow-visible border h-full cursor-pointer ${
                           pack.featured
                             ? 'border-[#F2431E]/30 ring-2 ring-[#F2431E]/20'
                             : 'border-gray-100'
@@ -357,7 +359,7 @@ export default function PacksSection({ language }: PacksSectionProps) {
 
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
 
             {/* Carte supplémentaire: Anniversaire (même style que les autres) */}

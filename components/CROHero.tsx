@@ -13,7 +13,7 @@ export default function CROHero() {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a href="#assistant" className="inline-flex items-center justify-center rounded-md px-6 py-3 text-base font-semibold text-white" style={{ backgroundColor: "#e27431" }}>
+            <a href="/devis" className="inline-flex items-center justify-center rounded-md px-6 py-3 text-base font-semibold text-white" style={{ backgroundColor: "#e27431" }}>
               Trouver mon pack idéal
             </a>
             <a href="#callback" className="inline-flex items-center justify-center rounded-md px-6 py-3 text-base font-semibold border border-gray-300 text-gray-900">

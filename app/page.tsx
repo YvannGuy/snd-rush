@@ -4,20 +4,18 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
-import AskBox from '@/components/AskBox/AskBox';
-import AssistantPromo from '@/components/AssistantPromo';
+import SolutionsSection from '@/components/SolutionsSection';
+import UrgencySection from '@/components/UrgencySection';
 import AboutSection from '@/components/AboutSection';
-import PacksSection from '@/components/PacksSection';
 import TrustindexReviews from '@/components/TrustindexReviews';
-import ContactSection from '@/components/ContactSection';
+import FaqInteractive from '@/components/FaqInteractive';
 import Footer from '@/components/Footer';
+import SectionAnimation from '@/components/SectionAnimation';
 import ScrollToTopButton from '@/components/ScrollToTopButton';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import ReservationModal from '@/components/ReservationModal';
 import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
-import FaqInteractive from '@/components/FaqInteractive';
-import CROGear from '@/components/CROGear';
 import AssistantModal from '@/components/AssistantModalRefactored';
 
 export default function Home() {
@@ -82,49 +80,35 @@ export default function Home() {
       <main>
         <HeroSection 
           language={language}
-          onReservationClick={() => setAssistantModal(true)}
         />
 
-        {/* Section AI Box - Trouvez votre pack idéal */}
-        <AskBox />
+        {/* Section Nos Solutions */}
+        <SectionAnimation delay={0.1}>
+          <SolutionsSection 
+            language={language}
+            onReservePack={handleReservePack}
+          />
+        </SectionAnimation>
 
-        {/* Section Titre Choix Solution */}
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '60px 20px 40px', 
-          background: 'linear-gradient(to bottom, #fff, #f9fafb)'
-        }}>
-          <h2 style={{ 
-            fontSize: 'clamp(24px, 5vw, 36px)', 
-            fontWeight: 700, 
-            color: '#111',
-            marginBottom: 12
-          }}>
-            Choisissez la solution adaptée pour vous
-          </h2>
-          <p style={{ 
-            fontSize: 'clamp(14px, 3vw, 18px)', 
-            color: '#666',
-            maxWidth: 600,
-            margin: '0 auto'
-          }}>
-            Des formules flexibles pour tous vos événements
-          </p>
-        </div>
+        {/* Section Besoin d'une sono maintenant ? */}
+        <SectionAnimation delay={0.2}>
+          <UrgencySection language={language} />
+        </SectionAnimation>
 
-        {/* Packs: "Le bon son. Sans compromis." juste sous le Hero */}
-        <PacksSection 
-          language={language} 
-          onReservePack={handleReservePack}
-        />
-        
-        {/* Assistant Promo Section */}
-        <AssistantPromo onOpenAssistant={() => setAssistantModal(true)} />
-        
-        <AboutSection language={language} />
-        <TrustindexReviews />
-        <FaqInteractive onOpenAssistant={() => setAssistantModal(true)} />
-        <ContactSection language={language} />
+        {/* Section Pourquoi SoundRush */}
+        <SectionAnimation delay={0.3}>
+          <AboutSection language={language} />
+        </SectionAnimation>
+
+        {/* Section Témoignages Clients */}
+        <SectionAnimation delay={0.4}>
+          <TrustindexReviews />
+        </SectionAnimation>
+
+        {/* Section Questions Fréquentes */}
+        <SectionAnimation delay={0.5}>
+          <FaqInteractive onOpenAssistant={() => setAssistantModal(true)} />
+        </SectionAnimation>
       </main>
 
       <Footer 

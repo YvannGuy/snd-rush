@@ -32,8 +32,8 @@ export default function Footer({ language }: FooterProps) {
       address: "Adresse",
       parisAddress: "Paris, Île-de-France",
       quickLinks: "Liens rapides",
-      privacyPolicy: "Politique de confidentialité",
-      terms: "Conditions générales",
+      privacyPolicy: "Mentions légales",
+      terms: "Conditions de location",
       allRightsReserved: "Tous droits réservés",
       emergencyService: "Service d'urgence 24h/24 - 7j/7",
       followUs: "Suivez-nous"
@@ -55,8 +55,8 @@ export default function Footer({ language }: FooterProps) {
       address: "Address",
       parisAddress: "Paris, Île-de-France",
       quickLinks: "Quick links",
-      privacyPolicy: "Privacy policy",
-      terms: "Terms and conditions",
+      privacyPolicy: "Legal notice",
+      terms: "Rental conditions",
       allRightsReserved: "All rights reserved",
       emergencyService: "24/7 emergency service",
       followUs: "Follow us"
@@ -70,6 +70,49 @@ export default function Footer({ language }: FooterProps) {
     }
   };
 
+  const footerTexts = {
+    fr: {
+      solutions: 'Solutions',
+      wedding: 'Mariage',
+      birthday: 'Anniversaire',
+      privateParty: 'Soirée privée',
+      conference: 'Conférence',
+      shortTerm: 'Location courte durée',
+      longTerm: 'Location longue durée',
+      options: 'Options',
+      catalogue: 'Catalogue',
+      micros: 'Micros',
+      speakers: 'Enceintes',
+      mixingDesks: 'Tables de mixage',
+      lights: 'Lumières',
+      accessories: 'Accessoires',
+      packs: 'Packs',
+      contact: 'Contact',
+      getQuote: 'Obtenir un devis'
+    },
+    en: {
+      solutions: 'Solutions',
+      wedding: 'Wedding',
+      birthday: 'Birthday',
+      privateParty: 'Private party',
+      conference: 'Conference',
+      shortTerm: 'Short-term rental',
+      longTerm: 'Long-term rental',
+      options: 'Options',
+      catalogue: 'Catalogue',
+      micros: 'Microphones',
+      speakers: 'Speakers',
+      mixingDesks: 'Mixing desks',
+      lights: 'Lights',
+      accessories: 'Accessories',
+      packs: 'Packs',
+      contact: 'Contact',
+      getQuote: 'Get a quote'
+    }
+  };
+
+  const currentFooterTexts = footerTexts[language];
+
   return (
     <>
       <footer className="bg-black text-white py-16">
@@ -78,71 +121,78 @@ export default function Footer({ language }: FooterProps) {
             {/* Logo et baseline */}
             <div className="space-y-4">
               <Link href="/" className="inline-block">
-                <span className="text-3xl font-bold tracking-tight">
-                  <span className="text-[#F2431E]">snd</span>
-                  <span className="text-white">•</span>
-                  <span className="text-[#F2431E]">rush</span>
+                <span className="text-3xl font-bold tracking-tight text-white">
+                  SoundRush
                 </span>
               </Link>
-              <p className="text-gray-300 text-sm font-medium italic">
+              <p className="text-gray-300 text-sm">
                 {texts[language].baseline}
               </p>
+              <Link
+                href="/devis"
+                className="inline-block bg-[#F2431E] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors mt-4"
+              >
+                {currentFooterTexts.getQuote}
+              </Link>
             </div>
 
-            {/* Navigation */}
+            {/* Solutions */}
             <div className="space-y-4">
               <h3 className="text-white font-semibold text-sm uppercase tracking-wider">
-                Navigation
+                {currentFooterTexts.solutions}
               </h3>
-              <nav className="flex flex-col space-y-3">
-                <Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm cursor-pointer">
-                  {texts[language].home}
-                </Link>
+              <nav className="flex flex-col space-y-2">
                 <button 
-                  onClick={() => scrollToSection('packs')}
-                  className="text-gray-300 hover:text-white transition-colors text-sm text-left cursor-pointer"
+                  onClick={() => scrollToSection('solutions')}
+                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
                 >
-                  {texts[language].packs}
-                </button>
-                <Link 
-                  href="/cgv"
-                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm cursor-pointer"
-                >
-                  {texts[language].rentalConditions}
-                </Link>
-                <button 
-                  onClick={() => setIsLegalNoticeOpen(true)}
-                  className="text-gray-300 hover:text-white transition-colors text-sm text-left cursor-pointer"
-                >
-                  {texts[language].legalNotice}
+                  {currentFooterTexts.wedding}
                 </button>
                 <button 
-                  onClick={() => scrollToSection('faq')}
-                  className="text-gray-300 hover:text-white transition-colors text-sm text-left cursor-pointer"
+                  onClick={() => scrollToSection('solutions')}
+                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
                 >
-                  {texts[language].faq}
+                  {currentFooterTexts.birthday}
+                </button>
+                <button 
+                  onClick={() => scrollToSection('solutions')}
+                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
+                >
+                  {currentFooterTexts.privateParty}
+                </button>
+                <button 
+                  onClick={() => scrollToSection('solutions')}
+                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
+                >
+                  {currentFooterTexts.conference}
+                </button>
+                <button 
+                  onClick={() => scrollToSection('solutions')}
+                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
+                >
+                  {currentFooterTexts.shortTerm}
+                </button>
+                <button 
+                  onClick={() => scrollToSection('solutions')}
+                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
+                >
+                  {currentFooterTexts.longTerm}
+                </button>
+                <button 
+                  onClick={() => scrollToSection('solutions')}
+                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
+                >
+                  {currentFooterTexts.options}
                 </button>
               </nav>
             </div>
 
-            {/* Infos pratiques */}
+            {/* Contact */}
             <div className="space-y-4">
               <h3 className="text-white font-semibold text-sm uppercase tracking-wider">
-                Contact
+                {currentFooterTexts.contact}
               </h3>
               <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 flex items-center justify-center">
-                    <i className="ri-map-pin-line text-[#F2431E]"></i>
-                  </div>
-                  <span className="text-gray-300 text-sm">{texts[language].zone}</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 flex items-center justify-center">
-                    <i className="ri-time-line text-[#F2431E]"></i>
-                  </div>
-                  <span className="text-gray-300 text-sm">{texts[language].schedule}</span>
-                </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-4 h-4 flex items-center justify-center">
                     <i className="ri-phone-line text-[#F2431E]"></i>
@@ -153,42 +203,42 @@ export default function Footer({ language }: FooterProps) {
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-4 h-4 flex items-center justify-center">
-                    <i className="ri-whatsapp-line text-[#F2431E]"></i>
-                  </div>
-                  <a href="https://wa.me/33651084994" className="text-gray-300 hover:text-white transition-colors text-sm cursor-pointer">
-                    {texts[language].whatsapp}
-                  </a>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 flex items-center justify-center">
                     <i className="ri-mail-line text-[#F2431E]"></i>
                   </div>
                   <a href="mailto:contact@guylocationevents.com" className="text-gray-300 hover:text-white transition-colors text-sm cursor-pointer">
                     {texts[language].email}
                   </a>
                 </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    <i className="ri-map-pin-line text-[#F2431E]"></i>
+                  </div>
+                  <span className="text-gray-300 text-sm">{texts[language].parisAddress}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Réseaux sociaux */}
+          {/* Bottom bar */}
           <div className="mt-12 pt-8 border-t border-gray-800">
-            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-              <div className="flex items-center space-x-6">
-                <a href="https://www.instagram.com/snd_rush?igsh=dTIzYm80cWZma3I5&utm_source=qr" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    <i className="ri-instagram-line text-lg"></i>
-                  </div>
-                </a>
-                <a href="https://www.tiktok.com/@snd.rush?_t=ZN-90BQyvub7W2&_r=1" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    <i className="ri-tiktok-line text-lg"></i>
-                  </div>
-                </a>
-              </div>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
               <p className="text-gray-400 text-sm">
-                {texts[language].rights}
+                © 2023 SoundRush - Tous droits réservés.
               </p>
+              <div className="flex items-center gap-4 md:gap-6">
+                <Link 
+                  href="/cgv"
+                  className="text-gray-400 hover:text-[#F2431E] transition-colors text-sm"
+                >
+                  {texts[language].terms}
+                </Link>
+                <Link 
+                  href="/mentions-legales"
+                  className="text-gray-400 hover:text-[#F2431E] transition-colors text-sm"
+                >
+                  {texts[language].privacyPolicy}
+                </Link>
+              </div>
             </div>
           </div>
         </div>

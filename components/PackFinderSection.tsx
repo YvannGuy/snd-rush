@@ -4,10 +4,9 @@ import { useState } from 'react';
 
 interface PackFinderSectionProps {
   language: 'fr' | 'en';
-  onOpenAssistant: () => void;
 }
 
-export default function PackFinderSection({ language, onOpenAssistant }: PackFinderSectionProps) {
+export default function PackFinderSection({ language }: PackFinderSectionProps) {
   const [selectedEvent, setSelectedEvent] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
 
@@ -61,14 +60,8 @@ export default function PackFinderSection({ language, onOpenAssistant }: PackFin
   const currentTexts = texts[language];
 
   const handleFindPack = () => {
-    if (selectedEvent && selectedSize) {
-      // Déclencher l'ouverture du modal assistant avec les paramètres
-      const event = new CustomEvent('openAssistantModal', {
-        detail: { eventType: selectedEvent, size: selectedSize }
-      });
-      window.dispatchEvent(event);
-      onOpenAssistant();
-    }
+    // Rediriger vers la page de devis
+    window.location.href = '/devis';
   };
 
   const isComplete = selectedEvent && selectedSize;

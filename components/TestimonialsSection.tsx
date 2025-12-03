@@ -93,93 +93,50 @@ export default function TestimonialsSection({ language }: TestimonialsSectionPro
   };
 
   return (
-    <section className="py-16 lg:py-24 bg-gradient-to-br from-gray-50 via-white to-gray-100 relative overflow-hidden">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#F2431E]/5 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[#F2431E]/5 rounded-full blur-3xl"></div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative">
+    <section className="py-16 lg:py-24 bg-white">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Title */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-4">
-            {texts[language].title}
+        <div className="text-center mb-12">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-4">
+            Témoignages Clients
           </h2>
-          <p className="text-xl text-[#F2431E] font-medium">
-            {texts[language].titleHighlight}
+          <p className="text-xl text-gray-600">
+            Ce que nos clients disent de nous
           </p>
         </div>
 
-        {/* Modern Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {currentTestimonials.map((testimonial, index) => (
-            <div
-              key={testimonial.id}
-              className="group relative"
-            >
-              {/* Card */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 ease-in-out transform hover:scale-105 hover:-translate-y-2 border border-white/20">
-                {/* Quote icon */}
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-[#F2431E] rounded-full flex items-center justify-center shadow-lg">
-                  <i className="ri-double-quotes-l text-white text-xl"></i>
+        {/* Horizontal Scrollable Testimonials */}
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-6 min-w-max px-4">
+            {currentTestimonials.map((testimonial, index) => (
+              <div
+                key={testimonial.id}
+                className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow min-w-[350px] max-w-[350px]"
+              >
+                {/* Avatar */}
+                <div className="w-16 h-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold text-2xl mb-4">
+                  {testimonial.author.charAt(0)}
+                </div>
+
+                {/* Name */}
+                <div className="font-semibold text-black text-lg mb-2">
+                  {testimonial.author}
+                </div>
+
+                {/* Stars */}
+                <div className="flex gap-1 mb-4">
+                  {renderStars(testimonial.rating)}
                 </div>
 
                 {/* Quote */}
-                <blockquote className="text-gray-800 text-lg leading-relaxed mb-6 pt-4">
+                <blockquote className="text-gray-700 leading-relaxed">
                   "{testimonial.quote}"
                 </blockquote>
-
-                {/* Author section */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    {/* Avatar */}
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      {testimonial.author.charAt(0)}
-                    </div>
-                    
-                    <div>
-                      <div className="font-semibold text-gray-900 text-lg">
-                        {testimonial.author}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {testimonial.event}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stars */}
-                  <div className="flex gap-1">
-                    {renderStars(testimonial.rating)}
-                  </div>
-                </div>
-
-                {/* Decorative line */}
-                <div className="absolute bottom-0 left-8 right-8 h-1 bg-gradient-to-r from-[#F2431E] to-transparent rounded-full"></div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Trust indicators */}
-        <div className="mt-16 text-center">
-          <div className="inline-flex items-center gap-8 bg-white/60 backdrop-blur-sm rounded-full px-8 py-4 shadow-lg border border-white/20">
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1">
-                {renderStars(5)}
-              </div>
-              <span className="text-gray-700 font-medium">4.9/5</span>
-            </div>
-            <div className="w-px h-6 bg-gray-300"></div>
-            <div className="text-gray-700 font-medium">
-              {language === 'fr' ? 'Plus de 200 événements' : 'Over 200 events'}
-            </div>
-            <div className="w-px h-6 bg-gray-300"></div>
-            <div className="text-gray-700 font-medium">
-              {language === 'fr' ? '100% satisfaits' : '100% satisfied'}
-            </div>
+            ))}
           </div>
         </div>
+
       </div>
     </section>
   );

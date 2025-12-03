@@ -1052,7 +1052,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
           </label>
         </div>
         <button style={styles.btn} onClick={addCustomLine}>
-          Ajouter au devis
+          Obtenir un devis
         </button>
         
         {customLines.length > 0 && (
@@ -1092,7 +1092,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
               <div>78 avenue des champs élysées</div>
               <div>75008 Paris</div>
               <div>Siret: 799 596 176</div>
-              <div>Tel: 0651084994</div>
+              <div>Tel: 0752074667</div>
             </div>
           </div>
 

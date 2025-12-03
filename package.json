@@ -12,6 +12,7 @@
     "@supabase/supabase-js": "^2.74.0",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
+    "framer-motion": "^12.23.25",
     "html2pdf.js": "^0.12.1",
     "next": "15.3.2",
     "nodemailer": "^7.0.5",

@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface HeaderProps {
   language: 'fr' | 'en';
@@ -11,7 +11,7 @@ interface HeaderProps {
   onAssistantClick?: () => void;
 }
 
-export default function Header({ language, onLanguageChange, onReservationClick, onAssistantClick }: HeaderProps) {
+export default function Header({ language, onLanguageChange }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const scrollToSection = (sectionId: string) => {
@@ -27,33 +27,31 @@ export default function Header({ language, onLanguageChange, onReservationClick,
     onLanguageChange(newLanguage);
   };
 
-  const handleReserveClick = () => {
-    // Ouvrir le modal assistant
-    if (onAssistantClick) {
-      onAssistantClick();
-    }
-    setIsMobileMenuOpen(false);
-  };
-
-  const handleCallClick = () => {
-    // Ouvrir le lien d'appel
-    window.open('tel:+33651084994', '_self');
-    setIsMobileMenuOpen(false);
-  };
-
   const texts = {
     fr: {
+      solutions: 'Solutions',
+      catalogue: 'Catalogue',
+      tarifs: 'Tarifs',
+      urgence: 'Urgence',
+      about: 'À propos',
+      contact: 'Contact',
+      getQuote: 'Obtenir un devis',
       packs: 'Packs',
       faq: 'FAQ',
-      contact: 'Contact',
       reserveNow: 'Réservez mon pack',
       callNow: 'Appelez',
       banner: '1er spécialiste de l\'urgence sonore • Paris et Île-de-France • 24h/24 7j/7 • Intervention rapide • Devis gratuit'
     },
     en: {
+      solutions: 'Solutions',
+      catalogue: 'Catalogue',
+      tarifs: 'Pricing',
+      urgence: 'Emergency',
+      about: 'About',
+      contact: 'Contact',
+      getQuote: 'Get a quote',
       packs: 'Packs',
       faq: 'FAQ',
-      contact: 'Contact',
       reserveNow: 'Reserve my pack',
       callNow: 'Call',
       banner: '1st sound emergency specialist • Paris and Île-de-France • 24/7 • Fast intervention • Free quote'
@@ -62,57 +60,39 @@ export default function Header({ language, onLanguageChange, onReservationClick,
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
-      {/* Bandeau orange en haut */}
-      <div className="bg-[#F2431E] text-white py-2 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-center">
-          <p className="text-xs sm:text-sm font-medium text-center leading-tight">
-            {texts[language].banner}
-          </p>
-        </div>
-      </div>
-
-      {/* Header principal */}
-      <div className="bg-white shadow-md">
-        <div className="px-4 sm:px-6 lg:px-8">
+      {/* Header principal avec fond sombre */}
+      <div className="bg-black shadow-md relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
+            {/* Logo SndRush */}
             <Link href="/" className="flex items-center">
-              <img 
-                src="/sndrushrecto1.png" 
-                alt="SND Rush" 
-                className="h-24 sm:h-32 w-auto"
-                style={{ maxHeight: '128px' }}
-              />
+              <span className="text-2xl font-bold text-[#F2431E]">
+                SndRush
+              </span>
             </Link>
 
-            {/* Navigation - Encore plus décalée à droite */}
-            <nav className="hidden lg:flex items-center justify-center space-x-12 flex-1 ml-24">
+            {/* Navigation complète */}
+            <nav className="hidden lg:flex items-center justify-center space-x-8 flex-1">
               <button 
-                onClick={() => scrollToSection('packs')}
-                className="text-black hover:text-gray-600 transition-colors font-medium cursor-pointer"
+                onClick={() => scrollToSection('about')}
+                className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
               >
-                {texts[language].packs}
-              </button>
-              <button 
-                onClick={() => scrollToSection('faq')}
-                className="text-black hover:text-gray-600 transition-colors font-medium cursor-pointer"
-              >
-                {texts[language].faq}
+                {texts[language].about}
               </button>
               <button 
                 onClick={() => scrollToSection('contact')}
-                className="text-black hover:text-gray-600 transition-colors font-medium cursor-pointer"
+                className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
               >
                 {texts[language].contact}
               </button>
             </nav>
 
-            {/* Language switcher and CTA */}
-            <div className="flex items-center space-x-8">
-              {/* Language switcher */}
+            {/* CTA Buttons */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              {/* Language switcher - Desktop only */}
               <button
                 onClick={toggleLanguage}
-                className="hidden lg:flex items-center space-x-1 text-sm font-medium text-gray-600 hover:text-black transition-colors cursor-pointer"
+                className="hidden lg:flex items-center space-x-1 text-sm font-medium text-white hover:text-[#F2431E] transition-colors cursor-pointer"
               >
                 <div className="w-6 h-6 flex items-center justify-center">
                   {language === 'fr' ? (
@@ -124,96 +104,98 @@ export default function Header({ language, onLanguageChange, onReservationClick,
                 <span className="uppercase">{language}</span>
               </button>
 
-              {/* Call Button */}
-              <button
-                onClick={handleCallClick}
-                className="bg-red-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm lg:px-6 rounded-lg font-medium hover:bg-red-700 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1 sm:gap-2 mr-2"
+              {/* Bouton Appeler - Desktop only */}
+              <a
+                href="tel:+33651084994"
+                className="hidden lg:flex bg-[#F2431E] text-white px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg font-medium hover:bg-[#E63A1A] transition-colors cursor-pointer whitespace-nowrap items-center gap-2"
               >
-                <span className="text-white text-sm sm:text-base">🚨</span>
-                <span className="hidden sm:inline">{texts[language].callNow}</span>
-              </button>
+                <span>📞</span>
+                <span>{texts[language].callNow}</span>
+              </a>
 
-              {/* CTA Button */}
-              <button
-                onClick={handleReserveClick}
-                className="bg-[#F2431E] text-white px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm lg:px-6 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1 sm:gap-2"
-              >
-                <span className="text-white text-sm sm:text-base">🎯</span>
-                <span className="hidden sm:inline">{texts[language].reserveNow}</span>
-              </button>
-
-              {/* Mobile menu button */}
-              <button 
-                className="lg:hidden p-2 cursor-pointer"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <i className={`ri-${isMobileMenuOpen ? 'close' : 'menu'}-line text-xl`}></i>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile menu */}
-          {isMobileMenuOpen && (
-            <div className="lg:hidden border-t border-gray-200 bg-white">
-              <div className="px-2 pt-2 pb-3 space-y-1">
+              {/* Mobile buttons - Toggle et Téléphone côte à côte */}
+              <div className="lg:hidden flex items-center gap-2">
+                {/* Mobile menu button */}
                 <button 
-                  onClick={() => scrollToSection('packs')}
-                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md cursor-pointer"
-                >
-                  {texts[language].packs}
-                </button>
-                <button 
-                  onClick={() => scrollToSection('faq')}
-                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md cursor-pointer"
-                >
-                  {texts[language].faq}
-                </button>
-                <button 
-                  onClick={() => scrollToSection('contact')}
-                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md cursor-pointer"
-                >
-                  {texts[language].contact}
-                </button>
-
-                {/* Language switcher for mobile */}
-                <button
-                  onClick={toggleLanguage}
-                  className="flex items-center space-x-2 w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md cursor-pointer"
+                  className="p-3 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+                  aria-expanded={isMobileMenuOpen}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
-                    {language === 'fr' ? (
-                      <span className="text-lg">🇫🇷</span>
+                    {isMobileMenuOpen ? (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     ) : (
-                      <span className="text-lg">🇬🇧</span>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
                     )}
                   </div>
-                  <span className="uppercase">{language}</span>
                 </button>
 
-                {/* Mobile action buttons */}
-                <div className="px-3 py-2 space-y-2">
-                  <button
-                    onClick={handleCallClick}
-                    className="w-full bg-red-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <span className="text-lg">🚨</span>
-                    <span>{texts[language].callNow}</span>
-                  </button>
-                  <button
-                    onClick={handleReserveClick}
-                    className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors flex items-center justify-center gap-2"
-                  >
-                    <span className="text-lg">🎯</span>
-                    <span>{texts[language].reserveNow}</span>
-                  </button>
-                </div>
+                {/* Bouton Téléphone - Mobile en orange */}
+                <a
+                  href="tel:+33651084994"
+                  className="p-3 cursor-pointer bg-[#F2431E] hover:bg-[#E63A1A] rounded-lg transition-colors"
+                  aria-label="Appeler"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </a>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
+
+      {/* Mobile menu - Complètement séparé du conteneur bg-black */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed top-16 left-0 right-0 border-t border-white/20 z-40 overflow-hidden"
+          style={{ 
+            background: 'transparent',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            backgroundColor: 'rgba(0, 0, 0, 0)',
+            width: '100vw',
+            maxWidth: '100%'
+          }}
+        >
+          <div className="pt-3 pb-4 space-y-2" style={{ paddingLeft: '1rem', paddingRight: '1rem', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+            <button 
+              onClick={() => scrollToSection('about')}
+              className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
+            >
+              {texts[language].about}
+            </button>
+            <button 
+              onClick={() => scrollToSection('contact')}
+              className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
+            >
+              {texts[language].contact}
+            </button>
+
+            {/* Language switcher for mobile */}
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center space-x-2 w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
+            >
+              <div className="w-5 h-5 flex items-center justify-center">
+                {language === 'fr' ? (
+                  <span className="text-base">🇫🇷</span>
+                ) : (
+                  <span className="text-base">🇬🇧</span>
+                )}
+              </div>
+              <span className="uppercase text-xs">{language}</span>
+            </button>
+
+          </div>
+        </div>
+      )}
     </header>
   );
 }

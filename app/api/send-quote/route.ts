@@ -268,7 +268,7 @@ export async function POST(request: NextRequest) {
     `;
 
     // Envoyer l'email au client
-    const clientEmail = await resend.emails.send({
+    await resend.emails.send({
       from: 'SND Rush <devisclients@guylocationevents.com>',
       to: [quoteData.client.email],
       subject: isInvoice 
@@ -284,7 +284,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Envoyer une notification à l'équipe SND Rush
-    const teamEmail = await resend.emails.send({
+    await resend.emails.send({
       from: 'SND Rush <noreply@sndrush.com>',
       to: ['contact@guylocationevents.com'],
       subject: `📧 Nouvea${isInvoice ? 'lle' : 'u'} ${documentTypeLC} envoyé${isInvoice ? 'e' : ''} - ${quoteData.client.firstName} ${quoteData.client.lastName}`,
