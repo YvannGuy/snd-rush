@@ -32,13 +32,6 @@ export default function CataloguePage() {
       <Header 
         language={language} 
         onLanguageChange={setLanguage}
-        onReservationClick={() => {
-          const element = document.getElementById('contact');
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-          }
-        }}
-        onAssistantClick={() => setAssistantModal(true)}
       />
       
       <main>

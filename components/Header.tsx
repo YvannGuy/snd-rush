@@ -7,8 +7,6 @@ import { useState } from 'react';
 interface HeaderProps {
   language: 'fr' | 'en';
   onLanguageChange: (lang: 'fr' | 'en') => void;
-  onReservationClick?: () => void;
-  onAssistantClick?: () => void;
 }
 
 export default function Header({ language, onLanguageChange }: HeaderProps) {

@@ -38,6 +38,7 @@ export default function AssistantModalRefactored({
     <AssistantRefactored
       isOpen={isOpen}
       onClose={onClose}
+      language={language}
       onReservationComplete={handleReservationComplete}
       onRentalConditionsClick={onRentalConditionsClick}
     />

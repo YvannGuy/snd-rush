@@ -9,7 +9,22 @@ export async function POST(req: Request) {
     // 1) EXTRACTION directe (simulation basique)
     const text = prompt.toLowerCase();
     
-    const parsed = {
+    const parsed: {
+      eventType: 'wedding' | 'birthday' | 'association' | 'corporate' | 'church' | 'concert' | 'other' | null;
+      guests: number | null;
+      indoor: boolean | null;
+      postalCode: string | null;
+      city: string | null;
+      dateISO: string | null;
+      needs: {
+        sound: boolean;
+        mics: 'none' | 'filaire' | 'sansfil' | 'mixte';
+        console: 'none' | 'small' | 'medium';
+        dj: boolean;
+        light: boolean;
+      };
+      notes: string | null;
+    } = {
       eventType: null,
       guests: null,
       indoor: null,

@@ -15,6 +15,7 @@ import ReservationModal from './assistant/ReservationModal';
 interface AssistantRefactoredProps {
   isOpen: boolean;
   onClose: () => void;
+  language?: 'fr' | 'en';
   onReservationComplete?: (payload: ReservationPayload) => void;
   onRentalConditionsClick?: () => void;
 }
@@ -22,6 +23,7 @@ interface AssistantRefactoredProps {
 export default function AssistantRefactored({ 
   isOpen, 
   onClose, 
+  language = 'fr',
   onReservationComplete,
   onRentalConditionsClick
 }: AssistantRefactoredProps) {

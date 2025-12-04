@@ -298,7 +298,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
   const basePrice = pack ? extractPrice(pack.priceParis) : null;
   const hasPrice = basePrice !== null;
 
-  // Sticky bar visibility
+  // Sticky bar visibility - must be called before any conditional returns
   useEffect(() => {
     const handleScroll = () => {
       const faqSection = document.getElementById('faq-section');
@@ -312,12 +312,17 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Check if pack exists before using it
   if (!pack) {
     return (
       <div className="pt-16 min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-black mb-4">Pack non trouvé</h1>
-          <p className="text-gray-600">Le pack demandé n'existe pas.</p>
+          <h1 className="text-2xl font-bold text-black mb-4">
+            {language === 'fr' ? 'Pack non trouvé' : 'Pack not found'}
+          </h1>
+          <p className="text-gray-600">
+            {language === 'fr' ? 'Le pack demandé n\'existe pas.' : 'The requested pack does not exist.'}
+          </p>
         </div>
       </div>
     );

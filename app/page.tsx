@@ -74,8 +74,6 @@ export default function Home() {
       <Header 
         language={language} 
         onLanguageChange={setLanguage}
-        onReservationClick={() => setReservationModal(true)}
-        onAssistantClick={() => setAssistantModal(true)}
       />
       
       <main>

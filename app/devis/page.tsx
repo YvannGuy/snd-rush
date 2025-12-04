@@ -13,15 +13,6 @@ export default function QuotePage() {
       <Header 
         language={language} 
         onLanguageChange={setLanguage}
-        onReservationClick={() => {
-          const element = document.getElementById('contact');
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-          }
-        }}
-        onAssistantClick={() => {
-          window.dispatchEvent(new CustomEvent('openAssistantModal'));
-        }}
       />
       
       <main>

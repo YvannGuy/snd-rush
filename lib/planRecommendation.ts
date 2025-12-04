@@ -78,11 +78,11 @@ export function planRecommendation(x: Extracted): PlanResult {
     MICF:   INVENTORY.mics.SHURE_SM58.qty,
   };
 
-  let useFBT = Math.min(spk, avail.FBT115);
+  const useFBT = Math.min(spk, avail.FBT115);
   let remain = spk - useFBT;
-  let useAS115 = Math.min(remain, avail.AS115);
+  const useAS115 = Math.min(remain, avail.AS115);
   remain -= useAS115;
-  let useAS108 = Math.min(remain, avail.AS108);
+  const useAS108 = Math.min(remain, avail.AS108);
   remain -= useAS108;
 
   if (remain > 0) warnings.push(`Stock d'enceintes insuffisant pour ${spk} unités.`);
