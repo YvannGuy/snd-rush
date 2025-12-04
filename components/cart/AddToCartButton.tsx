@@ -24,7 +24,6 @@ export default function AddToCartButton({
   onAdd,
 }: AddToCartButtonProps) {
   const { addToCart } = useCart();
-  const [showToast, setShowToast] = useState(false);
 
   const texts = {
     fr: {
@@ -57,8 +56,6 @@ export default function AddToCartButton({
     };
 
     addToCart(cartItem);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
 
     if (onAdd) {
       onAdd();
@@ -81,16 +78,6 @@ export default function AddToCartButton({
       >
         {currentTexts.addToCart}
       </button>
-
-      {/* Toast notification */}
-      {showToast && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-black text-white px-6 py-3 rounded-xl shadow-2xl z-50 animate-fadeIn">
-          <div className="flex items-center gap-2">
-            <span>✓</span>
-            <span className="font-semibold">{currentTexts.added}</span>
-          </div>
-        </div>
-      )}
     </>
   );
 }

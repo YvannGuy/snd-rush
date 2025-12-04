@@ -85,7 +85,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
 
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
                   <Link
-                    href="/catalogue"
+                    href="/packs"
                     className="bg-[#F2431E] text-white px-8 sm:px-12 py-4 sm:py-6 rounded-lg font-semibold text-base sm:text-xl hover:bg-[#E63A1A] transition-colors text-center cursor-pointer inline-block"
                   >
                     {texts[language].cta}

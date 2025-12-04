@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CartProvider } from "@/contexts/CartContext";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -85,19 +86,8 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
-        {/* Google Analytics */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-PGDMSHYT2H"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-PGDMSHYT2H');
-          `}
-        </Script>
+        {/* Google Analytics - Chargé conditionnellement selon le consentement */}
+        <GoogleAnalytics />
 
         {/* Elfsight Platform Script */}
         <Script

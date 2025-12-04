@@ -2,9 +2,37 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import MiniCart from '@/components/cart/MiniCart';
+import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
+import SignModal from '@/components/auth/SignModal';
+// Icônes inline pour éviter la dépendance lucide-react
+const UserIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+  </svg>
+);
+
+const LogOutIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+  </svg>
+);
+
+const FileTextIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+);
+
+const CalendarIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+);
 
 interface HeaderProps {
   language: 'fr' | 'en';
@@ -12,21 +40,70 @@ interface HeaderProps {
 }
 
 export default function Header({ language, onLanguageChange }: HeaderProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
+  const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const { getCartItemCount } = useCart();
   const [cartCount, setCartCount] = useState(0);
+  const { user } = useUser();
+  const { signOut } = useAuth();
 
   useEffect(() => {
+    // Initialiser le compteur au montage
     setCartCount(getCartItemCount());
     
     const handleCartUpdate = () => {
       setCartCount(getCartItemCount());
     };
     
+    const handleProductAdded = () => {
+      // Ne pas ouvrir le MiniCart si on est déjà sur la page panier
+      if (pathname !== '/panier') {
+        setIsMiniCartOpen(true);
+      }
+      setCartCount(getCartItemCount());
+    };
+    
     window.addEventListener('cartUpdated', handleCartUpdate);
-    return () => window.removeEventListener('cartUpdated', handleCartUpdate);
-  }, [getCartItemCount]);
+    window.addEventListener('productAddedToCart', handleProductAdded);
+    
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('productAddedToCart', handleProductAdded);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]); // Inclure pathname pour vérifier la page actuelle
+
+  // Fermer le menu profil quand on clique en dehors
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileMenuOpen]);
+
+  const getUserInitials = (user: any) => {
+    const email = user?.email || '';
+    return email.charAt(0).toUpperCase();
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setIsProfileMenuOpen(false);
+  };
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -48,7 +125,11 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       urgence: 'Urgence 24/7',
       faq: 'FAQ',
       callNow: 'Appelez',
-      banner: '1er spécialiste de l\'urgence sonore • Paris et Île-de-France • 24h/24 7j/7 • Intervention rapide • Devis gratuit'
+      banner: '1er spécialiste de l\'urgence sonore • Paris et Île-de-France • 24h/24 7j/7 • Intervention rapide • Devis gratuit',
+      account: 'Mon compte',
+      reservations: 'Mes réservations',
+      invoices: 'Mes factures',
+      signOut: 'Déconnexion',
     },
     en: {
       catalogue: 'Catalogue',
@@ -56,7 +137,11 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       urgence: 'Emergency 24/7',
       faq: 'FAQ',
       callNow: 'Call',
-      banner: '1st sound emergency specialist • Paris and Île-de-France • 24/7 • Fast intervention • Free quote'
+      banner: '1st sound emergency specialist • Paris and Île-de-France • 24/7 • Fast intervention • Free quote',
+      account: 'My account',
+      reservations: 'My reservations',
+      invoices: 'My invoices',
+      signOut: 'Sign out',
     }
   };
 
@@ -118,6 +203,55 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 <span className="uppercase">{language}</span>
               </button>
 
+              {/* Auth Icon - Desktop only */}
+              <div className="hidden lg:block relative" ref={profileMenuRef}>
+                <button
+                  onClick={() => user ? setIsProfileMenuOpen(!isProfileMenuOpen) : setIsSignModalOpen(true)}
+                  className="relative p-2 text-white hover:text-[#F2431E] transition-colors cursor-pointer rounded-full"
+                  aria-label={user ? texts[language].account : 'Se connecter'}
+                >
+                  {user ? (
+                    <div className="w-8 h-8 rounded-full bg-[#F2431E] flex items-center justify-center text-white font-bold text-sm">
+                      {getUserInitials(user)}
+                    </div>
+                  ) : (
+                    <UserIcon className="w-6 h-6" />
+                  )}
+                </button>
+
+                {/* Profile Menu Dropdown */}
+                {user && isProfileMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-200">
+                      <p className="text-sm font-semibold text-black truncate">{user.email}</p>
+                    </div>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <CalendarIcon className="w-4 h-4" />
+                      {texts[language].reservations}
+                    </Link>
+                    <Link
+                      href="/mes-factures"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <FileTextIcon className="w-4 h-4" />
+                      {texts[language].invoices}
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOutIcon className="w-4 h-4" />
+                      {texts[language].signOut}
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Panier - Desktop only */}
               <button
                 onClick={() => setIsMiniCartOpen(true)}
@@ -159,8 +293,23 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 <span>{texts[language].callNow}</span>
               </a>
 
-              {/* Mobile buttons - Toggle et Téléphone côte à côte */}
+              {/* Mobile buttons - Toggle, Auth, et Téléphone côte à côte */}
               <div className="lg:hidden flex items-center gap-2">
+                {/* Auth Icon - Mobile */}
+                <button
+                  onClick={() => user ? setIsProfileMenuOpen(!isProfileMenuOpen) : setIsSignModalOpen(true)}
+                  className="p-3 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative"
+                  aria-label={user ? texts[language].account : 'Se connecter'}
+                >
+                  {user ? (
+                    <div className="w-6 h-6 rounded-full bg-[#F2431E] flex items-center justify-center text-white font-bold text-xs">
+                      {getUserInitials(user)}
+                    </div>
+                  ) : (
+                    <UserIcon className="w-6 h-6" />
+                  )}
+                </button>
+
                 {/* Mobile menu button */}
                 <button 
                   className="p-3 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors"
@@ -269,6 +418,53 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
         onClose={() => setIsMiniCartOpen(false)}
         language={language}
       />
+
+      {/* Sign Modal */}
+      <SignModal
+        isOpen={isSignModalOpen}
+        onClose={() => setIsSignModalOpen(false)}
+        language={language}
+        onSuccess={() => {
+          // Le panier sera attaché automatiquement via CartContext
+          setIsSignModalOpen(false);
+          // Rediriger vers le dashboard après connexion
+          router.push('/dashboard');
+        }}
+      />
+
+      {/* Mobile Profile Menu */}
+      {user && isProfileMenuOpen && (
+        <div className="lg:hidden fixed top-16 left-0 right-0 bg-black/95 backdrop-blur-md z-40 border-t border-white/20">
+          <div className="px-4 py-4 space-y-2">
+            <div className="px-2 py-2 border-b border-white/20">
+              <p className="text-sm font-semibold text-white truncate">{user.email}</p>
+            </div>
+            <Link
+              href="/mes-reservations"
+              onClick={() => setIsProfileMenuOpen(false)}
+              className="flex items-center gap-3 px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md transition-colors"
+            >
+              <CalendarIcon className="w-5 h-5" />
+              {texts[language].reservations}
+            </Link>
+            <Link
+              href="/mes-factures"
+              onClick={() => setIsProfileMenuOpen(false)}
+              className="flex items-center gap-3 px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md transition-colors"
+            >
+              <FileTextIcon className="w-5 h-5" />
+              {texts[language].invoices}
+            </Link>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-3 w-full px-2 py-2.5 text-sm font-medium text-red-400 hover:bg-red-900/20 rounded-md transition-colors"
+            >
+              <LogOutIcon className="w-5 h-5" />
+              {texts[language].signOut}
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

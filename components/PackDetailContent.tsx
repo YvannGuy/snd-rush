@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
-import QuantityStepper from '@/components/products/QuantityStepper';
-import ProductAddons from '@/components/products/ProductAddons';
 import { useCart } from '@/contexts/CartContext';
 import { AvailabilityResponse, CalendarDisabledRange, ProductAddon, CartItem } from '@/types/db';
 
@@ -28,19 +27,18 @@ interface Pack {
 }
 
 export default function PackDetailContent({ packId, language }: PackDetailContentProps) {
-  const [isStickyVisible, setIsStickyVisible] = useState(false);
   const { addToCart } = useCart();
   
   // État pour le calendrier et la réservation
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity] = useState(1);
   const [rentalDays, setRentalDays] = useState(1);
-  const [selectedAddons, setSelectedAddons] = useState<ProductAddon[]>([]);
+  const [selectedAddons] = useState<ProductAddon[]>([]);
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
-  const [disabledRanges, setDisabledRanges] = useState<CalendarDisabledRange[]>([]);
-  const [showToast, setShowToast] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_disabledRanges, setDisabledRanges] = useState<CalendarDisabledRange[]>([]); // Préfixé avec _ pour indiquer qu'il n'est pas utilisé pour l'instant
 
   const packs: { fr: Pack[], en: Pack[] } = {
     fr: [
@@ -287,25 +285,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
   }, [startDate, endDate]);
 
   // Sticky bar visibility
-  useEffect(() => {
-    const handleScroll = () => {
-      const faqSection = document.getElementById('faq-section');
-      if (faqSection) {
-        const faqTop = faqSection.getBoundingClientRect().top;
-        setIsStickyVisible(faqTop > window.innerHeight);
-      }
-    };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Add-ons par défaut pour les packs
-  const defaultAddons: ProductAddon[] = [
-    { id: 'technician', name: 'Technicien installation', price: 80, description: 'Installation et reprise incluses' },
-    { id: 'delivery', name: 'Livraison express', price: 80 },
-    { id: 'emergency', name: 'Urgence 24/7', price: 0, description: 'Majoration +20%' },
-  ];
 
   const handleAddToCart = () => {
     if (!pack || !startDate || !endDate) {
@@ -334,8 +314,6 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
     };
 
     addToCart(cartItem);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
   };
 
   const texts = {
@@ -465,10 +443,11 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             <div>
             {/* Image principale */}
             <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-gray-100">
-              <img
+              <Image
                 src={pack.image}
                 alt={pack.name}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
             </div>
           </div>
@@ -477,7 +456,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
           <div>
             {/* Breadcrumb */}
             <nav className="text-sm text-gray-500 mb-4">
-              <a href="/packs" className="hover:text-[#F2431E] transition-colors">{language === 'fr' ? 'Packs' : 'Packs'}</a>
+              <Link href="/packs" className="hover:text-[#F2431E] transition-colors">{language === 'fr' ? 'Packs' : 'Packs'}</Link>
               <span className="mx-2">/</span>
               <span className="text-gray-900 font-medium">Pack {pack.name}</span>
             </nav>
@@ -691,13 +670,14 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.youMightNeed}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recommendedProducts.map((product, index) => (
-              <div key={index} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+            {recommendedProducts.map((product) => (
+              <div key={product.name} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="relative h-48 bg-gray-100">
-                  <img
+                  <Image
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
             </div>
                 <div className="p-4">
@@ -770,21 +750,6 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         </div>
       </div>
 
-      {/* Toast pour ajout au panier */}
-      {showToast && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-black text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-fadeIn">
-          <div className="flex items-center gap-4">
-            <span>✅</span>
-            <span className="font-semibold">{language === 'fr' ? 'Pack ajouté au panier' : 'Pack added to cart'}</span>
-            <a
-              href="/panier"
-              className="ml-4 px-4 py-2 bg-[#F2431E] rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
-            >
-              {language === 'fr' ? 'Voir le panier' : 'View cart'}
-            </a>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

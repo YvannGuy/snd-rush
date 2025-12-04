@@ -4,6 +4,15 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
+  // Vérifier les variables d'environnement
+  if (!process.env.RESEND_API_KEY) {
+    console.error('❌ RESEND_API_KEY manquante dans les variables d\'environnement');
+    return NextResponse.json(
+      { error: 'Erreur de configuration : RESEND_API_KEY manquante' },
+      { status: 500 }
+    );
+  }
+
   try {
     const body = await request.json();
     
@@ -90,13 +99,17 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error('Erreur Resend:', error);
+      console.error('❌ Erreur Resend:', error);
       return NextResponse.json(
-        { error: 'Impossible d\'envoyer l\'email' },
+        { 
+          error: 'Impossible d\'envoyer l\'email',
+          details: process.env.NODE_ENV === 'development' ? error : undefined
+        },
         { status: 500 }
       );
     }
 
+    console.log('✅ Email envoyé avec succès:', data?.id);
     return NextResponse.json({ 
       success: true, 
       messageId: data?.id,
@@ -105,10 +118,14 @@ export async function POST(request: NextRequest) {
         : 'Réservation avec acompte envoyée avec succès'
     });
 
-  } catch (error) {
-    console.error('Erreur API send-email:', error);
+  } catch (error: any) {
+    console.error('❌ Erreur API send-email:', error);
     return NextResponse.json(
-      { error: 'Erreur interne du serveur' },
+      { 
+        error: 'Erreur interne du serveur',
+        message: error.message || 'Erreur inconnue',
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      },
       { status: 500 }
     );
   }

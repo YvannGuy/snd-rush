@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import QuantityStepper from '@/components/products/QuantityStepper';
@@ -32,8 +33,6 @@ export default function ProductDetailPage() {
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [disabledRanges, setDisabledRanges] = useState<CalendarDisabledRange[]>([]);
 
-  // Toast pour l'ajout au panier
-  const [showToast, setShowToast] = useState(false);
 
   // Charger le produit depuis Supabase ou données locales
   useEffect(() => {
@@ -269,8 +268,6 @@ export default function ProductDetailPage() {
     };
 
     addToCart(cartItem);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
   };
 
   const calculateTotal = () => {
@@ -297,7 +294,6 @@ export default function ProductDetailPage() {
       days: 'jours',
       totalPrice: 'Total',
       getQuote: 'Obtenir un devis pour événement',
-      toastAdded: 'Article ajouté au panier !',
       goToCart: 'Voir le panier',
       testimonials: 'Avis clients',
     },
@@ -317,7 +313,6 @@ export default function ProductDetailPage() {
       days: 'days',
       totalPrice: 'Total',
       getQuote: 'Get a quote for event',
-      toastAdded: 'Item added to cart!',
       goToCart: 'View cart',
       testimonials: 'Customer reviews',
     },
@@ -384,7 +379,7 @@ export default function ProductDetailPage() {
             <div>
               {/* Breadcrumb */}
               <nav className="text-sm text-gray-500 mb-4">
-                <a href="/catalogue" className="hover:text-[#F2431E] transition-colors">{language === 'fr' ? 'Catalogue' : 'Catalogue'}</a>
+                <Link href="/catalogue" className="hover:text-[#F2431E] transition-colors">{language === 'fr' ? 'Catalogue' : 'Catalogue'}</Link>
                 <span className="mx-2">/</span>
                 <span className="text-gray-900 font-medium">{product.name}</span>
               </nav>
@@ -659,21 +654,6 @@ export default function ProductDetailPage() {
         </div>
       </main>
 
-      {/* Toast pour ajout au panier */}
-      {showToast && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-black text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-fadeIn">
-          <div className="flex items-center gap-4">
-            <span>✅</span>
-            <span className="font-semibold">{currentTexts.toastAdded}</span>
-            <a
-              href="/panier"
-              className="ml-4 px-4 py-2 bg-[#F2431E] rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
-            >
-              {currentTexts.goToCart}
-            </a>
-          </div>
-        </div>
-      )}
 
       <Footer language={language} onLegalNoticeClick={() => {}} onRentalConditionsClick={() => {}} />
     </div>

@@ -12,7 +12,7 @@ interface MiniCartProps {
 }
 
 export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
-  const { cart, removeFromCart, updateCartItem } = useCart();
+  const { cart, removeFromCart, updateCartItem, increaseQuantity, decreaseQuantity } = useCart();
   const [isMobile, setIsMobile] = useState(false);
   const cartRef = useRef<HTMLDivElement>(null);
 
@@ -36,17 +36,17 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (cartRef.current && !cartRef.current.contains(event.target as Node) && !isMobile) {
+      if (cartRef.current && !cartRef.current.contains(event.target as Node)) {
         onClose();
       }
     };
-    if (isOpen && !isMobile) {
+    if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen, isMobile, onClose]);
+  }, [isOpen, onClose]);
 
   const texts = {
     fr: {
@@ -92,7 +92,7 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
         className={`fixed inset-0 bg-black/50 z-40 transition-opacity ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
-        onClick={isMobile ? onClose : undefined}
+        onClick={onClose}
       />
 
       {/* Cart Drawer/Dropdown */}
@@ -100,17 +100,17 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
         ref={cartRef}
         className={`fixed z-50 bg-white shadow-2xl transition-transform duration-300 ease-out ${
           isMobile
-            ? `top-0 right-0 h-full w-full sm:w-96 flex flex-col ${
-                isOpen ? 'translate-x-0' : 'translate-x-full'
+            ? `top-16 right-4 w-[calc(100vw-2rem)] max-w-sm max-h-[80vh] rounded-xl border border-gray-200 flex flex-col ${
+                isOpen ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'
               }`
-            : `top-16 right-4 w-96 rounded-2xl border border-gray-200 ${
+            : `top-16 right-4 lg:right-[max(1rem,calc((100vw-1280px)/2+2rem))] w-80 max-h-[80vh] rounded-xl border border-gray-200 flex flex-col ${
                 isOpen ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'
               }`
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-black">{currentTexts.title}</h2>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+          <h2 className="text-lg font-bold text-black">{currentTexts.title}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -123,31 +123,31 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
         </div>
 
         {/* Cart Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4">
           {cart.items.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🛒</div>
-              <p className="text-lg font-semibold text-gray-900 mb-2">{currentTexts.empty}</p>
-              <p className="text-sm text-gray-600 mb-6">{currentTexts.emptyDescription}</p>
-              <div className="space-y-3">
+            <div className="text-center py-8">
+              <div className="text-5xl mb-3">🛒</div>
+              <p className="text-base font-semibold text-gray-900 mb-2">{currentTexts.empty}</p>
+              <p className="text-xs text-gray-600 mb-4">{currentTexts.emptyDescription}</p>
+              <div className="space-y-2">
                 <Link
                   href="/packs"
                   onClick={onClose}
-                  className="block w-full bg-[#F2431E] text-white py-3 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
+                  className="block w-full bg-[#F2431E] text-white py-2.5 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm"
                 >
                   {currentTexts.explorePacks}
                 </Link>
                 <Link
                   href="/catalogue"
                   onClick={onClose}
-                  className="block w-full border-2 border-[#F2431E] text-[#F2431E] py-3 rounded-lg font-semibold hover:bg-[#F2431E]/10 transition-colors"
+                  className="block w-full border-2 border-[#F2431E] text-[#F2431E] py-2.5 rounded-lg font-semibold hover:bg-[#F2431E]/10 transition-colors text-sm"
                 >
                   {currentTexts.exploreProducts}
                 </Link>
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {cart.items.map((item, index) => {
                 const itemTotal = item.dailyPrice * item.quantity * item.rentalDays + 
                   item.addons.reduce((sum, addon) => sum + addon.price, 0);
@@ -155,10 +155,10 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
                 return (
                   <div
                     key={`${item.productId}-${item.startDate}-${item.endDate}-${index}`}
-                    className="flex gap-4 pb-4 border-b border-gray-100 last:border-0"
+                    className="flex gap-3 pb-3 border-b border-gray-100 last:border-0"
                   >
                     {item.images && item.images.length > 0 && (
-                      <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         <Image
                           src={item.images[0]}
                           alt={item.productName}
@@ -168,22 +168,43 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 text-sm mb-1 truncate">
+                      <h3 className="font-semibold text-gray-900 text-xs mb-1 truncate">
                         {item.productName}
                       </h3>
                       <div className="text-xs text-gray-600 space-y-0.5">
-                        <p>Qty: {item.quantity}</p>
+                        <div className="flex items-center gap-2">
+                          <span>{language === 'fr' ? 'Qté:' : 'Qty:'}</span>
+                          <div className="flex items-center gap-1.5 border border-gray-300 rounded-md">
+                            <button
+                              onClick={() => decreaseQuantity(item.productId, item.startDate, item.endDate)}
+                              className="px-2 py-0.5 hover:bg-gray-100 transition-colors text-gray-700 font-semibold"
+                              aria-label={language === 'fr' ? 'Diminuer quantité' : 'Decrease quantity'}
+                            >
+                              −
+                            </button>
+                            <span className="px-2 py-0.5 min-w-[1.5rem] text-center font-semibold text-gray-900">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => increaseQuantity(item.productId, item.startDate, item.endDate)}
+                              className="px-2 py-0.5 hover:bg-gray-100 transition-colors text-gray-700 font-semibold"
+                              aria-label={language === 'fr' ? 'Augmenter quantité' : 'Increase quantity'}
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
                         <p>{item.rentalDays} {language === 'fr' ? 'jours' : 'days'}</p>
                         {item.addons.length > 0 && (
                           <p className="text-[#F2431E]">+{item.addons.length} {language === 'fr' ? 'option(s)' : 'option(s)'}</p>
                         )}
                       </div>
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="font-bold text-black text-sm">
+                      <div className="mt-1.5 flex items-center justify-between">
+                        <span className="font-bold text-black text-xs">
                           {itemTotal.toFixed(2)}€
                         </span>
                         <button
-                          onClick={() => removeFromCart(item.productId)}
+                          onClick={() => removeFromCart(item.productId, item.startDate, item.endDate)}
                           className="text-red-600 hover:text-red-700 text-xs font-medium"
                         >
                           {currentTexts.remove}
@@ -199,32 +220,32 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
 
         {/* Footer */}
         {cart.items.length > 0 && (
-          <div className="border-t border-gray-200 p-6 space-y-4">
+          <div className="border-t border-gray-200 p-4 space-y-3 flex-shrink-0">
             <div className="flex justify-between items-center">
-              <span className="font-semibold text-gray-700">{currentTexts.subtotal}</span>
-              <span className="text-xl font-bold text-black">{cart.total.toFixed(2)}€</span>
+              <span className="font-semibold text-gray-700 text-sm">{currentTexts.subtotal}</span>
+              <span className="text-lg font-bold text-black">{cart.total.toFixed(2)}€</span>
             </div>
             
             <div className="space-y-2">
               <Link
                 href="/panier"
                 onClick={onClose}
-                className="block w-full bg-gray-100 text-gray-900 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors text-center"
+                className="block w-full bg-gray-100 text-gray-900 py-2.5 rounded-lg font-semibold hover:bg-gray-200 transition-colors text-center text-sm"
               >
                 {currentTexts.viewCart}
               </Link>
               <Link
                 href="/panier"
                 onClick={onClose}
-                className="block w-full bg-[#F2431E] text-white py-3 rounded-lg font-bold hover:bg-[#E63A1A] transition-colors text-center"
+                className="block w-full bg-[#F2431E] text-white py-2.5 rounded-lg font-bold hover:bg-[#E63A1A] transition-colors text-center text-sm"
               >
                 {currentTexts.checkout}
               </Link>
             </div>
 
             {/* Bonus: Contact CTA */}
-            <div className="pt-4 border-t border-gray-200">
-              <p className="text-xs text-gray-600 text-center mb-3">
+            <div className="pt-3 border-t border-gray-200">
+              <p className="text-xs text-gray-600 text-center mb-2">
                 {currentTexts.needQuote}
               </p>
               <div className="flex gap-2">
@@ -232,14 +253,14 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
                   href="https://wa.me/33651084994"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 bg-green-500 text-white py-2 rounded-lg font-semibold text-sm hover:bg-green-600 transition-colors text-center flex items-center justify-center gap-1"
+                  className="flex-1 bg-green-500 text-white py-2 rounded-lg font-semibold text-xs hover:bg-green-600 transition-colors text-center flex items-center justify-center gap-1"
                 >
                   <span>💬</span>
                   {currentTexts.whatsapp}
                 </a>
                 <a
                   href="tel:+33651084994"
-                  className="flex-1 bg-gray-900 text-white py-2 rounded-lg font-semibold text-sm hover:bg-gray-800 transition-colors text-center flex items-center justify-center gap-1"
+                  className="flex-1 bg-gray-900 text-white py-2 rounded-lg font-semibold text-xs hover:bg-gray-800 transition-colors text-center flex items-center justify-center gap-1"
                 >
                   <span>📞</span>
                   {currentTexts.call}

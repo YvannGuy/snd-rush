@@ -2,6 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import SolutionsSection from '@/components/SolutionsSection';
@@ -18,8 +20,10 @@ import ReservationModal from '@/components/ReservationModal';
 import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
 import AssistantModal from '@/components/AssistantModalRefactored';
+import CookieBanner from '@/components/CookieBanner';
 
 export default function Home() {
+  const router = useRouter();
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const [reservationModal, setReservationModal] = useState(false);
   const [legalNoticeModal, setLegalNoticeModal] = useState(false);
@@ -36,6 +40,65 @@ export default function Home() {
     setReservationModal(false);
     setSelectedPackId(undefined);
   };
+
+  // Gérer les tokens d'authentification dans le hash (#access_token=...)
+  useEffect(() => {
+    const handleAuthTokens = async () => {
+      if (!supabase || typeof window === 'undefined') return;
+
+      // Vérifier s'il y a des tokens dans le hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      const type = hashParams.get('type');
+
+      // Si c'est une confirmation d'inscription ou connexion avec tokens
+      if (accessToken && refreshToken && (type === 'signup' || type === 'recovery')) {
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (error) {
+            console.error('Erreur lors de la création de la session:', error);
+            
+            // Si l'erreur concerne oauth_client_id, essayer de rediriger quand même
+            if (error.message?.includes('oauth_client_id')) {
+              console.warn('⚠️ Erreur oauth_client_id détectée, redirection vers le dashboard...');
+              // Nettoyer le hash de l'URL
+              window.history.replaceState(null, '', window.location.pathname);
+              // Rediriger vers le dashboard - la session peut quand même fonctionner
+              router.push('/dashboard');
+              return;
+            }
+            return;
+          }
+
+          if (data.session) {
+            console.log('✅ Session créée avec succès');
+            // Nettoyer le hash de l'URL
+            window.history.replaceState(null, '', window.location.pathname);
+            // Rediriger vers le dashboard
+            router.push('/dashboard');
+          }
+        } catch (err: any) {
+          console.error('Erreur lors du traitement des tokens:', err);
+          
+          // Si l'erreur concerne oauth_client_id, essayer de rediriger quand même
+          if (err?.message?.includes('oauth_client_id')) {
+            console.warn('⚠️ Erreur oauth_client_id détectée dans catch, redirection vers le dashboard...');
+            // Nettoyer le hash de l'URL
+            window.history.replaceState(null, '', window.location.pathname);
+            // Rediriger vers le dashboard
+            router.push('/dashboard');
+          }
+        }
+      }
+    };
+
+    handleAuthTokens();
+  }, [router]);
 
   // Écouter l'événement de réservation depuis l'assistant
   useEffect(() => {
@@ -123,6 +186,7 @@ export default function Home() {
 
       <ScrollToTopButton />
       <WhatsAppButton language={language} />
+      <CookieBanner language={language} />
 
       {/* Modals */}
       <ReservationModal 

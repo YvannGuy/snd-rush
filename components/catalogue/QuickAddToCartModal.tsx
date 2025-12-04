@@ -22,7 +22,6 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
   const [endDate, setEndDate] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [rentalDays, setRentalDays] = useState(1);
-  const [showToast, setShowToast] = useState(false);
 
   // Calculer les jours de location
   useEffect(() => {
@@ -69,11 +68,7 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
     };
 
     addToCart(cartItem);
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-      onClose();
-    }, 2000);
+    onClose();
   };
 
   const texts = {
@@ -226,15 +221,6 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
         </div>
       </div>
 
-      {/* Toast */}
-      {showToast && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-fadeIn">
-          <div className="flex items-center gap-3">
-            <span>✅</span>
-            <span className="font-semibold">{currentTexts.added}</span>
-          </div>
-        </div>
-      )}
     </>
   );
 }

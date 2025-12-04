@@ -25,7 +25,7 @@ export function getDeliveryPrice(zone: string): number {
   const DELIVERY_AR = { 
     paris: 80, 
     petite: 120, 
-    grande: 156, 
+    grande: 160, 
     retrait: 0 
   };
   return DELIVERY_AR[zone as keyof typeof DELIVERY_AR] || 0;

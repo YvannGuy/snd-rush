@@ -4,6 +4,23 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
+  // Vérifier les variables d'environnement
+  if (!process.env.RESEND_API_KEY) {
+    console.error('❌ RESEND_API_KEY manquante dans les variables d\'environnement');
+    return NextResponse.json(
+      { message: "Erreur de configuration : RESEND_API_KEY manquante", error: "Configuration manquante" },
+      { status: 500 }
+    );
+  }
+
+  if (!process.env.RESEND_FROM) {
+    console.error('❌ RESEND_FROM manquante dans les variables d\'environnement');
+    return NextResponse.json(
+      { message: "Erreur de configuration : RESEND_FROM manquante", error: "Configuration manquante" },
+      { status: 500 }
+    );
+  }
+
   const body = await req.json();
   const { 
     firstName, 
@@ -107,19 +124,33 @@ export async function POST(req: NextRequest) {
         <p><strong>Message :</strong><br/>${specialRequests || 'Aucune demande spéciale'}</p>
       `;
 
+    const recipientEmail = process.env.RESEND_TO || process.env.RESEND_FROM;
+    
+    if (!recipientEmail) {
+      throw new Error('Aucune adresse email de destination configurée');
+    }
+
     const data = await resend.emails.send({
-      from: process.env.RESEND_FROM!, // Ex: contact@sndrush.com (doit être vérifié sur Resend)
-      to: process.env.RESEND_TO || process.env.RESEND_FROM!, // destinataire
+      from: process.env.RESEND_FROM,
+      to: recipientEmail,
       subject: subject,
       html: htmlContent,
       replyTo: email,
     });
 
+    console.log('✅ Email de réservation envoyé avec succès:', data);
     return NextResponse.json({ message: "Message envoyé avec succès.", data }, { status: 200 });
   } catch (error: any) {
-    console.error("Erreur Resend :", error.message);
+    console.error("❌ Erreur Resend lors de l'envoi de l'email de réservation:", error);
+    const errorMessage = error.message || 'Erreur inconnue lors de l\'envoi de l\'email';
+    const errorDetails = error.response?.body || error;
+    
     return NextResponse.json(
-      { message: "Erreur lors de l’envoi du message.", error: error.message },
+      { 
+        message: "Erreur lors de l'envoi du message.", 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? errorDetails : undefined
+      },
       { status: 500 }
     );
   }

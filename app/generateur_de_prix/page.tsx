@@ -27,7 +27,7 @@ const PRICING = {
   // Transport A/R TTC
   LIVRAISON_PARIS: 80,
   LIVRAISON_PC: 120,
-  LIVRAISON_GC: 156,
+  LIVRAISON_GC: 160,
   LIVRAISON_RETRAIT: 0,
 
   // Urgence

@@ -68,15 +68,24 @@ async function checkAvailability(
     );
   }
 
+  // Vérifier si productId est un UUID valide ou un ID numérique (pack)
+  const isUUID = productId ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productId) : false;
+  const isPackId = productId ? !isUUID : false;
+  
+  // Si productId est numérique, c'est probablement un packId
+  const actualPackId = isPackId ? productId : packId;
+  const actualProductId = isUUID ? productId : null;
+
   // Pour les packs, on utilise une quantité par défaut (1 pack disponible)
   // Pour les produits, on récupère depuis la table products
   let totalQuantity = 1; // Par défaut pour les packs
 
-  if (productId) {
+  if (actualProductId) {
+    // Seulement si c'est un vrai UUID de produit
     const { data: product, error: productError } = await supabase
       .from('products')
       .select('quantity')
-      .eq('id', productId)
+      .eq('id', actualProductId)
       .single();
 
     if (productError || !product) {
@@ -97,10 +106,10 @@ async function checkAvailability(
     .lt('start_date', endDate) // start_date < endDate
     .gt('end_date', startDate); // end_date > startDate
 
-  if (productId) {
-    query = query.eq('product_id', productId);
-  } else if (packId) {
-    query = query.eq('pack_id', packId);
+  if (actualProductId) {
+    query = query.eq('product_id', actualProductId);
+  } else if (actualPackId) {
+    query = query.eq('pack_id', actualPackId);
   }
 
   const { data: reservations, error: reservationsError } = await query;

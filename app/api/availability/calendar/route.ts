@@ -27,6 +27,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Vérifier si productId est un UUID valide ou un ID numérique (pack)
+    const isUUID = productId ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productId) : false;
+    const isPackId = productId ? !isUUID : false;
+    
+    // Si productId est numérique, c'est probablement un packId
+    const actualPackId = isPackId ? productId : packId;
+    const actualProductId = isUUID ? productId : null;
+
     // Calculer le début et la fin du mois
     const [year, monthNum] = month.split('-').map(Number);
     const startOfMonth = new Date(year, monthNum - 1, 1).toISOString().split('T')[0];
@@ -40,10 +48,10 @@ export async function GET(request: NextRequest) {
       .lte('start_date', endOfMonth) // Commence avant ou pendant le mois
       .gte('end_date', startOfMonth); // Se termine après ou pendant le mois
 
-    if (productId) {
-      query = query.eq('product_id', productId);
-    } else if (packId) {
-      query = query.eq('pack_id', packId);
+    if (actualProductId) {
+      query = query.eq('product_id', actualProductId);
+    } else if (actualPackId) {
+      query = query.eq('pack_id', actualPackId);
     }
 
     const { data: reservations, error } = await query;
@@ -58,17 +66,19 @@ export async function GET(request: NextRequest) {
 
     // Récupérer la quantité totale (produit ou pack par défaut = 1)
     let totalQuantity = 1;
-    if (productId) {
+    if (actualProductId) {
+      // Seulement si c'est un vrai UUID de produit
       const { data: product } = await supabase
         .from('products')
         .select('quantity')
-        .eq('id', productId)
+        .eq('id', actualProductId)
         .single();
 
       if (product) {
         totalQuantity = product.quantity;
       }
     }
+    // Pour les packs, on utilise la quantité par défaut (1)
 
     // Grouper les réservations par date et calculer la disponibilité par jour
     // Pour simplifier, on retourne les plages où le produit est complètement indisponible
@@ -102,7 +112,7 @@ export async function GET(request: NextRequest) {
       for (let d = new Date(startOfMonth); d <= new Date(endOfMonth); d.setDate(d.getDate() + 1)) {
         const dateStr = d.toISOString().split('T')[0];
         const bookedQty = dateMap.get(dateStr) || 0;
-        const isBlocked = bookedQty >= product.quantity;
+        const isBlocked = bookedQty >= totalQuantity;
 
         if (isBlocked) {
           if (!currentRangeStart) {

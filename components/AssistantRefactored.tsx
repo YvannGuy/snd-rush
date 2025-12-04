@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Answers, Step, STEPS, PRICING_CONFIG, ReservationPayload } from '@/types/assistant';
 import { recommendPack, computePrice, isUrgent, validateStep } from '@/lib/assistant-logic';
-import { processReservation, showSuccessNotification, showErrorNotification } from '@/lib/assistant-api';
+import { processReservation } from '@/lib/assistant-api';
 import { trackAssistantEvent } from '@/lib/analytics';
 import Chip from './assistant/Chip';
 import Radio from './assistant/Radio';
@@ -187,7 +187,6 @@ export default function AssistantRefactored({
   const handleReservation = async (bookingType: 'info' | 'deposit') => {
     const recommendation = recommendPack(answers);
     if (!recommendation) {
-      showErrorNotification('Impossible de générer une recommandation');
       return;
     }
     
@@ -208,15 +207,12 @@ export default function AssistantRefactored({
       trackAssistantEvent.reservationCompleted(payload.packName, payload.totalPrice);
       
       if (payload.bookingType === 'info') {
-        showSuccessNotification('Merci ! Nous vous rappelons sous 24h.');
         onClose();
       } else {
-        showSuccessNotification('Redirection vers le paiement...');
         // La redirection Stripe se fait dans processReservation
       }
     } catch (error) {
       console.error('Erreur lors de la réservation:', error);
-      showErrorNotification('Erreur lors du traitement. Veuillez réessayer.');
     } finally {
       setIsLoading(false);
     }

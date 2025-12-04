@@ -4,6 +4,15 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
+  // Vérifier les variables d'environnement
+  if (!process.env.RESEND_API_KEY) {
+    console.error('❌ RESEND_API_KEY manquante dans les variables d\'environnement');
+    return NextResponse.json(
+      { error: 'Erreur de configuration : RESEND_API_KEY manquante' },
+      { status: 500 }
+    );
+  }
+
   try {
     const formData = await request.json();
     
@@ -379,6 +388,7 @@ export async function POST(request: NextRequest) {
     `;
 
     // Envoyer l'email de confirmation au client
+    let clientEmailSent = false;
     try {
       const clientEmailResult = await resend.emails.send({
         from: 'SND Rush <devisclients@guylocationevents.com>',
@@ -386,23 +396,34 @@ export async function POST(request: NextRequest) {
         subject: '🎵 Demande de devis reçue - SND Rush',
         html: clientEmailHtml
       });
-      console.log('Email client envoyé:', clientEmailResult);
-    } catch (clientError) {
-      console.error('Erreur envoi email client:', clientError);
-      throw clientError; // On relance l'erreur pour que l'utilisateur soit informé
+      console.log('✅ Email client envoyé:', clientEmailResult);
+      clientEmailSent = true;
+    } catch (clientError: any) {
+      console.error('❌ Erreur envoi email client:', clientError);
+      // Ne pas bloquer la réponse si l'email client échoue
+      // L'utilisateur sera informé via le warning
     }
 
     return NextResponse.json({ 
       success: true, 
       message: 'Demande de devis envoyée avec succès',
       teamEmailSent: teamEmailSent,
-      ...(teamEmailSent ? {} : { warning: 'L\'email à l\'équipe n\'a pas pu être envoyé, mais la confirmation client a été envoyée' })
+      clientEmailSent: clientEmailSent,
+      ...(teamEmailSent && clientEmailSent ? {} : { 
+        warning: !teamEmailSent && !clientEmailSent
+          ? 'Les emails n\'ont pas pu être envoyés, mais votre demande a été enregistrée'
+          : !teamEmailSent
+          ? 'L\'email à l\'équipe n\'a pas pu être envoyé, mais la confirmation client a été envoyée'
+          : 'L\'email de confirmation client n\'a pas pu être envoyé, mais votre demande a été transmise à l\'équipe'
+      })
     });
 
-  } catch (error) {
-    console.error('Erreur envoi demande de devis:', error);
+  } catch (error: any) {
+    console.error('❌ Erreur envoi demande de devis:', error);
     return NextResponse.json({ 
-      error: 'Erreur lors de l\'envoi de la demande de devis' 
+      error: 'Erreur lors de l\'envoi de la demande de devis',
+      message: error.message || 'Erreur inconnue',
+      details: process.env.NODE_ENV === 'development' ? error : undefined
     }, { status: 500 });
   }
 }

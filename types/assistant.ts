@@ -184,7 +184,7 @@ export const PRICING_CONFIG: Pricing = {
   delivery: {
     paris: 80,
     petite_couronne: 120,
-    grande_couronne: 156,
+    grande_couronne: 160,
     retrait: 0,
   },
   extras: {
