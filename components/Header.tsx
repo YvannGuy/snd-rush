@@ -2,7 +2,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useCart } from '@/contexts/CartContext';
+import MiniCart from '@/components/cart/MiniCart';
 
 interface HeaderProps {
   language: 'fr' | 'en';
@@ -11,6 +13,20 @@ interface HeaderProps {
 
 export default function Header({ language, onLanguageChange }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
+  const { getCartItemCount } = useCart();
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    setCartCount(getCartItemCount());
+    
+    const handleCartUpdate = () => {
+      setCartCount(getCartItemCount());
+    };
+    
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    return () => window.removeEventListener('cartUpdated', handleCartUpdate);
+  }, [getCartItemCount]);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -100,6 +116,38 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                   )}
                 </div>
                 <span className="uppercase">{language}</span>
+              </button>
+
+              {/* Panier - Desktop only */}
+              <button
+                onClick={() => setIsMiniCartOpen(true)}
+                className="hidden lg:flex relative p-2 text-white hover:text-[#F2431E] transition-colors cursor-pointer"
+                aria-label="Panier"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                    {cartCount > 9 ? '9+' : cartCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Panier Mobile */}
+              <button
+                onClick={() => setIsMiniCartOpen(true)}
+                className="lg:hidden relative p-2 text-white"
+                aria-label="Panier"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartCount > 9 ? '9+' : cartCount}
+                  </span>
+                )}
               </button>
 
               {/* Bouton Appeler - Desktop only */}
@@ -214,6 +262,13 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
           </div>
         </div>
       )}
+
+      {/* Mini Cart */}
+      <MiniCart
+        isOpen={isMiniCartOpen}
+        onClose={() => setIsMiniCartOpen(false)}
+        language={language}
+      />
     </header>
   );
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import QuickAddToCartModal from './catalogue/QuickAddToCartModal';
 
 interface CatalogueContentProps {
   language: 'fr' | 'en';
@@ -23,6 +25,10 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
   const [selectedUsageType, setSelectedUsageType] = useState<string>('all');
   const [selectedCapacity, setSelectedCapacity] = useState<string>('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
+  const [quickAddModal, setQuickAddModal] = useState<{ isOpen: boolean; product: Product | null }>({
+    isOpen: false,
+    product: null,
+  });
 
   const texts = {
     fr: {
@@ -44,7 +50,8 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         priceRange: 'Tarifs par jour'
       },
       helpButton: 'Je ne sais pas quoi choisir → Guide rapide',
-      addToQuote: 'Obtenir un devis',
+      addToCart: 'Ajouter au panier',
+      viewProduct: 'Voir le produit',
       needHelp: {
         title: 'Besoin d\'aide pour choisir ?',
         description: 'Vous ne savez pas quel matériel choisir ? Décrivez votre événement et nous trouvons la meilleure configuration en 2 minutes.',
@@ -81,7 +88,8 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         priceRange: 'Daily rates'
       },
       helpButton: 'I don\'t know what to choose → Quick guide',
-      addToQuote: 'Get a quote',
+      addToCart: 'Add to cart',
+      viewProduct: 'View product',
       needHelp: {
         title: 'Need help choosing?',
         description: 'Don\'t know what equipment to choose? Describe your event and we\'ll find the best configuration in 2 minutes.',
@@ -356,13 +364,22 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                     {product.price}
                   </p>
 
-                  {/* Add to Quote Button - aligné en bas */}
-                  <button
-                    onClick={() => handleAddToQuote(product.id)}
-                    className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors mt-auto"
-                  >
-                    {currentTexts.addToQuote}
-                  </button>
+                  {/* Buttons - alignés en bas */}
+                  <div className="flex flex-col gap-2 mt-auto">
+                    <button
+                      onClick={() => setQuickAddModal({ isOpen: true, product })}
+                      className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors flex items-center justify-center gap-2"
+                    >
+                      <span>🛒</span>
+                      {currentTexts.addToCart}
+                    </button>
+                    <Link
+                      href={`/catalogue/${product.id}`}
+                      className="w-full border-2 border-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center block"
+                    >
+                      {currentTexts.viewProduct}
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}
@@ -452,6 +469,16 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
           </div>
         </div>
       </div>
+
+      {/* Quick Add to Cart Modal */}
+      {quickAddModal.product && (
+        <QuickAddToCartModal
+          isOpen={quickAddModal.isOpen}
+          onClose={() => setQuickAddModal({ isOpen: false, product: null })}
+          product={quickAddModal.product}
+          language={language}
+        />
+      )}
     </div>
   );
 }

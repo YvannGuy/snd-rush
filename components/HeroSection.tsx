@@ -24,7 +24,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
       title2: 'en 2 minutes',
       subtitle: 'Faites appel à nos spécialistes de l\'urgence sonore ou planifiez votre événement avec Sound Rush, notre service de réservation à l\'avance. Matériel professionnel, intervention express et équipe disponible 24h/24 - 7j/7 sur Paris et région parisienne pour tous vos besoins en matière de son.',
       cta: 'Voir les packs & tarifs',
-      ctaSecondary: 'Vous ne savez pas quoi prendre ? Répondez à 3 questions',
+      ctaSecondary: 'Trouver mon pack',
       catalogue: 'Voir le catalogue',
       available: 'Disponible 24h/24 - 7j/7'
     },
@@ -33,7 +33,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
       title2: 'in 2 minutes',
       subtitle: 'Call on our sound emergency specialists or plan your event with Sound Rush, our advance booking service. Professional equipment, express intervention and team available 24/7 in Paris and the Paris region for all your sound needs.',
       cta: 'View packs & prices',
-      ctaSecondary: 'Not sure what to choose? Answer 3 questions',
+      ctaSecondary: 'Find my pack',
       catalogue: 'View catalogue',
       available: 'Available 24/7'
     }

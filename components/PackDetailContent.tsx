@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import QuantityStepper from '@/components/products/QuantityStepper';
+import ProductAddons from '@/components/products/ProductAddons';
+import { useCart } from '@/contexts/CartContext';
+import { AvailabilityResponse, CalendarDisabledRange, ProductAddon, CartItem } from '@/types/db';
 
 interface PackDetailContentProps {
   packId: string;
@@ -25,6 +29,18 @@ interface Pack {
 
 export default function PackDetailContent({ packId, language }: PackDetailContentProps) {
   const [isStickyVisible, setIsStickyVisible] = useState(false);
+  const { addToCart } = useCart();
+  
+  // État pour le calendrier et la réservation
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [rentalDays, setRentalDays] = useState(1);
+  const [selectedAddons, setSelectedAddons] = useState<ProductAddon[]>([]);
+  const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [disabledRanges, setDisabledRanges] = useState<CalendarDisabledRange[]>([]);
+  const [showToast, setShowToast] = useState(false);
 
   const packs: { fr: Pack[], en: Pack[] } = {
     fr: [
@@ -84,26 +100,27 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         ],
         highlight: "Clé en main",
         ideal: "150 à 300 personnes",
-        note: "Idéal pour grands événements, concerts, festivals, événements live/DJ."
+        note: "Idéal pour grands événements, concerts, live, DJ sets professionnels."
       },
       {
-        id: 5,
+        id: 4,
         name: "Événement",
-        tagline: "Solution haut de gamme sur devis",
-        description: "Pack événement avec sonorisation professionnelle complète pour très grands événements jusqu'à 600 personnes.",
+        tagline: "Solution sur mesure pour très grands événements",
+        description: "Pack événement avec sonorisation professionnelle complète pour événements jusqu'à 600 personnes.",
         priceParis: "Sur devis",
         priceHorsParis: "Sur devis",
         featured: false,
-        image: "/concert.jpg",
+        image: "/pack4cc.jpg",
         features: [
           "Sonorisation pro complète",
           "Micros HF & instruments",
           "Technicien & régie",
-          "Logistique complète"
+          "Logistique complète",
+          "Installation & reprise"
         ],
         highlight: "Clé en main",
         ideal: "300 à 600 personnes",
-        note: "Parfait pour très grands événements, concerts, festivals, événements professionnels."
+        note: "Parfait pour très grands événements, festivals, concerts, événements corporate."
       }
     ],
     en: [
@@ -119,7 +136,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         features: [
           "2 pro speakers",
           "1 microphone",
-          "Complete cabling",
+          "Complete wiring",
           "Installation & pickup"
         ],
         highlight: "Turnkey",
@@ -163,142 +180,113 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         ],
         highlight: "Turnkey",
         ideal: "150 to 300 people",
-        note: "Ideal for large events, concerts, festivals, live/DJ events."
+        note: "Ideal for large events, concerts, live, professional DJ sets."
       },
       {
-        id: 5,
+        id: 4,
         name: "Event",
-        tagline: "High-end solution on quote",
-        description: "Event pack with complete professional sound system for very large events up to 600 people.",
+        tagline: "Custom solution for very large events",
+        description: "Event pack with complete professional sound system for events up to 600 people.",
         priceParis: "On quote",
         priceHorsParis: "On quote",
         featured: false,
-        image: "/concert.jpg",
+        image: "/pack4cc.jpg",
         features: [
           "Complete pro sound system",
-          "Wireless mics & instruments",
+          "HF mics & instruments",
           "Technician & control room",
-          "Complete logistics"
+          "Complete logistics",
+          "Installation & pickup"
         ],
         highlight: "Turnkey",
         ideal: "300 to 600 people",
-        note: "Perfect for very large events, concerts, festivals, professional events."
+        note: "Perfect for very large events, festivals, concerts, corporate events."
       }
     ]
   };
 
-  const packIdNum = parseInt(packId);
-  const currentPacks = packs[language];
-  const pack = currentPacks.find(p => p.id === packIdNum);
+  const pack = packs[language].find(p => p.id.toString() === packId);
 
-  const texts = {
-    fr: {
-      included: 'Inclus dans ce pack',
-      viewFullSheet: 'Voir la fiche technique complète >',
-      capacities: 'Capacités & usages recommandés',
-      capacity: 'Capacité',
-      recommendedScenarios: 'Scénarios recommandés',
-      environment: 'Environnement',
-      availableOptions: 'Options disponibles',
-      delivery: 'Livraison & installation',
-      technician: 'Technicien son',
-      emergency: 'Urgence 2h',
-      add: 'Ajouter',
-      photos: 'Photos & détails',
-      testimonials: 'Ce que nos clients en disent',
-      addToQuote: 'Obtenir un devis',
-      talkToExpert: 'Parler à un expert',
-      bookNow: 'Réserver maintenant',
-      call: 'Appeler',
-      from: 'À partir de',
-      perDay: '/ jour',
-      rating: '4.9/5',
-      events: '200+ événements',
-      satisfied: '100% satisfaits',
-      idealFor: 'Idéal pour',
-      interiorExterior: 'Intérieur & extérieur',
-      faq: 'Questions fréquentes',
-      faqQuestions: [
-        {
-          question: "Vos prestations sont-elles assurées ?",
-          answer: "Oui, toutes nos prestations sont couvertes par une assurance responsabilité civile professionnelle."
-        },
-        {
-          question: "Puis-je modifier ma réservation ?",
-          answer: "Oui, vous pouvez modifier votre réservation jusqu'à 48h avant l'événement sous réserve de disponibilité."
-        },
-        {
-          question: "Que se passe-t-il en cas de matériel endommagé ?",
-          answer: "Une caution est demandée lors de la réservation. En cas de dommage, celle-ci sera utilisée pour couvrir les réparations."
-        },
-        {
-          question: "Quel est le temps de réponse moyen ?",
-          answer: "Nous répondons généralement sous 2 heures en journée et sous 4 heures en soirée et week-end."
+  // Charger les dates bloquées pour le calendrier
+  useEffect(() => {
+    async function loadDisabledRanges() {
+      if (!pack?.id) return;
+
+      try {
+        const today = new Date();
+        const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        
+        const response = await fetch(`/api/availability/calendar?packId=${pack.id}&month=${month}`);
+        if (response.ok) {
+          const data = await response.json();
+          setDisabledRanges(data.disabledRanges || []);
         }
-      ]
-    },
-    en: {
-      included: 'Included in this pack',
-      viewFullSheet: 'View full technical sheet >',
-      capacities: 'Capacities & recommended usages',
-      capacity: 'Capacity',
-      recommendedScenarios: 'Recommended scenarios',
-      environment: 'Environment',
-      availableOptions: 'Available options',
-      delivery: 'Delivery & installation',
-      technician: 'Sound technician',
-      emergency: 'Emergency 2h',
-      add: 'Add',
-      photos: 'Photos & details',
-      testimonials: 'What our clients say',
-      addToQuote: 'Get a quote',
-      talkToExpert: 'Talk to an expert',
-      bookNow: 'Book now',
-      call: 'Call',
-      from: 'From',
-      perDay: '/ day',
-      rating: '4.9/5',
-      events: '200+ events',
-      satisfied: '100% satisfied',
-      idealFor: 'Ideal for',
-      interiorExterior: 'Interior & exterior',
-      faq: 'Frequently asked questions',
-      faqQuestions: [
-        {
-          question: "Are your services insured?",
-          answer: "Yes, all our services are covered by professional liability insurance."
-        },
-        {
-          question: "Can I modify my reservation?",
-          answer: "Yes, you can modify your reservation up to 48 hours before the event subject to availability."
-        },
-        {
-          question: "What happens if equipment is damaged?",
-          answer: "A deposit is required when booking. In case of damage, it will be used to cover repairs."
-        },
-        {
-          question: "What is the average response time?",
-          answer: "We generally respond within 2 hours during the day and within 4 hours in the evening and weekends."
+      } catch (err) {
+        console.error('Erreur chargement calendrier:', err);
+      }
+    }
+
+    if (pack) {
+      loadDisabledRanges();
+    }
+  }, [pack]);
+
+  // Vérifier la disponibilité quand les dates changent
+  useEffect(() => {
+    async function checkAvailability() {
+      if (!pack?.id || !startDate || !endDate) {
+        setAvailability(null);
+        return;
+      }
+
+      setCheckingAvailability(true);
+      try {
+        const response = await fetch('/api/availability', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            packId: pack.id.toString(),
+            startDate,
+            endDate,
+          }),
+        });
+
+        if (response.ok) {
+          const data: AvailabilityResponse = await response.json();
+          setAvailability(data);
         }
-      ]
+      } catch (err) {
+        console.error('Erreur vérification disponibilité:', err);
+      } finally {
+        setCheckingAvailability(false);
+      }
     }
-  };
 
-  const currentTexts = texts[language];
+    checkAvailability();
+  }, [pack?.id, startDate, endDate]);
 
-  // Extract price number for sticky bar
-  const extractPrice = (priceStr: string): number | null => {
-    if (priceStr.toLowerCase().includes('devis') || priceStr.toLowerCase().includes('quote')) {
-      return null;
+  // Calculer les jours de location
+  useEffect(() => {
+    if (startDate && endDate) {
+      const startParts = startDate.split('-').map(Number);
+      const endParts = endDate.split('-').map(Number);
+      
+      if (startParts.length === 3 && endParts.length === 3) {
+        const start = new Date(Date.UTC(startParts[0], startParts[1] - 1, startParts[2]));
+        const end = new Date(Date.UTC(endParts[0], endParts[1] - 1, endParts[2]));
+        
+        const diffTime = end.getTime() - start.getTime();
+        const diffDays = Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+        setRentalDays(diffDays);
+      } else {
+        setRentalDays(1);
+      }
+    } else {
+      setRentalDays(1);
     }
-    const match = priceStr.match(/(\d+(?:\s?\d+)?)/);
-    return match ? parseInt(match[1].replace(/\s/g, '')) : null;
-  };
+  }, [startDate, endDate]);
 
-  const basePrice = pack ? extractPrice(pack.priceParis) : null;
-  const hasPrice = basePrice !== null;
-
-  // Sticky bar visibility - must be called before any conditional returns
+  // Sticky bar visibility
   useEffect(() => {
     const handleScroll = () => {
       const faqSection = document.getElementById('faq-section');
@@ -312,116 +300,171 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check if pack exists before using it
+  // Add-ons par défaut pour les packs
+  const defaultAddons: ProductAddon[] = [
+    { id: 'technician', name: 'Technicien installation', price: 80, description: 'Installation et reprise incluses' },
+    { id: 'delivery', name: 'Livraison express', price: 80 },
+    { id: 'emergency', name: 'Urgence 24/7', price: 0, description: 'Majoration +20%' },
+  ];
+
+  const handleAddToCart = () => {
+    if (!pack || !startDate || !endDate) {
+      return;
+    }
+
+    if (availability !== null && !availability.available) {
+      alert(language === 'fr' 
+        ? 'Ce pack n\'est pas disponible sur ces dates. Veuillez choisir d\'autres dates.' 
+        : 'This pack is not available for these dates. Please choose other dates.');
+      return;
+    }
+
+    const cartItem: CartItem = {
+      productId: `pack-${pack.id}`,
+      productName: `Pack ${pack.name}`,
+      productSlug: `pack-${pack.id}`,
+      quantity,
+      rentalDays,
+      startDate,
+      endDate,
+      dailyPrice: basePrice || 0,
+      deposit: 500,
+      addons: selectedAddons,
+      images: [pack.image],
+    };
+
+    addToCart(cartItem);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const texts = {
+    fr: {
+      perDay: '/jour',
+      rating: '4.9/5',
+      events: 'Événements',
+      addToQuote: 'Obtenir un devis pour événement',
+      included: 'Inclus dans ce pack',
+      capacities: 'Capacités & Utilisation',
+      capacity: 'Capacité',
+      recommendedScenarios: 'Scénarios recommandés',
+      environment: 'Environnement',
+      interiorExterior: 'Intérieur & Extérieur',
+      photos: 'Photos',
+      testimonials: 'Avis clients',
+      faq: 'Questions fréquentes',
+      call: 'Appeler',
+      description: 'Description',
+      specs: 'Caractéristiques techniques',
+      deposit: 'Dépôt de garantie',
+      depositNote: 'non débité',
+      youMightNeed: 'Vous pourriez en avoir besoin',
+      addToCart: 'Ajouter au panier',
+      checking: 'Vérification...',
+      available: 'Disponible',
+      unavailable: 'Indisponible',
+      faqQuestions: [
+        {
+          question: 'Le pack inclut-il l\'installation ?',
+          answer: 'Oui, tous nos packs incluent l\'installation et la reprise du matériel par nos techniciens.'
+        },
+        {
+          question: 'Puis-je modifier ma réservation ?',
+          answer: 'Oui, vous pouvez modifier votre réservation jusqu\'à 48h avant le début de la location.'
+        },
+        {
+          question: 'Quel est le délai de livraison ?',
+          answer: 'La livraison se fait généralement le jour même de l\'événement, selon vos besoins.'
+        }
+      ]
+    },
+    en: {
+      perDay: '/day',
+      rating: '4.9/5',
+      events: 'Events',
+      addToQuote: 'Get a quote for event',
+      included: 'Included in this pack',
+      capacities: 'Capacities & Usage',
+      capacity: 'Capacity',
+      recommendedScenarios: 'Recommended scenarios',
+      environment: 'Environment',
+      interiorExterior: 'Indoor & Outdoor',
+      photos: 'Photos',
+      testimonials: 'Customer reviews',
+      faq: 'Frequently asked questions',
+      call: 'Call',
+      description: 'Description',
+      specs: 'Technical specifications',
+      deposit: 'Security deposit',
+      depositNote: 'not charged',
+      youMightNeed: 'You might also need',
+      addToCart: 'Add to cart',
+      checking: 'Checking...',
+      available: 'Available',
+      unavailable: 'Unavailable',
+      faqQuestions: [
+        {
+          question: 'Does the pack include installation?',
+          answer: 'Yes, all our packs include installation and pickup of equipment by our technicians.'
+        },
+        {
+          question: 'Can I modify my reservation?',
+          answer: 'Yes, you can modify your reservation up to 48 hours before the start of the rental.'
+        },
+        {
+          question: 'What is the delivery time?',
+          answer: 'Delivery is usually done on the day of the event, according to your needs.'
+        }
+      ]
+    }
+  };
+
+  const currentTexts = texts[language];
+
   if (!pack) {
     return (
-      <div className="pt-16 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-black mb-4">
-            {language === 'fr' ? 'Pack non trouvé' : 'Pack not found'}
-          </h1>
-          <p className="text-gray-600">
-            {language === 'fr' ? 'Le pack demandé n\'existe pas.' : 'The requested pack does not exist.'}
-          </p>
-        </div>
+      <div className="pt-16 bg-white min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">{language === 'fr' ? 'Pack non trouvé' : 'Pack not found'}</p>
       </div>
     );
   }
 
-  // Enhanced features with icons mapping
-  const featureIcons: Record<string, string> = {
-    'enceinte': '🔊',
-    'speaker': '🔊',
-    'table': '🎛️',
-    'mixage': '🎛️',
-    'micro': '🎤',
-    'microphone': '🎤',
-    'console': '🎧',
-    'dj': '🎧',
-    'câblage': '🔌',
-    'cable': '🔌',
-    'installation': '🔧',
-    'technicien': '👤',
-    'technician': '👤'
+  // Extraire le prix de base si disponible
+  const priceMatch = pack.priceParis.match(/(\d+)/);
+  const basePrice = priceMatch ? parseInt(priceMatch[1]) : null;
+  const hasPrice = basePrice !== null;
+
+  const calculateTotal = () => {
+    if (!hasPrice || !startDate || !endDate) return 0;
+    const baseTotal = basePrice * quantity * rentalDays;
+    const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
+    return baseTotal + addonsTotal;
   };
 
-  const getFeatureIcon = (feature: string): string => {
-    const lowerFeature = feature.toLowerCase();
-    for (const [key, icon] of Object.entries(featureIcons)) {
-      if (lowerFeature.includes(key)) {
-        return icon;
-      }
-    }
-    return '✓';
-  };
-
-  // Parse capacity from ideal field
-  const parseCapacity = (ideal: string): string => {
-    const match = ideal.match(/(\d+)\s*(?:à|-)?\s*(\d+)?/);
-    if (match) {
-      const min = match[1];
-      const max = match[2] || min;
-      return `${min}-${max} personnes`;
-    }
-    return ideal;
+  const parseCapacity = (ideal: string) => {
+    const match = ideal.match(/(\d+)\s*(?:à|-|to)\s*(\d+)/);
+    return match ? `${match[1]} à ${match[2]} personnes` : ideal;
   };
 
   const capacity = parseCapacity(pack.ideal);
 
+  // Produits recommandés
+  const recommendedProducts = [
+    { name: 'Console de mixage', price: '45€/jour', image: '/platinedj.jpg' },
+    { name: 'Micro sans fil', price: '35€/jour', image: '/microshure.png' },
+    { name: 'Pied d\'enceinte', price: '15€/jour', image: '/pro1.png' },
+    { name: 'Câbles XLR', price: '12€/jour', image: '/lyreled.png' }
+  ];
+
   return (
-    <div className="pt-16">
-      {/* Main Product Section */}
-      <div className="bg-white py-12">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+    <div className="pt-16 bg-white">
+      {/* Hero Section - Image + Infos principales */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-            {/* Left Column - Product Info */}
+          {/* Left Column - Image Gallery */}
             <div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-4">
-                Pack {pack.name}
-                <br />
-                <span className="text-2xl md:text-3xl lg:text-4xl font-normal text-gray-600">
-                  {capacity}
-                </span>
-              </h1>
-              <p className="text-xl text-gray-600 mb-6">
-                {currentTexts.idealFor} {pack.note.split(' ').slice(-3).join(' ')}
-              </p>
-              
-              <div className="text-4xl font-bold text-black mb-8">
-                {hasPrice ? `${currentTexts.from} ${basePrice}€ ${currentTexts.perDay}` : pack.priceParis}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <a
-                  href="/devis"
-                  className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-[#E63A1A] transition-colors text-center"
-                >
-                  {currentTexts.addToQuote}
-                </a>
-                <a
-                  href="tel:+33651084994"
-                  className="border-2 border-black text-black px-8 py-4 rounded-lg font-semibold text-lg hover:bg-black hover:text-white transition-colors text-center"
-                >
-                  {currentTexts.talkToExpert}
-                </a>
-              </div>
-
-              {/* Trust Indicators */}
-              <div className="flex items-center gap-6 text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <span className="text-yellow-400">★★★★★</span>
-                  <span>{currentTexts.rating}</span>
-                </div>
-                <span>•</span>
-                <span>{currentTexts.events}</span>
-                <span>•</span>
-                <span>{currentTexts.satisfied}</span>
-              </div>
-            </div>
-
-            {/* Right Column - Main Image */}
-            <div className="relative h-96 lg:h-[500px] rounded-xl overflow-hidden">
+            {/* Image principale */}
+            <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-gray-100">
               <img
                 src={pack.image}
                 alt={pack.name}
@@ -429,234 +472,319 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
               />
             </div>
           </div>
+
+          {/* Right Column - Product Info */}
+          <div>
+            {/* Breadcrumb */}
+            <nav className="text-sm text-gray-500 mb-4">
+              <a href="/packs" className="hover:text-[#F2431E] transition-colors">{language === 'fr' ? 'Packs' : 'Packs'}</a>
+              <span className="mx-2">/</span>
+              <span className="text-gray-900 font-medium">Pack {pack.name}</span>
+            </nav>
+
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                {language === 'fr' ? 'Puissant' : 'Powerful'}
+              </span>
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                {language === 'fr' ? 'Indoor/Outdoor' : 'Indoor/Outdoor'}
+              </span>
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                {language === 'fr' ? 'Pro Quality' : 'Pro Quality'}
+              </span>
+      </div>
+
+            {/* Titre */}
+            <h1 className="text-4xl md:text-5xl font-bold text-black mb-4 leading-tight">
+              Pack {pack.name}
+            </h1>
+
+            {/* Description courte */}
+            <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+              {pack.description}
+            </p>
+
+            {/* Prix */}
+            <div className="mb-6">
+              {hasPrice ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-black">{basePrice}€</span>
+                  <span className="text-xl text-gray-500">{currentTexts.perDay}</span>
+                </div>
+              ) : (
+                <p className="text-2xl font-semibold text-gray-700">{pack.priceParis}</p>
+              )}
+            </div>
+
+            {/* Sélecteur de dates */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                {language === 'fr' ? 'Période de location' : 'Rental period'}
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1.5">
+                    {language === 'fr' ? 'Début' : 'Start'}
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate || ''}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      if (e.target.value && endDate && e.target.value > endDate) {
+                        setEndDate(null);
+                      }
+                    }}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1.5">
+                    {language === 'fr' ? 'Fin' : 'End'}
+                  </label>
+                  <input
+                    type="date"
+                    value={endDate || ''}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate || new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Disponibilité */}
+            {startDate && endDate && (
+              <div className="mb-6">
+                {checkingAvailability ? (
+                  <div className="text-sm text-gray-600 py-2">{currentTexts.checking}</div>
+                ) : availability ? (
+                  <div className={`flex items-center gap-2 ${availability.available ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className="text-lg">{availability.available ? '●' : '●'}</span>
+                    <span className="font-medium text-sm">
+                      {availability.available 
+                        ? (language === 'fr' ? 'Disponible aux dates sélectionnées' : 'Available on selected dates')
+                        : currentTexts.unavailable
+                      }
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {/* Total */}
+            {startDate && endDate && hasPrice && (
+              <div className="mb-6 flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <span className="text-gray-700 font-medium">
+                  {language === 'fr' ? 'Total' : 'Total'} ({rentalDays} {language === 'fr' ? 'jours' : 'days'})
+                </span>
+                <span className="text-2xl font-bold text-black">{calculateTotal().toFixed(2)}€</span>
+          </div>
+            )}
+
+            {/* Bouton Ajouter au panier */}
+            <button
+              onClick={handleAddToCart}
+              disabled={checkingAvailability || (availability !== null && !availability.available) || !startDate || !endDate}
+              className={`
+                w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2
+                ${!checkingAvailability && startDate && endDate && (availability === null || availability.available)
+                  ? 'bg-[#F2431E] text-white hover:bg-[#E63A1A] hover:shadow-xl'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }
+              `}
+            >
+              <span>🛒</span>
+              {checkingAvailability 
+                ? currentTexts.checking
+                : currentTexts.addToCart
+              }
+            </button>
+
+            {/* Caution */}
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+              <span>🔒</span>
+              <span>{language === 'fr' ? 'Caution: 500€' : 'Deposit: 500€'}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Included Features Section */}
+      {/* Description Section */}
+      <div className="bg-white py-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-black mb-6">{currentTexts.description}</h2>
+          <p className="text-lg text-gray-700 leading-relaxed mb-8">
+            {pack.description}
+          </p>
+          
+          {/* 3 Features avec icônes */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">⚡</div>
+              <div>
+                <h3 className="font-bold text-black mb-1">
+                  {language === 'fr' ? 'Puissance' : 'Power'} {hasPrice ? `${basePrice}W RMS` : ''}
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  {language === 'fr' ? 'Son puissant et cristallin pour tous vos événements' : 'Powerful and crystal-clear sound for all your events'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">🔌</div>
+              <div>
+                <h3 className="font-bold text-black mb-1">
+                  {language === 'fr' ? 'Connectiques pro' : 'Pro Connectivity'}
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  {language === 'fr' ? 'XLR, Jack, Bluetooth intégré' : 'XLR, Jack, Integrated Bluetooth'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">👥</div>
+              <div>
+                <h3 className="font-bold text-black mb-1">{capacity}</h3>
+                <p className="text-gray-600 text-sm">
+                  {language === 'fr' ? 'Idéale pour mariages, conférences, DJ sets' : 'Ideal for weddings, conferences, DJ sets'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Caractéristiques techniques */}
       <div className="bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-black mb-8">
-            {currentTexts.included}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pack.features.map((feature, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-xl p-6 shadow-md flex items-start gap-4"
-              >
-                <div className="text-3xl flex-shrink-0">
-                  {getFeatureIcon(feature)}
+          <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.specs}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl p-4 text-center">
+              <div className="text-3xl mb-2">🔊</div>
+              <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Puissance RMS' : 'RMS Power'}</p>
+              <p className="text-lg font-bold text-black">{hasPrice ? `${basePrice}W` : '—'}</p>
                 </div>
-                <p className="text-gray-700 font-medium">{feature}</p>
-              </div>
+            <div className="bg-white rounded-xl p-4 text-center">
+              <div className="text-3xl mb-2">📦</div>
+              <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Poids' : 'Weight'}</p>
+              <p className="text-lg font-bold text-black">28 kg</p>
+            </div>
+            <div className="bg-white rounded-xl p-4 text-center">
+              <div className="text-3xl mb-2">📐</div>
+              <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Dimensions' : 'Dimensions'}</p>
+              <p className="text-lg font-bold text-black">46x36x66cm</p>
+            </div>
+            <div className="bg-white rounded-xl p-4 text-center">
+              <div className="text-3xl mb-2">📶</div>
+              <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Bluetooth' : 'Bluetooth'}</p>
+              <p className="text-lg font-bold text-black">{language === 'fr' ? 'Oui' : 'Yes'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Vous pourriez en avoir besoin */}
+      <div className="bg-white py-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.youMightNeed}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {recommendedProducts.map((product, index) => (
+              <div key={index} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="relative h-48 bg-gray-100">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+            </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-black mb-2">{product.name}</h3>
+                  <p className="text-lg font-bold text-[#F2431E] mb-4">{product.price}</p>
+                  <button className="w-full bg-[#F2431E] text-white py-2 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors">
+                    {language === 'fr' ? 'Ajouter' : 'Add'}
+                  </button>
+            </div>
+            </div>
             ))}
           </div>
-          <div className="mt-8">
-            <a href="#" className="text-gray-600 hover:text-[#F2431E] transition-colors">
-              {currentTexts.viewFullSheet}
-            </a>
-          </div>
         </div>
       </div>
 
-      {/* Capacities & Usage Section */}
-      <div className="bg-white py-12">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-black mb-8">
-            {currentTexts.capacities}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gray-50 rounded-xl p-6 flex items-start gap-4">
-              <div className="text-3xl">👥</div>
-              <div>
-                <p className="font-semibold text-black mb-1">{currentTexts.capacity}</p>
-                <p className="text-gray-600">{capacity}</p>
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-6 flex items-start gap-4">
-              <div className="text-3xl">📅</div>
-              <div>
-                <p className="font-semibold text-black mb-1">{currentTexts.recommendedScenarios}</p>
-                <p className="text-gray-600">{pack.note}</p>
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-6 flex items-start gap-4">
-              <div className="text-3xl">📍</div>
-              <div>
-                <p className="font-semibold text-black mb-1">{currentTexts.environment}</p>
-                <p className="text-gray-600">{currentTexts.interiorExterior}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Available Options Section */}
+      {/* Avis clients */}
       <div className="bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-black mb-8">
-            {currentTexts.availableOptions}
-          </h2>
+          <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.testimonials}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl p-6 shadow-md flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="text-3xl">🚚</div>
-                <div>
-                  <p className="font-semibold text-black">{currentTexts.delivery}</p>
-                  <p className="text-gray-600">{currentTexts.from} 80€</p>
-                </div>
-              </div>
-              <button className="bg-[#F2431E] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors">
-                {currentTexts.add}
-              </button>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-md flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="text-3xl">👤</div>
-                <div>
-                  <p className="font-semibold text-black">{currentTexts.technician}</p>
-                  <p className="text-gray-600">{currentTexts.from} 60€/h</p>
-                </div>
-              </div>
-              <button className="bg-[#F2431E] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors">
-                {currentTexts.add}
-              </button>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-md flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="text-3xl">⚡</div>
-                <div>
-                  <p className="font-semibold text-black">{currentTexts.emergency}</p>
-                  <p className="text-gray-600">Supplément +30%</p>
-                </div>
-              </div>
-              <button className="bg-[#F2431E] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors">
-                {currentTexts.add}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Photos & Details Section */}
-      <div className="bg-white py-12">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-black mb-8">
-            {currentTexts.photos}
-          </h2>
-          <div className="flex gap-4 overflow-x-auto pb-4">
-            <div className="flex-shrink-0 w-80 h-64 rounded-xl overflow-hidden">
-              <img src="/enceintebt.jpg" alt="Enceinte" className="w-full h-full object-cover" />
-            </div>
-            <div className="flex-shrink-0 w-80 h-64 rounded-xl overflow-hidden">
-              <img src={pack.image} alt={pack.name} className="w-full h-full object-cover" />
-            </div>
-            <div className="flex-shrink-0 w-80 h-64 rounded-xl overflow-hidden">
-              <img src="/platinedj.jpg" alt="Console DJ" className="w-full h-full object-cover" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Testimonials Section */}
-      <div className="bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-black mb-8">
-            {currentTexts.testimonials}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl p-6 shadow-md">
+            <div className="bg-white rounded-xl p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold">
                   M
                 </div>
                 <div>
-                  <p className="font-semibold text-black">Marie D.</p>
-                  <div className="flex text-yellow-400">★★★★★</div>
+                  <p className="font-semibold text-black">Marie L.</p>
+                  <div className="flex text-[#F2431E]">★★★★★</div>
                 </div>
               </div>
               <p className="text-gray-700">
-                "Service impeccable, matériel de qualité et équipe très professionnelle. Je recommande vivement !"
+                "{language === 'fr' 
+                  ? 'Parfait pour notre mariage! Son cristallin et puissance au rendez-vous. Livraison et installation impeccables.' 
+                  : 'Perfect for our wedding! Crystal-clear sound and power delivered. Impeccable delivery and installation.'}"
               </p>
             </div>
-            <div className="bg-white rounded-xl p-6 shadow-md">
+            <div className="bg-white rounded-xl p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold">
                   T
                 </div>
                 <div>
-                  <p className="font-semibold text-black">Thomas L.</p>
-                  <div className="flex text-yellow-400">★★★★★</div>
+                  <p className="font-semibold text-black">Thomas R.</p>
+                  <div className="flex text-[#F2431E]">★★★★★</div>
                 </div>
               </div>
               <p className="text-gray-700">
-                "Parfait pour notre mariage ! Installation rapide, son de qualité et technicien très à l'écoute."
+                "{language === 'fr' 
+                  ? 'Matériel professionnel de qualité. Idéal pour nos événements d\'entreprise. Je recommande vivement!' 
+                  : 'Professional quality equipment. Ideal for our corporate events. I highly recommend it!'}"
+              </p>
+            </div>
+            <div className="bg-white rounded-xl p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold">
+                  S
+                </div>
+                <div>
+                  <p className="font-semibold text-black">Sophie M.</p>
+                  <div className="flex text-[#F2431E]">★★★★★</div>
+                </div>
+              </div>
+              <p className="text-gray-700">
+                "{language === 'fr' 
+                  ? 'Excellent rapport qualité/prix. Service client réactif et matériel en parfait état. Très satisfaite!' 
+                  : 'Excellent value for money. Responsive customer service and equipment in perfect condition. Very satisfied!'}"
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Sticky CTA Bar */}
-      {isStickyVisible && hasPrice && (
-        <div className="fixed bottom-0 left-0 right-0 bg-black text-white py-4 px-6 z-50 shadow-lg">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-xl font-bold">
-              {currentTexts.from} {basePrice}€ {currentTexts.perDay}
-            </div>
-            <div className="flex gap-4">
-              <a
-                href="/devis"
-                className="inline-block bg-[#F2431E] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-center"
-              >
-                {currentTexts.addToQuote}
-              </a>
-              <a
-                href="tel:+33651084994"
-                className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2"
-              >
-                📞 {currentTexts.call}
-              </a>
-            </div>
+      {/* Toast pour ajout au panier */}
+      {showToast && (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-black text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-fadeIn">
+          <div className="flex items-center gap-4">
+            <span>✅</span>
+            <span className="font-semibold">{language === 'fr' ? 'Pack ajouté au panier' : 'Pack added to cart'}</span>
+            <a
+              href="/panier"
+              className="ml-4 px-4 py-2 bg-[#F2431E] rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
+            >
+              {language === 'fr' ? 'Voir le panier' : 'View cart'}
+            </a>
           </div>
-        </div>
-      )}
-
-      {/* FAQ Section */}
-      <div id="faq-section" className="bg-white py-12">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-black mb-8">
-            {currentTexts.faq}
-          </h2>
-          <div className="space-y-4">
-            {currentTexts.faqQuestions.map((faq, index) => (
-              <FAQItem key={index} question={faq.question} answer={faq.answer} />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FAQItem({ question, answer }: { question: string; answer: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="border-b border-gray-200 pb-4">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between text-left py-4"
-      >
-        <span className="font-semibold text-black text-lg">{question}</span>
-        <span className="text-2xl text-gray-400">{isOpen ? '−' : '+'}</span>
-      </button>
-      {isOpen && (
-        <div className="text-gray-600 mt-2">
-          {answer}
         </div>
       )}
     </div>
   );
 }
-

@@ -37,6 +37,8 @@ export default function AssistantRefactored({
   
   const modalRef = useRef<HTMLDivElement>(null);
   const focusRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Focus trap et gestion des événements clavier
   useEffect(() => {
@@ -58,6 +60,28 @@ export default function AssistantRefactored({
       focusRef.current.focus();
     }
   }, [isOpen, currentStep]);
+
+  // Scroller vers le bouton quand il devient actif (sur mobile)
+  useEffect(() => {
+    // Vérifier si on peut procéder avec les réponses actuelles
+    const step = STEPS[currentStep];
+    const value = answers[step?.id as keyof Answers];
+    const canProceedNow = step && (
+      step.id === 'extras' || 
+      (value && (!Array.isArray(value) || value.length > 0))
+    );
+
+    if (canProceedNow && buttonRef.current) {
+      // Petit délai pour laisser le DOM se mettre à jour
+      setTimeout(() => {
+        buttonRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'end',
+          inline: 'nearest'
+        });
+      }, 300);
+    }
+  }, [answers, currentStep]);
 
   // Réinitialiser l'état à l'ouverture
   useEffect(() => {
@@ -92,6 +116,17 @@ export default function AssistantRefactored({
     if (errors[stepId]) {
       setErrors({ ...errors, [stepId]: '' });
     }
+
+    // Sur mobile, scroller vers le bouton après une sélection
+    setTimeout(() => {
+      if (buttonRef.current) {
+        buttonRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'end',
+          inline: 'nearest'
+        });
+      }
+    }, 100);
   };
 
   const handleNext = () => {
@@ -395,7 +430,7 @@ export default function AssistantRefactored({
       {/* Modal */}
       <div 
         ref={modalRef}
-        className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden transform transition-all duration-300"
+        className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col transform transition-all duration-300"
         role="dialog"
         aria-modal="true"
         aria-labelledby="assistant-title"
@@ -462,27 +497,33 @@ export default function AssistantRefactored({
           </div>
         </div>
 
-        {/* Contenu */}
-        <div className="p-8 max-h-[500px] overflow-y-auto custom-scrollbar">
+        {/* Contenu scrollable */}
+        <div 
+          ref={contentRef}
+          className="flex-1 p-8 overflow-y-auto custom-scrollbar min-h-0"
+        >
           {showSummary ? renderSummary() : renderStep()}
         </div>
 
-        {/* Navigation améliorée */}
+        {/* Navigation améliorée - Sticky en bas sur mobile */}
         {!showSummary && (
-          <div className="flex gap-4 p-8 border-t border-gray-100 bg-gray-50/50">
+          <div className="sticky bottom-0 flex gap-4 p-4 sm:p-8 border-t border-gray-100 bg-white z-10">
             {currentStep > 0 && (
               <button
                 onClick={handlePrevious}
-                className="px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold hover:bg-gray-100 transition-all shadow-sm hover:shadow-md border border-gray-200"
+                className="px-4 sm:px-8 py-3 sm:py-4 bg-white text-gray-700 rounded-xl font-semibold hover:bg-gray-100 transition-all shadow-sm hover:shadow-md border border-gray-200 text-sm sm:text-base"
               >
                 ← Précédent
               </button>
             )}
             <button
-              ref={focusRef}
+              ref={(node) => {
+                focusRef.current = node;
+                buttonRef.current = node;
+              }}
               onClick={handleNext}
               disabled={!canProceed()}
-              className={`flex-1 py-4 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] ${
+              className={`flex-1 py-3 sm:py-4 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] text-sm sm:text-base ${
                 canProceed()
                   ? 'bg-gradient-to-r from-[#F2431E] to-[#e27431] text-white hover:from-[#E63A1A] hover:to-[#F2431E]'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
