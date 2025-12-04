@@ -1,17 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import PackDetailContent from '@/components/PackDetailContent';
+import CatalogueContent from '@/components/CatalogueContent';
 import AssistantModal from '@/components/AssistantModalRefactored';
 
-export default function PackDetailPage() {
+export default function CataloguePage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const [assistantModal, setAssistantModal] = useState(false);
-  const params = useParams();
-  const packId = params?.id as string;
 
   // Écouter l'événement pour ouvrir l'assistant
   useEffect(() => {
@@ -26,9 +23,8 @@ export default function PackDetailPage() {
     };
   }, []);
 
-  const handleReservePack = (selectedPackId: number) => {
-    // Rediriger vers la page de réservation
-    window.location.href = `/packs/${selectedPackId}`;
+  const handleReservePack = (packId: number) => {
+    window.location.href = `/packs/${packId}`;
   };
 
   return (
@@ -46,7 +42,7 @@ export default function PackDetailPage() {
       />
       
       <main>
-        <PackDetailContent packId={packId} language={language} />
+        <CatalogueContent language={language} />
       </main>
 
       <Footer 

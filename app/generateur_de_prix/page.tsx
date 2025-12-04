@@ -397,7 +397,6 @@ export default function PriceGeneratorPage() {
   const [notes, setNotes] = useState('');
 
   // Informations client
-  const [clientName, setClientName] = useState('');
   const [clientAddress, setClientAddress] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
@@ -680,6 +679,12 @@ export default function PriceGeneratorPage() {
   const customLinesTotal = useMemo(() => {
     return customLines.reduce((sum, line) => sum + line.price, 0);
   }, [customLines]);
+
+  // Construire le nom complet du client à partir du prénom et du nom
+  const clientName = useMemo(() => {
+    const parts = [clientFirstName, clientLastName].filter(Boolean);
+    return parts.length > 0 ? parts.join(' ') : '';
+  }, [clientFirstName, clientLastName]);
 
   const subtotal = baseMateriel + transport + install + techCost + customLinesTotal;
   const total = Math.round(subtotal * (urgent ? 1.2 : 1));

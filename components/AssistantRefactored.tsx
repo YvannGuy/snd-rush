@@ -191,12 +191,15 @@ export default function AssistantRefactored({
     const error = errors[step.id];
 
     return (
-      <div className="space-y-6">
-        {/* Titre et sous-titre */}
+      <div className="space-y-8 animate-fadeIn">
+        {/* Titre et sous-titre améliorés */}
         <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h2>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#F2431E]/10 to-[#e27431]/10 rounded-2xl mb-4">
+            <span className="text-2xl">✨</span>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">{step.title}</h2>
           {step.subtitle && (
-            <p className="text-sm text-gray-600">{step.subtitle}</p>
+            <p className="text-lg text-gray-600 max-w-md mx-auto leading-relaxed">{step.subtitle}</p>
           )}
         </div>
 
@@ -280,14 +283,21 @@ export default function AssistantRefactored({
     trackAssistantEvent.packRecommended(recommendation.pack.name, recommendation.confidence);
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-8 animate-fadeIn">
         <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Notre recommandation</h2>
-          <p className="text-sm text-gray-600">Basée sur vos réponses</p>
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#F2431E]/20 to-[#e27431]/20 rounded-3xl mb-4">
+            <span className="text-4xl">🎯</span>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Notre recommandation</h2>
+          <p className="text-lg text-gray-600">Basée sur vos réponses</p>
         </div>
 
-        {/* Pack recommandé */}
-        <div className="border-2 border-[#e27431] rounded-xl p-6 bg-[#e27431]/5">
+        {/* Pack recommandé avec design amélioré */}
+        <div className="relative border-2 border-[#F2431E] rounded-2xl p-8 bg-gradient-to-br from-[#F2431E]/5 to-[#e27431]/5 shadow-lg">
+          {/* Badge de confiance */}
+          <div className="absolute -top-4 right-6 bg-gradient-to-r from-[#F2431E] to-[#e27431] text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+            {Math.round(recommendation.confidence * 100)}% de confiance
+          </div>
           <div className="text-center">
             <h3 className="text-2xl font-bold text-[#e27431] mb-2">{recommendation.pack.name}</h3>
             
@@ -349,21 +359,21 @@ export default function AssistantRefactored({
           </ul>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-3">
+        {/* Actions améliorées */}
+        <div className="flex gap-4">
           <button
             onClick={() => handleReservation('deposit')}
             disabled={isLoading}
-            className="flex-1 bg-[#e27431] text-white py-4 rounded-xl font-semibold hover:bg-[#e27431]/90 transition-colors disabled:opacity-50"
+            className="flex-1 bg-gradient-to-r from-[#F2431E] to-[#e27431] text-white py-5 rounded-xl font-bold text-lg hover:from-[#E63A1A] hover:to-[#F2431E] transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Traitement...' : 'Réserver maintenant'}
+            {isLoading ? '⏳ Traitement...' : '✨ Réserver maintenant'}
           </button>
           <button
             onClick={() => handleReservation('info')}
             disabled={isLoading}
-            className="flex-1 bg-gray-100 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+            className="flex-1 bg-white text-gray-700 py-5 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all shadow-md hover:shadow-lg border-2 border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Être rappelé
+            📞 Être rappelé
           </button>
         </div>
       </div>
@@ -383,77 +393,100 @@ export default function AssistantRefactored({
       {/* Modal */}
       <div 
         ref={modalRef}
-        className="relative bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden"
+        className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden transform transition-all duration-300"
         role="dialog"
         aria-modal="true"
         aria-labelledby="assistant-title"
       >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#e27431] to-[#e27431]/90 text-white p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🤖</span>
-              <div>
-                <h1 id="assistant-title" className="text-lg font-bold">Assistant SND Rush</h1>
-                <p className="text-white/90 text-sm">Trouvez le pack parfait</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-              aria-label="Fermer"
-            >
-              ×
-            </button>
-          </div>
+        {/* Header avec design moderne */}
+        <div className="relative bg-gradient-to-br from-[#F2431E] via-[#e27431] to-[#E63A1A] text-white p-8 overflow-hidden">
+          {/* Éléments décoratifs */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
           
-          {/* Progress bar */}
-          {!showSummary && (
-            <div className="mt-4">
-              <div className="flex gap-2">
-                {STEPS.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`h-2 flex-1 rounded-full transition-colors ${
-                      index <= currentStep ? 'bg-white' : 'bg-white/30'
-                    }`}
-                  />
-                ))}
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-3xl">🤖</span>
+                </div>
+                <div>
+                  <h1 id="assistant-title" className="text-2xl font-bold mb-1">Assistant SND Rush</h1>
+                  <p className="text-white/90 text-sm">Trouvez le pack parfait en 2 minutes</p>
+                </div>
               </div>
-              <p className="text-white/90 text-xs mt-2">
-                Étape {currentStep + 1} sur {STEPS.length}
-              </p>
+              <button
+                onClick={onClose}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all hover:scale-110"
+                aria-label="Fermer"
+              >
+                <span className="text-xl">×</span>
+              </button>
             </div>
-          )}
+            
+            {/* Progress bar améliorée */}
+            {!showSummary && (
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-white/90">
+                    Étape {currentStep + 1} sur {STEPS.length}
+                  </span>
+                  <span className="text-sm font-medium text-white/90">
+                    {Math.round(((currentStep + 1) / STEPS.length) * 100)}%
+                  </span>
+                </div>
+                <div className="relative h-3 bg-white/20 rounded-full overflow-hidden">
+                  <div 
+                    className="absolute top-0 left-0 h-full bg-white rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
+                  />
+                  <div className="flex gap-1 absolute inset-0 p-1">
+                    {STEPS.map((_, index) => (
+                      <div
+                        key={index}
+                        className={`flex-1 h-full rounded-full transition-all duration-300 ${
+                          index <= currentStep 
+                            ? 'bg-white/40' 
+                            : index === currentStep + 1
+                            ? 'bg-white/20'
+                            : 'bg-transparent'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Contenu */}
-        <div className="p-6 max-h-[500px] overflow-y-auto">
+        <div className="p-8 max-h-[500px] overflow-y-auto custom-scrollbar">
           {showSummary ? renderSummary() : renderStep()}
         </div>
 
-        {/* Navigation */}
+        {/* Navigation améliorée */}
         {!showSummary && (
-          <div className="flex gap-3 p-6 border-t border-gray-200">
+          <div className="flex gap-4 p-8 border-t border-gray-100 bg-gray-50/50">
             {currentStep > 0 && (
               <button
                 onClick={handlePrevious}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                className="px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold hover:bg-gray-100 transition-all shadow-sm hover:shadow-md border border-gray-200"
               >
-                Précédent
+                ← Précédent
               </button>
             )}
             <button
               ref={focusRef}
               onClick={handleNext}
               disabled={!canProceed()}
-              className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
+              className={`flex-1 py-4 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] ${
                 canProceed()
-                  ? 'bg-[#e27431] text-white hover:bg-[#e27431]/90'
+                  ? 'bg-gradient-to-r from-[#F2431E] to-[#e27431] text-white hover:from-[#E63A1A] hover:to-[#F2431E]'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              {currentStep === STEPS.length - 1 ? 'Voir la recommandation' : 'Suivant'}
+              {currentStep === STEPS.length - 1 ? '✨ Voir la recommandation' : 'Suivant →'}
             </button>
           </div>
         )}

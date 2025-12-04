@@ -27,26 +27,28 @@ export default function Radio({
       onClick={() => onClick(value)}
       disabled={disabled}
       className={`
-        w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200
+        w-full flex items-center justify-between p-5 rounded-2xl border-2 transition-all duration-300
         ${selected 
-          ? 'border-[#e27431] bg-[#e27431]/10 text-[#e27431]' 
-          : 'border-gray-200 hover:border-[#e27431] hover:bg-gray-50 text-gray-700'
+          ? 'border-[#F2431E] bg-gradient-to-r from-[#F2431E]/10 to-[#e27431]/10 text-[#F2431E] shadow-lg scale-[1.02]' 
+          : 'border-gray-200 hover:border-[#F2431E]/50 hover:bg-gray-50 text-gray-700 hover:shadow-md'
         }
-        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer transform hover:scale-[1.01]'}
       `}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <div className={`
-          w-5 h-5 rounded-full border-2 flex items-center justify-center
-          ${selected ? 'border-[#e27431] bg-[#e27431]' : 'border-gray-300'}
+          w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
+          ${selected ? 'border-[#F2431E] bg-[#F2431E] shadow-md' : 'border-gray-300'}
         `}>
-          {selected && <div className="w-2 h-2 bg-white rounded-full" />}
+          {selected && <div className="w-3 h-3 bg-white rounded-full animate-pulse" />}
         </div>
-        {icon && <span className="text-xl">{icon}</span>}
-        <span className="font-medium">{label}</span>
+        {icon && <span className="text-2xl">{icon}</span>}
+        <span className="font-semibold text-lg">{label}</span>
       </div>
       {price !== undefined && (
-        <span className="text-sm font-semibold">
+        <span className={`text-sm font-bold px-3 py-1 rounded-lg ${
+          selected ? 'bg-[#F2431E] text-white' : 'bg-gray-100 text-gray-700'
+        }`}>
           {price > 0 ? `+${price} €` : 'Inclus'}
         </span>
       )}

@@ -23,7 +23,8 @@ export default function HeroSection({ language }: HeroSectionProps) {
       title1: 'Location de sonorisation, lumière & DJ gear',
       title2: 'en 2 minutes',
       subtitle: 'Faites appel à nos spécialistes de l\'urgence sonore ou planifiez votre événement avec Sound Rush, notre service de réservation à l\'avance. Matériel professionnel, intervention express et équipe disponible 24h/24 - 7j/7 sur Paris et région parisienne pour tous vos besoins en matière de son.',
-      cta: 'Obtenir un devis',
+      cta: 'Voir les packs & tarifs',
+      ctaSecondary: 'Vous ne savez pas quoi prendre ? Répondez à 3 questions',
       catalogue: 'Voir le catalogue',
       available: 'Disponible 24h/24 - 7j/7'
     },
@@ -31,7 +32,8 @@ export default function HeroSection({ language }: HeroSectionProps) {
       title1: 'Sound system, lighting & DJ gear rental',
       title2: 'in 2 minutes',
       subtitle: 'Call on our sound emergency specialists or plan your event with Sound Rush, our advance booking service. Professional equipment, express intervention and team available 24/7 in Paris and the Paris region for all your sound needs.',
-      cta: 'Get a quote',
+      cta: 'View packs & prices',
+      ctaSecondary: 'Not sure what to choose? Answer 3 questions',
       catalogue: 'View catalogue',
       available: 'Available 24/7'
     }
@@ -83,11 +85,19 @@ export default function HeroSection({ language }: HeroSectionProps) {
 
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
                   <Link
-                    href="/devis"
+                    href="/catalogue"
                     className="bg-[#F2431E] text-white px-8 sm:px-12 py-4 sm:py-6 rounded-lg font-semibold text-base sm:text-xl hover:bg-[#E63A1A] transition-colors text-center cursor-pointer inline-block"
                   >
                     {texts[language].cta}
                   </Link>
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('openAssistantModal'));
+                    }}
+                    className="bg-transparent border-2 border-white text-white px-8 sm:px-12 py-4 sm:py-6 rounded-lg font-semibold text-base sm:text-xl hover:bg-white/10 transition-colors text-center cursor-pointer"
+                  >
+                    {texts[language].ctaSecondary}
+                  </button>
                 </div>
               </div>
             </div>

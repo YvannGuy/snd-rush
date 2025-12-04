@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import SolutionsSection from '@/components/SolutionsSection';
 import UrgencySection from '@/components/UrgencySection';
+import PourQuiSection from '@/components/PourQuiSection';
 import AboutSection from '@/components/AboutSection';
 import TrustindexReviews from '@/components/TrustindexReviews';
 import FaqInteractive from '@/components/FaqInteractive';
@@ -95,18 +96,23 @@ export default function Home() {
           <UrgencySection language={language} />
         </SectionAnimation>
 
-        {/* Section Pourquoi SoundRush */}
+        {/* Section Pour Qui ? */}
         <SectionAnimation delay={0.3}>
+          <PourQuiSection language={language} />
+        </SectionAnimation>
+
+        {/* Section Pourquoi SoundRush */}
+        <SectionAnimation delay={0.4}>
           <AboutSection language={language} />
         </SectionAnimation>
 
         {/* Section Témoignages Clients */}
-        <SectionAnimation delay={0.4}>
+        <SectionAnimation delay={0.5}>
           <TrustindexReviews />
         </SectionAnimation>
 
         {/* Section Questions Fréquentes */}
-        <SectionAnimation delay={0.5}>
+        <SectionAnimation delay={0.6}>
           <FaqInteractive onOpenAssistant={() => setAssistantModal(true)} />
         </SectionAnimation>
       </main>

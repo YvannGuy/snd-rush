@@ -29,30 +29,18 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
 
   const texts = {
     fr: {
-      solutions: 'Solutions',
       catalogue: 'Catalogue',
-      tarifs: 'Tarifs',
-      urgence: 'Urgence',
-      about: 'À propos',
-      contact: 'Contact',
-      getQuote: 'Obtenir un devis',
       packs: 'Packs',
+      urgence: 'Urgence 24/7',
       faq: 'FAQ',
-      reserveNow: 'Réservez mon pack',
       callNow: 'Appelez',
       banner: '1er spécialiste de l\'urgence sonore • Paris et Île-de-France • 24h/24 7j/7 • Intervention rapide • Devis gratuit'
     },
     en: {
-      solutions: 'Solutions',
       catalogue: 'Catalogue',
-      tarifs: 'Pricing',
-      urgence: 'Emergency',
-      about: 'About',
-      contact: 'Contact',
-      getQuote: 'Get a quote',
       packs: 'Packs',
+      urgence: 'Emergency 24/7',
       faq: 'FAQ',
-      reserveNow: 'Reserve my pack',
       callNow: 'Call',
       banner: '1st sound emergency specialist • Paris and Île-de-France • 24/7 • Fast intervention • Free quote'
     }
@@ -72,18 +60,30 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
             </Link>
 
             {/* Navigation complète */}
-            <nav className="hidden lg:flex items-center justify-center space-x-8 flex-1">
-              <button 
-                onClick={() => scrollToSection('about')}
+            <nav className="hidden lg:flex items-center justify-center space-x-6 flex-1">
+              <Link 
+                href="/catalogue"
                 className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
               >
-                {texts[language].about}
+                {texts[language].catalogue}
+              </Link>
+              <Link 
+                href="/packs"
+                className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
+              >
+                {texts[language].packs}
+              </Link>
+              <button 
+                onClick={() => scrollToSection('urgency')}
+                className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
+              >
+                {texts[language].urgence}
               </button>
               <button 
-                onClick={() => scrollToSection('contact')}
+                onClick={() => scrollToSection('faq')}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
               >
-                {texts[language].contact}
+                {texts[language].faq}
               </button>
             </nav>
 
@@ -165,17 +165,37 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
           }}
         >
           <div className="pt-3 pb-4 space-y-2" style={{ paddingLeft: '1rem', paddingRight: '1rem', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
-            <button 
-              onClick={() => scrollToSection('about')}
+            <Link 
+              href="/catalogue"
+              onClick={() => setIsMobileMenuOpen(false)}
               className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
             >
-              {texts[language].about}
+              {texts[language].catalogue}
+            </Link>
+            <Link 
+              href="/packs"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
+            >
+              {texts[language].packs}
+            </Link>
+            <button 
+              onClick={() => {
+                scrollToSection('urgency');
+                setIsMobileMenuOpen(false);
+              }}
+              className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
+            >
+              {texts[language].urgence}
             </button>
             <button 
-              onClick={() => scrollToSection('contact')}
+              onClick={() => {
+                scrollToSection('faq');
+                setIsMobileMenuOpen(false);
+              }}
               className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
             >
-              {texts[language].contact}
+              {texts[language].faq}
             </button>
 
             {/* Language switcher for mobile */}

@@ -29,166 +29,160 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
   const packs: { fr: Pack[], en: Pack[] } = {
     fr: [
       {
-        id: 2,
-        name: "Conférence",
-        tagline: "Séminaires & formations",
-        description: "Sonorisation claire et professionnelle pour vos événements d'entreprise et formations.",
-        priceParis: "À partir de 550 € TTC",
-        priceHorsParis: "630 € TTC",
-        featured: true,
-        image: "/conference.jpg",
+        id: 1,
+        name: "Essentiel",
+        tagline: "Solution basique pour petits événements",
+        description: "Pack essentiel parfait pour les petits événements intérieurs jusqu'à 70 personnes.",
+        priceParis: "300 € TTC",
+        priceHorsParis: "300 € TTC",
+        featured: false,
+        image: "/pack2c.jpg",
         features: [
-          "Sonorisation claire et professionnelle",
-          "Micro pour présentations",
-          "Livraison & installation",
-          "Technicien pendant l'événement",
-          "Démontage après la conférence"
+          "2 enceintes pro",
+          "1 micro",
+          "Câblage complet",
+          "Installation & reprise"
         ],
         highlight: "Clé en main",
-        ideal: "Jusqu'à 150 personnes",
-        note: "Idéal conférences, séminaires, formations, présentations d'entreprise."
+        ideal: "30 à 70 personnes",
+        note: "Idéal pour petits événements intérieurs, réunions, anniversaires intimes."
+      },
+      {
+        id: 2,
+        name: "Standard",
+        tagline: "Solution complète pour événements moyens",
+        description: "Pack standard avec sonorisation complète pour événements jusqu'à 150 personnes.",
+        priceParis: "450 € TTC",
+        priceHorsParis: "450 € TTC",
+        featured: true,
+        image: "/pack2cc.jpg",
+        features: [
+          "2 enceintes + 1 caisson de basse",
+          "2 micros",
+          "Console de mixage",
+          "Installation & reprise"
+        ],
+        highlight: "Clé en main",
+        ideal: "70 à 150 personnes",
+        note: "Parfait pour événements moyens, mariages, conférences, soirées privées."
       },
       {
         id: 3,
-        name: "Mariage",
-        tagline: "Grand jour & réceptions",
-        description: "Sonorisation romantique et élégante pour votre plus beau jour.",
-        priceParis: "À partir de 700 € TTC",
-        priceHorsParis: "780 € TTC",
+        name: "Premium",
+        tagline: "Solution professionnelle pour grands événements",
+        description: "Pack premium avec équipement professionnel et technicien sur place pour événements jusqu'à 300 personnes.",
+        priceParis: "650 € TTC",
+        priceHorsParis: "650 € TTC",
         featured: false,
-        image: "/mariage.jpg",
+        image: "/pack4cc.jpg",
         features: [
-          "Sonorisation romantique et élégante",
-          "Micros pour discours et toasts",
-          "Livraison & installation",
-          "Technicien discret pendant la cérémonie",
-          "Démontage après la réception"
+          "2 enceintes + 2 caissons",
+          "Console pro",
+          "4 micros",
+          "Technicien sur place",
+          "Installation & reprise"
         ],
         highlight: "Clé en main",
-        ideal: "Jusqu'à 250 personnes",
-        note: "Parfait pour mariages, anniversaires de mariage, réceptions élégantes."
+        ideal: "150 à 300 personnes",
+        note: "Idéal pour grands événements, concerts, festivals, événements live/DJ."
       },
       {
         id: 5,
-        name: "Concert",
-        tagline: "Spectacles & festivals",
-        description: "Sonorisation puissante et professionnelle pour vos événements musicaux.",
-        priceParis: "À partir de 1 100 € TTC",
-        priceHorsParis: "1 180 € TTC",
+        name: "Événement",
+        tagline: "Solution haut de gamme sur devis",
+        description: "Pack événement avec sonorisation professionnelle complète pour très grands événements jusqu'à 600 personnes.",
+        priceParis: "Sur devis",
+        priceHorsParis: "Sur devis",
         featured: false,
         image: "/concert.jpg",
         features: [
-          "Sonorisation puissante et professionnelle",
-          "Micros sans fil pour les artistes",
-          "Livraison & installation complète",
-          "Technicien son pendant le spectacle",
-          "Démontage après le concert"
+          "Sonorisation pro complète",
+          "Micros HF & instruments",
+          "Technicien & régie",
+          "Logistique complète"
         ],
         highlight: "Clé en main",
-        ideal: "Jusqu'à 500 personnes",
-        note: "Idéal concerts, festivals, spectacles, événements musicaux."
-      },
-      {
-        id: 6,
-        name: "Soirée",
-        tagline: "Fêtes & événements privés",
-        description: "Sonorisation festive et énergique pour vos soirées et événements privés.",
-        priceParis: "À partir de 450 € TTC",
-        priceHorsParis: "530 € TTC",
-        featured: false,
-        image: "/dance.jpg",
-        features: [
-          "Sonorisation festive et énergique",
-          "Musique d'ambiance et DJ",
-          "Livraison & installation",
-          "Technicien pendant la soirée",
-          "Démontage après l'événement"
-        ],
-        highlight: "Clé en main",
-        ideal: "Jusqu'à 200 personnes",
-        note: "Idéal pour soirées privées, anniversaires, fêtes d'entreprise, événements festifs."
+        ideal: "300 à 600 personnes",
+        note: "Parfait pour très grands événements, concerts, festivals, événements professionnels."
       }
     ],
     en: [
       {
-        id: 2,
-        name: "Conference",
-        tagline: "Seminars & training",
-        description: "Clear and professional sound system for your corporate events and training.",
-        priceParis: "From 550 € TTC",
-        priceHorsParis: "630 € TTC",
-        featured: true,
-        image: "/conference.jpg",
+        id: 1,
+        name: "Essential",
+        tagline: "Basic solution for small events",
+        description: "Essential pack perfect for small indoor events up to 70 people.",
+        priceParis: "300 € TTC",
+        priceHorsParis: "300 € TTC",
+        featured: false,
+        image: "/pack2c.jpg",
         features: [
-          "Clear and professional sound system",
-          "Microphone for presentations",
-          "Delivery & installation",
-          "Technician during the event",
-          "Dismantling after the conference"
+          "2 pro speakers",
+          "1 microphone",
+          "Complete cabling",
+          "Installation & pickup"
         ],
         highlight: "Turnkey",
-        ideal: "Up to 150 people",
-        note: "Ideal for conferences, seminars, training, corporate presentations."
+        ideal: "30 to 70 people",
+        note: "Ideal for small indoor events, meetings, intimate birthdays."
+      },
+      {
+        id: 2,
+        name: "Standard",
+        tagline: "Complete solution for medium events",
+        description: "Standard pack with complete sound system for events up to 150 people.",
+        priceParis: "450 € TTC",
+        priceHorsParis: "450 € TTC",
+        featured: true,
+        image: "/pack2cc.jpg",
+        features: [
+          "2 speakers + 1 subwoofer",
+          "2 microphones",
+          "Mixing console",
+          "Installation & pickup"
+        ],
+        highlight: "Turnkey",
+        ideal: "70 to 150 people",
+        note: "Perfect for medium events, weddings, conferences, private parties."
       },
       {
         id: 3,
-        name: "Wedding",
-        tagline: "Special day & receptions",
-        description: "Romantic and elegant sound system for your special day.",
-        priceParis: "From 700 € TTC",
-        priceHorsParis: "780 € TTC",
+        name: "Premium",
+        tagline: "Professional solution for large events",
+        description: "Premium pack with professional equipment and on-site technician for events up to 300 people.",
+        priceParis: "650 € TTC",
+        priceHorsParis: "650 € TTC",
         featured: false,
-        image: "/mariage.jpg",
+        image: "/pack4cc.jpg",
         features: [
-          "Romantic and elegant sound system",
-          "Microphones for speeches and toasts",
-          "Delivery & installation",
-          "Discreet technician during the ceremony",
-          "Dismantling after the reception"
+          "2 speakers + 2 subwoofers",
+          "Pro console",
+          "4 microphones",
+          "On-site technician",
+          "Installation & pickup"
         ],
         highlight: "Turnkey",
-        ideal: "Up to 250 people",
-        note: "Perfect for weddings, wedding anniversaries, elegant receptions."
+        ideal: "150 to 300 people",
+        note: "Ideal for large events, concerts, festivals, live/DJ events."
       },
       {
         id: 5,
-        name: "Concert",
-        tagline: "Shows & festivals",
-        description: "Powerful and professional sound system for your musical events.",
-        priceParis: "From 1,100 € TTC",
-        priceHorsParis: "1,180 € TTC",
+        name: "Event",
+        tagline: "High-end solution on quote",
+        description: "Event pack with complete professional sound system for very large events up to 600 people.",
+        priceParis: "On quote",
+        priceHorsParis: "On quote",
         featured: false,
         image: "/concert.jpg",
         features: [
-          "Powerful and professional sound system",
-          "Wireless microphones for artists",
-          "Complete delivery & installation",
-          "Sound technician during the show",
-          "Dismantling after the concert"
+          "Complete pro sound system",
+          "Wireless mics & instruments",
+          "Technician & control room",
+          "Complete logistics"
         ],
         highlight: "Turnkey",
-        ideal: "Up to 500 people",
-        note: "Ideal for concerts, festivals, shows, musical events."
-      },
-      {
-        id: 6,
-        name: "Party",
-        tagline: "Parties & private events",
-        description: "Festive and energetic sound system for your parties and private events.",
-        priceParis: "From 450 € TTC",
-        priceHorsParis: "530 € TTC",
-        featured: false,
-        image: "/dance.jpg",
-        features: [
-          "Festive and energetic sound system",
-          "Ambient music and DJ",
-          "Delivery & installation",
-          "Technician during the party",
-          "Dismantling after the event"
-        ],
-        highlight: "Turnkey",
-        ideal: "Up to 200 people",
-        note: "Ideal for private parties, birthdays, corporate parties, festive events."
+        ideal: "300 to 600 people",
+        note: "Perfect for very large events, concerts, festivals, professional events."
       }
     ]
   };
@@ -293,12 +287,16 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
   const currentTexts = texts[language];
 
   // Extract price number for sticky bar
-  const extractPrice = (priceStr: string): number => {
+  const extractPrice = (priceStr: string): number | null => {
+    if (priceStr.toLowerCase().includes('devis') || priceStr.toLowerCase().includes('quote')) {
+      return null;
+    }
     const match = priceStr.match(/(\d+(?:\s?\d+)?)/);
-    return match ? parseInt(match[1].replace(/\s/g, '')) : 0;
+    return match ? parseInt(match[1].replace(/\s/g, '')) : null;
   };
 
-  const basePrice = pack ? extractPrice(pack.priceParis) : 0;
+  const basePrice = pack ? extractPrice(pack.priceParis) : null;
+  const hasPrice = basePrice !== null;
 
   // Sticky bar visibility
   useEffect(() => {
@@ -374,14 +372,18 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             {/* Left Column - Product Info */}
             <div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-4">
-                Pack {pack.name} — {capacity}
+                Pack {pack.name}
+                <br />
+                <span className="text-2xl md:text-3xl lg:text-4xl font-normal text-gray-600">
+                  {capacity}
+                </span>
               </h1>
               <p className="text-xl text-gray-600 mb-6">
                 {currentTexts.idealFor} {pack.note.split(' ').slice(-3).join(' ')}
               </p>
               
               <div className="text-4xl font-bold text-black mb-8">
-                {currentTexts.from} {basePrice}€ {currentTexts.perDay}
+                {hasPrice ? `${currentTexts.from} ${basePrice}€ ${currentTexts.perDay}` : pack.priceParis}
               </div>
 
               {/* Action Buttons */}
@@ -591,7 +593,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
       </div>
 
       {/* Sticky CTA Bar */}
-      {isStickyVisible && (
+      {isStickyVisible && hasPrice && (
         <div className="fixed bottom-0 left-0 right-0 bg-black text-white py-4 px-6 z-50 shadow-lg">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-xl font-bold">

@@ -329,10 +329,10 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden"
+                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden flex flex-col h-full"
               >
                 {/* Product Image */}
-                <div className="relative h-48 bg-gray-200">
+                <div className="relative h-48 bg-gray-200 flex-shrink-0">
                   <img
                     src={product.image}
                     alt={product.name}
@@ -345,7 +345,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                 </div>
 
                 {/* Product Info */}
-                <div className="p-5">
+                <div className="p-5 flex flex-col flex-grow">
                   <h3 className="text-lg font-bold text-black mb-2">
                     {product.name}
                   </h3>
@@ -356,10 +356,10 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                     {product.price}
                   </p>
 
-                  {/* Add to Quote Button */}
+                  {/* Add to Quote Button - aligné en bas */}
                   <button
                     onClick={() => handleAddToQuote(product.id)}
-                    className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors"
+                    className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors mt-auto"
                   >
                     {currentTexts.addToQuote}
                   </button>
@@ -388,12 +388,14 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
           <p className="text-xl text-gray-600 mb-8">
             {currentTexts.needHelp.description}
           </p>
-          <a
-            href="/devis"
+          <button
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('openAssistantModal'));
+            }}
             className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-[#E63A1A] transition-colors"
           >
             {currentTexts.needHelp.cta}
-          </a>
+          </button>
         </div>
       </div>
 
