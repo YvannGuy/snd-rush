@@ -280,7 +280,45 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // Aussi mettre à jour les réservations existantes en pending si elles existent
+          // Mettre à jour la réservation PENDING créée lors du checkout avec les bonnes données
+          if (reservationId) {
+            try {
+              // Récupérer la réservation PENDING originale
+              const { data: pendingReservation, error: pendingError } = await supabaseClient
+                .from('reservations')
+                .select('*')
+                .eq('id', reservationId)
+                .single();
+
+              if (!pendingError && pendingReservation && pendingReservation.status === 'PENDING') {
+                // Mettre à jour avec les données complètes
+                const updatedNotes = {
+                  sessionId: session.id,
+                  cartItems: cartItems,
+                  customerEmail,
+                  customerName,
+                  deliveryOption: deliveryOption || 'paris',
+                  orderId: order.id,
+                };
+
+                await supabaseClient
+                  .from('reservations')
+                  .update({
+                    status: 'CONFIRMED',
+                    stripe_payment_intent_id: paymentIntentId,
+                    total_price: (session.amount_total || 0) / 100,
+                    notes: JSON.stringify(updatedNotes),
+                  })
+                  .eq('id', reservationId);
+
+                console.log(`✅ Réservation PENDING ${reservationId} mise à jour en CONFIRMED`);
+              }
+            } catch (e) {
+              console.error('Erreur mise à jour réservation PENDING:', e);
+            }
+          }
+
+          // Aussi mettre à jour les autres réservations existantes en pending si elles existent
           const { data: pendingReservations } = await supabaseClient
             .from('reservations')
             .select('id')
