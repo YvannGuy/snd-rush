@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 import QuickAddToCartModal from './catalogue/QuickAddToCartModal';
 
 interface CatalogueContentProps {
@@ -9,7 +10,7 @@ interface CatalogueContentProps {
 }
 
 interface Product {
-  id: number;
+  id: number | string;
   name: string;
   category: string;
   description: string;
@@ -25,6 +26,8 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
   const [selectedUsageType, setSelectedUsageType] = useState<string>('all');
   const [selectedCapacity, setSelectedCapacity] = useState<string>('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [quickAddModal, setQuickAddModal] = useState<{ isOpen: boolean; product: Product | null }>({
     isOpen: false,
     product: null,
@@ -111,7 +114,8 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
 
   const currentTexts = texts[language];
 
-  const products: Product[] = [
+  // Produits par défaut (fallback)
+  const defaultProducts: Product[] = [
     {
       id: 1,
       name: 'Enceinte active 15"',
@@ -189,6 +193,73 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
     }
   ];
 
+  // Charger les produits depuis Supabase
+  useEffect(() => {
+    const loadProducts = async () => {
+      if (!supabase) {
+        // Fallback vers les produits par défaut
+        setProducts(defaultProducts);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Erreur chargement produits:', error);
+          // Fallback vers les produits par défaut
+          setProducts(defaultProducts);
+          setLoading(false);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          // Convertir les produits Supabase au format attendu
+          const convertedProducts: Product[] = data.map((product: any) => {
+            // Convertir daily_price_ttc en nombre si c'est une chaîne
+            const price = typeof product.daily_price_ttc === 'string' 
+              ? parseFloat(product.daily_price_ttc) 
+              : (product.daily_price_ttc || 0);
+            
+            // Extraire capacity et usage_type depuis specs (jsonb)
+            const specs = product.specs || {};
+            const capacity = specs.capacity || undefined;
+            const usageType = specs.usage_type || 'event';
+            
+            return {
+              id: product.id,
+              name: product.name || 'Produit sans nom',
+              category: product.category || 'accessoires',
+              description: product.description || '',
+              price: `${price}€/jour`,
+              image: product.images && product.images.length > 0 ? product.images[0] : '/placeholder.jpg',
+              capacity: capacity,
+              usageType: usageType,
+            };
+          });
+          console.log('Produits chargés depuis Supabase:', convertedProducts);
+          setProducts(convertedProducts);
+        } else {
+          console.log('Aucun produit en base, utilisation des produits par défaut');
+          // Aucun produit en base, utiliser les produits par défaut
+          setProducts(defaultProducts);
+        }
+      } catch (error) {
+        console.error('Erreur chargement produits:', error);
+        // Fallback vers les produits par défaut
+        setProducts(defaultProducts);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
   const categoryColors: Record<string, string> = {
     sonorisation: 'bg-[#F2431E]',
     dj: 'bg-blue-500',
@@ -208,7 +279,9 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
     // Price range filter logic
     let matchesPrice = true;
     if (selectedPriceRange !== 'all') {
-      const priceNum = parseInt(product.price);
+      // Extraire le nombre du prix (format: "70.00€/jour" ou "70€/jour")
+      const priceMatch = product.price.match(/(\d+(?:\.\d+)?)/);
+      const priceNum = priceMatch ? parseFloat(priceMatch[1]) : 0;
       switch (selectedPriceRange) {
         case '0-50':
           matchesPrice = priceNum <= 50;
@@ -333,8 +406,14 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
       {/* Products Grid */}
       <div className="bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E] mx-auto"></div>
+              <p className="text-gray-600 mt-4">Chargement des produits...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
               <div
                 key={product.id}
                 className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden flex flex-col h-full"
@@ -382,10 +461,11 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
-          {filteredProducts.length === 0 && (
+          {!loading && filteredProducts.length === 0 && (
             <div className="text-center py-12">
               <p className="text-xl text-gray-600">
                 Aucun produit trouvé avec ces critères.

@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface AdminSidebarProps {
   language?: 'fr' | 'en';
@@ -15,6 +17,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
   const { signOut } = useAuth();
   const router = useRouter();
   const { user } = useUser();
+  const [pendingReservationsCount, setPendingReservationsCount] = useState(0);
 
   const texts = {
     fr: {
@@ -26,6 +29,8 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
       planning: 'Planning & Disponibilités',
       clients: 'Clients',
       invoices: 'Factures',
+      contracts: 'Contrats',
+      deliveries: 'Livraisons',
       settings: 'Paramètres',
       administrator: 'Administrateur',
       logout: 'Déconnexion',
@@ -39,6 +44,8 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
       planning: 'Planning & Availabilities',
       clients: 'Clients',
       invoices: 'Invoices',
+      contracts: 'Contracts',
+      deliveries: 'Deliveries',
       settings: 'Settings',
       administrator: 'Administrator',
       logout: 'Logout',
@@ -72,6 +79,31 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
     }
     return name.substring(0, 2).toUpperCase();
   };
+
+  // Charger le nombre de réservations en attente
+  useEffect(() => {
+    if (!user || !supabase) return;
+
+    const loadPendingReservationsCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('reservations')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'PENDING');
+
+        if (error) throw error;
+        setPendingReservationsCount(count || 0);
+      } catch (error) {
+        console.error('Erreur chargement réservations en attente:', error);
+      }
+    };
+
+    loadPendingReservationsCount();
+    
+    // Recharger toutes les 30 secondes
+    const interval = setInterval(loadPendingReservationsCount, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
@@ -116,7 +148,11 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
           </svg>
           {currentTexts.reservations}
           {/* Badge pour réservations en attente */}
-          <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">5</span>
+          {pendingReservationsCount > 0 && (
+            <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
+              {pendingReservationsCount > 99 ? '99+' : pendingReservationsCount}
+            </span>
+          )}
         </Link>
         <Link
           href="/admin/catalogue"
@@ -182,6 +218,32 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           {currentTexts.invoices}
+        </Link>
+        <Link
+          href="/admin/contrats"
+          className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
+            isActive('/admin/contrats')
+              ? 'bg-[#F2431E] text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          {currentTexts.contracts}
+        </Link>
+        <Link
+          href="/admin/livraisons"
+          className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
+            isActive('/admin/livraisons')
+              ? 'bg-[#F2431E] text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          {currentTexts.deliveries}
         </Link>
         <Link
           href="/admin/parametres"

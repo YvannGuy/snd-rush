@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
 
 interface SignModalProps {
   isOpen: boolean;
@@ -10,6 +11,9 @@ interface SignModalProps {
   onSuccess?: () => void;
   language?: 'fr' | 'en';
   initialTab?: 'signin' | 'signup';
+  isAdmin?: boolean;
+  onOpenAdminModal?: () => void;
+  onOpenUserModal?: () => void;
 }
 
 type TabType = 'signin' | 'signup';
@@ -20,7 +24,10 @@ export default function SignModal({
   prefillEmail = '', 
   onSuccess,
   language = 'fr',
-  initialTab = 'signin'
+  initialTab = 'signin',
+  isAdmin = false,
+  onOpenAdminModal,
+  onOpenUserModal
 }: SignModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [email, setEmail] = useState(prefillEmail);
@@ -30,9 +37,14 @@ export default function SignModal({
   // Réinitialiser l'onglet quand le modal s'ouvre
   useEffect(() => {
     if (isOpen) {
-      setActiveTab(initialTab);
+      // Pour admin, forcer l'onglet signin
+      if (isAdmin) {
+        setActiveTab('signin');
+      } else {
+        setActiveTab(initialTab);
+      }
     }
-  }, [isOpen, initialTab]);
+  }, [isOpen, initialTab, isAdmin]);
   const [title, setTitle] = useState<'mr' | 'mme'>('mr');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -57,7 +69,6 @@ export default function SignModal({
       benefits: [
         'Suivez vos réservations',
         'Accédez à vos factures',
-        'Caution remboursée automatiquement',
       ],
       close: 'Fermer',
       title: 'Titre',
@@ -78,7 +89,6 @@ export default function SignModal({
       benefits: [
         'Track your reservations',
         'Access your invoices',
-        'Deposit automatically refunded',
       ],
       close: 'Close',
       title: 'Title',
@@ -134,7 +144,10 @@ export default function SignModal({
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between rounded-t-3xl">
           <h2 className="text-2xl font-bold text-black">
-            {activeTab === 'signin' ? currentTexts.signIn : currentTexts.signUp}
+            {isAdmin 
+              ? (language === 'fr' ? 'Administrateur' : 'Administrator')
+              : (activeTab === 'signin' ? currentTexts.signIn : currentTexts.signUp)
+            }
           </h2>
           <button
             onClick={onClose}
@@ -149,33 +162,35 @@ export default function SignModal({
 
         {/* Content */}
         <div className="p-6">
-          {/* Tabs */}
-          <div className="flex gap-2 mb-6 border-b border-gray-200">
-            <button
-              onClick={() => {
-                setActiveTab('signin');
-              }}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                activeTab === 'signin'
-                  ? 'text-[#F2431E] border-b-2 border-[#F2431E]'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {currentTexts.signIn}
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('signup');
-              }}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                activeTab === 'signup'
-                  ? 'text-[#F2431E] border-b-2 border-[#F2431E]'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {currentTexts.signUp}
-            </button>
-          </div>
+          {/* Tabs - masqués pour admin */}
+          {!isAdmin && (
+            <div className="flex gap-2 mb-6 border-b border-gray-200">
+              <button
+                onClick={() => {
+                  setActiveTab('signin');
+                }}
+                className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                  activeTab === 'signin'
+                    ? 'text-[#F2431E] border-b-2 border-[#F2431E]'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {currentTexts.signIn}
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('signup');
+                }}
+                className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                  activeTab === 'signup'
+                    ? 'text-[#F2431E] border-b-2 border-[#F2431E]'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {currentTexts.signUp}
+              </button>
+            </div>
+          )}
 
           {/* Error message */}
           {error && (
@@ -250,7 +265,43 @@ export default function SignModal({
             </form>
           )}
 
-          {activeTab === 'signup' && (
+          {/* Lien administrateur - visible uniquement sur l'onglet connexion utilisateur */}
+          {activeTab === 'signin' && !isAdmin && onOpenAdminModal && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenAdminModal();
+                }}
+                className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#F2431E] transition-colors group"
+              >
+                <span>{language === 'fr' ? 'Administrateur' : 'Administrator'}</span>
+                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Lien utilisateur - visible uniquement sur le modal admin */}
+          {activeTab === 'signin' && isAdmin && onOpenUserModal && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenUserModal();
+                }}
+                className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#F2431E] transition-colors group"
+              >
+                <span>{language === 'fr' ? 'Utilisateur' : 'User'}</span>
+                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'signup' && !isAdmin && (
             <form onSubmit={handleSignUp} className="space-y-4">
               <div>
                 <label htmlFor="signup-title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -336,39 +387,54 @@ export default function SignModal({
           )}
 
 
-          {/* Why account section */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-            <h3 className="font-bold text-black mb-2">{currentTexts.whyAccount}</h3>
-            <ul className="space-y-1 text-sm text-gray-600">
-              {currentTexts.benefits.map((benefit, index) => (
-                <li key={index} className="flex items-center gap-2">
-                  <span className="text-[#F2431E]">✓</span>
-                  {benefit}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Help section */}
-          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-            <p className="text-sm text-gray-600 mb-2">{currentTexts.needHelp}</p>
-            <div className="flex gap-4 justify-center">
-              <a
-                href="tel:+33123456789"
-                className="text-[#F2431E] font-semibold hover:underline"
-              >
-                {currentTexts.call}
-              </a>
-              <a
-                href="https://wa.me/33123456789"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#F2431E] font-semibold hover:underline"
-              >
-                {currentTexts.whatsapp}
-              </a>
+          {/* Why account section - masquée pour admin */}
+          {!isAdmin && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+              <h3 className="font-bold text-black mb-2">{currentTexts.whyAccount}</h3>
+              <ul className="space-y-1 text-sm text-gray-600">
+                {currentTexts.benefits.map((benefit, index) => (
+                  <li key={index} className="flex items-center gap-2">
+                    <span className="text-[#F2431E]">✓</span>
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
+          )}
+
+          {/* Avertissement sécurité - visible uniquement sur le modal admin */}
+          {isAdmin && activeTab === 'signin' && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-xs text-yellow-800 text-center">
+                {language === 'fr' 
+                  ? '⚠️ Toute tentative de connexion non autorisée sera enregistrée'
+                  : '⚠️ Any unauthorized login attempt will be recorded'}
+              </p>
+            </div>
+          )}
+
+          {/* Help section - masquée pour admin */}
+          {!isAdmin && (
+            <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+              <p className="text-sm text-gray-600 mb-2">{currentTexts.needHelp}</p>
+              <div className="flex gap-4 justify-center">
+                <a
+                  href="tel:+33123456789"
+                  className="text-[#F2431E] font-semibold hover:underline"
+                >
+                  {currentTexts.call}
+                </a>
+                <a
+                  href="https://wa.me/33123456789"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#F2431E] font-semibold hover:underline"
+                >
+                  {currentTexts.whatsapp}
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

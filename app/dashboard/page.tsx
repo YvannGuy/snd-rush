@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const { user, loading } = useUser();
   const { signOut } = useAuth();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -276,6 +277,21 @@ export default function DashboardPage() {
           isOpen={isSignModalOpen}
           onClose={() => setIsSignModalOpen(false)}
           language={language}
+          onOpenAdminModal={() => setIsAdminModalOpen(true)}
+        />
+        <SignModal
+          isOpen={isAdminModalOpen}
+          onClose={() => setIsAdminModalOpen(false)}
+          language={language}
+          isAdmin={true}
+          onSuccess={() => {
+            setIsAdminModalOpen(false);
+            router.push('/admin');
+          }}
+          onOpenUserModal={() => {
+            setIsAdminModalOpen(false);
+            setIsSignModalOpen(true);
+          }}
         />
       </div>
     );

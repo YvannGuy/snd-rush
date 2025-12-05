@@ -60,19 +60,32 @@ export default function AdminDashboardPage() {
           .eq('start_date', todayStr)
           .order('created_at', { ascending: false });
 
-        // Récupérer les orders récents pour enrichir les réservations
-        const { data: recentOrdersForReservations } = await supabaseClient
+        // Récupérer tous les orders pour enrichir les réservations
+        const { data: allOrdersForReservations } = await supabaseClient
           .from('orders')
-          .select('customer_email, customer_name, total, status, created_at')
-          .order('created_at', { ascending: false })
-          .limit(20);
+          .select('customer_email, customer_name, total, status, created_at, stripe_session_id, metadata')
+          .order('created_at', { ascending: false });
 
-        // Associer les orders aux réservations (approximation basée sur la date)
+        // Associer les orders aux réservations via sessionId dans notes
         let reservationsWithOrders = [];
         if (reservationsData) {
           reservationsWithOrders = reservationsData.map((reservation) => {
-            // Trouver l'order le plus récent (approximation)
-            const matchingOrder = recentOrdersForReservations?.[0] || null;
+            let matchingOrder = null;
+            
+            // Chercher l'order via sessionId dans notes
+            if (reservation.notes && allOrdersForReservations) {
+              try {
+                const notesData = JSON.parse(reservation.notes);
+                if (notesData.sessionId) {
+                  matchingOrder = allOrdersForReservations.find(
+                    (o: any) => o.stripe_session_id === notesData.sessionId
+                  );
+                }
+              } catch (e) {
+                // Ignorer les erreurs de parsing
+              }
+            }
+
             return {
               ...reservation,
               order: matchingOrder,
@@ -388,22 +401,39 @@ export default function AdminDashboardPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-6">
-          <div className="text-6xl mb-6">🔒</div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">{currentTexts.signInRequired}</h1>
-          <p className="text-xl text-gray-600 mb-8">{currentTexts.signInDescription}</p>
-          <button
-            onClick={() => setIsSignModalOpen(true)}
-            className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
-          >
-            {currentTexts.signIn}
-          </button>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex">
+        {/* Sidebar */}
+        <AdminSidebar language={language} />
+
+        {/* Main Content */}
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto px-6">
+            <div className="text-6xl mb-6">🔒</div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">{currentTexts.signInRequired}</h1>
+            <p className="text-xl text-gray-600 mb-8">{currentTexts.signInDescription}</p>
+            <button
+              onClick={() => setIsSignModalOpen(true)}
+              className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
+            >
+              {currentTexts.signIn}
+            </button>
+          </div>
+        </main>
         <SignModal
           isOpen={isSignModalOpen}
           onClose={() => setIsSignModalOpen(false)}
           language={language}
+          isAdmin={true}
+          onSuccess={() => {
+            setIsSignModalOpen(false);
+            // Recharger la page pour afficher le dashboard admin
+            window.location.reload();
+          }}
+          onOpenUserModal={() => {
+            setIsSignModalOpen(false);
+            // Rediriger vers le dashboard utilisateur pour ouvrir le modal utilisateur
+            router.push('/dashboard');
+          }}
         />
       </div>
     );

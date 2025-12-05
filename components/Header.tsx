@@ -45,6 +45,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const { getCartItemCount } = useCart();
@@ -349,12 +350,8 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       {/* Mobile menu - Complètement séparé du conteneur bg-black */}
       {isMobileMenuOpen && (
         <div 
-          className="lg:hidden fixed top-16 left-0 right-0 border-t border-white/20 z-40 overflow-hidden"
+          className="lg:hidden fixed top-16 left-0 right-0 border-t border-white/20 z-40 overflow-hidden bg-black"
           style={{ 
-            background: 'transparent',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            backgroundColor: 'rgba(0, 0, 0, 0)',
             width: '100vw',
             maxWidth: '100%'
           }}
@@ -429,6 +426,26 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
           setIsSignModalOpen(false);
           // Rediriger vers le dashboard après connexion
           router.push('/dashboard');
+        }}
+        onOpenAdminModal={() => {
+          setIsSignModalOpen(false);
+          setIsAdminModalOpen(true);
+        }}
+      />
+
+      {/* Admin Sign Modal */}
+      <SignModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        language={language}
+        isAdmin={true}
+        onSuccess={() => {
+          setIsAdminModalOpen(false);
+          router.push('/admin');
+        }}
+        onOpenUserModal={() => {
+          setIsAdminModalOpen(false);
+          setIsSignModalOpen(true);
         }}
       />
 
