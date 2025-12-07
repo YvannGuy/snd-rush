@@ -10,9 +10,9 @@ const PRICING = {
   ENCEINTE_AS108: 70,   // AS108 - Entrée de gamme pro
   ENCEINTE_AS115: 80,    // AS115 - Milieu de gamme équilibré
   ENCEINTE_FBT: 90,      // FBT X-Lite 115A - Premium fiable
-  PROMIX8: 48,
-  PROMIX16_UPGRADE: 50,
-  CAISSON: 100,
+  PROMIX8: 30,
+  PROMIX16_UPGRADE: 40,
+  CAISSON: 90,
   MIC_FIL: 10,
   MIC_SANSFIL: 10,
 

@@ -11,64 +11,52 @@ export interface Pack {
 }
 
 export const PACKS: Record<string, Pack> = {
-  essentiel: {
-    id: "pack_essentiel",
-    name: "Pack Essentiel",
-    basePrice: 349,
+  petit: {
+    id: "pack_petit",
+    name: "Pack S Petit",
+    basePrice: 109,
     composition: [
-      "2 enceintes Mac Mah AS108 avec pieds et housses",
-      "1 console HPA Promix 8",
-      "1 micro Shure SM58 (filaire)",
-      "Câblage complet fourni",
+      "1 enceinte Mac Mah AS 115",
+      "1 console de mixage",
     ],
     defaultLight: false,
-    capacity: { min: 0, max: 50 }
+    capacity: { min: 30, max: 70 }
   },
-  standard: {
-    id: "pack_standard",
-    name: "Pack Standard",
-    basePrice: 799,
+  confort: {
+    id: "pack_confort",
+    name: "Pack M Confort",
+    basePrice: 129,
+    composition: [
+      "2 enceintes Mac Mah AS 115",
+      "1 console HPA Promix 8",
+    ],
+    defaultLight: false,
+    capacity: { min: 70, max: 150 }
+  },
+  grand: {
+    id: "pack_grand",
+    name: "Pack L Grand",
+    basePrice: 179,
     composition: [
       "2 enceintes FBT X-Lite 115A",
-      "1 caisson FBT X-Sub 118SA",
+      "1 caisson X-Sub 118SA",
       "1 console HPA Promix 16",
-      "2 micros Shure SM58 (filaire) + pieds",
-      "Lumières basiques (2 PAR LED)",
-      "Câblage complet fourni",
     ],
-    defaultLight: true,
-    capacity: { min: 50, max: 100 }
+    defaultLight: false,
+    capacity: { min: 150, max: 250 }
   },
-  premium: {
-    id: "pack_premium",
-    name: "Pack Premium",
-    basePrice: 1499,
-    composition: [
-      "2 enceintes FBT X-Lite 115A",
-      "2 caissons FBT X-Sub 118SA",
-      "1 console HPA Promix 16",
-      "3 micros Shure SM58 + 1 Mipro sans fil",
-      "Jeu de lumières LED + BoomTone DJ SV200 II",
-      "Technicien sur place inclus",
-      "Câblage complet fourni",
-    ],
-    defaultLight: true,
-    capacity: { min: 100, max: 200 }
-  },
-  prestige: {
-    id: "pack_prestige",
-    name: "Pack Prestige",
+  maxi: {
+    id: "pack_maxi",
+    name: "Pack XL Maxi / Sur mesure",
     basePrice: null, // Prix sur demande
     composition: [
-      "Sono complète (enceintes FBT, caissons, retours)",
-      "Console HPA Promix 16",
-      "Pack micros (Shure + Mipro sans fil)",
-      "Pack lumière complet (uplights, effets, BoomTone)",
-      "Technicien dédié",
-      "Options DJ / Photo / Vidéo sur demande",
+      "Sonorisation pro",
+      "Micros HF & instruments",
+      "Technicien & régie",
+      "Logistique complète",
     ],
-    defaultLight: true,
-    capacity: { min: 200, max: 999 }
+    defaultLight: false,
+    capacity: { min: 300, max: 999 }
   },
 };
 
@@ -86,10 +74,10 @@ export function recommendPackByGuests(guests: string): Pack | null {
     default: guestCount = 0;
   }
   
-  if (guestCount <= 50) return PACKS.essentiel;
-  if (guestCount <= 100) return PACKS.standard;
-  if (guestCount <= 200) return PACKS.premium;
-  return PACKS.prestige;
+  if (guestCount <= 70) return PACKS.petit;
+  if (guestCount <= 150) return PACKS.confort;
+  if (guestCount <= 250) return PACKS.grand;
+  return PACKS.maxi;
 }
 
 /**

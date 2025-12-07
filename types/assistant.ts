@@ -139,47 +139,47 @@ export const PACK_IDS = {
 // Configuration des prix
 export const PRICING_CONFIG: Pricing = {
   packs: {
-    essentiel: {
+    petit: {
       id: PACK_IDS.essentiel.id,
-      name: 'Pack Essentiel',
-      description: 'Solution basique pour petits événements',
-      basePrice: 349,
-      features: ['2 enceintes', 'Promix 8', 'Livraison'],
-      capacity: { min: 0, max: 50 },
+      name: 'Pack S Petit',
+      description: 'Pack S parfait pour les petits événements jusqu\'à 70 personnes, avec 1 enceinte Mac Mah AS 115 et console de mixage.',
+      basePrice: 109,
+      features: ['1 enceinte Mac Mah AS 115', '1 console de mixage'],
+      capacity: { min: 30, max: 70 },
       priceId: PACK_IDS.essentiel.priceId,
     },
-    standard: {
+    confort: {
       id: PACK_IDS.standard.id,
-      name: 'Pack Standard',
-      description: 'Solution complète pour événements moyens',
-      basePrice: 799,
-      features: ['2 enceintes', '1 caisson', 'Promix 8', 'Livraison'],
-      capacity: { min: 50, max: 100 },
+      name: 'Pack M Confort',
+      description: 'Pack M pour événements moyens jusqu\'à 150 personnes, avec 2 enceintes Mac Mah AS 115 et console HPA Promix 8.',
+      basePrice: 129,
+      features: ['2 enceintes Mac Mah AS 115', '1 console HPA Promix 8'],
+      capacity: { min: 70, max: 150 },
       priceId: PACK_IDS.standard.priceId,
     },
-    premium: {
+    grand: {
       id: PACK_IDS.premium.id,
-      name: 'Pack Premium',
-      description: 'Solution professionnelle pour grands événements',
-      basePrice: 1499,
-      features: ['4 enceintes', '2 caissons', 'Promix 16', 'Livraison'],
-      capacity: { min: 100, max: 250 },
+      name: 'Pack L Grand',
+      description: 'Pack L idéal pour événements jusqu\'à 250 personnes, avec 2 enceintes FBT X-Lite 115A, 1 caisson X-Sub 118SA et console HPA Promix 16.',
+      basePrice: 179,
+      features: ['2 enceintes FBT X-Lite 115A', '1 caisson X-Sub 118SA', '1 console HPA Promix 16'],
+      capacity: { min: 150, max: 250 },
       priceId: PACK_IDS.premium.priceId,
     },
-    prestige: {
+    maxi: {
       id: PACK_IDS.prestige.id,
-      name: 'Pack Prestige',
-      description: 'Solution haut de gamme sur devis',
-      basePrice: 2500,
-      features: ['Matériel professionnel', 'Technicien dédié', 'Sur devis'],
-      capacity: { min: 200, max: 1000 },
+      name: 'Pack XL Maxi / Sur mesure',
+      description: 'Solution sur mesure pour très grands événements',
+      basePrice: null,
+      features: ['Sonorisation pro', 'Micros HF & instruments', 'Technicien & régie', 'Logistique complète'],
+      capacity: { min: 300, max: 1000 },
       priceId: PACK_IDS.prestige.priceId,
     },
   },
   aLaCarte: {
     enceinte: 70,
-    promix8: 40,
-    caisson: 100,
+    promix8: 30,
+    caisson: 90,
   },
   delivery: {
     paris: 80,
@@ -188,7 +188,7 @@ export const PRICING_CONFIG: Pricing = {
     retrait: 0,
   },
   extras: {
-    promix16: 80,
+    promix16: 70,
     lumiere_basique: 80,
     technicien: 150,
     micros_filaire: 10,

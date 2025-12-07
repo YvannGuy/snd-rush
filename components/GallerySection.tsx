@@ -1,15 +1,16 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 
 interface GallerySectionProps {
   language: 'fr' | 'en';
 }
 
 export default function GallerySection({ language }: GallerySectionProps) {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+  const [playingVideos, setPlayingVideos] = useState<Set<number>>(new Set());
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const texts = {
     fr: {
@@ -26,76 +27,40 @@ export default function GallerySection({ language }: GallerySectionProps) {
 
   const mediaItems = [
     {
-      type: 'image',
-      src: 'https://readdy.ai/api/search-image?query=Professional%20DJ%20mixing%20live%20music%20at%20elegant%20wedding%20reception%20with%20high-end%20audio%20equipment%2C%20mixing%20console%20with%20glowing%20buttons%2C%20speakers%20and%20microphones%20setup%2C%20warm%20ambient%20lighting%2C%20guests%20dancing%20in%20background%2C%20premium%20sound%20system%20installation&width=800&height=600&seq=gallery-1&orientation=landscape',
-      alt: 'DJ professionnel lors d\'un mariage'
+      type: 'video',
+      src: '/video1.mp4',
+      alt: language === 'fr' ? 'Vidéo 1 - Nos équipements en action' : 'Video 1 - Our equipment in action'
     },
     {
-      type: 'image',
-      src: 'https://readdy.ai/api/search-image?query=Corporate%20conference%20setup%20with%20professional%20microphones%2C%20large%20speakers%2C%20and%20audio%20mixing%20equipment%2C%20business%20presentation%20environment%2C%20clean%20modern%20venue%2C%20professional%20lighting%2C%20attendees%20listening%20to%20speaker&width=800&height=600&seq=gallery-2&orientation=landscape',
-      alt: 'Conférence d\'entreprise'
+      type: 'video',
+      src: '/video2.mp4',
+      alt: language === 'fr' ? 'Vidéo 2 - Nos équipements en action' : 'Video 2 - Our equipment in action'
     },
     {
-      type: 'image',
-      src: 'https://readdy.ai/api/search-image?query=Live%20concert%20stage%20with%20powerful%20professional%20speakers%2C%20mixing%20console%2C%20microphones%2C%20stage%20lighting%2C%20musicians%20performing%2C%20audience%20enjoying%20music%2C%20high-quality%20sound%20system%2C%20concert%20venue%20atmosphere&width=800&height=600&seq=gallery-3&orientation=landscape',
-      alt: 'Concert en direct'
-    },
-    {
-      type: 'image',
-      src: 'https://readdy.ai/api/search-image?query=Birthday%20party%20celebration%20with%20professional%20sound%20system%2C%20DJ%20equipment%2C%20colorful%20party%20lights%2C%20people%20dancing%20and%20celebrating%2C%20speakers%20and%20audio%20setup%2C%20festive%20atmosphere%2C%20modern%20venue&width=800&height=600&seq=gallery-4&orientation=landscape',
-      alt: 'Fête d\'anniversaire'
-    },
-    {
-      type: 'image',
-      src: 'https://readdy.ai/api/search-image?query=Professional%20audio%20technician%20installing%20high-end%20sound%20equipment%2C%20mixing%20console%20setup%2C%20speakers%20placement%2C%20technical%20expertise%2C%20modern%20audio%20gear%2C%20professional%20installation%20service%2C%20clean%20workspace&width=800&height=600&seq=gallery-5&orientation=landscape',
-      alt: 'Installation technique'
-    },
-    {
-      type: 'image',
-      src: 'https://readdy.ai/api/search-image?query=Outdoor%20event%20with%20professional%20sound%20system%2C%20large%20speakers%2C%20mixing%20equipment%2C%20people%20enjoying%20music%20outdoors%2C%20festival%20atmosphere%2C%20professional%20audio%20setup%2C%20sunny%20day%20event&width=800&height=600&seq=gallery-6&orientation=landscape',
-      alt: 'Événement extérieur'
-    },
-    {
-      type: 'image',
-      src: 'https://readdy.ai/api/search-image?query=High-end%20professional%20audio%20equipment%20collection%2C%20mixing%20consoles%2C%20speakers%2C%20microphones%2C%20cables%2C%20technical%20gear%20organized%20professionally%2C%20modern%20audio%20rental%20inventory%2C%20premium%20sound%20equipment&width=800&height=600&seq=gallery-7&orientation=landscape',
-      alt: 'Matériel professionnel'
-    },
-    {
-      type: 'image',
-      src: 'https://readdy.ai/api/search-image?query=Wedding%20ceremony%20with%20professional%20sound%20system%2C%20elegant%20venue%2C%20bride%20and%20groom%2C%20guests%20seated%2C%20microphones%20for%20vows%2C%20speakers%20discreetly%20placed%2C%20romantic%20atmosphere%2C%20premium%20audio%20service&width=800&height=600&seq=gallery-8&orientation=landscape',
-      alt: 'Cérémonie de mariage'
+      type: 'video',
+      src: '/video3.mp4',
+      alt: language === 'fr' ? 'Vidéo 3 - Nos équipements en action' : 'Video 3 - Our equipment in action'
     }
   ];
 
-  const totalSlides = Math.ceil(mediaItems.length / 4);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % totalSlides);
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [totalSlides]);
-
-  const getCurrentSlideItems = () => {
-    const startIndex = currentSlide * 4;
-    return mediaItems.slice(startIndex, startIndex + 4);
+  const handleVideoPlay = (index: number) => {
+    setPlayingVideos(prev => new Set(prev).add(index));
   };
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides);
+  const handleVideoPause = (index: number) => {
+    setPlayingVideos(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(index);
+      return newSet;
+    });
   };
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  const openVideo = (videoSrc: string) => {
+    setSelectedVideo(videoSrc);
   };
 
-  const openImage = (imageSrc: string) => {
-    setSelectedImage(imageSrc);
-  };
-
-  const closeImage = () => {
-    setSelectedImage(null);
+  const closeVideo = () => {
+    setSelectedVideo(null);
   };
 
   return (
@@ -113,88 +78,85 @@ export default function GallerySection({ language }: GallerySectionProps) {
             </p>
           </div>
 
-          {/* Gallery Slider */}
-          <div className="relative">
-            <div className="overflow-hidden rounded-3xl">
+          {/* Video Gallery */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+            {mediaItems.map((item, index) => (
               <div 
-                className="flex transition-transform duration-1000 ease-in-out"
-                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                key={index} 
+                className="group relative overflow-hidden rounded-2xl bg-gray-100 aspect-video hover:shadow-2xl transition-all duration-500 cursor-pointer"
+                onMouseEnter={() => {
+                  const video = videoRefs.current[index];
+                  if (video) {
+                    video.play().catch(() => {});
+                  }
+                }}
+                onMouseLeave={() => {
+                  const video = videoRefs.current[index];
+                  if (video) {
+                    video.pause();
+                  }
+                }}
+                onClick={() => openVideo(item.src)}
               >
-                {Array.from({ length: totalSlides }).map((_, slideIndex) => (
-                  <div key={slideIndex} className="w-full flex-shrink-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
-                      {mediaItems.slice(slideIndex * 4, slideIndex * 4 + 4).map((item, index) => (
-                        <div key={index} className="group relative overflow-hidden rounded-2xl bg-gray-100 aspect-[4/3] hover:shadow-xl transition-all duration-500">
-                          <img
-                            src={item.src}
-                            alt={item.alt}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300"></div>
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <button
-                              onClick={() => openImage(item.src)}
-                              className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors cursor-pointer"
-                            >
-                              <i className="ri-eye-line text-2xl text-black"></i>
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                <video
+                  ref={(el) => {
+                    videoRefs.current[index] = el;
+                  }}
+                  src={item.src}
+                  className="w-full h-full object-cover"
+                  playsInline
+                  muted
+                  loop
+                  onPlay={() => handleVideoPlay(index)}
+                  onPause={() => handleVideoPause(index)}
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  <div className="w-20 h-20 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </div>
+                {/* Play overlay when not playing */}
+                {!playingVideos.has(index) && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/10 pointer-events-none">
+                    <div className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
                     </div>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-
-            {/* Navigation Arrows */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-lg z-10"
-            >
-              <i className="ri-arrow-left-line text-xl text-black"></i>
-            </button>
-            
-            <button
-              onClick={nextSlide}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-lg z-10"
-            >
-              <i className="ri-arrow-right-line text-xl text-black"></i>
-            </button>
-          </div>
-
-          {/* Slide Indicators */}
-          <div className="flex justify-center space-x-3 mt-8">
-            {Array.from({ length: totalSlides }).map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`h-3 rounded-full transition-all duration-300 cursor-pointer ${
-                  index === currentSlide 
-                    ? 'bg-[#F2431E] w-8' 
-                    : 'bg-gray-300 w-3 hover:bg-gray-400'
-                }`}
-              />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Image Modal */}
-      {selectedImage && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-          <div className="relative max-w-7xl max-h-full">
+      {/* Video Modal */}
+      {selectedVideo && (
+        <div 
+          className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4"
+          onClick={closeVideo}
+        >
+          <div className="relative max-w-7xl w-full max-h-full" onClick={(e) => e.stopPropagation()}>
             <button
-              onClick={closeImage}
+              onClick={closeVideo}
               className="absolute -top-4 -right-4 w-12 h-12 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors z-10"
             >
-              <i className="ri-close-line text-2xl text-black"></i>
+              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-            <img
-              src={selectedImage}
-              alt="Image en plein écran"
-              className="max-w-full max-h-full object-contain rounded-lg"
-            />
+            <video
+              src={selectedVideo}
+              controls
+              autoPlay
+              className="w-full h-full max-h-[90vh] rounded-lg"
+            >
+              {language === 'fr' ? 'Votre navigateur ne supporte pas la lecture de vidéos.' : 'Your browser does not support video playback.'}
+            </video>
           </div>
         </div>
       )}

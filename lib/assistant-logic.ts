@@ -189,8 +189,8 @@ export function computeOptionsTotal(answers: Answers, basePrice: number): number
  * Vérifie si le pack a de la lumière par défaut
  */
 function hasDefaultLight(basePrice: number): boolean {
-  // Les packs Premium et Prestige incluent la lumière par défaut
-  return basePrice >= 1499;
+  // Les packs Standard, Premium et Prestige incluent la lumière par défaut
+  return basePrice >= 179;
 }
 
 /**

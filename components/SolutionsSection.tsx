@@ -11,7 +11,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
   const texts = {
     fr: {
       title: 'Nos packs les plus populaires',
-      subtitle: 'Adaptés à 30 à 400 personnes — installation incluse.',
+      subtitle: '',
       viewPack: 'Voir ce pack',
       requestQuote: 'Demander un devis',
       viewAllPacks: 'Voir tous les packs',
@@ -37,52 +37,49 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
       packs: [
         {
           id: 1,
-          name: 'Pack Essentiel',
-          price: '300€',
-          capacity: 'Pour 30 à 70 personnes, intérieur',
+          name: 'Pack S Petit',
+          price: '109€',
+          capacity: 'Pour 30 à 70 personnes',
           includes: [
-            '2 enceintes pro',
-            '1 micro',
-            'Câblage',
-            'Installation & reprise'
+            '1 enceinte Mac Mah AS 115',
+            '1 console de mixage',
+            'Options : micros, câbles, installation, livraison'
           ],
           cta: 'Voir ce pack',
           ctaType: 'pack' as const
         },
         {
           id: 2,
-          name: 'Pack Standard',
-          price: '450€',
+          name: 'Pack M Confort',
+          price: '129€',
           capacity: 'Pour 70 à 150 personnes',
           includes: [
-            '2 enceintes + 1 caisson de basse',
-            '2 micros',
-            'Console de mixage',
-            'Installation & reprise'
+            '2 enceintes Mac Mah AS 115',
+            '1 console HPA Promix 8',
+            'Options : micros, câbles, installation, livraison'
           ],
           cta: 'Voir ce pack',
           ctaType: 'pack' as const
         },
         {
           id: 3,
-          name: 'Pack Premium',
-          price: '650€',
-          capacity: 'Pour 150 à 300 personnes, live / DJ',
+          name: 'Pack L Grand',
+          price: '179€',
+          capacity: 'Pour 150 à 250 personnes',
           includes: [
-            '2 enceintes + 2 caissons',
-            'Console pro',
-            '4 micros',
-            'Technicien sur place',
-            'Installation & reprise'
+            '2 enceintes FBT X-Lite 115A',
+            '1 caisson X-Sub 118SA',
+            '1 console HPA Promix 16',
+            'Options : micros, câbles, installation, livraison'
           ],
           cta: 'Voir ce pack',
           ctaType: 'pack' as const
         },
         {
           id: 5,
-          name: 'Pack Événement',
-          price: 'Sur devis',
-          capacity: 'Pour 300 à 600 personnes',
+          name: 'Pack XL Maxi / Sur mesure',
+          price: 'Sur mesure',
+          capacity: 'Plus de 300 personnes',
           includes: [
             'Sonorisation pro',
             'Micros HF & instruments',
@@ -96,7 +93,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
     },
     en: {
       title: 'Our most popular packs',
-      subtitle: 'Suitable for 30 to 400 people — installation included.',
+      subtitle: '',
       viewPack: 'View this pack',
       requestQuote: 'Request a quote',
       viewAllPacks: 'View all packs',
@@ -122,52 +119,49 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
       packs: [
         {
           id: 1,
-          name: 'Essential Pack',
-          price: '300€',
-          capacity: 'For 30 to 70 people, indoor',
+          name: 'Pack S Small',
+          price: '109€',
+          capacity: 'For 30 to 70 people',
           includes: [
-            '2 pro speakers',
-            '1 microphone',
-            'Cabling',
-            'Installation & pickup'
+            '1 Mac Mah AS 115 speaker',
+            '1 mixing console',
+            'Options: mics, cables, installation, delivery'
           ],
           cta: 'View this pack',
           ctaType: 'pack' as const
         },
         {
           id: 2,
-          name: 'Standard Pack',
-          price: '450€',
+          name: 'Pack M Comfort',
+          price: '129€',
           capacity: 'For 70 to 150 people',
           includes: [
-            '2 speakers + 1 subwoofer',
-            '2 microphones',
-            'Mixing console',
-            'Installation & pickup'
+            '2 Mac Mah AS 115 speakers',
+            '1 HPA Promix 8 console',
+            'Options: mics, cables, installation, delivery'
           ],
           cta: 'View this pack',
           ctaType: 'pack' as const
         },
         {
           id: 3,
-          name: 'Premium Pack',
-          price: '650€',
-          capacity: 'For 150 to 300 people, live / DJ',
+          name: 'Pack L Large',
+          price: '179€',
+          capacity: 'For 150 to 250 people',
           includes: [
-            '2 speakers + 2 subwoofers',
-            'Pro console',
-            '4 microphones',
-            'On-site technician',
-            'Installation & pickup'
+            '2 FBT X-Lite 115A speakers',
+            '1 X-Sub 118SA subwoofer',
+            '1 HPA Promix 16 console',
+            'Options: mics, cables, installation, delivery'
           ],
           cta: 'View this pack',
           ctaType: 'pack' as const
         },
         {
           id: 5,
-          name: 'Event Pack',
+          name: 'Pack XL Maxi / Custom',
           price: 'On quote',
-          capacity: 'For 300 to 600 people',
+          capacity: 'More than 300 people',
           includes: [
             'Pro sound system',
             'Wireless mics & instruments',
@@ -199,9 +193,11 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-4">
             {currentTexts.title}
           </h2>
-          <p className="text-xl text-gray-600">
-            {currentTexts.subtitle}
-          </p>
+          {currentTexts.subtitle && (
+            <p className="text-xl text-gray-600">
+              {currentTexts.subtitle}
+            </p>
+          )}
         </div>
 
         {/* Packs Grid */}

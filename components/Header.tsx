@@ -57,8 +57,15 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     // Initialiser le compteur au montage
     setCartCount(getCartItemCount());
     
-    const handleCartUpdate = () => {
-      setCartCount(getCartItemCount());
+    const handleCartUpdate = (event?: CustomEvent) => {
+      // Utiliser les données de l'événement si disponibles, sinon lire depuis le contexte
+      if (event?.detail) {
+        const cart = event.detail as { items: any[] };
+        const count = cart.items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0;
+        setCartCount(count);
+      } else {
+        setCartCount(getCartItemCount());
+      }
     };
     
     const handleProductAdded = () => {
@@ -69,11 +76,13 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       setCartCount(getCartItemCount());
     };
     
-    window.addEventListener('cartUpdated', handleCartUpdate);
+    // Écouter l'événement avec le type correct
+    const cartUpdateHandler = (event: Event) => handleCartUpdate(event as CustomEvent);
+    window.addEventListener('cartUpdated', cartUpdateHandler);
     window.addEventListener('productAddedToCart', handleProductAdded);
     
     return () => {
-      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('cartUpdated', cartUpdateHandler);
       window.removeEventListener('productAddedToCart', handleProductAdded);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,12 +205,12 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               >
                 <div className="w-6 h-6 flex items-center justify-center">
                   {language === 'fr' ? (
-                    <span className="text-lg">🇫🇷</span>
-                  ) : (
                     <span className="text-lg">🇬🇧</span>
+                  ) : (
+                    <span className="text-lg">🇫🇷</span>
                   )}
                 </div>
-                <span className="uppercase">{language}</span>
+                <span className="uppercase">{language === 'fr' ? 'EN' : 'FR'}</span>
               </button>
 
               {/* Auth Icon - Desktop only */}
@@ -397,12 +406,12 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
             >
               <div className="w-5 h-5 flex items-center justify-center">
                 {language === 'fr' ? (
-                  <span className="text-base">🇫🇷</span>
-                ) : (
                   <span className="text-base">🇬🇧</span>
+                ) : (
+                  <span className="text-base">🇫🇷</span>
                 )}
               </div>
-              <span className="uppercase text-xs">{language}</span>
+              <span className="uppercase text-xs">{language === 'fr' ? 'EN' : 'FR'}</span>
             </button>
 
           </div>

@@ -44,160 +44,152 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
     fr: [
       {
         id: 1,
-        name: "Essentiel",
+        name: "Pack S Petit",
         tagline: "Solution basique pour petits événements",
-        description: "Pack essentiel parfait pour les petits événements intérieurs jusqu'à 70 personnes.",
-        priceParis: "300 € TTC",
-        priceHorsParis: "300 € TTC",
+        description: "Pack S parfait pour les petits événements jusqu'à 70 personnes, avec 1 enceinte Mac Mah AS 115 et console de mixage.",
+        priceParis: "109 € TTC",
+        priceHorsParis: "109 € TTC",
         featured: false,
         image: "/pack2c.jpg",
         features: [
-          "2 enceintes pro",
-          "1 micro",
-          "Câblage complet",
-          "Installation & reprise"
+          "1 enceinte Mac Mah AS 115",
+          "1 console de mixage",
+          "Options : micros, câbles, installation, livraison"
         ],
-        highlight: "Clé en main",
+        highlight: "Caution : 700 €",
         ideal: "30 à 70 personnes",
-        note: "Idéal pour petits événements intérieurs, réunions, anniversaires intimes."
+        note: "Idéal pour conférences, mariages, DJ sets."
       },
       {
         id: 2,
-        name: "Standard",
+        name: "Pack M Confort",
         tagline: "Solution complète pour événements moyens",
-        description: "Pack standard avec sonorisation complète pour événements jusqu'à 150 personnes.",
-        priceParis: "450 € TTC",
-        priceHorsParis: "450 € TTC",
+        description: "Pack M pour événements moyens jusqu'à 150 personnes, avec 2 enceintes Mac Mah AS 115 et console HPA Promix 8.",
+        priceParis: "129 € TTC",
+        priceHorsParis: "129 € TTC",
         featured: true,
         image: "/pack2cc.jpg",
         features: [
-          "2 enceintes + 1 caisson de basse",
-          "2 micros",
-          "Console de mixage",
-          "Installation & reprise"
+          "2 enceintes Mac Mah AS 115",
+          "1 console HPA Promix 8",
+          "Options : micros, câbles, installation, livraison"
         ],
-        highlight: "Clé en main",
+        highlight: "Caution : 1100 €",
         ideal: "70 à 150 personnes",
-        note: "Parfait pour événements moyens, mariages, conférences, soirées privées."
+        note: "Parfait pour conférences, fêtes, DJ sets."
       },
       {
         id: 3,
-        name: "Premium",
+        name: "Pack L Grand",
         tagline: "Solution professionnelle pour grands événements",
-        description: "Pack premium avec équipement professionnel et technicien sur place pour événements jusqu'à 300 personnes.",
-        priceParis: "650 € TTC",
-        priceHorsParis: "650 € TTC",
+        description: "Pack L idéal pour événements jusqu'à 250 personnes, avec 2 enceintes FBT X-Lite 115A, 1 caisson X-Sub 118SA et console HPA Promix 16.",
+        priceParis: "179 € TTC",
+        priceHorsParis: "179 € TTC",
         featured: false,
         image: "/pack4cc.jpg",
         features: [
-          "2 enceintes + 2 caissons",
-          "Console pro",
-          "4 micros",
-          "Technicien sur place",
-          "Installation & reprise"
+          "2 enceintes FBT X-Lite 115A",
+          "1 caisson X-Sub 118SA",
+          "1 console HPA Promix 16",
+          "Options : micros, câbles, installation, livraison"
         ],
-        highlight: "Clé en main",
-        ideal: "150 à 300 personnes",
-        note: "Idéal pour grands événements, concerts, live, DJ sets professionnels."
+        highlight: "Caution : 1600 €",
+        ideal: "150 à 250 personnes",
+        note: "Idéal pour concerts, DJ sets, grandes conférences."
       },
       {
         id: 4,
-        name: "Événement",
+        name: "Pack XL Maxi / Sur mesure",
         tagline: "Solution sur mesure pour très grands événements",
-        description: "Pack événement avec sonorisation professionnelle complète pour événements jusqu'à 600 personnes.",
+        description: "Pack XL avec sonorisation professionnelle complète pour événements de plus de 300 personnes.",
         priceParis: "Sur devis",
         priceHorsParis: "Sur devis",
         featured: false,
         image: "/pack4cc.jpg",
         features: [
-          "Sonorisation pro complète",
+          "Sonorisation pro",
           "Micros HF & instruments",
           "Technicien & régie",
-          "Logistique complète",
-          "Installation & reprise"
+          "Logistique complète"
         ],
-        highlight: "Clé en main",
-        ideal: "300 à 600 personnes",
+        highlight: "Caution : selon devis",
+        ideal: "Plus de 300 personnes",
         note: "Parfait pour très grands événements, festivals, concerts, événements corporate."
       }
     ],
     en: [
       {
         id: 1,
-        name: "Essential",
+        name: "Pack S Small",
         tagline: "Basic solution for small events",
-        description: "Essential pack perfect for small indoor events up to 70 people.",
-        priceParis: "300 € TTC",
-        priceHorsParis: "300 € TTC",
+        description: "Pack S perfect for small events up to 70 people, with 1 Mac Mah AS 115 speaker and mixing console.",
+        priceParis: "109 € TTC",
+        priceHorsParis: "109 € TTC",
         featured: false,
         image: "/pack2c.jpg",
         features: [
-          "2 pro speakers",
-          "1 microphone",
-          "Complete wiring",
-          "Installation & pickup"
+          "1 Mac Mah AS 115 speaker",
+          "1 mixing console",
+          "Options: mics, cables, installation, delivery"
         ],
-        highlight: "Turnkey",
+        highlight: "Deposit: 700 €",
         ideal: "30 to 70 people",
-        note: "Ideal for small indoor events, meetings, intimate birthdays."
+        note: "Ideal for conferences, weddings, DJ sets."
       },
       {
         id: 2,
-        name: "Standard",
+        name: "Pack M Comfort",
         tagline: "Complete solution for medium events",
-        description: "Standard pack with complete sound system for events up to 150 people.",
-        priceParis: "450 € TTC",
-        priceHorsParis: "450 € TTC",
+        description: "Pack M for medium events up to 150 people, with 2 Mac Mah AS 115 speakers and HPA Promix 8 console.",
+        priceParis: "129 € TTC",
+        priceHorsParis: "129 € TTC",
         featured: true,
         image: "/pack2cc.jpg",
         features: [
-          "2 speakers + 1 subwoofer",
-          "2 microphones",
-          "Mixing console",
-          "Installation & pickup"
+          "2 Mac Mah AS 115 speakers",
+          "1 HPA Promix 8 console",
+          "Options: mics, cables, installation, delivery"
         ],
-        highlight: "Turnkey",
+        highlight: "Deposit: 1100 €",
         ideal: "70 to 150 people",
-        note: "Perfect for medium events, weddings, conferences, private parties."
+        note: "Perfect for conferences, parties, DJ sets."
       },
       {
         id: 3,
-        name: "Premium",
+        name: "Pack L Large",
         tagline: "Professional solution for large events",
-        description: "Premium pack with professional equipment and on-site technician for events up to 300 people.",
-        priceParis: "650 € TTC",
-        priceHorsParis: "650 € TTC",
+        description: "Pack L ideal for events up to 250 people, with 2 FBT X-Lite 115A speakers, 1 X-Sub 118SA subwoofer and HPA Promix 16 console.",
+        priceParis: "179 € TTC",
+        priceHorsParis: "179 € TTC",
         featured: false,
         image: "/pack4cc.jpg",
         features: [
-          "2 speakers + 2 subwoofers",
-          "Pro console",
-          "4 microphones",
-          "On-site technician",
-          "Installation & pickup"
+          "2 FBT X-Lite 115A speakers",
+          "1 X-Sub 118SA subwoofer",
+          "1 HPA Promix 16 console",
+          "Options: mics, cables, installation, delivery"
         ],
-        highlight: "Turnkey",
-        ideal: "150 to 300 people",
-        note: "Ideal for large events, concerts, live, professional DJ sets."
+        highlight: "Deposit: 1600 €",
+        ideal: "150 to 250 people",
+        note: "Ideal for concerts, DJ sets, large conferences."
       },
       {
         id: 4,
-        name: "Event",
+        name: "Pack XL Maxi / Custom",
         tagline: "Custom solution for very large events",
-        description: "Event pack with complete professional sound system for events up to 600 people.",
+        description: "Pack XL with complete professional sound system for events with more than 300 people.",
         priceParis: "On quote",
         priceHorsParis: "On quote",
         featured: false,
         image: "/pack4cc.jpg",
         features: [
-          "Complete pro sound system",
+          "Pro sound system",
           "HF mics & instruments",
           "Technician & control room",
-          "Complete logistics",
-          "Installation & pickup"
+          "Complete logistics"
         ],
-        highlight: "Turnkey",
-        ideal: "300 to 600 people",
+        highlight: "Deposit: on quote",
+        ideal: "More than 300 people",
         note: "Perfect for very large events, festivals, concerts, corporate events."
       }
     ]
@@ -308,7 +300,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
       startDate,
       endDate,
       dailyPrice: basePrice || 0,
-      deposit: 500,
+      deposit: pack.id === 1 ? 700 : pack.id === 2 ? 1100 : pack.id === 3 ? 1600 : 500,
       addons: selectedAddons,
       images: [pack.image],
     };
@@ -585,7 +577,12 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             {/* Caution */}
             <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
               <span>🔒</span>
-              <span>{language === 'fr' ? 'Caution: 500€' : 'Deposit: 500€'}</span>
+              <span>
+                {language === 'fr' 
+                  ? `Caution: ${pack.id === 1 ? '700' : pack.id === 2 ? '1100' : pack.id === 3 ? '1600' : 'selon devis'}€`
+                  : `Deposit: ${pack.id === 1 ? '700' : pack.id === 2 ? '1100' : pack.id === 3 ? '1600' : 'on quote'}€`
+                }
+              </span>
             </div>
           </div>
         </div>
@@ -605,10 +602,13 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
               <div className="text-4xl">⚡</div>
               <div>
                 <h3 className="font-bold text-black mb-1">
-                  {language === 'fr' ? 'Puissance' : 'Power'} {hasPrice ? `${basePrice}W RMS` : ''}
+                  {language === 'fr' ? 'Puissance' : 'Power'}
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  {language === 'fr' ? 'Son puissant et cristallin pour tous vos événements' : 'Powerful and crystal-clear sound for all your events'}
+                  {pack.id === 1 && (language === 'fr' ? 'Enceinte Mac Mah AS 115 : 400 W LF + 100 W HF RMS' : 'Mac Mah AS 115 Speaker: 400 W LF + 100 W HF RMS')}
+                  {pack.id === 2 && (language === 'fr' ? '2× Enceintes Mac Mah AS 115 : 2× (400 W LF + 100 W HF RMS)' : '2× Mac Mah AS 115 Speakers: 2× (400 W LF + 100 W HF RMS)')}
+                  {pack.id === 3 && (language === 'fr' ? '2× Enceintes FBT X-Lite 115A : 1200 W LF + 300 W HF chacune. 1× Caisson X-Sub 118SA : 1200 W LF' : '2× FBT X-Lite 115A Speakers: 1200 W LF + 300 W HF each. 1× X-Sub 118SA Subwoofer: 1200 W LF')}
+                  {pack.id === 4 && (language === 'fr' ? 'Puissance professionnelle adaptée à vos besoins' : 'Professional power adapted to your needs')}
                 </p>
               </div>
             </div>
@@ -628,7 +628,10 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
               <div>
                 <h3 className="font-bold text-black mb-1">{capacity}</h3>
                 <p className="text-gray-600 text-sm">
-                  {language === 'fr' ? 'Idéale pour mariages, conférences, DJ sets' : 'Ideal for weddings, conferences, DJ sets'}
+                  {pack.id === 1 && (language === 'fr' ? 'Idéal pour conférences, mariages, DJ sets' : 'Ideal for conferences, weddings, DJ sets')}
+                  {pack.id === 2 && (language === 'fr' ? 'Parfait pour conférences, fêtes, DJ sets' : 'Perfect for conferences, parties, DJ sets')}
+                  {pack.id === 3 && (language === 'fr' ? 'Idéal pour concerts, DJ sets, grandes conférences' : 'Ideal for concerts, DJ sets, large conferences')}
+                  {pack.id === 4 && (language === 'fr' ? 'Parfait pour très grands événements, festivals, concerts' : 'Perfect for very large events, festivals, concerts')}
                 </p>
               </div>
             </div>
@@ -644,17 +647,32 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             <div className="bg-white rounded-xl p-4 text-center">
               <div className="text-3xl mb-2">🔊</div>
               <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Puissance RMS' : 'RMS Power'}</p>
-              <p className="text-lg font-bold text-black">{hasPrice ? `${basePrice}W` : '—'}</p>
-                </div>
+              <p className="text-lg font-bold text-black">
+                {pack.id === 1 && '400 W LF + 100 W HF'}
+                {pack.id === 2 && '2× (400 W LF + 100 W HF)'}
+                {pack.id === 3 && (language === 'fr' ? 'Enceintes: 2× (1200 W LF + 300 W HF). Caisson: 1200 W LF' : 'Speakers: 2× (1200 W LF + 300 W HF). Sub: 1200 W LF')}
+                {pack.id === 4 && '—'}
+              </p>
+            </div>
             <div className="bg-white rounded-xl p-4 text-center">
               <div className="text-3xl mb-2">📦</div>
               <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Poids' : 'Weight'}</p>
-              <p className="text-lg font-bold text-black">28 kg</p>
+              <p className="text-lg font-bold text-black">
+                {pack.id === 1 && '28 kg'}
+                {pack.id === 2 && '2×28 kg'}
+                {pack.id === 3 && (language === 'fr' ? 'Enceintes: 2×24 kg, Sub: 38 kg' : 'Speakers: 2×24 kg, Sub: 38 kg')}
+                {pack.id === 4 && '—'}
+              </p>
             </div>
             <div className="bg-white rounded-xl p-4 text-center">
               <div className="text-3xl mb-2">📐</div>
               <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Dimensions' : 'Dimensions'}</p>
-              <p className="text-lg font-bold text-black">46x36x66cm</p>
+              <p className="text-lg font-bold text-black text-xs">
+                {pack.id === 1 && '46×36×66 cm'}
+                {pack.id === 2 && '2×46×36×66 cm'}
+                {pack.id === 3 && (language === 'fr' ? 'Enceintes: 2×46×36×66 cm, Sub: 52×50×120 cm' : 'Speakers: 2×46×36×66 cm, Sub: 52×50×120 cm')}
+                {pack.id === 4 && '—'}
+              </p>
             </div>
             <div className="bg-white rounded-xl p-4 text-center">
               <div className="text-3xl mb-2">📶</div>

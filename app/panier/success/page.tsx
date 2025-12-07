@@ -24,6 +24,13 @@ export default function CartSuccessPage() {
     // Vider le panier une seule fois au montage
     clearCart();
     
+    // Marquer dans sessionStorage que le panier a été vidé (persiste pendant la session)
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('cart_cleared', 'true');
+      // Vider aussi le localStorage pour être sûr
+      localStorage.removeItem('sndrush_cart');
+    }
+    
     // Vérifier périodiquement si l'order a été créé par le webhook
     setIsCheckingOrder(true);
     let attempts = 0;

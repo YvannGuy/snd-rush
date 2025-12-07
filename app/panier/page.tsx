@@ -334,16 +334,31 @@ export default function CartPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4 mb-3">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">{item.productName}</h3>
-                            <p className="text-sm text-gray-500">{item.startDate} → {item.endDate}</p>
+                            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">{item.productName}</h3>
+                            {/* Dates - Affichage clair */}
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span className="text-sm font-medium text-gray-700">
+                                {new Date(item.startDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                              </span>
+                              <span className="text-gray-400">→</span>
+                              <span className="text-sm font-medium text-gray-700">
+                                {new Date(item.endDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                              </span>
+                            </div>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <div className="text-xl sm:text-2xl font-bold text-[#F2431E] mb-1">
+                            <div className="text-xl sm:text-2xl font-bold text-[#F2431E] mb-2">
                               {itemTotal.toFixed(2)}€
                             </div>
-                            <p className="text-xs text-gray-500">
-                              {item.dailyPrice}€ × {item.quantity} × {item.rentalDays} {currentTexts.days}
-                            </p>
+                            {/* Détail du calcul - Affichage clair */}
+                            <div className="bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+                              <p className="text-sm font-semibold text-gray-700 mb-0.5">
+                                {item.dailyPrice}€ × {item.quantity} × {item.rentalDays} {currentTexts.days}
+                              </p>
+                            </div>
                           </div>
                         </div>
                         
@@ -400,35 +415,42 @@ export default function CartPage() {
                 </h2>
                 <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
                   <div className="flex gap-3 min-w-max">
-                    {/* Carte Livraison - Très compacte */}
-                    <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 w-[130px] flex-shrink-0 hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-1 mb-1.5">
-                        <div className="w-4 h-4 bg-[#F2431E]/10 rounded flex items-center justify-center flex-shrink-0">
-                          <svg className="w-2 h-2 text-[#F2431E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {/* Carte Livraison - Compacte */}
+                    <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 w-[150px] flex-shrink-0 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <div className="w-6 h-6 bg-[#F2431E]/10 rounded flex items-center justify-center flex-shrink-0">
+                          <svg className="w-3 h-3 text-[#F2431E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                           </svg>
                         </div>
-                        <h3 className="font-semibold text-[9px] text-gray-900">{language === 'fr' ? 'Livraison' : 'Delivery'}</h3>
+                        <h3 className="font-semibold text-sm text-gray-900">{language === 'fr' ? 'Livraison' : 'Delivery'}</h3>
                       </div>
-                      <div className="space-y-0.5">
+                      <div className="space-y-1">
                         {Object.values(deliveryOptions).map((option) => {
                           const isSelected = deliveryOption === option.id;
                           return (
                             <button
                               key={option.id}
                               type="button"
-                              onClick={() => setDeliveryOption(option.id)}
-                              className={`w-full text-left px-1 py-0.5 rounded transition-all ${
+                              onClick={() => {
+                                // Toggle : si déjà sélectionné, désélectionner
+                                if (isSelected) {
+                                  setDeliveryOption(null);
+                                } else {
+                                  setDeliveryOption(option.id);
+                                }
+                              }}
+                              className={`w-full text-left px-2 py-1.5 rounded transition-all border ${
                                 isSelected
-                                  ? 'bg-[#F2431E]/10 border border-[#F2431E]'
-                                  : 'bg-gray-50 border border-transparent hover:bg-gray-100'
+                                  ? 'bg-[#F2431E]/10 border-[#F2431E]'
+                                  : 'bg-gray-50 border-transparent hover:bg-gray-100 hover:border-gray-200'
                               }`}
                             >
-                              <div className="flex justify-between items-center gap-0.5">
-                                <span className={`font-medium truncate text-[8px] leading-tight ${isSelected ? 'text-[#F2431E]' : 'text-gray-700'}`}>
+                              <div className="flex justify-between items-center gap-1.5">
+                                <span className={`font-medium text-xs ${isSelected ? 'text-[#F2431E]' : 'text-gray-700'}`}>
                                   {option.name}
                                 </span>
-                                <span className={`font-bold flex-shrink-0 text-[8px] ${isSelected ? 'text-[#F2431E]' : option.id === 'retrait' ? 'text-green-600' : 'text-gray-700'}`}>
+                                <span className={`font-bold flex-shrink-0 text-xs ${isSelected ? 'text-[#F2431E]' : option.id === 'retrait' ? 'text-green-600' : 'text-gray-700'}`}>
                                   {option.price > 0 ? `${option.price}€` : language === 'fr' ? 'Gratuit' : 'Free'}
                                 </span>
                               </div>

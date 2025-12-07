@@ -23,28 +23,77 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const [isAttaching, setIsAttaching] = useState(false);
   const productAddedRef = useRef<boolean>(false);
+  const cartClearedRef = useRef<boolean>(false); // Flag pour empêcher le rechargement après clearCart
 
   // Charger le panier depuis localStorage au montage
   useEffect(() => {
+    // Ne pas charger si le panier vient d'être vidé (sessionStorage persiste pendant la session)
+    const cartClearedInSession = sessionStorage.getItem('cart_cleared');
+    if (cartClearedInSession === 'true') {
+      // Vider le localStorage aussi pour être sûr
+      localStorage.removeItem('sndrush_cart');
+      setCart({ items: [], total: 0, depositTotal: 0 });
+      // Dispatcher l'événement pour mettre à jour le badge
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { items: [], total: 0, depositTotal: 0 } }));
+      }
+      return;
+    }
+
     const savedCart = localStorage.getItem('sndrush_cart');
     if (savedCart) {
       try {
-        setCart(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        // Ne charger que si le panier n'est pas vide
+        if (parsedCart.items && parsedCart.items.length > 0) {
+          // Vérifier si on est sur la page de succès - si oui, ne pas charger
+          if (typeof window !== 'undefined' && window.location.pathname.includes('/panier/success')) {
+            // Vider le panier si on est sur la page de succès
+            localStorage.removeItem('sndrush_cart');
+            sessionStorage.setItem('cart_cleared', 'true');
+            setCart({ items: [], total: 0, depositTotal: 0 });
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { items: [], total: 0, depositTotal: 0 } }));
+            }
+            return;
+          }
+          setCart(parsedCart);
+        } else {
+          // Si le panier est vide, s'assurer qu'il est bien vide
+          setCart({ items: [], total: 0, depositTotal: 0 });
+        }
       } catch (e) {
         console.error('Erreur chargement panier:', e);
+        // En cas d'erreur, vider le localStorage
+        localStorage.removeItem('sndrush_cart');
+        setCart({ items: [], total: 0, depositTotal: 0 });
       }
+    } else {
+      // Pas de panier dans localStorage, s'assurer qu'il est vide
+      setCart({ items: [], total: 0, depositTotal: 0 });
     }
   }, []);
 
   // Charger le panier depuis Supabase si l'utilisateur est connecté
   useEffect(() => {
-    if (!user || !supabase) return;
+    // Ne pas charger si le panier vient d'être vidé (sessionStorage persiste pendant la session)
+    const cartClearedInSession = sessionStorage.getItem('cart_cleared');
+    if (cartClearedInSession === 'true') {
+      return;
+    }
+
+    if (!user || !supabase || cartClearedRef.current) return;
 
     const loadCartFromSupabase = async () => {
       const supabaseClient = supabase;
       if (!supabaseClient) return;
       
       try {
+        // Ne pas charger si on est sur la page de succès
+        if (typeof window !== 'undefined' && window.location.pathname.includes('/panier/success')) {
+          return;
+        }
+
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) return;
 
@@ -56,10 +105,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
         // Ne pas afficher d'erreur si Supabase n'est pas configuré (500) ou si non authentifié (401)
         if (response.status === 500 || response.status === 401) {
-          // Sur la page de succès, c'est normal que le panier soit vide après paiement
-          if (window.location.pathname.includes('/success')) {
-            return;
-          }
           console.warn('Panier non disponible, utilisation du panier local uniquement');
           return;
         }
@@ -67,23 +112,59 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (response.ok) {
           const data = await response.json();
           const serverCart = data.cart;
+          
+          // Vérifier si le panier correspond à une commande déjà payée
+          // Si l'utilisateur a des réservations CONFIRMED récentes, vider le panier
           if (serverCart && serverCart.items && serverCart.items.length > 0) {
-            // Fusionner avec le panier local si nécessaire
-            setCart({
-              items: serverCart.items || [],
-              total: serverCart.total_price || 0,
-              depositTotal: serverCart.deposit_total || 0,
-            });
+            try {
+              // Vérifier s'il y a des réservations CONFIRMED récentes (dernières 5 minutes)
+              const { data: recentReservations } = await supabaseClient
+                .from('reservations')
+                .select('id, created_at')
+                .eq('user_id', user.id)
+                .eq('status', 'CONFIRMED')
+                .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+              // Si une réservation récente existe, vider le panier (probablement déjà payé)
+              if (recentReservations && recentReservations.length > 0) {
+                console.log('✅ Réservation récente détectée, vidage du panier');
+                // Vider le panier serveur
+                await fetch('/api/user/cart', {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                  },
+                });
+                // Vider le localStorage
+                localStorage.removeItem('sndrush_cart');
+                // Marquer comme vidé dans sessionStorage
+                sessionStorage.setItem('cart_cleared', 'true');
+                setCart({ items: [], total: 0, depositTotal: 0 });
+                return;
+              }
+            } catch (checkError) {
+              console.error('Erreur vérification réservations:', checkError);
+            }
+
+            // Ne charger que si le panier n'a pas été vidé récemment
+            if (!cartClearedRef.current && cartClearedInSession !== 'true') {
+              setCart({
+                items: serverCart.items || [],
+                total: serverCart.total_price || 0,
+                depositTotal: serverCart.deposit_total || 0,
+              });
+            }
           } else if (serverCart && (!serverCart.items || serverCart.items.length === 0)) {
             // Si le panier serveur est vide, vider aussi le panier local
-            setCart({ items: [], total: 0, depositTotal: 0 });
+            if (!cartClearedRef.current) {
+              setCart({ items: [], total: 0, depositTotal: 0 });
+              localStorage.removeItem('sndrush_cart');
+            }
           }
         }
       } catch (error) {
-        // Ne pas afficher d'erreur si c'est juste une configuration manquante ou sur la page de succès
-        if (window.location.pathname.includes('/success')) {
-          return;
-        }
         if (error instanceof Error && !error.message.includes('Configuration Supabase manquante')) {
           console.error('Erreur chargement panier Supabase:', error);
         }
@@ -137,12 +218,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Sauvegarder le panier dans localStorage et Supabase à chaque changement
   useEffect(() => {
+    // Ne pas sauvegarder si le panier vient d'être vidé
+    if (cartClearedRef.current && cart.items.length === 0) {
+      // Réinitialiser le flag après un court délai pour permettre les futures sauvegardes
+      setTimeout(() => {
+        cartClearedRef.current = false;
+      }, 2000);
+      return;
+    }
+
     localStorage.setItem('sndrush_cart', JSON.stringify(cart));
     // Dispatcher un événement pour mettre à jour le badge du header
     window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
 
     // Sauvegarder dans Supabase si l'utilisateur est connecté
-    if (user && supabase && cart.items.length > 0 && !isAttaching) {
+    if (user && supabase && cart.items.length > 0 && !isAttaching && !cartClearedRef.current) {
       const saveCartToSupabase = async () => {
         const supabaseClient = supabase;
         if (!supabaseClient) return;
@@ -189,6 +279,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const addToCart = (item: CartItem) => {
+    // Réinitialiser le flag de panier vidé si on ajoute un produit
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('cart_cleared');
+      cartClearedRef.current = false;
+    }
+
     setCart((prevCart) => {
       // Vérifier si le produit existe déjà dans le panier
       const existingIndex = prevCart.items.findIndex(
@@ -306,6 +402,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const clearCart = async () => {
+    // Marquer que le panier vient d'être vidé pour empêcher le rechargement
+    cartClearedRef.current = true;
+    
+    // Utiliser sessionStorage pour persister pendant toute la session (même après rechargement)
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('cart_cleared', 'true');
+    }
+    
     // Vider le panier local
     setCart({ items: [], total: 0, depositTotal: 0 });
     
@@ -316,22 +420,39 @@ export function CartProvider({ children }: { children: ReactNode }) {
       console.error('Erreur suppression panier localStorage:', e);
     }
     
+    // Dispatcher un événement pour mettre à jour le badge du header immédiatement
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { items: [], total: 0, depositTotal: 0 } }));
+    }
+    
     // Vider le panier Supabase si l'utilisateur est connecté
     if (user && supabase) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          await fetch('/api/user/cart', {
+          const response = await fetch('/api/user/cart', {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
             },
           });
+          
+          if (response.ok) {
+            console.log('✅ Panier Supabase vidé avec succès');
+          } else {
+            console.warn('⚠️ Erreur lors de la suppression du panier Supabase:', response.status);
+          }
         }
       } catch (error) {
         console.error('Erreur suppression panier Supabase:', error);
       }
     }
+    
+    // Réinitialiser le flag après un délai pour permettre les futures opérations
+    // Mais garder sessionStorage pour empêcher le rechargement
+    setTimeout(() => {
+      cartClearedRef.current = false;
+    }, 5000); // 5 secondes devraient être suffisantes
   };
 
   const getCartItemCount = () => {

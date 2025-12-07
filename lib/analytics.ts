@@ -59,6 +59,20 @@ export const trackAssistantEvent = {
       value: totalPrice,
       currency: 'EUR'
     });
+  },
+  
+  addToCart: (packName: string) => {
+    trackEvent('add_to_cart', { 
+      event_category: 'conversion',
+      pack_name: packName
+    });
+  },
+  
+  expertCalled: (packName: string) => {
+    trackEvent('expert_called', { 
+      event_category: 'assistant',
+      pack_name: packName
+    });
   }
 };
 

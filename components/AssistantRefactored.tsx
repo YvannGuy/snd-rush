@@ -6,6 +6,8 @@ import { Answers, Step, STEPS, PRICING_CONFIG, ReservationPayload } from '@/type
 import { recommendPack, computePrice, isUrgent, validateStep } from '@/lib/assistant-logic';
 import { processReservation } from '@/lib/assistant-api';
 import { trackAssistantEvent } from '@/lib/analytics';
+import { useCart } from '@/contexts/CartContext';
+import { CartItem } from '@/types/db';
 import Chip from './assistant/Chip';
 import Radio from './assistant/Radio';
 import Input from './assistant/Input';
@@ -34,6 +36,7 @@ export default function AssistantRefactored({
   const [isLoading, setIsLoading] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [currentRecommendation, setCurrentRecommendation] = useState<any>(null);
+  const { addToCart } = useCart();
   
   const modalRef = useRef<HTMLDivElement>(null);
   const focusRef = useRef<HTMLButtonElement>(null);
@@ -195,6 +198,83 @@ export default function AssistantRefactored({
 
     setCurrentRecommendation(recommendation);
     setShowReservationModal(true);
+  };
+
+  const handleAddToCart = () => {
+    const recommendation = recommendPack(answers);
+    if (!recommendation) {
+      return;
+    }
+
+    // Calculer les dates de location
+    const startDate = answers.date || new Date().toISOString().split('T')[0];
+    const endDate = answers.date || new Date().toISOString().split('T')[0];
+    
+    // Calculer les jours de location (par défaut 1 jour)
+    let rentalDays = 1;
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffTime = end.getTime() - start.getTime();
+      rentalDays = Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+    }
+
+    // Mapper le pack ID
+    const packIdMapping: Record<string, number> = {
+      'pack_petit': 1,
+      'pack_confort': 2,
+      'pack_grand': 3,
+      'pack_maxi': 5,
+    };
+    
+    const packId = packIdMapping[recommendation.pack.id] || 2; // Fallback sur Pack M Confort
+
+    // Créer l'item du panier
+    const cartItem: CartItem = {
+      productId: `pack-${packId}`,
+      productName: `Pack ${recommendation.pack.name}`,
+      productSlug: `pack-${packId}`,
+      quantity: 1,
+      rentalDays: rentalDays,
+      startDate: startDate,
+      endDate: endDate,
+      dailyPrice: recommendation.breakdown.base,
+      deposit: 500, // Dépôt par défaut
+      addons: [], // Les extras seront gérés séparément si nécessaire
+      images: [], // Pas d'image pour les packs de l'assistant
+    };
+
+    addToCart(cartItem);
+    
+    // Track add to cart
+    trackAssistantEvent.addToCart(recommendation.pack.name);
+    
+    // Fermer l'assistant et rediriger vers le panier
+    onClose();
+    
+    // Optionnel : rediriger vers le panier
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        window.location.href = '/panier';
+      }, 500);
+    }
+  };
+
+  const handleCallExpert = () => {
+    // Ouvrir WhatsApp avec un message pré-rempli
+    const message = encodeURIComponent(
+      `Bonjour, j'ai utilisé l'assistant SND Rush et j'aimerais parler avec un expert pour finaliser ma réservation.`
+    );
+    window.open(`https://wa.me/33651084994?text=${message}`, '_blank');
+    
+    // Track expert call
+    const recommendation = recommendPack(answers);
+    if (recommendation) {
+      trackAssistantEvent.expertCalled(recommendation.pack.name);
+    }
+    
+    // Fermer l'assistant
+    onClose();
   };
 
   const handleReservationConfirm = async (payload: ReservationPayload) => {
@@ -395,18 +475,18 @@ export default function AssistantRefactored({
         {/* Actions améliorées */}
         <div className="flex gap-4">
           <button
-            onClick={() => handleReservation('deposit')}
+            onClick={handleAddToCart}
             disabled={isLoading}
             className="flex-1 bg-gradient-to-r from-[#F2431E] to-[#e27431] text-white py-5 rounded-xl font-bold text-lg hover:from-[#E63A1A] hover:to-[#F2431E] transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? '⏳ Traitement...' : '✨ Réserver maintenant'}
+            {isLoading ? '⏳ Traitement...' : 'Ajouter au panier'}
           </button>
           <button
-            onClick={() => handleReservation('info')}
+            onClick={handleCallExpert}
             disabled={isLoading}
             className="flex-1 bg-white text-gray-700 py-5 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all shadow-md hover:shadow-lg border-2 border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            📞 Être rappelé
+            Appeler un expert
           </button>
         </div>
       </div>

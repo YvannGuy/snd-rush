@@ -338,6 +338,24 @@ export async function POST(req: NextRequest) {
 
             console.log(`✅ ${pendingReservations.length} réservations en attente mises à jour`);
           }
+
+          // Vider le panier de l'utilisateur après paiement réussi
+          if (userId) {
+            try {
+              const { error: cartDeleteError } = await supabaseClient
+                .from('carts')
+                .delete()
+                .eq('user_id', userId);
+
+              if (cartDeleteError) {
+                console.error('❌ Erreur suppression panier:', cartDeleteError);
+              } else {
+                console.log('✅ Panier vidé pour l\'utilisateur:', userId);
+              }
+            } catch (e) {
+              console.error('❌ Erreur lors de la suppression du panier:', e);
+            }
+          }
         }
 
         console.log('✅ Commande traitée avec succès pour la session:', session.id);

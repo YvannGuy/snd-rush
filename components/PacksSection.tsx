@@ -57,145 +57,135 @@ export default function PacksSection({ language }: PacksSectionProps) {
     fr: [
       {
         id: 2,
-        name: "Conférence",
-        tagline: "Séminaires & formations",
-        description: "Sonorisation claire et professionnelle pour vos événements d'entreprise et formations.",
-        priceParis: "À partir de 550 € TTC",
-        priceHorsParis: "630 € TTC",
+        name: "Pack M Confort",
+        tagline: "Solution complète pour événements moyens",
+        description: "Pack M pour événements moyens jusqu'à 150 personnes, avec 2 enceintes Mac Mah AS 115 et console HPA Promix 8.",
+        priceParis: "129 € TTC",
+        priceHorsParis: "129 € TTC",
         featured: true,
         image: "/conference.jpg",
         features: [
-          "Sonorisation claire et professionnelle",
-          "Micro pour présentations",
-          "Livraison & installation",
-          "Technicien pendant l'événement",
-          "Démontage après la conférence"
+          "2 enceintes Mac Mah AS 115",
+          "1 console HPA Promix 8",
+          "Options : micros, câbles, installation, livraison"
         ],
-        highlight: "Clé en main",
-        ideal: "Jusqu'à 150 personnes",
-        note: "Idéal conférences, séminaires, formations, présentations d'entreprise."
+        highlight: "Caution : 1100 €",
+        ideal: "70 à 150 personnes",
+        note: "Parfait pour conférences, fêtes, DJ sets."
       },
       {
         id: 3,
-        name: "Mariage",
-        tagline: "Grand jour & réceptions",
-        description: "Sonorisation romantique et élégante pour votre plus beau jour.",
-        priceParis: "À partir de 700 € TTC",
-        priceHorsParis: "780 € TTC",
+        name: "Pack L Grand",
+        tagline: "Solution professionnelle pour grands événements",
+        description: "Pack L idéal pour événements jusqu'à 250 personnes, avec 2 enceintes FBT X-Lite 115A, 1 caisson X-Sub 118SA et console HPA Promix 16.",
+        priceParis: "179 € TTC",
+        priceHorsParis: "179 € TTC",
         featured: false,
         image: "/mariage.jpg",
         features: [
-          "Sonorisation romantique et élégante",
-          "Micros pour discours et toasts",
-          "Livraison & installation",
-          "Technicien discret pendant la cérémonie",
-          "Démontage après la réception"
+          "2 enceintes FBT X-Lite 115A",
+          "1 caisson X-Sub 118SA",
+          "1 console HPA Promix 16",
+          "Options : micros, câbles, installation, livraison"
         ],
-        highlight: "Clé en main",
-        ideal: "Jusqu'à 250 personnes",
-        note: "Parfait pour mariages, anniversaires de mariage, réceptions élégantes."
+        highlight: "Caution : 1600 €",
+        ideal: "150 à 250 personnes",
+        note: "Idéal pour concerts, DJ sets, grandes conférences."
       },
       {
         id: 5,
-        name: "Concert",
-        tagline: "Spectacles & festivals",
-        description: "Sonorisation puissante et professionnelle pour vos événements musicaux.",
-        priceParis: "À partir de 1 100 € TTC",
-        priceHorsParis: "1 180 € TTC",
+        name: "Pack XL Maxi / Sur mesure",
+        tagline: "Solution sur mesure pour très grands événements",
+        description: "Pack XL avec sonorisation professionnelle complète pour événements de plus de 300 personnes.",
+        priceParis: "Sur devis",
+        priceHorsParis: "Sur devis",
         featured: false,
         image: "/concert.jpg",
         features: [
-          "Sonorisation puissante et professionnelle",
-          "Micros sans fil pour les artistes",
-          "Livraison & installation complète",
-          "Technicien son pendant le spectacle",
-          "Démontage après le concert"
+          "Sonorisation pro",
+          "Micros HF & instruments",
+          "Technicien & régie",
+          "Logistique complète"
         ],
-        highlight: "Clé en main",
-        ideal: "Jusqu'à 500 personnes",
-        note: "Idéal concerts, festivals, spectacles, événements musicaux."
+        highlight: "Caution : selon devis",
+        ideal: "Plus de 300 personnes",
+        note: "Parfait pour très grands événements, festivals, concerts, événements corporate."
       },
       {
-        id: 6,
-        name: "Soirée",
-        tagline: "Fêtes & événements privés",
-        description: "Sonorisation festive et énergique pour vos soirées et événements privés.",
-        priceParis: "À partir de 450 € TTC",
-        priceHorsParis: "530 € TTC",
+        id: 1,
+        name: "Pack S Petit",
+        tagline: "Solution basique pour petits événements",
+        description: "Pack S parfait pour les petits événements jusqu'à 70 personnes, avec 1 enceinte Mac Mah AS 115 et console de mixage.",
+        priceParis: "109 € TTC",
+        priceHorsParis: "109 € TTC",
         featured: false,
         image: "/dance.jpg",
         features: [
-          "Sonorisation festive et énergique",
-          "Musique d'ambiance et DJ",
-          "Livraison & installation",
-          "Technicien pendant la soirée",
-          "Démontage après l'événement"
+          "1 enceinte Mac Mah AS 115",
+          "1 console de mixage",
+          "Options : micros, câbles, installation, livraison"
         ],
-        highlight: "Clé en main",
-        ideal: "Jusqu'à 200 personnes",
-        note: "Idéal pour soirées privées, anniversaires, fêtes d'entreprise, événements festifs."
+        highlight: "Caution : 700 €",
+        ideal: "30 à 70 personnes",
+        note: "Idéal pour conférences, mariages, DJ sets."
       }
     ],
     en: [
       {
         id: 2,
-        name: "Pack STANDARD",
-        tagline: "Up to 150 people",
-        description: "Complete professional sound system with installation and technician included.",
-        priceParis: "À partir de 550 € TTC",
-        priceHorsParis: "630 € TTC",
+        name: "Pack M Comfort",
+        tagline: "Complete solution for medium events",
+        description: "Pack M for medium events up to 150 people, with 2 Mac Mah AS 115 speakers and HPA Promix 8 console.",
+        priceParis: "129 € TTC",
+        priceHorsParis: "129 € TTC",
         featured: true,
         image: "/conference.jpg",
         features: [
-          "Sound system for 150 people",
-          "1 wired microphone",
-          "Delivery & Pickup",
-          "Installation & tuning by technician",
-          "Dismantling after event"
+          "2 Mac Mah AS 115 speakers",
+          "1 HPA Promix 8 console",
+          "Options: mics, cables, installation, delivery"
         ],
-        highlight: "Turnkey",
-        ideal: "Up to 150 people",
-        note: "Perfect for intimate receptions, worship, conferences, friendly evenings."
+        highlight: "Deposit: 1100 €",
+        ideal: "70 to 150 people",
+        note: "Perfect for conferences, parties, DJ sets."
       },
       {
         id: 3,
-        name: "Pack PREMIUM",
-        tagline: "Up to 250 people",
-        description: "Complete professional system with technical assistance during the event.",
-        priceParis: "À partir de 700 € TTC",
-        priceHorsParis: "780 € TTC",
+        name: "Pack L Large",
+        tagline: "Professional solution for large events",
+        description: "Pack L ideal for events up to 250 people, with 2 FBT X-Lite 115A speakers, 1 X-Sub 118SA subwoofer and HPA Promix 16 console.",
+        priceParis: "179 € TTC",
+        priceHorsParis: "179 € TTC",
         featured: false,
         image: "/mariage.jpg",
         features: [
-          "Sound system for 250 people",
-          "2 wired microphones",
-          "Delivery & Pickup",
-          "Installation + technician assistance",
-          "Complete dismantling"
+          "2 FBT X-Lite 115A speakers",
+          "1 X-Sub 118SA subwoofer",
+          "1 HPA Promix 16 console",
+          "Options: mics, cables, installation, delivery"
         ],
-        highlight: "Turnkey",
-        ideal: "Up to 250 people",
-        note: "Ideal for weddings, associations, corporate evenings."
+        highlight: "Deposit: 1600 €",
+        ideal: "150 to 250 people",
+        note: "Ideal for concerts, DJ sets, large conferences."
       },
       {
         id: 5,
         name: "Pack PRESTIGE",
         tagline: "Up to 500 people",
         description: "Maximum configuration with technical supervision during the event.",
-        priceParis: "À partir de 1 100 € TTC",
-        priceHorsParis: "1 180 € TTC",
+        priceParis: "Sur devis",
+        priceHorsParis: "Sur devis",
         featured: false,
         image: "/concert.jpg",
         features: [
-          "Professional sound system for 500 people",
-          "2 wireless microphones",
-          "Delivery & Pickup by truck",
-          "Complete installation + technician assistance",
-          "Dismantling & storage"
+          "Pro sound system",
+          "HF mics & instruments",
+          "Technician & control room",
+          "Complete logistics"
         ],
-        highlight: "Turnkey",
-        ideal: "Up to 500 people",
-        note: "Large receptions, concerts, worship, festivals."
+        highlight: "Deposit: on quote",
+        ideal: "More than 300 people",
+        note: "Perfect for very large events, festivals, concerts, corporate events."
       },
       {
         id: 6,

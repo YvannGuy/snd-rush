@@ -10,6 +10,7 @@ import SolutionsSection from '@/components/SolutionsSection';
 import UrgencySection from '@/components/UrgencySection';
 import PourQuiSection from '@/components/PourQuiSection';
 import AboutSection from '@/components/AboutSection';
+import GallerySection from '@/components/GallerySection';
 import TrustindexReviews from '@/components/TrustindexReviews';
 import FaqInteractive from '@/components/FaqInteractive';
 import Footer from '@/components/Footer';
@@ -165,6 +166,11 @@ export default function Home() {
         {/* Section Pourquoi SoundRush */}
         <SectionAnimation delay={0.4}>
           <AboutSection language={language} />
+        </SectionAnimation>
+
+        {/* Section Galerie Vidéos */}
+        <SectionAnimation delay={0.45}>
+          <GallerySection language={language} />
         </SectionAnimation>
 
         {/* Section Témoignages Clients */}
