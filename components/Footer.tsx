@@ -63,13 +63,6 @@ export default function Footer({ language }: FooterProps) {
     }
   };
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   const footerTexts = {
     fr: {
       solutions: 'Solutions',
@@ -79,7 +72,6 @@ export default function Footer({ language }: FooterProps) {
       conference: 'Conférence',
       shortTerm: 'Location courte durée',
       longTerm: 'Location longue durée',
-      options: 'Options',
       catalogue: 'Catalogue',
       micros: 'Micros',
       speakers: 'Enceintes',
@@ -88,7 +80,7 @@ export default function Footer({ language }: FooterProps) {
       accessories: 'Accessoires',
       packs: 'Packs',
       contact: 'Contact',
-      getQuote: 'Obtenir un devis'
+      getQuote: 'Appeler'
     },
     en: {
       solutions: 'Solutions',
@@ -98,7 +90,6 @@ export default function Footer({ language }: FooterProps) {
       conference: 'Conference',
       shortTerm: 'Short-term rental',
       longTerm: 'Long-term rental',
-      options: 'Options',
       catalogue: 'Catalogue',
       micros: 'Microphones',
       speakers: 'Speakers',
@@ -107,7 +98,7 @@ export default function Footer({ language }: FooterProps) {
       accessories: 'Accessories',
       packs: 'Packs',
       contact: 'Contact',
-      getQuote: 'Get a quote'
+      getQuote: 'Call'
     }
   };
 
@@ -128,12 +119,12 @@ export default function Footer({ language }: FooterProps) {
               <p className="text-gray-300 text-sm">
                 {texts[language].baseline}
               </p>
-              <Link
-                href="/devis"
+              <a
+                href="tel:+33651084994"
                 className="inline-block bg-[#F2431E] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors mt-4"
               >
                 {currentFooterTexts.getQuote}
-              </Link>
+              </a>
             </div>
 
             {/* Solutions */}
@@ -142,48 +133,24 @@ export default function Footer({ language }: FooterProps) {
                 {currentFooterTexts.solutions}
               </h3>
               <nav className="flex flex-col space-y-2">
-                <button 
-                  onClick={() => scrollToSection('solutions')}
-                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
-                >
+                <span className="text-gray-300 text-sm">
                   {currentFooterTexts.wedding}
-                </button>
-                <button 
-                  onClick={() => scrollToSection('solutions')}
-                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
-                >
+                </span>
+                <span className="text-gray-300 text-sm">
                   {currentFooterTexts.birthday}
-                </button>
-                <button 
-                  onClick={() => scrollToSection('solutions')}
-                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
-                >
+                </span>
+                <span className="text-gray-300 text-sm">
                   {currentFooterTexts.privateParty}
-                </button>
-                <button 
-                  onClick={() => scrollToSection('solutions')}
-                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
-                >
+                </span>
+                <span className="text-gray-300 text-sm">
                   {currentFooterTexts.conference}
-                </button>
-                <button 
-                  onClick={() => scrollToSection('solutions')}
-                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
-                >
+                </span>
+                <span className="text-gray-300 text-sm">
                   {currentFooterTexts.shortTerm}
-                </button>
-                <button 
-                  onClick={() => scrollToSection('solutions')}
-                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
-                >
+                </span>
+                <span className="text-gray-300 text-sm">
                   {currentFooterTexts.longTerm}
-                </button>
-                <button 
-                  onClick={() => scrollToSection('solutions')}
-                  className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm text-left cursor-pointer"
-                >
-                  {currentFooterTexts.options}
-                </button>
+                </span>
               </nav>
             </div>
 

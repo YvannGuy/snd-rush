@@ -141,7 +141,7 @@ export default function Home() {
         onLanguageChange={setLanguage}
       />
       
-      <main>
+      <main className="pt-[104px]">
         <HeroSection 
           language={language}
         />
@@ -198,7 +198,6 @@ export default function Home() {
 
       <ScrollToTopButton />
       <WhatsAppButton language={language} />
-      <CookieBanner language={language} />
 
       {/* Modals */}
       <ReservationModal 

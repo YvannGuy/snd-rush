@@ -33,6 +33,124 @@ export default function ProductDetailPage() {
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [disabledRanges, setDisabledRanges] = useState<CalendarDisabledRange[]>([]);
 
+  // Produits recommandés
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+
+  // Charger les produits recommandés depuis Supabase
+  useEffect(() => {
+    async function loadRecommendedProducts() {
+      if (!product || !supabase) return;
+
+      try {
+        // Définir les catégories recommandées selon le produit actuel
+        let targetCategories: string[] = [];
+        
+        if (product.category === 'sonorisation') {
+          // Pour les enceintes/caissons : recommander micros, consoles, câbles
+          targetCategories = ['micros', 'sonorisation']; // On inclut aussi sonorisation pour avoir des consoles
+        } else if (product.category === 'micros') {
+          // Pour les micros : recommander câbles, consoles, autres micros
+          targetCategories = ['accessoires', 'sonorisation'];
+        } else if (product.category === 'lumieres') {
+          // Pour les lumières : recommander autres lumières, câbles
+          targetCategories = ['lumieres', 'accessoires'];
+        } else if (product.category === 'accessoires') {
+          // Pour les accessoires : recommander produits principaux
+          targetCategories = ['sonorisation', 'micros', 'lumieres'];
+        } else {
+          // Par défaut : recommander produits de différentes catégories
+          targetCategories = ['sonorisation', 'micros', 'accessoires', 'lumieres'];
+        }
+
+        // Charger les produits depuis Supabase
+        const { data: allProducts, error } = await supabase
+          .from('products')
+          .select('*')
+          .neq('id', product.id) // Exclure le produit actuel
+          .in('category', targetCategories)
+          .limit(20); // Charger plus pour avoir un meilleur choix
+
+        // Exclure Pioneer XDJ des produits recommandés
+        const filteredByPioneer = allProducts?.filter(p => 
+          !p.name.toLowerCase().includes('pioneer') && !p.name.toLowerCase().includes('xdj')
+        ) || [];
+
+        if (error) {
+          console.error('Erreur chargement produits recommandés:', error);
+          return;
+        }
+
+        if (filteredByPioneer && filteredByPioneer.length > 0) {
+          // Trier et sélectionner les produits les plus pertinents
+          let filtered = filteredByPioneer;
+
+          // Prioriser les produits complémentaires selon le type de produit
+          if (product.category === 'sonorisation') {
+            // Pour enceintes/caissons : prioriser micros, puis consoles, puis accessoires
+            filtered = allProducts.sort((a, b) => {
+              const aIsMicro = a.category === 'micros' ? 3 : 0;
+              const bIsMicro = b.category === 'micros' ? 3 : 0;
+              const aIsConsole = (a.name.toLowerCase().includes('promix') || a.name.toLowerCase().includes('console')) ? 2 : 0;
+              const bIsConsole = (b.name.toLowerCase().includes('promix') || b.name.toLowerCase().includes('console')) ? 2 : 0;
+              const aIsAccessoire = a.category === 'accessoires' ? 1 : 0;
+              const bIsAccessoire = b.category === 'accessoires' ? 1 : 0;
+              
+              const aScore = aIsMicro + aIsConsole + aIsAccessoire;
+              const bScore = bIsMicro + bIsConsole + bIsAccessoire;
+              return bScore - aScore;
+            });
+          } else if (product.category === 'micros') {
+            // Pour micros : prioriser câbles XLR, puis adaptateurs, puis consoles
+            filtered = allProducts.sort((a, b) => {
+              const aIsCableXlr = a.name.toLowerCase().includes('xlr') && a.category === 'accessoires' ? 3 : 0;
+              const bIsCableXlr = b.name.toLowerCase().includes('xlr') && b.category === 'accessoires' ? 3 : 0;
+              const aIsAdaptateur = a.name.toLowerCase().includes('adaptateur') ? 2 : 0;
+              const bIsAdaptateur = b.name.toLowerCase().includes('adaptateur') ? 2 : 0;
+              const aIsConsole = (a.name.toLowerCase().includes('promix') || a.name.toLowerCase().includes('console')) ? 1 : 0;
+              const bIsConsole = (b.name.toLowerCase().includes('promix') || b.name.toLowerCase().includes('console')) ? 1 : 0;
+              
+              const aScore = aIsCableXlr + aIsAdaptateur + aIsConsole;
+              const bScore = bIsCableXlr + bIsAdaptateur + bIsConsole;
+              return bScore - aScore;
+            });
+          } else if (product.category === 'lumieres') {
+            // Pour lumières : prioriser autres lumières, puis accessoires (câbles DMX potentiels)
+            filtered = allProducts.sort((a, b) => {
+              const aIsLumiere = a.category === 'lumieres' ? 2 : 0;
+              const bIsLumiere = b.category === 'lumieres' ? 2 : 0;
+              const aIsAccessoire = a.category === 'accessoires' ? 1 : 0;
+              const bIsAccessoire = b.category === 'accessoires' ? 1 : 0;
+              
+              const aScore = aIsLumiere + aIsAccessoire;
+              const bScore = bIsLumiere + bIsAccessoire;
+              return bScore - aScore;
+            });
+          } else if (product.category === 'accessoires') {
+            // Pour accessoires : prioriser produits principaux (enceintes, micros, consoles)
+            filtered = allProducts.sort((a, b) => {
+              const aIsSonorisation = a.category === 'sonorisation' ? 3 : 0;
+              const bIsSonorisation = b.category === 'sonorisation' ? 3 : 0;
+              const aIsMicro = a.category === 'micros' ? 2 : 0;
+              const bIsMicro = b.category === 'micros' ? 2 : 0;
+              const aIsConsole = (a.name.toLowerCase().includes('promix') || a.name.toLowerCase().includes('console')) ? 1 : 0;
+              const bIsConsole = (b.name.toLowerCase().includes('promix') || b.name.toLowerCase().includes('console')) ? 1 : 0;
+              
+              const aScore = aIsSonorisation + aIsMicro + aIsConsole;
+              const bScore = bIsSonorisation + bIsMicro + bIsConsole;
+              return bScore - aScore;
+            });
+          }
+
+          // Prendre les 4 premiers
+          setRecommendedProducts(filtered.slice(0, 4));
+        }
+      } catch (err) {
+        console.error('Erreur chargement produits recommandés:', err);
+      }
+    }
+
+    loadRecommendedProducts();
+  }, [product]);
 
   // Charger le produit depuis Supabase ou données locales
   useEffect(() => {
@@ -95,14 +213,6 @@ export default function ProductDetailPage() {
         description: '100-300 pers.',
         price: '85€/jour',
         image: '/enceintebt.jpg',
-      },
-      {
-        id: 2,
-        name: 'Pioneer XDJ-RX3',
-        category: 'dj',
-        description: 'Contrôleur DJ pro',
-        price: '120€/jour',
-        image: '/platinedj.jpg',
       },
       {
         id: 3,
@@ -347,13 +457,6 @@ export default function ProductDetailPage() {
   const isAvailable = availability?.available ?? null;
   const canAddToCart = !checkingAvailability && startDate && endDate && (isAvailable === null || isAvailable === true);
 
-  // Produits recommandés
-  const recommendedProducts = [
-    { name: 'Console de mixage', price: '45€/jour', image: '/platinedj.jpg' },
-    { name: 'Micro sans fil', price: '35€/jour', image: '/microshure.png' },
-    { name: 'Pied d\'enceinte', price: '15€/jour', image: '/pro1.png' },
-    { name: 'Câbles XLR', price: '12€/jour', image: '/lyreled.png' }
-  ];
 
   return (
     <div className="min-h-screen bg-white">
@@ -385,17 +488,85 @@ export default function ProductDetailPage() {
               </nav>
 
               {/* Tags */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                  {language === 'fr' ? 'Puissant' : 'Powerful'}
-                </span>
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                  {language === 'fr' ? 'Indoor/Outdoor' : 'Indoor/Outdoor'}
-                </span>
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
-                  {language === 'fr' ? 'Pro Quality' : 'Pro Quality'}
-                </span>
-              </div>
+              {(() => {
+                // Fonction pour générer les tags selon le produit
+                const getProductTags = (product: Product): Array<{ text: string; color: string }> => {
+                  const tags: Array<{ text: string; color: string }> = [];
+                  const nameLower = product.name.toLowerCase();
+                  const category = product.category;
+                  const specs = product.specs || {};
+                  const longDesc = product.long_description || '';
+                  
+                  // Tags selon la catégorie
+                  if (category === 'sonorisation') {
+                    // Enceintes et caissons
+                    if (nameLower.includes('caisson') || nameLower.includes('sub')) {
+                      tags.push({ text: language === 'fr' ? 'Basses profondes' : 'Deep Bass', color: 'bg-purple-100 text-purple-800' });
+                      tags.push({ text: language === 'fr' ? 'Puissant' : 'Powerful', color: 'bg-green-100 text-green-800' });
+                      tags.push({ text: language === 'fr' ? 'Pro' : 'Pro', color: 'bg-blue-100 text-blue-800' });
+                    } else {
+                      // Enceintes
+                      if (specs.bluetooth || longDesc.toLowerCase().includes('bluetooth')) {
+                        tags.push({ text: 'Bluetooth', color: 'bg-blue-100 text-blue-800' });
+                      }
+                      tags.push({ text: language === 'fr' ? 'Puissant' : 'Powerful', color: 'bg-green-100 text-green-800' });
+                      tags.push({ text: language === 'fr' ? 'Pro' : 'Pro', color: 'bg-purple-100 text-purple-800' });
+                    }
+                  } else if (category === 'micros') {
+                    if (nameLower.includes('sans fil') || nameLower.includes('wireless')) {
+                      tags.push({ text: language === 'fr' ? 'Sans fil' : 'Wireless', color: 'bg-blue-100 text-blue-800' });
+                    } else {
+                      tags.push({ text: 'XLR', color: 'bg-blue-100 text-blue-800' });
+                    }
+                    tags.push({ text: language === 'fr' ? 'Professionnel' : 'Professional', color: 'bg-green-100 text-green-800' });
+                    if (nameLower.includes('shure') || nameLower.includes('mipro')) {
+                      tags.push({ text: language === 'fr' ? 'Référence' : 'Reference', color: 'bg-purple-100 text-purple-800' });
+                    } else {
+                      tags.push({ text: language === 'fr' ? 'Qualité' : 'Quality', color: 'bg-purple-100 text-purple-800' });
+                    }
+                  } else if (category === 'lumieres') {
+                    tags.push({ text: 'LED', color: 'bg-blue-100 text-blue-800' });
+                    if (longDesc.toLowerCase().includes('dmx')) {
+                      tags.push({ text: 'DMX', color: 'bg-green-100 text-green-800' });
+                    }
+                    tags.push({ text: language === 'fr' ? 'Professionnel' : 'Professional', color: 'bg-purple-100 text-purple-800' });
+                  } else if (category === 'accessoires') {
+                    if (nameLower.includes('xlr')) {
+                      tags.push({ text: 'XLR', color: 'bg-blue-100 text-blue-800' });
+                    }
+                    if (nameLower.includes('adaptateur')) {
+                      tags.push({ text: language === 'fr' ? 'Adaptateur' : 'Adapter', color: 'bg-green-100 text-green-800' });
+                    }
+                    tags.push({ text: language === 'fr' ? 'Professionnel' : 'Professional', color: 'bg-purple-100 text-purple-800' });
+                  } else if (nameLower.includes('promix') || nameLower.includes('console')) {
+                    // Consoles de mixage
+                    tags.push({ text: language === 'fr' ? 'Mixage' : 'Mixing', color: 'bg-blue-100 text-blue-800' });
+                    if (longDesc.toLowerCase().includes('effets') || longDesc.toLowerCase().includes('dsp')) {
+                      tags.push({ text: language === 'fr' ? 'Effets intégrés' : 'Built-in Effects', color: 'bg-green-100 text-green-800' });
+                    }
+                    tags.push({ text: language === 'fr' ? 'Pro' : 'Pro', color: 'bg-purple-100 text-purple-800' });
+                  } else {
+                    // Tags par défaut
+                    tags.push({ text: language === 'fr' ? 'Professionnel' : 'Professional', color: 'bg-green-100 text-green-800' });
+                    tags.push({ text: language === 'fr' ? 'Qualité' : 'Quality', color: 'bg-blue-100 text-blue-800' });
+                    tags.push({ text: language === 'fr' ? 'Pro' : 'Pro', color: 'bg-purple-100 text-purple-800' });
+                  }
+                  
+                  return tags;
+                };
+                
+                const tags = product ? getProductTags(product) : [];
+                
+                return tags.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {tags.map((tag, index) => (
+                      <span key={index} className={`px-3 py-1 rounded-full text-xs font-semibold ${tag.color}`}>
+                        {tag.text}
+                      </span>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
 
               {/* Titre */}
               <h1 className="text-4xl md:text-5xl font-bold text-black mb-4 leading-tight">
@@ -510,92 +681,492 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Description Section */}
-          {product.description && (
+          {(product.description || product.long_description) && (
             <div className="bg-white py-12">
               <h2 className="text-3xl font-bold text-black mb-6">{currentTexts.description}</h2>
+              
+              {/* Description courte - extraire la première phrase ou description courte */}
               <p className="text-lg text-gray-700 leading-relaxed mb-8">
-                {product.description}
+                {(() => {
+                  if (product.description) {
+                    // Prendre la première phrase de la description
+                    const firstSentence = product.description.split('.')[0];
+                    return firstSentence.length > 0 ? firstSentence + '.' : product.description;
+                  }
+                  if (product.long_description) {
+                    // Extraire la première ligne descriptive (sans emoji)
+                    const lines = product.long_description.split('\n');
+                    const firstDescriptiveLine = lines.find(line => {
+                      const trimmed = line.trim();
+                      return trimmed && !trimmed.match(/^[🎤🔊⚡🔌👥🎶📡]/) && !trimmed.startsWith('Caractéristiques');
+                    });
+                    return firstDescriptiveLine?.trim() || lines[0]?.trim() || '';
+                  }
+                  return '';
+                })()}
               </p>
               
-              {/* 3 Features avec icônes */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex items-start gap-4">
-                  <div className="text-4xl">⚡</div>
-                  <div>
-                    <h3 className="font-bold text-black mb-1">
-                      {language === 'fr' ? 'Puissance' : 'Power'} {product.specs?.puissance || '800W RMS'}
-                    </h3>
-                    <p className="text-gray-600 text-sm">
-                      {language === 'fr' ? 'Son puissant et cristallin pour tous vos événements' : 'Powerful and crystal-clear sound for all your events'}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="text-4xl">🔌</div>
-                  <div>
-                    <h3 className="font-bold text-black mb-1">
-                      {language === 'fr' ? 'Connectiques pro' : 'Pro Connectivity'}
-                    </h3>
-                    <p className="text-gray-600 text-sm">
-                      {language === 'fr' ? 'XLR, Jack, Bluetooth intégré' : 'XLR, Jack, Integrated Bluetooth'}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="text-4xl">👥</div>
-                  <div>
-                    <h3 className="font-bold text-black mb-1">
-                      {product.description.match(/\d+-\d+/)?.[0] || '50-200'} {language === 'fr' ? 'personnes' : 'people'}
-                    </h3>
-                    <p className="text-gray-600 text-sm">
-                      {language === 'fr' ? 'Idéale pour mariages, conférences, DJ sets' : 'Ideal for weddings, conferences, DJ sets'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Caractéristiques techniques */}
-          {product.specs && (
-            <div className="bg-gray-50 py-12">
-              <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.specs}</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Object.entries(product.specs).slice(0, 8).map(([key, value], index) => (
-                  <div key={key} className="bg-white rounded-xl p-4 text-center">
-                    <div className="text-3xl mb-2">🔊</div>
-                    <p className="text-sm font-semibold text-gray-700 capitalize">{key}</p>
-                    <p className="text-lg font-bold text-black">{String(value)}</p>
-                  </div>
-                ))}
-              </div>
+              {/* 3 Features avec icônes - Format adapté selon le type de produit */}
+              {(() => {
+                const isMicro = product.category === 'micros';
+                const isLumiere = product.category === 'lumieres';
+                const isAccessoire = product.category === 'accessoires';
+                const longDesc = product.long_description || '';
+                const hasCustomFormat = longDesc.includes('🎶') || longDesc.includes('🎛️') || longDesc.includes('✨') || longDesc.includes('🎨') || longDesc.includes('🎤') || longDesc.includes('🎧') || longDesc.includes('📏');
+                
+                // Fonction pour extraire le titre et la description après un emoji
+                const extractSection = (emoji: string) => {
+                  const lines = longDesc.split('\n');
+                  const emojiIndex = lines.findIndex((l: string) => l.trim().startsWith(emoji));
+                  if (emojiIndex === -1) return { title: '', desc: '' };
+                  
+                  const titleLine = lines[emojiIndex]?.replace(emoji, '').trim() || '';
+                  // Chercher la première ligne non vide après l'emoji (ignorer les lignes vides)
+                  let descLine = '';
+                  for (let i = emojiIndex + 1; i < lines.length; i++) {
+                    const trimmed = lines[i]?.trim();
+                    if (trimmed && !trimmed.match(/^[🎤🔊⚡🔌👥🎶🎛️🎚️✨🎨🏛️📏✅🎧]/) && !trimmed.startsWith('Caractéristiques')) {
+                      descLine = trimmed;
+                      break;
+                    }
+                  }
+                  return { title: titleLine, desc: descLine };
+                };
+                
+                // Pour les lumières avec format personnalisé
+                if (isLumiere && (longDesc.includes('✨') || longDesc.includes('🎨'))) {
+                  // Format Lyre LED : ✨, 🎨, 🎛️
+                  if (longDesc.includes('✨')) {
+                    const led = extractSection('✨');
+                    const effects = extractSection('🎨');
+                    const control = extractSection('🎛️');
+                    const usage = extractSection('🏛️');
+                    
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">✨</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {led.title || 'LED blanche 100W'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {led.desc || 'Faisceau puissant et précis'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🎨</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {effects.title || 'Effets intégrés'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {effects.desc || 'Goboss, couleurs, prisme et effets Rainbow'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🎛️</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {control.title || 'Modes de contrôle'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {control.desc || 'DMX, automatique, musical et maître-esclave'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  // Format Barre LED : 🎨, ⚡, 🎛️
+                  else if (longDesc.includes('🎨') && longDesc.includes('⚡')) {
+                    const colors = extractSection('🎨');
+                    const power = extractSection('⚡');
+                    const control = extractSection('🎛️');
+                    const installation = extractSection('🏛️');
+                    
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🎨</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {colors.title || 'Couleurs puissantes et variées'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {colors.desc || 'Mélange RGBAW-UV pour des effets riches et dynamiques'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">⚡</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {power.title || '7 LED de 10W'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {power.desc || 'Éclairage homogène et performant'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🎛️</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {control.title || 'Contrôle simple'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {control.desc || 'DMX, automatique, musical, maître-esclave + télécommande incluse'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                }
+                
+                // Pour les accessoires avec format 🔌, 🎤/🎧, 🔌, 📏
+                if (isAccessoire && (longDesc.includes('🎤') || longDesc.includes('🎧') || longDesc.includes('📏'))) {
+                  const transmission = extractSection('🎤');
+                  const usage = extractSection('🎧');
+                  const connect = extractSection('🔌');
+                  const length = extractSection('📏');
+                  
+                  // Format Câble XLR : 🎤, 🔌, 📏
+                  if (transmission.title) {
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🎤</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {transmission.title || 'Transmission stable'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {transmission.desc || 'Signal clair et sans interférences'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🔌</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {connect.title || 'Connectique standard'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {connect.desc || 'XLR femelle ↔ XLR mâle'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">📏</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {length.title || 'Longueur'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {length.desc || '6 mètres'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  // Format Adaptateur RCA : 🎧, 🔌, 📏
+                  else if (usage.title) {
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🎧</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {usage.title || 'Usage pratique'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {usage.desc || 'Idéal pour relier lecteur, table de mixage ou enceinte'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🔌</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {connect.title || 'Connectique'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {connect.desc || 'XLR femelle ↔ RCA mâle'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">📏</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {length.title || 'Longueur'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {length.desc || '3 mètres'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                }
+                
+                // Pour les micros ou produits avec format personnalisé : 🎶, 🔌, 👥 (ou 🎛️ pour consoles, ou ⚡🎶👥 pour caisson)
+                if (isMicro || hasCustomFormat) {
+                  const power = extractSection('⚡');
+                  const quality = extractSection('🎶');
+                  const effects = extractSection('🎛️');
+                  const connect = extractSection('🔌');
+                  const usage = extractSection('👥');
+                  
+                  // Si c'est un caisson avec ⚡, afficher ⚡, 🎶, 👥
+                  if (power.title && quality.title) {
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">⚡</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {power.title || 'Puissance 1200W'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {power.desc || 'Basses profondes et percutantes pour une immersion totale'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🎶</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {quality.title || 'Haut-parleur 18"'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {quality.desc || 'Idéal pour musique live, DJ sets et événements'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">👥</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {usage.title || 'Événements moyens à grands'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {usage.desc || 'Idéal pour événements de moyenne à grande envergure'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  // Si c'est une console avec effets (🎛️), afficher 🎶, 🎛️, 🔌
+                  else if (effects.title) {
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🎶</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {quality.title || 'Mixage simple et précis'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {quality.desc || 'Idéale pour conférences, cultes et animations'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🎛️</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {effects.title || 'Effets intégrés'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {effects.desc || '24 effets DSP avec réglage'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🔌</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {connect.title || 'Connectivité essentielle'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {connect.desc || '6 entrées micro XLR, USB & Bluetooth'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    // Format pour les micros : 🎶, 🔌, 👥
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🎶</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {quality.title || 'Qualité sonore légendaire'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {quality.desc || 'Son clair, chaud et précis pour discours et chant'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">🔌</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {connect.title || 'Connectique XLR'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {connect.desc || 'Compatible avec toutes les enceintes et consoles pro'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="text-4xl">👥</div>
+                          <div>
+                            <h3 className="font-bold text-black mb-1">
+                              {usage.title || 'Usage universel'}
+                            </h3>
+                            <p className="text-gray-600 text-sm">
+                              {usage.desc || 'Idéal pour conférences, cultes, événements live'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                } else {
+                  // Pour les autres produits : ⚡ Puissance, 🔌 Connectiques, 👥 Capacité
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="flex items-start gap-4">
+                        <div className="text-4xl">⚡</div>
+                        <div>
+                          <h3 className="font-bold text-black mb-1">
+                            {(() => {
+                              const power = product.specs?.puissance || product.specs?.power_rms || product.specs?.power;
+                              return power ? `${language === 'fr' ? 'Puissance' : 'Power'} ${power}` : (language === 'fr' ? 'Puissance 800W RMS' : 'Power 800W RMS');
+                            })()}
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            {language === 'fr' ? 'Son puissant et cristallin pour tous vos événements' : 'Powerful and crystal-clear sound for all your events'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-4">
+                        <div className="text-4xl">🔌</div>
+                        <div>
+                          <h3 className="font-bold text-black mb-1">
+                            {language === 'fr' ? 'Connectiques pro' : 'Pro Connectivity'}
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            {product.specs?.connectivity || product.specs?.inputs || (product.specs?.bluetooth ? (language === 'fr' ? 'XLR, Jack, Bluetooth intégré' : 'XLR, Jack, Integrated Bluetooth') : (language === 'fr' ? 'XLR, Jack, Bluetooth intégré' : 'XLR, Jack, Integrated Bluetooth'))}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-4">
+                        <div className="text-4xl">👥</div>
+                        <div>
+                          <h3 className="font-bold text-black mb-1">
+                            {(() => {
+                              const capacity = product.specs?.capacity || product.description?.match(/\d+-\d+/)?.[0];
+                              return capacity ? `${capacity} ${language === 'fr' ? 'personnes' : 'people'}` : (language === 'fr' ? '50-200 personnes' : '50-200 people');
+                            })()}
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            {product.specs?.usage_type === 'event' ? (language === 'fr' ? 'Idéale pour mariages, conférences, DJ sets' : 'Ideal for weddings, conferences, DJ sets') : 
+                             product.specs?.usage_type === 'dj' ? (language === 'fr' ? 'Idéale pour sets DJ et événements musicaux' : 'Ideal for DJ sets and musical events') :
+                             (language === 'fr' ? 'Idéale pour mariages, conférences, DJ sets' : 'Ideal for weddings, conferences, DJ sets')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+              })()}
             </div>
           )}
 
           {/* Vous pourriez en avoir besoin */}
-          <div className="bg-white py-12">
-            <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.youMightNeed}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {recommendedProducts.map((recProduct, index) => (
-                <div key={index} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="relative h-48 bg-gray-100">
-                    <img
-                      src={recProduct.image}
-                      alt={recProduct.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-black mb-2">{recProduct.name}</h3>
-                    <p className="text-lg font-bold text-[#F2431E] mb-4">{recProduct.price}</p>
-                    <button className="w-full bg-[#F2431E] text-white py-2 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors">
-                      {language === 'fr' ? 'Ajouter' : 'Add'}
-                    </button>
-                  </div>
-                </div>
-              ))}
+          {recommendedProducts.length > 0 && (
+            <div className="bg-white py-12">
+              <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.youMightNeed}</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {recommendedProducts.map((recProduct) => {
+                  // Gérer les images (peuvent être un tableau ou une chaîne JSON)
+                  let productImages: string[] = [];
+                  if (Array.isArray(recProduct.images)) {
+                    productImages = recProduct.images;
+                  } else if (typeof recProduct.images === 'string') {
+                    try {
+                      const parsed = JSON.parse(recProduct.images);
+                      productImages = Array.isArray(parsed) ? parsed : [parsed];
+                    } catch {
+                      productImages = [recProduct.images];
+                    }
+                  }
+                  
+                  const productImage = productImages.length > 0 
+                    ? productImages[0] 
+                    : '/products/default.jpg';
+                  
+                  const handleAddRecommended = () => {
+                    const cartItem: CartItem = {
+                      productId: recProduct.id,
+                      productName: recProduct.name,
+                      dailyPrice: parseFloat(recProduct.daily_price_ttc.toString()),
+                      quantity: 1,
+                      rentalDays: 1,
+                      startDate: null,
+                      endDate: null,
+                      deposit: parseFloat(recProduct.deposit?.toString() || '0'),
+                      image: productImage,
+                    };
+                    addToCart(cartItem);
+                  };
+
+                  return (
+                    <Link 
+                      key={recProduct.id} 
+                      href={`/catalogue/${recProduct.id}`}
+                      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+                    >
+                      <div className="relative h-48 bg-gray-100">
+                        <img
+                          src={productImage}
+                          alt={recProduct.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-black mb-2">{recProduct.name}</h3>
+                        <p className="text-lg font-bold text-[#F2431E] mb-4">
+                          {recProduct.daily_price_ttc}€/{language === 'fr' ? 'jour' : 'day'}
+                        </p>
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAddRecommended();
+                          }}
+                          className="w-full bg-[#F2431E] text-white py-2 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
+                        >
+                          {language === 'fr' ? 'Ajouter' : 'Add'}
+                        </button>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Avis clients */}
           <div className="bg-gray-50 py-12">

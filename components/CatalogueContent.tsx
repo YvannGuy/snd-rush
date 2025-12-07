@@ -28,6 +28,8 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12; // 12 produits par page (3 lignes de 4)
   const [quickAddModal, setQuickAddModal] = useState<{ isOpen: boolean; product: Product | null }>({
     isOpen: false,
     product: null,
@@ -62,15 +64,10 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
       },
       urgency: {
         title: 'Besoin d\'un système son maintenant ?',
-        intervention: 'Intervention en 2h en Île-de-France',
+        intervention: 'Intervention en moins de 1h en Île-de-France',
         delivery: 'Livraison + installation',
         cta: 'Appeler maintenant'
       },
-      ready: {
-        title: 'Prêt à louer votre matériel ?',
-        quickQuote: 'Obtenir un devis rapide',
-        expert: 'Parler à un expert'
-      }
     },
     en: {
       title: 'Professional Equipment Catalog',
@@ -100,14 +97,9 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
       },
       urgency: {
         title: 'Need a sound system now?',
-        intervention: 'Intervention in 2h in Île-de-France',
+        intervention: 'Intervention in less than 1h in Île-de-France',
         delivery: 'Delivery + installation',
         cta: 'Call now'
-      },
-      ready: {
-        title: 'Ready to rent your equipment?',
-        quickQuote: 'Get a quick quote',
-        expert: 'Talk to an expert'
       }
     }
   };
@@ -125,15 +117,6 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
       image: '/enceintebt.jpg',
       capacity: '100-300',
       usageType: 'event'
-    },
-    {
-      id: 2,
-      name: 'Pioneer XDJ-RX3',
-      category: 'dj',
-      description: 'Contrôleur DJ pro',
-      price: '120€/jour',
-      image: '/platinedj.jpg',
-      usageType: 'dj'
     },
     {
       id: 3,
@@ -197,8 +180,9 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
   useEffect(() => {
     const loadProducts = async () => {
       if (!supabase) {
-        // Fallback vers les produits par défaut
-        setProducts(defaultProducts);
+        // Fallback vers les produits par défaut + packs
+        const allProducts = [...defaultProducts, ...getPacksAsProducts()];
+        setProducts(allProducts);
         setLoading(false);
         return;
       }
@@ -211,8 +195,9 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
 
         if (error) {
           console.error('Erreur chargement produits:', error);
-          // Fallback vers les produits par défaut
-          setProducts(defaultProducts);
+          // Fallback vers les produits par défaut + packs
+          const allProducts = [...defaultProducts, ...getPacksAsProducts()];
+          setProducts(allProducts);
           setLoading(false);
           return;
         }
@@ -241,17 +226,27 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
               usageType: usageType,
             };
           });
-          console.log('Produits chargés depuis Supabase:', convertedProducts);
-          setProducts(convertedProducts);
+          
+          // Filtrer Pioneer XDJ si présent
+          const filteredProducts = convertedProducts.filter(p => 
+            !p.name.toLowerCase().includes('pioneer') && !p.name.toLowerCase().includes('xdj')
+          );
+          
+          // Ajouter les packs
+          const allProducts = [...filteredProducts, ...getPacksAsProducts()];
+          console.log('Produits chargés depuis Supabase:', allProducts);
+          setProducts(allProducts);
         } else {
-          console.log('Aucun produit en base, utilisation des produits par défaut');
-          // Aucun produit en base, utiliser les produits par défaut
-          setProducts(defaultProducts);
+          console.log('Aucun produit en base, utilisation des produits par défaut + packs');
+          // Aucun produit en base, utiliser les produits par défaut + packs
+          const allProducts = [...defaultProducts, ...getPacksAsProducts()];
+          setProducts(allProducts);
         }
       } catch (error) {
         console.error('Erreur chargement produits:', error);
-        // Fallback vers les produits par défaut
-        setProducts(defaultProducts);
+        // Fallback vers les produits par défaut + packs
+        const allProducts = [...defaultProducts, ...getPacksAsProducts()];
+        setProducts(allProducts);
       } finally {
         setLoading(false);
       }
@@ -259,6 +254,52 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
 
     loadProducts();
   }, []);
+
+  // Fonction pour convertir les packs en produits
+  function getPacksAsProducts(): Product[] {
+    return [
+      {
+        id: 'pack-1',
+        name: 'Pack S Petit',
+        category: 'packs',
+        description: 'Pour 30 à 70 personnes. 1 enceinte Mac Mah AS 115, 1 console de mixage',
+        price: '109€/jour',
+        image: '/pack2c.jpg',
+        capacity: '30-70',
+        usageType: 'event'
+      },
+      {
+        id: 'pack-2',
+        name: 'Pack M Confort',
+        category: 'packs',
+        description: 'Pour 70 à 150 personnes. 2 enceintes Mac Mah AS 115, 1 console HPA Promix 8',
+        price: '129€/jour',
+        image: '/pack2cc.jpg',
+        capacity: '70-150',
+        usageType: 'event'
+      },
+      {
+        id: 'pack-3',
+        name: 'Pack L Grand',
+        category: 'packs',
+        description: 'Pour 150 à 250 personnes. 2 enceintes FBT X-Lite 115A, 1 caisson, 1 console HPA Promix 16',
+        price: '179€/jour',
+        image: '/pack4cc.jpg',
+        capacity: '150-250',
+        usageType: 'event'
+      },
+      {
+        id: 'pack-5',
+        name: 'Pack XL Maxi / Sur mesure',
+        category: 'packs',
+        description: 'Plus de 300 personnes. Sonorisation pro, micros HF, technicien & régie, logistique complète',
+        price: 'Sur devis',
+        image: '/concert.jpg',
+        capacity: '300+',
+        usageType: 'event'
+      }
+    ];
+  }
 
   const categoryColors: Record<string, string> = {
     sonorisation: 'bg-[#F2431E]',
@@ -270,6 +311,11 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
   };
 
   const filteredProducts = products.filter(product => {
+    // Exclure Pioneer XDJ de tous les résultats
+    if (product.name.toLowerCase().includes('pioneer') || product.name.toLowerCase().includes('xdj')) {
+      return false;
+    }
+    
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
@@ -279,24 +325,41 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
     // Price range filter logic
     let matchesPrice = true;
     if (selectedPriceRange !== 'all') {
-      // Extraire le nombre du prix (format: "70.00€/jour" ou "70€/jour")
-      const priceMatch = product.price.match(/(\d+(?:\.\d+)?)/);
-      const priceNum = priceMatch ? parseFloat(priceMatch[1]) : 0;
-      switch (selectedPriceRange) {
-        case '0-50':
-          matchesPrice = priceNum <= 50;
-          break;
-        case '50-100':
-          matchesPrice = priceNum > 50 && priceNum <= 100;
-          break;
-        case '100+':
-          matchesPrice = priceNum > 100;
-          break;
+      // Extraire le nombre du prix (format: "70.00€/jour" ou "70€/jour" ou "Sur devis")
+      if (product.price.toLowerCase().includes('devis') || product.price.toLowerCase().includes('quote')) {
+        // Les packs "Sur devis" ne matchent aucun filtre de prix sauf si on filtre explicitement
+        matchesPrice = false;
+      } else {
+        const priceMatch = product.price.match(/(\d+(?:\.\d+)?)/);
+        const priceNum = priceMatch ? parseFloat(priceMatch[1]) : 0;
+        switch (selectedPriceRange) {
+          case '0-50':
+            matchesPrice = priceNum <= 50;
+            break;
+          case '50-100':
+            matchesPrice = priceNum > 50 && priceNum <= 100;
+            break;
+          case '100+':
+            matchesPrice = priceNum > 100;
+            break;
+        }
       }
     }
 
     return matchesSearch && matchesCategory && matchesUsageType && matchesCapacity && matchesPrice;
   });
+
+  // Pagination - s'active seulement si plus de 20 produits
+  const shouldPaginate = filteredProducts.length > 20;
+  const totalPages = shouldPaginate ? Math.ceil(filteredProducts.length / itemsPerPage) : 1;
+  const startIndex = shouldPaginate ? (currentPage - 1) * itemsPerPage : 0;
+  const endIndex = shouldPaginate ? startIndex + itemsPerPage : filteredProducts.length;
+  const paginatedProducts = shouldPaginate ? filteredProducts.slice(startIndex, endIndex) : filteredProducts;
+
+  // Réinitialiser la page quand les filtres changent
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedUsageType, selectedCapacity, selectedPriceRange]);
 
   const handleAddToQuote = (productId: number) => {
     // Rediriger vers la page de devis
@@ -311,7 +374,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
   };
 
   return (
-    <div className="pt-16">
+    <div className="pt-[104px]">
       {/* Header Section */}
       <div className="bg-white py-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -413,7 +476,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
+              {paginatedProducts.map((product) => (
               <div
                 key={product.id}
                 className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden flex flex-col h-full"
@@ -436,8 +499,9 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                   <h3 className="text-lg font-bold text-black mb-2">
                     {product.name}
                   </h3>
-                  <p className="text-gray-600 mb-4">
-                    {product.description}
+                  <p className="text-gray-600 mb-4 text-sm line-clamp-2">
+                    {product.description.split('.')[0] || product.description.substring(0, 100)}
+                    {product.description.length > 100 && !product.description.includes('.') ? '...' : ''}
                   </p>
                   <p className="text-2xl font-bold text-[#F2431E] mb-4">
                     {product.price}
@@ -445,15 +509,34 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
 
                   {/* Buttons - alignés en bas */}
                   <div className="flex flex-col gap-2 mt-auto">
-                    <button
-                      onClick={() => setQuickAddModal({ isOpen: true, product })}
-                      className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors flex items-center justify-center gap-2"
-                    >
-                      <span>🛒</span>
-                      {currentTexts.addToCart}
-                    </button>
+                    {product.category === 'packs' && (product.price.includes('devis') || product.price.includes('quote')) ? (
+                      <Link
+                        href="/devis"
+                        className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors text-center block"
+                      >
+                        {language === 'fr' ? 'Demander un devis' : 'Request a quote'}
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (product.category === 'packs') {
+                            // Pour les packs, rediriger vers la page pack
+                            const packId = product.id.toString().replace('pack-', '');
+                            window.location.href = `/packs/${packId}`;
+                          } else {
+                            setQuickAddModal({ isOpen: true, product });
+                          }
+                        }}
+                        className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors flex items-center justify-center gap-2"
+                      >
+                        <span>🛒</span>
+                        {currentTexts.addToCart}
+                      </button>
+                    )}
                     <Link
-                      href={`/catalogue/${product.id}`}
+                      href={product.category === 'packs' 
+                        ? `/packs/${product.id.toString().replace('pack-', '')}` 
+                        : `/catalogue/${product.id}`}
                       className="w-full border-2 border-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center block"
                     >
                       {currentTexts.viewProduct}
@@ -470,6 +553,72 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
               <p className="text-xl text-gray-600">
                 Aucun produit trouvé avec ces critères.
               </p>
+            </div>
+          )}
+
+          {/* Pagination - affichée seulement si nécessaire */}
+          {!loading && shouldPaginate && filteredProducts.length > 0 && (
+            <div className="mt-12 flex flex-col items-center gap-4">
+              <div className="text-sm text-gray-600">
+                {language === 'fr' 
+                  ? `Affichage ${startIndex + 1}-${Math.min(endIndex, filteredProducts.length)} sur ${filteredProducts.length} produits`
+                  : `Showing ${startIndex + 1}-${Math.min(endIndex, filteredProducts.length)} of ${filteredProducts.length} products`
+                }
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    currentPage === 1
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-[#F2431E] text-white hover:bg-[#E63A1A]'
+                  }`}
+                >
+                  {language === 'fr' ? 'Précédent' : 'Previous'}
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-10 h-10 rounded-lg font-medium transition-colors ${
+                          currentPage === pageNum
+                            ? 'bg-[#F2431E] text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    currentPage === totalPages
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-[#F2431E] text-white hover:bg-[#E63A1A]'
+                  }`}
+                >
+                  {language === 'fr' ? 'Suivant' : 'Next'}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -522,29 +671,6 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
               className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-[#E63A1A] transition-colors"
             >
               {currentTexts.urgency.cta}
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Ready Section */}
-      <div className="bg-white py-16">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-black mb-8">
-            {currentTexts.ready.title}
-          </h2>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <a
-              href="/devis"
-              className="bg-[#F2431E] text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-[#E63A1A] transition-colors text-center"
-            >
-              {currentTexts.ready.quickQuote}
-            </a>
-            <a
-              href="tel:+33651084994"
-              className="border-2 border-[#F2431E] text-[#F2431E] px-8 py-4 rounded-lg font-semibold text-lg hover:bg-[#F2431E] hover:text-white transition-colors"
-            >
-              {currentTexts.ready.expert}
             </a>
           </div>
         </div>

@@ -454,17 +454,48 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             </nav>
 
             {/* Tags */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                {language === 'fr' ? 'Puissant' : 'Powerful'}
-              </span>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                {language === 'fr' ? 'Indoor/Outdoor' : 'Indoor/Outdoor'}
-              </span>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
-                {language === 'fr' ? 'Pro Quality' : 'Pro Quality'}
-              </span>
-      </div>
+            {(() => {
+              // Fonction pour générer les tags selon le pack
+              const getPackTags = (packId: number): Array<{ text: string; color: string }> => {
+                const tags: Array<{ text: string; color: string }> = [];
+                
+                if (packId === 1) {
+                  // Pack S Petit
+                  tags.push({ text: language === 'fr' ? 'Compact' : 'Compact', color: 'bg-blue-100 text-blue-800' });
+                  tags.push({ text: language === 'fr' ? '30-70 personnes' : '30-70 people', color: 'bg-green-100 text-green-800' });
+                  tags.push({ text: language === 'fr' ? 'Clé en main' : 'Turnkey', color: 'bg-purple-100 text-purple-800' });
+                } else if (packId === 2) {
+                  // Pack M Confort
+                  tags.push({ text: language === 'fr' ? 'Confort' : 'Comfort', color: 'bg-blue-100 text-blue-800' });
+                  tags.push({ text: language === 'fr' ? '70-150 personnes' : '70-150 people', color: 'bg-green-100 text-green-800' });
+                  tags.push({ text: language === 'fr' ? 'Professionnel' : 'Professional', color: 'bg-purple-100 text-purple-800' });
+                } else if (packId === 3) {
+                  // Pack L Grand
+                  tags.push({ text: language === 'fr' ? 'Puissant' : 'Powerful', color: 'bg-green-100 text-green-800' });
+                  tags.push({ text: language === 'fr' ? '150-250 personnes' : '150-250 people', color: 'bg-blue-100 text-blue-800' });
+                  tags.push({ text: language === 'fr' ? 'Caisson inclus' : 'Subwoofer included', color: 'bg-purple-100 text-purple-800' });
+                } else if (packId === 4) {
+                  // Pack XL Maxi
+                  tags.push({ text: language === 'fr' ? 'Sur mesure' : 'Custom', color: 'bg-purple-100 text-purple-800' });
+                  tags.push({ text: language === 'fr' ? '300+ personnes' : '300+ people', color: 'bg-green-100 text-green-800' });
+                  tags.push({ text: language === 'fr' ? 'Technicien inclus' : 'Technician included', color: 'bg-blue-100 text-blue-800' });
+                }
+                
+                return tags;
+              };
+              
+              const tags = getPackTags(pack.id);
+              
+              return tags.length > 0 ? (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {tags.map((tag, index) => (
+                    <span key={index} className={`px-3 py-1 rounded-full text-xs font-semibold ${tag.color}`}>
+                      {tag.text}
+                    </span>
+                  ))}
+                </div>
+              ) : null;
+            })()}
 
             {/* Titre */}
             <h1 className="text-4xl md:text-5xl font-bold text-black mb-4 leading-tight">

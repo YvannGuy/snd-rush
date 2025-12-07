@@ -7,11 +7,47 @@ interface CookieBannerProps {
   language?: 'fr' | 'en';
 }
 
-export default function CookieBanner({ language = 'fr' }: CookieBannerProps) {
+export default function CookieBanner({ language }: CookieBannerProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [detectedLanguage, setDetectedLanguage] = useState<'fr' | 'en'>('fr');
 
   useEffect(() => {
+    // Détecter la langue depuis localStorage ou depuis l'attribut lang du HTML
+    const detectLanguage = () => {
+      if (language) {
+        setDetectedLanguage(language);
+        return;
+      }
+      
+      // Vérifier localStorage pour la langue
+      const storedLanguage = localStorage.getItem('language') as 'fr' | 'en' | null;
+      if (storedLanguage && (storedLanguage === 'fr' || storedLanguage === 'en')) {
+        setDetectedLanguage(storedLanguage);
+        return;
+      }
+      
+      // Vérifier l'attribut lang du HTML
+      if (typeof window !== 'undefined') {
+        const htmlLang = document.documentElement.lang;
+        if (htmlLang === 'en' || htmlLang.startsWith('en-')) {
+          setDetectedLanguage('en');
+        } else {
+          setDetectedLanguage('fr');
+        }
+      }
+    };
+
+    detectLanguage();
+
+    // Écouter les changements de langue
+    const handleLanguageChange = () => {
+      detectLanguage();
+    };
+    
+    window.addEventListener('languageChanged', handleLanguageChange);
+    window.addEventListener('storage', handleLanguageChange);
+
     // Vérifier si l'utilisateur a déjà fait un choix
     const cookieConsent = localStorage.getItem('cookieConsent');
     if (!cookieConsent) {
@@ -21,7 +57,12 @@ export default function CookieBanner({ language = 'fr' }: CookieBannerProps) {
         setIsAnimating(true);
       }, 1000);
     }
-  }, []);
+
+    return () => {
+      window.removeEventListener('languageChanged', handleLanguageChange);
+      window.removeEventListener('storage', handleLanguageChange);
+    };
+  }, [language]);
 
   const handleAccept = () => {
     localStorage.setItem('cookieConsent', 'accepted');
@@ -60,7 +101,7 @@ export default function CookieBanner({ language = 'fr' }: CookieBannerProps) {
     },
   };
 
-  const currentTexts = texts[language];
+  const currentTexts = texts[detectedLanguage];
 
   return (
     <div

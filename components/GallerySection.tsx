@@ -65,7 +65,7 @@ export default function GallerySection({ language }: GallerySectionProps) {
 
   return (
     <>
-      <section className="py-24 lg:py-32 bg-white overflow-hidden">
+      <section id="gallery" className="py-24 lg:py-32 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-20">

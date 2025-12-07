@@ -9,6 +9,7 @@ import MiniCart from '@/components/cart/MiniCart';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import SignModal from '@/components/auth/SignModal';
+import TopBanner from '@/components/TopBanner';
 // Icônes inline pour éviter la dépendance lucide-react
 const UserIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,9 +158,12 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
+      {/* Bandeau orange en haut */}
+      <TopBanner language={language} />
+      
       {/* Header principal avec fond sombre */}
       <div className="bg-black shadow-md relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="flex items-center justify-between h-16">
             {/* Logo SndRush */}
             <Link href="/" className="flex items-center">
@@ -182,22 +186,42 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               >
                 {texts[language].packs}
               </Link>
-              <button 
-                onClick={() => scrollToSection('urgency')}
+              <Link 
+                href="/#urgency"
+                onClick={(e) => {
+                  if (pathname === '/') {
+                    e.preventDefault();
+                    scrollToSection('urgency');
+                  }
+                }}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
               >
                 {texts[language].urgence}
-              </button>
-              <button 
-                onClick={() => scrollToSection('faq')}
+              </Link>
+              <Link 
+                href="/#faq"
+                onClick={(e) => {
+                  if (pathname === '/') {
+                    e.preventDefault();
+                    scrollToSection('faq');
+                  }
+                }}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
               >
                 {texts[language].faq}
-              </button>
+              </Link>
             </nav>
 
             {/* CTA Buttons */}
             <div className="flex items-center gap-3 sm:gap-4">
+              {/* CTA Principal - Réserver */}
+              <Link
+                href="/packs"
+                className="hidden lg:flex items-center justify-center px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm"
+              >
+                {language === 'fr' ? 'Réserver' : 'Book'}
+              </Link>
+
               {/* Language switcher - Desktop only */}
               <button
                 onClick={toggleLanguage}
@@ -294,16 +318,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 )}
               </button>
 
-              {/* Bouton Appeler - Desktop only */}
-              <a
-                href="tel:+33651084994"
-                className="hidden lg:flex bg-[#F2431E] text-white px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg font-medium hover:bg-[#E63A1A] transition-colors cursor-pointer whitespace-nowrap items-center gap-2"
-              >
-                <span>📞</span>
-                <span>{texts[language].callNow}</span>
-              </a>
-
-              {/* Mobile buttons - Toggle, Auth, et Téléphone côte à côte */}
+              {/* Mobile buttons - Toggle et Auth côte à côte */}
               <div className="lg:hidden flex items-center gap-2">
                 {/* Auth Icon - Mobile */}
                 <button
@@ -322,7 +337,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
 
                 {/* Mobile menu button */}
                 <button 
-                  className="p-3 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-3 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative z-50"
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
                   aria-expanded={isMobileMenuOpen}
@@ -339,33 +354,16 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                     )}
                   </div>
                 </button>
-
-                {/* Bouton Téléphone - Mobile en orange */}
-                <a
-                  href="tel:+33651084994"
-                  className="p-3 cursor-pointer bg-[#F2431E] hover:bg-[#E63A1A] rounded-lg transition-colors"
-                  aria-label="Appeler"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                </a>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Mobile menu - Complètement séparé du conteneur bg-black */}
-      {isMobileMenuOpen && (
-        <div 
-          className="lg:hidden fixed top-16 left-0 right-0 border-t border-white/20 z-40 overflow-hidden bg-black"
-          style={{ 
-            width: '100vw',
-            maxWidth: '100%'
-          }}
-        >
-          <div className="pt-3 pb-4 space-y-2" style={{ paddingLeft: '1rem', paddingRight: '1rem', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+          
+          {/* Mobile menu - Positionné relativement au conteneur */}
+          {isMobileMenuOpen && (
+            <div 
+              className="lg:hidden absolute top-full left-0 right-0 border-t border-white/20 z-30 overflow-hidden bg-black"
+            >
+              <div className="pt-3 pb-4 space-y-2 px-4">
             <Link 
               href="/catalogue"
               onClick={() => setIsMobileMenuOpen(false)}
@@ -380,24 +378,41 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
             >
               {texts[language].packs}
             </Link>
-            <button 
-              onClick={() => {
-                scrollToSection('urgency');
+            <Link 
+              href="/#urgency"
+              onClick={(e) => {
+                if (pathname === '/') {
+                  e.preventDefault();
+                  scrollToSection('urgency');
+                }
                 setIsMobileMenuOpen(false);
               }}
               className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
             >
               {texts[language].urgence}
-            </button>
-            <button 
-              onClick={() => {
-                scrollToSection('faq');
+            </Link>
+            <Link 
+              href="/#faq"
+              onClick={(e) => {
+                if (pathname === '/') {
+                  e.preventDefault();
+                  scrollToSection('faq');
+                }
                 setIsMobileMenuOpen(false);
               }}
               className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
             >
               {texts[language].faq}
-            </button>
+            </Link>
+            
+            {/* CTA Réserver - Mobile */}
+            <Link
+              href="/packs"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block w-full text-left px-2 py-2.5 text-sm font-semibold bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-md cursor-pointer transition-colors text-center mt-2"
+            >
+              {language === 'fr' ? 'Réserver' : 'Book'}
+            </Link>
 
             {/* Language switcher for mobile */}
             <button
@@ -413,10 +428,11 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               </div>
               <span className="uppercase text-xs">{language === 'fr' ? 'EN' : 'FR'}</span>
             </button>
-
-          </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Mini Cart */}
       <MiniCart
@@ -460,7 +476,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
 
       {/* Mobile Profile Menu */}
       {user && isProfileMenuOpen && (
-        <div className="lg:hidden fixed top-16 left-0 right-0 bg-black/95 backdrop-blur-md z-40 border-t border-white/20">
+        <div className="lg:hidden fixed top-[104px] left-0 right-0 bg-black/95 backdrop-blur-md z-40 border-t border-white/20">
           <div className="px-4 py-4 space-y-2">
             <div className="px-2 py-2 border-b border-white/20">
               <p className="text-sm font-semibold text-white truncate">{user.email}</p>

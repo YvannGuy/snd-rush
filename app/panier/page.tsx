@@ -288,7 +288,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header language={language} onLanguageChange={setLanguage} />
-      <main className="pt-20 pb-16">
+      <main className="pt-[104px] pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           {/* Header épuré */}
           <div className="mb-8">
