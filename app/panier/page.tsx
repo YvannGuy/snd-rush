@@ -9,7 +9,8 @@ import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 import Image from 'next/image';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
-import { CartItem } from '@/types/db';
+import { CartItem, Product } from '@/types/db';
+import { supabase } from '@/lib/supabase';
 
 type DeliveryOption = 'paris' | 'petite_couronne' | 'grande_couronne' | 'retrait';
 
@@ -29,6 +30,7 @@ export default function CartPage() {
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const { cart, removeFromCart, increaseQuantity, decreaseQuantity, addToCart } = useCart();
   const { user } = useUser();
 
@@ -38,6 +40,115 @@ export default function CartPage() {
       setCustomerEmail(user.email);
     }
   }, [user, customerEmail]);
+
+  // Charger les produits recommandés depuis Supabase
+  useEffect(() => {
+    async function loadRecommendedProducts() {
+      if (!supabase || cart.items.length === 0) {
+        setRecommendedProducts([]);
+        return;
+      }
+
+      try {
+        // Analyser le contenu du panier pour déterminer les catégories recommandées
+        const cartCategories = new Set<string>();
+        const cartProductNames = cart.items.map(item => item.productName.toLowerCase());
+        
+        // Détecter les catégories dans le panier
+        cartProductNames.forEach(name => {
+          if (name.includes('pack') || name.includes('enceinte') || name.includes('caisson')) {
+            cartCategories.add('sonorisation');
+          }
+          if (name.includes('micro')) {
+            cartCategories.add('micros');
+          }
+          if (name.includes('led') || name.includes('lumière') || name.includes('lyre')) {
+            cartCategories.add('lumieres');
+          }
+        });
+
+        // Déterminer les catégories recommandées selon le contenu du panier
+        let targetCategories: string[] = [];
+        
+        if (cartCategories.has('sonorisation')) {
+          // Si le panier contient de la sono : recommander micros, câbles, accessoires
+          targetCategories = ['micros', 'accessoires'];
+        } else if (cartCategories.has('micros')) {
+          // Si le panier contient des micros : recommander câbles, consoles, autres micros
+          targetCategories = ['accessoires', 'sonorisation'];
+        } else if (cartCategories.has('lumieres')) {
+          // Si le panier contient des lumières : recommander autres lumières, câbles
+          targetCategories = ['lumieres', 'accessoires'];
+        } else {
+          // Par défaut : recommander produits complémentaires
+          targetCategories = ['micros', 'accessoires', 'lumieres'];
+        }
+
+        // Récupérer les IDs des produits déjà dans le panier (exclure les packs)
+        const cartProductIds = cart.items
+          .filter(item => !item.productId.startsWith('pack-'))
+          .map(item => item.productId);
+
+        // Charger les produits depuis Supabase
+        const { data: allProducts, error } = await supabase
+          .from('products')
+          .select('*')
+          .in('category', targetCategories)
+          .limit(20);
+
+        // Exclure Pioneer XDJ et produits déjà dans le panier
+        const filtered = allProducts?.filter(p => {
+          const nameLower = p.name.toLowerCase();
+          const isPioneer = nameLower.includes('pioneer') || nameLower.includes('xdj');
+          const isInCart = cartProductIds.includes(p.id);
+          return !isPioneer && !isInCart;
+        }) || [];
+
+        if (error) {
+          console.error('Erreur chargement produits recommandés:', error);
+          return;
+        }
+
+        if (filtered.length > 0) {
+          // Trier par pertinence selon le contenu du panier
+          let sorted = filtered;
+          
+          if (cartCategories.has('sonorisation')) {
+            // Prioriser micros, puis câbles XLR, puis autres accessoires
+            sorted = filtered.sort((a, b) => {
+              const aIsMicro = a.category === 'micros' ? 3 : 0;
+              const bIsMicro = b.category === 'micros' ? 3 : 0;
+              const aIsCableXlr = a.name.toLowerCase().includes('xlr') && a.category === 'accessoires' ? 2 : 0;
+              const bIsCableXlr = b.name.toLowerCase().includes('xlr') && b.category === 'accessoires' ? 2 : 0;
+              const aIsAccessoire = a.category === 'accessoires' ? 1 : 0;
+              const bIsAccessoire = b.category === 'accessoires' ? 1 : 0;
+              
+              return (bIsMicro + bIsCableXlr + bIsAccessoire) - (aIsMicro + aIsCableXlr + aIsAccessoire);
+            });
+          } else if (cartCategories.has('micros')) {
+            // Prioriser câbles XLR, adaptateurs, puis consoles
+            sorted = filtered.sort((a, b) => {
+              const aIsCableXlr = a.name.toLowerCase().includes('xlr') && a.category === 'accessoires' ? 3 : 0;
+              const bIsCableXlr = b.name.toLowerCase().includes('xlr') && b.category === 'accessoires' ? 3 : 0;
+              const aIsAdaptateur = a.name.toLowerCase().includes('adaptateur') ? 2 : 0;
+              const bIsAdaptateur = b.name.toLowerCase().includes('adaptateur') ? 2 : 0;
+              const aIsConsole = (a.name.toLowerCase().includes('promix') || a.name.toLowerCase().includes('console')) ? 1 : 0;
+              const bIsConsole = (b.name.toLowerCase().includes('promix') || b.name.toLowerCase().includes('console')) ? 1 : 0;
+              
+              return (bIsCableXlr + bIsAdaptateur + bIsConsole) - (aIsCableXlr + aIsAdaptateur + aIsConsole);
+            });
+          }
+
+          // Prendre les 3 premiers produits (on garde la livraison et l'installation)
+          setRecommendedProducts(sorted.slice(0, 3));
+        }
+      } catch (err) {
+        console.error('Erreur chargement produits recommandés:', err);
+      }
+    }
+
+    loadRecommendedProducts();
+  }, [cart.items]);
 
   const deliveryOptions: Record<DeliveryOption, DeliveryOptionType> = {
     paris: { id: 'paris', name: language === 'fr' ? 'Paris' : 'Paris', price: 80 },
@@ -489,80 +600,71 @@ export default function CartPage() {
                       </div>
                     </div>
 
-                    {/* Carte Produit exemple 1 - Compacte */}
-                    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 min-w-[180px] hover:shadow-md transition-shadow cursor-pointer">
-                      <div className="relative w-full h-20 rounded-md overflow-hidden bg-gray-100 mb-2">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-1">{language === 'fr' ? 'Micro sans fil' : 'Wireless mic'}</h3>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-sm font-bold text-[#F2431E]">30€/j</span>
-                        <button 
-                          onClick={() => handleAddAdditionalProduct(
-                            language === 'fr' ? 'Micro sans fil' : 'Wireless microphone',
-                            30,
-                            'micro-sans-fil'
-                          )}
-                          className="px-3 py-1 bg-[#F2431E] text-white rounded-md font-medium hover:bg-[#E63A1A] transition-colors text-xs"
-                        >
-                          {language === 'fr' ? 'Ajouter' : 'Add'}
-                        </button>
-                      </div>
-                    </div>
+                    {/* Produits recommandés depuis Supabase */}
+                    {recommendedProducts.map((product) => {
+                      const productImage = product.images && product.images.length > 0 
+                        ? (Array.isArray(product.images) ? product.images[0] : typeof product.images === 'string' ? product.images : '/placeholder-product.png')
+                        : '/placeholder-product.png';
+                      const productPrice = product.daily_price_ttc 
+                        ? `${product.daily_price_ttc}€/j`
+                        : language === 'fr' ? 'Sur devis' : 'On quote';
 
-                    {/* Carte Produit exemple 2 - Compacte */}
-                    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 min-w-[180px] hover:shadow-md transition-shadow cursor-pointer">
-                      <div className="relative w-full h-20 rounded-md overflow-hidden bg-gray-100 mb-2">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-1">{language === 'fr' ? 'Éclairage LED' : 'LED lighting'}</h3>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-sm font-bold text-[#F2431E]">50€/j</span>
-                        <button 
-                          onClick={() => handleAddAdditionalProduct(
-                            language === 'fr' ? 'Éclairage LED' : 'LED lighting',
-                            50,
-                            'eclairage-led'
-                          )}
-                          className="px-3 py-1 bg-[#F2431E] text-white rounded-md font-medium hover:bg-[#E63A1A] transition-colors text-xs"
-                        >
-                          {language === 'fr' ? 'Ajouter' : 'Add'}
-                        </button>
-                      </div>
-                    </div>
+                      // Utiliser les dates du premier item du panier
+                      const firstItem = cart.items[0];
+                      const startDate = firstItem?.startDate || new Date().toISOString().split('T')[0];
+                      const endDate = firstItem?.endDate || new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                      const rentalDays = firstItem?.rentalDays || 1;
 
-                    {/* Carte Produit exemple 3 - Compacte */}
-                    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 min-w-[180px] hover:shadow-md transition-shadow cursor-pointer">
-                      <div className="relative w-full h-20 rounded-md overflow-hidden bg-gray-100 mb-2">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                          </svg>
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-1">{language === 'fr' ? 'Câbles audio' : 'Audio cables'}</h3>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-sm font-bold text-[#F2431E]">20€/j</span>
-                        <button 
-                          onClick={() => handleAddAdditionalProduct(
-                            language === 'fr' ? 'Câbles audio' : 'Audio cables',
-                            20,
-                            'cables-audio'
-                          )}
-                          className="px-3 py-1 bg-[#F2431E] text-white rounded-md font-medium hover:bg-[#E63A1A] transition-colors text-xs"
+                      const handleAddProduct = () => {
+                        const cartItem: CartItem = {
+                          productId: product.id,
+                          productName: product.name,
+                          productSlug: product.slug || product.id,
+                          quantity: 1,
+                          rentalDays,
+                          startDate,
+                          endDate,
+                          dailyPrice: product.daily_price_ttc || 0,
+                          deposit: product.deposit || 0,
+                          addons: [],
+                          images: Array.isArray(product.images) ? product.images : product.images ? [product.images] : [],
+                        };
+                        addToCart(cartItem);
+                        
+                        // Rafraîchir les produits recommandés pour exclure celui qui vient d'être ajouté
+                        setRecommendedProducts(prev => prev.filter(p => p.id !== product.id));
+                      };
+
+                      return (
+                        <Link
+                          key={product.id}
+                          href={`/catalogue/${product.slug || product.id}`}
+                          className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 min-w-[180px] hover:shadow-md transition-shadow cursor-pointer block"
                         >
-                          {language === 'fr' ? 'Ajouter' : 'Add'}
-                        </button>
-                      </div>
-                    </div>
+                          <div className="relative w-full h-20 rounded-md overflow-hidden bg-gray-100 mb-2">
+                            <Image
+                              src={productImage}
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-1">{product.name}</h3>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-sm font-bold text-[#F2431E]">{productPrice}</span>
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleAddProduct();
+                              }}
+                              className="px-3 py-1 bg-[#F2431E] text-white rounded-md font-medium hover:bg-[#E63A1A] transition-colors text-xs"
+                            >
+                              {language === 'fr' ? 'Ajouter' : 'Add'}
+                            </button>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
