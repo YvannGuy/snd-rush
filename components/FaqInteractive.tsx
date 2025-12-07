@@ -55,7 +55,8 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-4">
-            Questions Fréquentes
+            <span className="text-black">Questions </span>
+            <span className="text-[#F2431E]">Fréquentes</span>
           </h2>
           <p className="text-xl text-gray-600">
             Tout ce que vous devez savoir

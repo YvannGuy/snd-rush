@@ -50,7 +50,8 @@ export default function PourQuiSection({ language }: PourQuiSectionProps) {
 
         {/* Title */}
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-12 text-center">
-          {currentTexts.title}
+          <span className="text-black">On s'occupe de tout, pour tous vos </span>
+          <span className="text-[#F2431E]">événements</span>
         </h2>
 
         {/* Categories Grid */}

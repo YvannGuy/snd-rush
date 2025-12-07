@@ -191,7 +191,8 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
         {/* Title */}
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-4">
-            {currentTexts.title}
+            <span className="text-black">Nos packs </span>
+            <span className="text-[#F2431E]">les plus populaires</span>
           </h2>
           {currentTexts.subtitle && (
             <p className="text-xl text-gray-600">

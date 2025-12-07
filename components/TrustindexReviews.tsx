@@ -51,7 +51,8 @@ export default function TrustindexReviews() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-6">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-            Ce que disent nos clients
+            <span className="text-gray-900">Ce que disent </span>
+            <span className="text-[#F2431E]">nos clients</span>
           </h2>
           <p className="text-xl text-gray-600">
             Découvrez ce que nos clients disent de nos services

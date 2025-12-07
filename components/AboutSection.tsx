@@ -68,7 +68,8 @@ export default function AboutSection({ language }: AboutSectionProps) {
         {/* Title */}
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-4">
-            {texts[language].title}
+            <span className="text-black">{language === 'fr' ? 'Pourquoi ' : 'Why '}</span>
+            <span className="text-[#F2431E]">SoundRush</span>
           </h2>
           <p className="text-xl text-gray-600">
             {texts[language].subtitle}

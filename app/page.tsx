@@ -11,6 +11,7 @@ import UrgencySection from '@/components/UrgencySection';
 import PourQuiSection from '@/components/PourQuiSection';
 import AboutSection from '@/components/AboutSection';
 import GallerySection from '@/components/GallerySection';
+import TrustedBySection from '@/components/TrustedBySection';
 import TrustindexReviews from '@/components/TrustindexReviews';
 import FaqInteractive from '@/components/FaqInteractive';
 import Footer from '@/components/Footer';
@@ -171,6 +172,11 @@ export default function Home() {
         {/* Section Galerie Vidéos */}
         <SectionAnimation delay={0.45}>
           <GallerySection language={language} />
+        </SectionAnimation>
+
+        {/* Section Ils nous ont fait confiance */}
+        <SectionAnimation delay={0.48}>
+          <TrustedBySection language={language} />
         </SectionAnimation>
 
         {/* Section Témoignages Clients */}
