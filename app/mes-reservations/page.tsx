@@ -482,13 +482,23 @@ export default function MesReservationsPage() {
                             if (notesContent) {
                               try {
                                 const parsedNotes = JSON.parse(notesContent);
-                                if (parsedNotes && typeof parsedNotes === 'object' && !parsedNotes.cartItems) {
-                                  notesContent = Object.entries(parsedNotes)
-                                    .filter(([key]) => key !== 'sessionId')
-                                    .map(([key, value]) => `${key}: ${value}`)
-                                    .join(', ') || null;
-                                } else if (parsedNotes && typeof parsedNotes === 'object' && parsedNotes.cartItems) {
-                                  notesContent = null; // Ne pas afficher si c'est juste des métadonnées
+                                // Ne pas afficher si ce sont uniquement des métadonnées techniques
+                                if (parsedNotes && typeof parsedNotes === 'object') {
+                                  if (parsedNotes.cartItems || parsedNotes.sessionId) {
+                                    // Si c'est juste des métadonnées (pas de message/notes), ne rien afficher
+                                    if (!parsedNotes.message && !parsedNotes.notes) {
+                                      notesContent = null;
+                                    } else {
+                                      // Afficher seulement message ou notes, pas les métadonnées
+                                      notesContent = parsedNotes.message || parsedNotes.notes || null;
+                                    }
+                                  } else {
+                                    // Pas de métadonnées techniques, afficher les autres champs
+                                    notesContent = Object.entries(parsedNotes)
+                                      .filter(([key]) => key !== 'sessionId')
+                                      .map(([key, value]) => `${key}: ${value}`)
+                                      .join(', ') || null;
+                                  }
                                 }
                               } catch (e) {
                                 // Ce n'est pas du JSON, afficher tel quel

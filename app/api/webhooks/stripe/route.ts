@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
         const userId = metadata.userId;
         const customerEmail = session.customer_email || metadata.customerEmail || '';
         const customerName = metadata.customerName || '';
+        const customerPhone = metadata.customerPhone || '';
         const deliveryOption = metadata.deliveryOption || 'paris';
         const deliveryFee = parseFloat(metadata.deliveryFee || '0');
         const total = parseFloat(metadata.total || '0');
@@ -137,6 +138,7 @@ export async function POST(req: NextRequest) {
             stripe_payment_intent_id: paymentIntentId,
             customer_email: customerEmail,
             customer_name: customerName,
+            customer_phone: customerPhone,
             delivery_address: address,
             delivery_option: deliveryOption,
             delivery_fee: deliveryFee,

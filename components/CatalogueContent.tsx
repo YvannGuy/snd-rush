@@ -213,7 +213,8 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
             // Extraire capacity et usage_type depuis specs (jsonb)
             const specs = product.specs || {};
             const capacity = specs.capacity || undefined;
-            const usageType = specs.usage_type || 'event';
+            // Pour les accessoires, on définit usage_type par défaut à 'event' si non défini
+            const usageType = specs.usage_type || (product.category === 'accessoires' ? 'event' : 'event');
             
             return {
               id: product.id,
@@ -235,6 +236,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
           // Ajouter les packs
           const allProducts = [...filteredProducts, ...getPacksAsProducts()];
           console.log('Produits chargés depuis Supabase:', allProducts);
+          console.log('Produit Pied d\'enceinte trouvé:', filteredProducts.find(p => p.name.toLowerCase().includes('pied')));
           setProducts(allProducts);
         } else {
           console.log('Aucun produit en base, utilisation des produits par défaut + packs');
@@ -320,7 +322,8 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const matchesUsageType = selectedUsageType === 'all' || product.usageType === selectedUsageType;
-    const matchesCapacity = selectedCapacity === 'all' || product.capacity === selectedCapacity;
+    // Pour les produits sans capacity (comme les accessoires), on les inclut si le filtre est à 'all'
+    const matchesCapacity = selectedCapacity === 'all' || product.capacity === selectedCapacity || (!product.capacity && selectedCapacity === 'all');
     
     // Price range filter logic
     let matchesPrice = true;
@@ -374,7 +377,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
   };
 
   return (
-    <div className="pt-[104px]">
+    <div className="pt-[112px]">
       {/* Header Section */}
       <div className="bg-white py-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -496,23 +499,29 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
 
                 {/* Product Info */}
                 <div className="p-5 flex flex-col flex-grow">
-                  <h3 className="text-lg font-bold text-black mb-2">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-600 mb-4 text-sm line-clamp-2">
-                    {product.description.split('.')[0] || product.description.substring(0, 100)}
-                    {product.description.length > 100 && !product.description.includes('.') ? '...' : ''}
-                  </p>
-                  <p className="text-2xl font-bold text-[#F2431E] mb-4">
-                    {product.price}
-                  </p>
+                  <div className="h-[3rem] mb-2 flex items-start">
+                    <h3 className="text-lg font-bold text-black line-clamp-2">
+                      {product.name}
+                    </h3>
+                  </div>
+                  <div className="h-[3rem] mb-4">
+                    <p className="text-gray-600 text-sm line-clamp-2">
+                      {product.description.split('.')[0] || product.description.substring(0, 100)}
+                      {product.description.length > 100 && !product.description.includes('.') ? '...' : ''}
+                    </p>
+                  </div>
+                  <div className="h-[2.75rem] flex items-end mb-4">
+                    <p className="text-2xl font-bold text-[#F2431E] leading-none">
+                      {product.price}
+                    </p>
+                  </div>
 
                   {/* Buttons - alignés en bas */}
-                  <div className="flex flex-col gap-2 mt-auto">
+                  <div className="flex flex-col gap-2 mt-auto pt-2">
                     {product.category === 'packs' && (product.price.includes('devis') || product.price.includes('quote')) ? (
                       <Link
                         href="/devis"
-                        className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors text-center block"
+                        className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors text-center min-h-[44px] flex items-center justify-center"
                       >
                         {language === 'fr' ? 'Demander un devis' : 'Request a quote'}
                       </Link>
@@ -527,7 +536,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                             setQuickAddModal({ isOpen: true, product });
                           }
                         }}
-                        className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors flex items-center justify-center gap-2"
+                        className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors flex items-center justify-center gap-2 min-h-[44px]"
                       >
                         <span>🛒</span>
                         {currentTexts.addToCart}
@@ -537,7 +546,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                       href={product.category === 'packs' 
                         ? `/packs/${product.id.toString().replace('pack-', '')}` 
                         : `/catalogue/${product.id}`}
-                      className="w-full border-2 border-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center block"
+                      className="w-full border-2 border-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center min-h-[44px] flex items-center justify-center"
                     >
                       {currentTexts.viewProduct}
                     </Link>

@@ -190,7 +190,7 @@ export default function Footer({ language }: FooterProps) {
           <div className="mt-12 pt-8 border-t border-gray-800">
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
               <p className="text-gray-400 text-sm">
-                © 2023 SoundRush - Tous droits réservés.
+                © 2025 SoundRush - Tous droits réservés.
               </p>
               <div className="flex items-center gap-4 md:gap-6">
                 <Link 

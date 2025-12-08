@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useCart } from '@/contexts/CartContext';
@@ -11,6 +11,7 @@ import Image from 'next/image';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import { CartItem, Product } from '@/types/db';
 import { supabase } from '@/lib/supabase';
+import { calculateInstallationPrice } from '@/lib/calculateInstallationPrice';
 
 type DeliveryOption = 'paris' | 'petite_couronne' | 'grande_couronne' | 'retrait';
 
@@ -22,15 +23,17 @@ interface DeliveryOptionType {
 
 export default function CartPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
-  const [deliveryOption, setDeliveryOption] = useState<DeliveryOption | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [pendingCheckout, setPendingCheckout] = useState(false);
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [showDepositInfo, setShowDepositInfo] = useState(false);
+  const depositInfoRef = useRef<HTMLDivElement>(null);
   const { cart, removeFromCart, increaseQuantity, decreaseQuantity, addToCart } = useCart();
   const { user } = useUser();
 
@@ -40,6 +43,23 @@ export default function CartPage() {
       setCustomerEmail(user.email);
     }
   }, [user, customerEmail]);
+
+  // Fermer le tooltip si on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (depositInfoRef.current && !depositInfoRef.current.contains(event.target as Node)) {
+        setShowDepositInfo(false);
+      }
+    };
+
+    if (showDepositInfo) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDepositInfo]);
 
   // Charger les produits recommandés depuis Supabase
   useEffect(() => {
@@ -94,7 +114,7 @@ export default function CartPage() {
           .from('products')
           .select('*')
           .in('category', targetCategories)
-          .limit(20);
+          .limit(30); // Augmenter la limite pour avoir plus de choix, notamment pour les câbles
 
         // Exclure Pioneer XDJ et produits déjà dans le panier
         const filtered = allProducts?.filter(p => {
@@ -104,43 +124,131 @@ export default function CartPage() {
           return !isPioneer && !isInCart;
         }) || [];
 
+        // S'assurer que les câbles XLR et RCA-XLR sont toujours inclus s'ils existent
+        const cablesXlr = filtered.filter(p => {
+          const nameLower = p.name.toLowerCase();
+          return (nameLower.includes('xlr') || nameLower.includes('cable xlr') || nameLower.includes('câble xlr')) 
+            && p.category === 'accessoires'
+            && !nameLower.includes('rca');
+        });
+        
+        const cablesRcaXlr = filtered.filter(p => {
+          const nameLower = p.name.toLowerCase();
+          return nameLower.includes('rca') && nameLower.includes('xlr') && p.category === 'accessoires';
+        });
+
+        // Si on n'a pas de câbles dans les résultats, essayer de les charger séparément
+        let additionalCables: any[] = [];
+        if (cablesXlr.length === 0 || cablesRcaXlr.length === 0) {
+          const { data: cableProducts } = await supabase
+            .from('products')
+            .select('*')
+            .eq('category', 'accessoires')
+            .limit(20);
+          
+          if (cableProducts) {
+            additionalCables = cableProducts.filter(p => {
+              const nameLower = p.name.toLowerCase();
+              const isPioneer = nameLower.includes('pioneer') || nameLower.includes('xdj');
+              const isInCart = cartProductIds.includes(p.id);
+              const isCableXlr = (nameLower.includes('xlr') || nameLower.includes('cable xlr') || nameLower.includes('câble xlr')) && !nameLower.includes('rca');
+              const isCableRcaXlr = nameLower.includes('rca') && nameLower.includes('xlr');
+              const isNotInFiltered = !filtered.find(fp => fp.id === p.id);
+              return !isPioneer && !isInCart && (isCableXlr || isCableRcaXlr) && isNotInFiltered;
+            });
+          }
+        }
+        
+        // Combiner filtered avec les câbles additionnels
+        const allFiltered = [...filtered, ...additionalCables];
+
         if (error) {
           console.error('Erreur chargement produits recommandés:', error);
           return;
         }
 
-        if (filtered.length > 0) {
+        if (allFiltered.length > 0) {
           // Trier par pertinence selon le contenu du panier
-          let sorted = filtered;
+          let sorted = allFiltered;
           
           if (cartCategories.has('sonorisation')) {
-            // Prioriser micros, puis câbles XLR, puis autres accessoires
+            // Prioriser micros, puis pieds d'enceinte, puis câbles XLR et RCA-XLR, puis autres accessoires
             sorted = filtered.sort((a, b) => {
-              const aIsMicro = a.category === 'micros' ? 3 : 0;
-              const bIsMicro = b.category === 'micros' ? 3 : 0;
-              const aIsCableXlr = a.name.toLowerCase().includes('xlr') && a.category === 'accessoires' ? 2 : 0;
-              const bIsCableXlr = b.name.toLowerCase().includes('xlr') && b.category === 'accessoires' ? 2 : 0;
+              const aIsMicro = a.category === 'micros' ? 5 : 0;
+              const bIsMicro = b.category === 'micros' ? 5 : 0;
+              const aIsPied = (a.name.toLowerCase().includes('pied') || a.name.toLowerCase().includes('boomtone')) && a.category === 'accessoires' ? 4 : 0;
+              const bIsPied = (b.name.toLowerCase().includes('pied') || b.name.toLowerCase().includes('boomtone')) && b.category === 'accessoires' ? 4 : 0;
+              // Prioriser câbles XLR et RCA-XLR
+              const aIsCableXlr = (a.name.toLowerCase().includes('xlr') || a.name.toLowerCase().includes('cable xlr') || a.name.toLowerCase().includes('câble xlr')) && a.category === 'accessoires' ? 3 : 0;
+              const bIsCableXlr = (b.name.toLowerCase().includes('xlr') || b.name.toLowerCase().includes('cable xlr') || b.name.toLowerCase().includes('câble xlr')) && b.category === 'accessoires' ? 3 : 0;
+              const aIsCableRcaXlr = (a.name.toLowerCase().includes('rca') && a.name.toLowerCase().includes('xlr')) && a.category === 'accessoires' ? 3 : 0;
+              const bIsCableRcaXlr = (b.name.toLowerCase().includes('rca') && b.name.toLowerCase().includes('xlr')) && b.category === 'accessoires' ? 3 : 0;
               const aIsAccessoire = a.category === 'accessoires' ? 1 : 0;
               const bIsAccessoire = b.category === 'accessoires' ? 1 : 0;
               
-              return (bIsMicro + bIsCableXlr + bIsAccessoire) - (aIsMicro + aIsCableXlr + aIsAccessoire);
+              return (bIsMicro + bIsPied + bIsCableXlr + bIsCableRcaXlr + bIsAccessoire) - (aIsMicro + aIsPied + aIsCableXlr + aIsCableRcaXlr + aIsAccessoire);
             });
           } else if (cartCategories.has('micros')) {
-            // Prioriser câbles XLR, adaptateurs, puis consoles
+            // Prioriser câbles XLR et RCA-XLR, adaptateurs, puis consoles
             sorted = filtered.sort((a, b) => {
-              const aIsCableXlr = a.name.toLowerCase().includes('xlr') && a.category === 'accessoires' ? 3 : 0;
-              const bIsCableXlr = b.name.toLowerCase().includes('xlr') && b.category === 'accessoires' ? 3 : 0;
+              // Prioriser câbles XLR et RCA-XLR
+              const aIsCableXlr = (a.name.toLowerCase().includes('xlr') || a.name.toLowerCase().includes('cable xlr') || a.name.toLowerCase().includes('câble xlr')) && a.category === 'accessoires' ? 4 : 0;
+              const bIsCableXlr = (b.name.toLowerCase().includes('xlr') || b.name.toLowerCase().includes('cable xlr') || b.name.toLowerCase().includes('câble xlr')) && b.category === 'accessoires' ? 4 : 0;
+              const aIsCableRcaXlr = (a.name.toLowerCase().includes('rca') && a.name.toLowerCase().includes('xlr')) && a.category === 'accessoires' ? 4 : 0;
+              const bIsCableRcaXlr = (b.name.toLowerCase().includes('rca') && b.name.toLowerCase().includes('xlr')) && b.category === 'accessoires' ? 4 : 0;
               const aIsAdaptateur = a.name.toLowerCase().includes('adaptateur') ? 2 : 0;
               const bIsAdaptateur = b.name.toLowerCase().includes('adaptateur') ? 2 : 0;
               const aIsConsole = (a.name.toLowerCase().includes('promix') || a.name.toLowerCase().includes('console')) ? 1 : 0;
               const bIsConsole = (b.name.toLowerCase().includes('promix') || b.name.toLowerCase().includes('console')) ? 1 : 0;
               
-              return (bIsCableXlr + bIsAdaptateur + bIsConsole) - (aIsCableXlr + aIsAdaptateur + aIsConsole);
+              return (bIsCableXlr + bIsCableRcaXlr + bIsAdaptateur + bIsConsole) - (aIsCableXlr + aIsCableRcaXlr + aIsAdaptateur + aIsConsole);
+            });
+          } else {
+            // Par défaut, prioriser aussi les câbles XLR et RCA-XLR
+            sorted = filtered.sort((a, b) => {
+              const aIsCableXlr = (a.name.toLowerCase().includes('xlr') || a.name.toLowerCase().includes('cable xlr') || a.name.toLowerCase().includes('câble xlr')) && a.category === 'accessoires' ? 3 : 0;
+              const bIsCableXlr = (b.name.toLowerCase().includes('xlr') || b.name.toLowerCase().includes('cable xlr') || b.name.toLowerCase().includes('câble xlr')) && b.category === 'accessoires' ? 3 : 0;
+              const aIsCableRcaXlr = (a.name.toLowerCase().includes('rca') && a.name.toLowerCase().includes('xlr')) && a.category === 'accessoires' ? 3 : 0;
+              const bIsCableRcaXlr = (b.name.toLowerCase().includes('rca') && b.name.toLowerCase().includes('xlr')) && b.category === 'accessoires' ? 3 : 0;
+              
+              return (bIsCableXlr + bIsCableRcaXlr) - (aIsCableXlr + aIsCableRcaXlr);
             });
           }
 
-          // Prendre les 3 premiers produits (on garde la livraison et l'installation)
-          setRecommendedProducts(sorted.slice(0, 3));
+          // S'assurer qu'on inclut au moins un câble XLR et un câble RCA-XLR s'ils existent
+          const cablesXlrInSorted = sorted.filter(p => {
+            const nameLower = p.name.toLowerCase();
+            return (nameLower.includes('xlr') || nameLower.includes('cable xlr') || nameLower.includes('câble xlr')) 
+              && p.category === 'accessoires'
+              && !nameLower.includes('rca');
+          });
+          
+          const cablesRcaXlrInSorted = sorted.filter(p => {
+            const nameLower = p.name.toLowerCase();
+            return nameLower.includes('rca') && nameLower.includes('xlr') && p.category === 'accessoires';
+          });
+
+          // Construire la liste finale en priorisant les câbles
+          let finalProducts: any[] = [];
+          
+          // Ajouter d'abord un câble XLR s'il existe
+          if (cablesXlrInSorted.length > 0 && !finalProducts.find(p => p.id === cablesXlrInSorted[0].id)) {
+            finalProducts.push(cablesXlrInSorted[0]);
+          }
+          
+          // Ajouter ensuite un câble RCA-XLR s'il existe
+          if (cablesRcaXlrInSorted.length > 0 && !finalProducts.find(p => p.id === cablesRcaXlrInSorted[0].id)) {
+            finalProducts.push(cablesRcaXlrInSorted[0]);
+          }
+          
+          // Compléter avec les autres produits recommandés (jusqu'à 3 au total)
+          const otherProducts = sorted.filter(p => 
+            !finalProducts.find(fp => fp.id === p.id)
+          );
+          
+          finalProducts = [...finalProducts, ...otherProducts].slice(0, 3);
+          
+          setRecommendedProducts(finalProducts);
         }
       } catch (err) {
         console.error('Erreur chargement produits recommandés:', err);
@@ -157,8 +265,14 @@ export default function CartPage() {
     retrait: { id: 'retrait', name: language === 'fr' ? 'Retrait' : 'Pickup', price: 0 },
   };
 
-  const deliveryFee = deliveryOption ? deliveryOptions[deliveryOption].price : 0;
-  const totalWithDelivery = cart.total + deliveryFee;
+  // Vérifier si la livraison est déjà dans le panier
+  const deliveryItem = cart.items.find(item => item.productId.startsWith('delivery-'));
+  const currentDeliveryOption = deliveryItem 
+    ? (deliveryItem.productId.replace('delivery-', '') as DeliveryOption)
+    : null;
+
+  // L'installation et la livraison sont déjà dans cart.total car elles sont dans cart.items
+  const totalWithDelivery = cart.total;
 
   const texts = {
     fr: {
@@ -170,7 +284,8 @@ export default function CartPage() {
       subtotal: 'Sous-total',
       delivery: 'Livraison',
       total: 'Total',
-      deposit: 'Dépôt total',
+      deposit: 'Caution',
+      depositInfo: 'Empreinte bancaire non débitée',
       checkout: 'Créer un compte et payer',
       checkoutStripe: 'Passer la commande',
       acceptTermsText: 'J\'accepte les',
@@ -186,6 +301,7 @@ export default function CartPage() {
       processing: 'Traitement...',
       customerEmail: 'Email',
       customerName: 'Nom complet',
+      customerPhone: 'Téléphone',
       deliveryAddress: 'Adresse de livraison',
       requiredFields: 'Veuillez remplir tous les champs requis.',
       deliveryDetails: 'Détails de livraison',
@@ -206,7 +322,8 @@ export default function CartPage() {
       subtotal: 'Subtotal',
       delivery: 'Delivery',
       total: 'Total',
-      deposit: 'Total deposit',
+      deposit: 'Deposit',
+      depositInfo: 'Bank authorization hold, not charged',
       checkout: 'Create account and pay',
       checkoutStripe: 'Checkout',
       acceptTermsText: 'I accept the',
@@ -222,6 +339,7 @@ export default function CartPage() {
       processing: 'Processing...',
       customerEmail: 'Email',
       customerName: 'Full name',
+      customerPhone: 'Phone',
       deliveryAddress: 'Delivery address',
       requiredFields: 'Please fill in all required fields.',
       deliveryDetails: 'Delivery details',
@@ -241,7 +359,7 @@ export default function CartPage() {
     if (cart.items.length === 0) return;
 
     // Vérifier que les champs requis sont remplis
-    if (!customerEmail || !customerName) {
+    if (!customerEmail || !customerName || !customerPhone) {
       alert(currentTexts.requiredFields);
       return;
     }
@@ -253,8 +371,11 @@ export default function CartPage() {
       return;
     }
 
-    // Utiliser "retrait" par défaut si aucune option de livraison n'est sélectionnée
-    const finalDeliveryOption = deliveryOption || 'retrait';
+    // Récupérer l'option de livraison depuis le panier
+    const deliveryItemInCart = cart.items.find(item => item.productId.startsWith('delivery-'));
+    const finalDeliveryOption = deliveryItemInCart 
+      ? (deliveryItemInCart.productId.replace('delivery-', '') as DeliveryOption)
+      : 'retrait';
 
     if (!acceptTerms) {
       alert(language === 'fr' 
@@ -266,8 +387,8 @@ export default function CartPage() {
     setIsProcessing(true);
     
     try {
-      // Calculer les totaux
-      const deliveryFee = finalDeliveryOption ? deliveryOptions[finalDeliveryOption].price : 0;
+      // Calculer les totaux (la livraison est déjà dans cart.total)
+      const deliveryFee = deliveryItemInCart ? deliveryItemInCart.dailyPrice : 0;
       const total = cart.total;
       const depositTotal = cart.depositTotal;
 
@@ -287,18 +408,19 @@ export default function CartPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userId: user?.id, // Envoyer l'ID de l'utilisateur connecté
-          cartItems: cart.items, // Utiliser cartItems pour le webhook
-          items, // Format Stripe
-          total,
-          depositTotal,
-          deliveryFee,
-          deliveryOption: finalDeliveryOption,
-          customerEmail,
-          customerName,
-          address: finalDeliveryOption !== 'retrait' ? customerAddress : '',
-        }),
+          body: JSON.stringify({
+            userId: user?.id, // Envoyer l'ID de l'utilisateur connecté
+            cartItems: cart.items, // Utiliser cartItems pour le webhook
+            items, // Format Stripe
+            total,
+            depositTotal,
+            deliveryFee,
+            deliveryOption: finalDeliveryOption,
+            customerEmail,
+            customerName,
+            customerPhone,
+            address: finalDeliveryOption !== 'retrait' ? customerAddress : '',
+          }),
       });
 
       const data = await response.json();
@@ -327,38 +449,47 @@ export default function CartPage() {
     }
   };
 
-  // Handler pour ajouter un produit supplémentaire
-  const handleAddAdditionalProduct = (productName: string, dailyPrice: number, productId: string) => {
-    // Utiliser les dates du premier item du panier, ou dates par défaut
-    const firstItem = cart.items[0];
-    const startDate = firstItem?.startDate || new Date().toISOString().split('T')[0];
-    const endDate = firstItem?.endDate || new Date(Date.now() + 86400000).toISOString().split('T')[0];
-    const rentalDays = firstItem?.rentalDays || 1;
+  // Calculer le prix d'installation recommandé
+  const installationPrice = calculateInstallationPrice(cart.items);
+  
+  // Vérifier si l'installation est déjà dans le panier
+  const installationItem = cart.items.find(item => item.productId === 'installation-service');
+  const installationSelected = !!installationItem;
 
-    const cartItem: CartItem = {
-      productId,
-      productName,
-      productSlug: productId,
-      quantity: 1,
-      rentalDays,
-      startDate,
-      endDate,
-      dailyPrice,
-      deposit: 0,
-      addons: [],
-      images: [],
-    };
-
-    addToCart(cartItem);
-    // Pas de message de confirmation ni d'ouverture du dropdown sur la page panier
-  };
-
-  // Handler pour demander une installation
+  // Handler pour ajouter/retirer l'installation
   const handleRequestInstallation = () => {
-    if (language === 'fr') {
-      alert('Merci pour votre demande ! Nous vous contacterons sous peu pour discuter de vos besoins en installation.');
+    if (installationPrice === null) {
+      if (language === 'fr') {
+        alert('Installation sur devis. Veuillez nous contacter.');
+      } else {
+        alert('Installation on quote. Please contact us.');
+      }
+      return;
+    }
+
+    if (installationSelected) {
+      // Retirer l'installation du panier
+      removeFromCart('installation-service', installationItem!.startDate, installationItem!.endDate);
     } else {
-      alert('Thank you for your request! We will contact you shortly to discuss your installation needs.');
+      // Ajouter l'installation au panier
+      const firstItem = cart.items[0];
+      const startDate = firstItem?.startDate || new Date().toISOString().split('T')[0];
+      const endDate = firstItem?.endDate || new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
+      const installationCartItem: CartItem = {
+        productId: 'installation-service',
+        productName: language === 'fr' ? 'Installation par technicien' : 'Installation by technician',
+        productSlug: 'installation',
+        quantity: 1,
+        rentalDays: 1, // Installation est un service unique, pas par jour
+        startDate,
+        endDate,
+        dailyPrice: installationPrice,
+        deposit: 0,
+        addons: [],
+        images: ['/installation.jpg'],
+      };
+      addToCart(installationCartItem);
     }
   };
 
@@ -399,7 +530,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header language={language} onLanguageChange={setLanguage} />
-      <main className="pt-[104px] pb-16">
+      <main className="pt-[112px] pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           {/* Header épuré */}
           <div className="mb-8">
@@ -538,17 +669,44 @@ export default function CartPage() {
                       </div>
                       <div className="space-y-1">
                         {Object.values(deliveryOptions).map((option) => {
-                          const isSelected = deliveryOption === option.id;
+                          const isSelected = currentDeliveryOption === option.id;
                           return (
                             <button
                               key={option.id}
                               type="button"
                               onClick={() => {
-                                // Toggle : si déjà sélectionné, désélectionner
                                 if (isSelected) {
-                                  setDeliveryOption(null);
+                                  // Retirer la livraison du panier
+                                  if (deliveryItem) {
+                                    removeFromCart(deliveryItem.productId, deliveryItem.startDate, deliveryItem.endDate);
+                                  }
                                 } else {
-                                  setDeliveryOption(option.id);
+                                  // Ajouter la livraison au panier
+                                  const firstItem = cart.items.find(item => !item.productId.startsWith('delivery-') && !item.productId.startsWith('installation-'));
+                                  const startDate = firstItem?.startDate || new Date().toISOString().split('T')[0];
+                                  const endDate = firstItem?.endDate || new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                                  
+                                  // Retirer l'ancienne livraison si elle existe
+                                  if (deliveryItem) {
+                                    removeFromCart(deliveryItem.productId, deliveryItem.startDate, deliveryItem.endDate);
+                                  }
+                                  
+                                  const deliveryCartItem: CartItem = {
+                                    productId: `delivery-${option.id}`,
+                                    productName: language === 'fr' 
+                                      ? `Livraison - ${option.name}`
+                                      : `Delivery - ${option.name}`,
+                                    productSlug: 'delivery',
+                                    quantity: 1,
+                                    rentalDays: 1,
+                                    startDate,
+                                    endDate,
+                                    dailyPrice: option.price,
+                                    deposit: 0,
+                                    addons: [],
+                                    images: ['/livraison.jpg'],
+                                  };
+                                  addToCart(deliveryCartItem);
                                 }
                               }}
                               className={`w-full text-left px-2 py-1.5 rounded transition-all border ${
@@ -572,14 +730,18 @@ export default function CartPage() {
                     </div>
 
                     {/* Carte Installation - Compacte */}
-                    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 min-w-[200px] hover:shadow-md transition-shadow cursor-pointer">
+                    <div className={`bg-white rounded-lg p-4 shadow-sm border min-w-[200px] hover:shadow-md transition-shadow cursor-pointer ${
+                      installationSelected ? 'border-[#F2431E] bg-[#F2431E]/5' : 'border-gray-100'
+                    }`}>
+                      <div className="relative w-full h-20 rounded-md overflow-hidden bg-gray-100 mb-2">
+                        <Image
+                          src="/installation.jpg"
+                          alt={language === 'fr' ? 'Installation' : 'Installation'}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                        </div>
                         <h3 className="font-semibold text-sm text-gray-900">{language === 'fr' ? 'Installation' : 'Installation'}</h3>
                       </div>
                       <p className="text-xs text-gray-600 mb-3 line-clamp-2">
@@ -588,14 +750,24 @@ export default function CartPage() {
                           : 'Installation by technician'}
                       </p>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-900">
-                          {language === 'fr' ? 'Sur devis' : 'On quote'}
+                        <span className={`text-sm font-semibold ${installationSelected ? 'text-[#F2431E]' : 'text-gray-900'}`}>
+                          {installationPrice !== null 
+                            ? `${installationPrice}€`
+                            : (language === 'fr' ? 'Sur devis' : 'On quote')
+                          }
                         </span>
                         <button 
                           onClick={handleRequestInstallation}
-                          className="px-3 py-1.5 bg-[#F2431E] text-white rounded-md font-medium hover:bg-[#E63A1A] transition-colors text-xs"
+                          className={`px-3 py-1.5 rounded-md font-medium transition-colors text-xs ${
+                            installationSelected
+                              ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                              : 'bg-[#F2431E] text-white hover:bg-[#E63A1A]'
+                          }`}
                         >
-                          {language === 'fr' ? 'Demander' : 'Request'}
+                          {installationSelected 
+                            ? (language === 'fr' ? 'Retirer' : 'Remove')
+                            : (language === 'fr' ? 'Ajouter' : 'Add')
+                          }
                         </button>
                       </div>
                     </div>
@@ -708,17 +880,31 @@ export default function CartPage() {
                     <span className="font-semibold text-gray-900">{cart.total.toFixed(2)}€</span>
                   </div>
                   
-                  {deliveryOption && (
-                    <div className="flex justify-between text-gray-600">
-                      <span>{currentTexts.delivery}</span>
-                      <span className="font-semibold text-gray-900">
-                        {deliveryOptions[deliveryOption].price > 0 ? `+${deliveryOptions[deliveryOption].price}€` : language === 'fr' ? 'Gratuit' : 'Free'}
-                      </span>
+                  <div className="flex justify-between items-center text-xs text-gray-500 pt-2 relative" ref={depositInfoRef}>
+                    <div className="flex items-center gap-1.5">
+                      <span>{currentTexts.deposit}</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowDepositInfo(!showDepositInfo)}
+                        className="w-4 h-4 rounded-full bg-gray-300 text-white text-[10px] font-bold flex items-center justify-center hover:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-[#F2431E] focus:ring-offset-1"
+                        aria-label={language === 'fr' ? 'Information sur la caution' : 'Deposit information'}
+                      >
+                        i
+                      </button>
+                      {showDepositInfo && (
+                        <div className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50">
+                          <p className="mb-1 font-semibold">{currentTexts.depositInfo}</p>
+                          <p className="text-gray-300">
+                            {language === 'fr' 
+                              ? 'Cette somme sera bloquée sur votre carte bancaire mais ne sera pas débitée. Elle sera libérée après retour du matériel en bon état.'
+                              : 'This amount will be held on your bank card but not charged. It will be released after the equipment is returned in good condition.'}
+                          </p>
+                          <div className="absolute bottom-0 left-4 transform translate-y-full">
+                            <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  
-                  <div className="flex justify-between text-xs text-gray-500 pt-2">
-                    <span>{currentTexts.deposit}</span>
                     <span>{cart.depositTotal.toFixed(2)}€</span>
                   </div>
                 </div>
@@ -760,7 +946,21 @@ export default function CartPage() {
                         placeholder={language === 'fr' ? 'Votre nom complet' : 'Your full name'}
                       />
                     </div>
-                  {deliveryOption && deliveryOption !== 'retrait' && (
+                    <div>
+                      <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700 mb-1.5">
+                        {currentTexts.customerPhone} <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        id="customerPhone"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:border-[#F2431E] focus:ring-1 focus:ring-[#F2431E] focus:outline-none transition-colors"
+                        placeholder={language === 'fr' ? '06 12 34 56 78' : '+33 6 12 34 56 78'}
+                      />
+                    </div>
+                  {currentDeliveryOption && currentDeliveryOption !== 'retrait' && (
                       <div>
                       <label htmlFor="customerAddress" className="block text-sm font-medium text-gray-700 mb-1.5">
                           {currentTexts.deliveryAddress}
@@ -803,7 +1003,7 @@ export default function CartPage() {
                 {/* Bouton checkout - Toujours actif */}
                   <button
                     onClick={handleCheckout}
-                  disabled={isProcessing || !customerEmail || !customerName || (user ? !acceptTerms : false)}
+                  disabled={isProcessing || !customerEmail || !customerName || !customerPhone || (user ? !acceptTerms : false)}
                   className="w-full bg-[#F2431E] text-white py-3.5 rounded-xl font-bold text-base hover:bg-[#E63A1A] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                 >
                   {isProcessing ? (

@@ -179,8 +179,8 @@ export default function AdminCataloguePage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {paginatedProducts.map((product) => (
-                    <div key={product.id} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="mb-4">
+                    <div key={product.id} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                      <div className="mb-4 flex-shrink-0">
                         {product.images && product.images.length > 0 ? (
                           <img
                             src={product.images[0]}
@@ -195,24 +195,32 @@ export default function AdminCataloguePage() {
                           </div>
                         )}
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">{product.name}</h3>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{product.description}</p>
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <div className="text-sm text-gray-500">{currentTexts.price}</div>
-                          <div className="text-lg font-bold text-gray-900">{product.daily_price_ttc}€</div>
+                      <div className="flex flex-col flex-grow">
+                        <div className="h-[3rem] mb-2 flex items-start">
+                          <h3 className="text-xl font-bold text-gray-900 line-clamp-2">{product.name}</h3>
                         </div>
-                        <div>
-                          <div className="text-sm text-gray-500">{currentTexts.deposit}</div>
-                          <div className="text-lg font-bold text-gray-900">{product.deposit}€</div>
+                        <div className="h-[3rem] mb-4">
+                          <p className="text-gray-600 text-sm line-clamp-2">{product.description}</p>
+                        </div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <div className="text-sm text-gray-500">{currentTexts.price}</div>
+                            <div className="text-lg font-bold text-gray-900">{product.daily_price_ttc}€</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-500">{currentTexts.deposit}</div>
+                            <div className="text-lg font-bold text-gray-900">{product.deposit}€</div>
+                          </div>
+                        </div>
+                        <div className="mt-auto pt-2">
+                          <Link
+                            href={`/admin/catalogue/${product.id}`}
+                            className="w-full text-center bg-[#F2431E] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors min-h-[44px] flex items-center justify-center"
+                          >
+                            {currentTexts.edit}
+                          </Link>
                         </div>
                       </div>
-                      <Link
-                        href={`/admin/catalogue/${product.id}`}
-                        className="block w-full text-center bg-[#F2431E] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
-                      >
-                        {currentTexts.edit}
-                      </Link>
                     </div>
                   ))}
                   </div>

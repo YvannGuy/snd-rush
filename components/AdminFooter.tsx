@@ -7,11 +7,11 @@ interface AdminFooterProps {
 export default function AdminFooter({ language = 'fr' }: AdminFooterProps) {
   const texts = {
     fr: {
-      copyright: '© 2024 SoundRush. Tous droits réservés.',
+      copyright: '© 2025 SoundRush. Tous droits réservés.',
       version: 'Version',
     },
     en: {
-      copyright: '© 2024 SoundRush. All rights reserved.',
+      copyright: '© 2025 SoundRush. All rights reserved.',
       version: 'Version',
     },
   };

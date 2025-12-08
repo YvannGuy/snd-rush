@@ -61,7 +61,7 @@ export function useAuth() {
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string, metadata?: { title?: string; firstName?: string; lastName?: string }) => {
+  const signUpWithEmail = async (email: string, password: string, metadata?: { title?: string; firstName?: string; lastName?: string; phone?: string }) => {
     if (!supabase) {
       setError('Supabase non configuré');
       return { error: 'Supabase non configuré' };
@@ -82,6 +82,7 @@ export function useAuth() {
             title: metadata?.title,
             first_name: metadata?.firstName,
             last_name: metadata?.lastName,
+            phone: metadata?.phone,
           },
         },
       });
@@ -118,7 +119,7 @@ export function useAuth() {
         try {
           await supabase.from('user_profiles').insert({
             user_id: data.user.id,
-            phone: null,
+            phone: metadata.phone || null,
             address: null,
             company: null,
           });

@@ -48,6 +48,7 @@ export default function SignModal({
   const [title, setTitle] = useState<'mr' | 'mme'>('mr');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
   const { signInWithEmail, signUpWithEmail, loading, error } = useAuth();
 
   useEffect(() => {
@@ -76,6 +77,7 @@ export default function SignModal({
       mme: 'Madame',
       firstName: 'Prénom',
       lastName: 'Nom',
+      phone: 'Téléphone',
     },
     en: {
       signIn: 'Sign in',
@@ -96,6 +98,7 @@ export default function SignModal({
       mme: 'Mrs',
       firstName: 'First name',
       lastName: 'Last name',
+      phone: 'Phone',
     },
   };
 
@@ -114,7 +117,7 @@ export default function SignModal({
     e.preventDefault();
     
     // Validation des champs requis
-    if (!firstName || !lastName) {
+    if (!firstName || !lastName || !phone) {
       return;
     }
     
@@ -122,6 +125,7 @@ export default function SignModal({
       title,
       firstName,
       lastName,
+      phone,
     });
     
     if (!result.error) {
@@ -347,6 +351,20 @@ export default function SignModal({
                 />
               </div>
               <div>
+                <label htmlFor="signup-phone" className="block text-sm font-medium text-gray-700 mb-2">
+                  {currentTexts.phone}
+                </label>
+                <input
+                  id="signup-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-[#F2431E] focus:outline-none"
+                  placeholder={language === 'fr' ? '06 12 34 56 78' : '+33 6 12 34 56 78'}
+                />
+              </div>
+              <div>
                 <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-2">
                   {currentTexts.email}
                 </label>
@@ -378,7 +396,7 @@ export default function SignModal({
               </div>
               <button
                 type="submit"
-                disabled={loading || !firstName || !lastName}
+                disabled={loading || !firstName || !lastName || !phone}
                 className="w-full py-3 bg-[#F2431E] text-white rounded-xl font-bold hover:bg-[#E63A1A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? '...' : currentTexts.signUp}

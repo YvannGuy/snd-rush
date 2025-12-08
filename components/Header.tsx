@@ -10,6 +10,7 @@ import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import SignModal from '@/components/auth/SignModal';
 import TopBanner from '@/components/TopBanner';
+import SearchBar from '@/components/SearchBar';
 // Icônes inline pour éviter la dépendance lucide-react
 const UserIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,14 +117,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     setIsProfileMenuOpen(false);
   };
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-    setIsMobileMenuOpen(false);
-  };
-
   const toggleLanguage = () => {
     const newLanguage = language === 'fr' ? 'en' : 'fr';
     onLanguageChange(newLanguage);
@@ -158,9 +151,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
-      {/* Bandeau orange en haut */}
-      <TopBanner language={language} />
-      
       {/* Header principal avec fond sombre */}
       <div className="bg-black shadow-md relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -172,45 +162,10 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               </span>
             </Link>
 
-            {/* Navigation complète */}
-            <nav className="hidden lg:flex items-center justify-center space-x-6 flex-1">
-              <Link 
-                href="/catalogue"
-                className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
-              >
-                {texts[language].catalogue}
-              </Link>
-              <Link 
-                href="/packs"
-                className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
-              >
-                {texts[language].packs}
-              </Link>
-              <Link 
-                href="/#urgency"
-                onClick={(e) => {
-                  if (pathname === '/') {
-                    e.preventDefault();
-                    scrollToSection('urgency');
-                  }
-                }}
-                className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
-              >
-                {texts[language].urgence}
-              </Link>
-              <Link 
-                href="/#faq"
-                onClick={(e) => {
-                  if (pathname === '/') {
-                    e.preventDefault();
-                    scrollToSection('faq');
-                  }
-                }}
-                className="text-white hover:text-[#F2431E] transition-colors font-medium cursor-pointer"
-              >
-                {texts[language].faq}
-              </Link>
-            </nav>
+            {/* Barre de recherche */}
+            <div className="hidden lg:flex items-center justify-center flex-1 px-8">
+              <SearchBar language={language} />
+            </div>
 
             {/* CTA Buttons */}
             <div className="flex items-center gap-3 sm:gap-4">
@@ -358,58 +313,22 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
             </div>
           </div>
           
-          {/* Mobile menu - Positionné relativement au conteneur */}
+          {/* Mobile menu - Positionné en fixed pour être visible sous le bandeau orange */}
           {isMobileMenuOpen && (
             <div 
-              className="lg:hidden absolute top-full left-0 right-0 border-t border-white/20 z-30 overflow-hidden bg-black"
+              className="lg:hidden fixed top-[112px] left-0 right-0 border-t border-white/20 z-40 overflow-hidden bg-black"
             >
               <div className="pt-3 pb-4 space-y-2 px-4">
-            <Link 
-              href="/catalogue"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
-            >
-              {texts[language].catalogue}
-            </Link>
-            <Link 
-              href="/packs"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
-            >
-              {texts[language].packs}
-            </Link>
-            <Link 
-              href="/#urgency"
-              onClick={(e) => {
-                if (pathname === '/') {
-                  e.preventDefault();
-                  scrollToSection('urgency');
-                }
-                setIsMobileMenuOpen(false);
-              }}
-              className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
-            >
-              {texts[language].urgence}
-            </Link>
-            <Link 
-              href="/#faq"
-              onClick={(e) => {
-                if (pathname === '/') {
-                  e.preventDefault();
-                  scrollToSection('faq');
-                }
-                setIsMobileMenuOpen(false);
-              }}
-              className="block w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
-            >
-              {texts[language].faq}
-            </Link>
+                {/* Barre de recherche mobile */}
+                <div className="mb-4">
+                  <SearchBar language={language} />
+                </div>
             
             {/* CTA Réserver - Mobile */}
             <Link
               href="/packs"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block w-full text-left px-2 py-2.5 text-sm font-semibold bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-md cursor-pointer transition-colors text-center mt-2"
+              className="block w-full px-2 py-2.5 text-sm font-semibold bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-md cursor-pointer transition-colors text-center mt-2"
             >
               {language === 'fr' ? 'Réserver' : 'Book'}
             </Link>
@@ -433,6 +352,9 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
           )}
         </div>
       </div>
+
+      {/* Bandeau orange en bas */}
+      <TopBanner language={language} />
 
       {/* Mini Cart */}
       <MiniCart
@@ -476,7 +398,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
 
       {/* Mobile Profile Menu */}
       {user && isProfileMenuOpen && (
-        <div className="lg:hidden fixed top-[104px] left-0 right-0 bg-black/95 backdrop-blur-md z-40 border-t border-white/20">
+        <div className="lg:hidden fixed top-[112px] left-0 right-0 bg-black/95 backdrop-blur-md z-40 border-t border-white/20">
           <div className="px-4 py-4 space-y-2">
             <div className="px-2 py-2 border-b border-white/20">
               <p className="text-sm font-semibold text-white truncate">{user.email}</p>

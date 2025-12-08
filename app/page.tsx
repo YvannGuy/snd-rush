@@ -141,7 +141,7 @@ export default function Home() {
         onLanguageChange={setLanguage}
       />
       
-      <main className="pt-[104px]">
+      <main className="pt-[112px]">
         <HeroSection 
           language={language}
         />

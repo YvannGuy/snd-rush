@@ -10,6 +10,7 @@ import ProductAddons from '@/components/products/ProductAddons';
 import { supabase } from '@/lib/supabase';
 import { Product, AvailabilityResponse, CalendarDisabledRange, ProductAddon, CartItem } from '@/types/db';
 import { useCart } from '@/contexts/CartContext';
+import { calculateInstallationPrice } from '@/lib/calculateInstallationPrice';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -46,8 +47,8 @@ export default function ProductDetailPage() {
         let targetCategories: string[] = [];
         
         if (product.category === 'sonorisation') {
-          // Pour les enceintes/caissons : recommander micros, consoles, câbles
-          targetCategories = ['micros', 'sonorisation']; // On inclut aussi sonorisation pour avoir des consoles
+          // Pour les enceintes/caissons : recommander micros, consoles, câbles, pieds d'enceinte
+          targetCategories = ['micros', 'sonorisation', 'accessoires']; // On inclut aussi sonorisation pour avoir des consoles et accessoires pour les pieds
         } else if (product.category === 'micros') {
           // Pour les micros : recommander câbles, consoles, autres micros
           targetCategories = ['accessoires', 'sonorisation'];
@@ -86,17 +87,19 @@ export default function ProductDetailPage() {
 
           // Prioriser les produits complémentaires selon le type de produit
           if (product.category === 'sonorisation') {
-            // Pour enceintes/caissons : prioriser micros, puis consoles, puis accessoires
+            // Pour enceintes/caissons : prioriser micros, puis consoles, puis pieds d'enceinte, puis autres accessoires
             filtered = allProducts.sort((a, b) => {
-              const aIsMicro = a.category === 'micros' ? 3 : 0;
-              const bIsMicro = b.category === 'micros' ? 3 : 0;
-              const aIsConsole = (a.name.toLowerCase().includes('promix') || a.name.toLowerCase().includes('console')) ? 2 : 0;
-              const bIsConsole = (b.name.toLowerCase().includes('promix') || b.name.toLowerCase().includes('console')) ? 2 : 0;
+              const aIsMicro = a.category === 'micros' ? 4 : 0;
+              const bIsMicro = b.category === 'micros' ? 4 : 0;
+              const aIsConsole = (a.name.toLowerCase().includes('promix') || a.name.toLowerCase().includes('console')) ? 3 : 0;
+              const bIsConsole = (b.name.toLowerCase().includes('promix') || b.name.toLowerCase().includes('console')) ? 3 : 0;
+              const aIsPied = (a.name.toLowerCase().includes('pied') || a.name.toLowerCase().includes('boomtone')) ? 2 : 0;
+              const bIsPied = (b.name.toLowerCase().includes('pied') || b.name.toLowerCase().includes('boomtone')) ? 2 : 0;
               const aIsAccessoire = a.category === 'accessoires' ? 1 : 0;
               const bIsAccessoire = b.category === 'accessoires' ? 1 : 0;
               
-              const aScore = aIsMicro + aIsConsole + aIsAccessoire;
-              const bScore = bIsMicro + bIsConsole + bIsAccessoire;
+              const aScore = aIsMicro + aIsConsole + aIsPied + aIsAccessoire;
+              const bScore = bIsMicro + bIsConsole + bIsPied + bIsAccessoire;
               return bScore - aScore;
             });
           } else if (product.category === 'micros') {
@@ -157,14 +160,31 @@ export default function ProductDetailPage() {
     async function loadProduct() {
       if (supabase && productId) {
         try {
-          const { data, error: productError } = await supabase
+          // D'abord, essayer de chercher par ID (si c'est un nombre)
+          const numericId = parseInt(productId, 10);
+          if (!isNaN(numericId)) {
+            const { data, error: productError } = await supabase
+              .from('products')
+              .select('*')
+              .eq('id', numericId)
+              .single();
+
+            if (!productError && data) {
+              setProduct(data);
+              setLoading(false);
+              return;
+            }
+          }
+
+          // Si la recherche par ID a échoué, essayer par slug
+          const { data: slugData, error: slugError } = await supabase
             .from('products')
             .select('*')
-            .eq('id', productId)
+            .eq('slug', productId)
             .single();
 
-          if (!productError && data) {
-            setProduct(data);
+          if (!slugError && slugData) {
+            setProduct(slugData);
             setLoading(false);
             return;
           }
@@ -173,8 +193,19 @@ export default function ProductDetailPage() {
         }
       }
 
+      // Si Supabase n'a pas fonctionné, essayer les produits locaux
       const localProducts = getLocalProducts();
-      const foundProduct = localProducts.find(p => p.id.toString() === productId);
+      // Chercher par ID numérique
+      let foundProduct = localProducts.find(p => p.id.toString() === productId);
+      
+      // Si pas trouvé par ID, essayer de matcher par nom (slug approximatif)
+      if (!foundProduct) {
+        const slugMatch = productId.toLowerCase().replace(/-/g, ' ');
+        foundProduct = localProducts.find(p => 
+          p.name.toLowerCase().replace(/\s+/g, '-') === productId.toLowerCase() ||
+          p.name.toLowerCase().includes(slugMatch)
+        );
+      }
       
       if (foundProduct) {
         const convertedProduct: Product = {
@@ -672,6 +703,67 @@ export default function ProductDetailPage() {
                 }
               </button>
 
+              {/* Carte Installation */}
+              {(() => {
+                // Calculer le prix d'installation selon le produit
+                const productNameLower = product.name.toLowerCase();
+                let installationPrice: number | null = null;
+                
+                // Enceintes
+                if (productNameLower.includes('enceinte') || productNameLower.includes('as 115') || productNameLower.includes('as 108') || productNameLower.includes('fbt')) {
+                  installationPrice = 40; // 1 enceinte seule
+                }
+                // Caissons
+                else if (productNameLower.includes('caisson') || productNameLower.includes('subwoofer') || productNameLower.includes('basse')) {
+                  installationPrice = 40; // Caisson seul
+                }
+                // Consoles
+                else if (productNameLower.includes('promix') || productNameLower.includes('console') || productNameLower.includes('hpa')) {
+                  installationPrice = 40; // Console seule
+                }
+                // Micros
+                else if (productNameLower.includes('micro')) {
+                  installationPrice = 30; // Micros seuls
+                }
+                // Lumières
+                else if (productNameLower.includes('led') || productNameLower.includes('lumière') || productNameLower.includes('lyre') || productNameLower.includes('barre')) {
+                  installationPrice = 40; // 1 lumière
+                }
+                // Accessoires (pas d'installation nécessaire)
+                else if (product.category === 'accessoires') {
+                  installationPrice = null; // Pas d'installation pour les accessoires
+                }
+                
+                if (installationPrice === null) return null;
+                
+                return (
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-3 hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <h3 className="font-semibold text-sm text-gray-900">{language === 'fr' ? 'Installation' : 'Installation'}</h3>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-3">
+                      {language === 'fr' 
+                        ? 'Installation par technicien professionnel'
+                        : 'Installation by professional technician'}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {installationPrice}€
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {language === 'fr' ? 'Optionnel' : 'Optional'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Caution */}
               <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
                 <span>🔒</span>
@@ -828,7 +920,76 @@ export default function ProductDetailPage() {
                 }
                 
                 // Pour les accessoires avec format 🔌, 🎤/🎧, 🔌, 📏
-                if (isAccessoire && (longDesc.includes('🎤') || longDesc.includes('🎧') || longDesc.includes('📏'))) {
+                // Ou format pied d'enceinte : ⚡, 📏, 🎒, 🏗️
+                if (isAccessoire && (longDesc.includes('🎤') || longDesc.includes('🎧') || longDesc.includes('📏') || longDesc.includes('🎒') || longDesc.includes('🏗️'))) {
+                  // Vérifier si c'est un pied d'enceinte (format ⚡, 📏, 🎒, 🏗️)
+                  const isPiedEnceinte = longDesc.includes('🎒') || longDesc.includes('🏗️') || product.name.toLowerCase().includes('pied');
+                  
+                  if (isPiedEnceinte) {
+                    const charge = extractSection('⚡');
+                    const hauteur = extractSection('📏');
+                    const livraison = extractSection('🎒');
+                    const matiere = extractSection('🏗️');
+                    
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {charge.title && (
+                          <div className="flex items-start gap-4">
+                            <div className="text-4xl">⚡</div>
+                            <div>
+                              <h3 className="font-bold text-black mb-1">
+                                {charge.title || 'Charge maximale'}
+                              </h3>
+                              <p className="text-gray-600 text-sm">
+                                {charge.desc || '≈ 30 kg par pied'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {hauteur.title && (
+                          <div className="flex items-start gap-4">
+                            <div className="text-4xl">📏</div>
+                            <div>
+                              <h3 className="font-bold text-black mb-1">
+                                {hauteur.title || 'Hauteur réglable'}
+                              </h3>
+                              <p className="text-gray-600 text-sm">
+                                {hauteur.desc || '1000 ⭢ 1600 mm'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {livraison.title && (
+                          <div className="flex items-start gap-4">
+                            <div className="text-4xl">🎒</div>
+                            <div>
+                              <h3 className="font-bold text-black mb-1">
+                                {livraison.title || 'Livré avec housse'}
+                              </h3>
+                              <p className="text-gray-600 text-sm">
+                                {livraison.desc || 'Goupille de sécurité et pieds ajustables'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {matiere.title && (
+                          <div className="flex items-start gap-4">
+                            <div className="text-4xl">🏗️</div>
+                            <div>
+                              <h3 className="font-bold text-black mb-1">
+                                {matiere.title || 'Matière'}
+                              </h3>
+                              <p className="text-gray-600 text-sm">
+                                {matiere.desc || 'Acier noir, solide et durable'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  
+                  // Format standard pour autres accessoires
                   const transmission = extractSection('🎤');
                   const usage = extractSection('🎧');
                   const connect = extractSection('🔌');
@@ -1137,29 +1298,35 @@ export default function ProductDetailPage() {
                     <Link 
                       key={recProduct.id} 
                       href={`/catalogue/${recProduct.id}`}
-                      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+                      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full"
                     >
-                      <div className="relative h-48 bg-gray-100">
+                      <div className="relative h-48 bg-gray-100 flex-shrink-0">
                         <img
                           src={productImage}
                           alt={recProduct.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="p-4">
-                        <h3 className="font-bold text-black mb-2">{recProduct.name}</h3>
-                        <p className="text-lg font-bold text-[#F2431E] mb-4">
-                          {recProduct.daily_price_ttc}€/{language === 'fr' ? 'jour' : 'day'}
-                        </p>
-                        <button 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleAddRecommended();
-                          }}
-                          className="w-full bg-[#F2431E] text-white py-2 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
-                        >
-                          {language === 'fr' ? 'Ajouter' : 'Add'}
-                        </button>
+                      <div className="p-4 flex flex-col flex-grow">
+                        <div className="h-[3rem] mb-2 flex items-start">
+                          <h3 className="font-bold text-black line-clamp-2">{recProduct.name}</h3>
+                        </div>
+                        <div className="h-[2rem] mb-4 flex items-end">
+                          <p className="text-lg font-bold text-[#F2431E]">
+                            {recProduct.daily_price_ttc}€/{language === 'fr' ? 'jour' : 'day'}
+                          </p>
+                        </div>
+                        <div className="mt-auto">
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleAddRecommended();
+                            }}
+                            className="w-full bg-[#F2431E] text-white py-2 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
+                          >
+                            {language === 'fr' ? 'Ajouter' : 'Add'}
+                          </button>
+                        </div>
                       </div>
                     </Link>
                   );

@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { userId, items, cartItems, total, depositTotal, deliveryFee, deliveryOption, customerEmail, customerName, address } = body;
+    const { userId, items, cartItems, total, depositTotal, deliveryFee, deliveryOption, customerEmail, customerName, customerPhone, address } = body;
 
     // Vérifier que l'utilisateur est authentifié
     if (!userId) {
@@ -105,6 +105,7 @@ export async function POST(req: NextRequest) {
           cartItems: cartItems || items,
           customerEmail,
           customerName,
+          customerPhone: customerPhone || '',
           deliveryOption: deliveryOption || 'paris',
         }),
       })
@@ -138,6 +139,7 @@ export async function POST(req: NextRequest) {
         address: address || '',
         customerEmail: customerEmail || '',
         customerName: customerName || '',
+        customerPhone: customerPhone || '',
       },
       payment_intent_data: {
         metadata: {
@@ -158,6 +160,7 @@ export async function POST(req: NextRequest) {
             cartItems: cartItems || items,
             customerEmail,
             customerName,
+            customerPhone: customerPhone || '',
             deliveryOption: deliveryOption || 'paris',
           }),
         })

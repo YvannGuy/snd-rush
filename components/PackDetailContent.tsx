@@ -40,6 +40,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_disabledRanges, setDisabledRanges] = useState<CalendarDisabledRange[]>([]); // Préfixé avec _ pour indiquer qu'il n'est pas utilisé pour l'instant
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
 
   const packs: { fr: Pack[], en: Pack[] } = {
     fr: [
@@ -277,6 +278,108 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
     }
   }, [startDate, endDate]);
 
+  // Charger les produits recommandés depuis Supabase selon le pack
+  useEffect(() => {
+    async function loadRecommendedProducts() {
+      if (!pack || !supabase) return;
+
+      try {
+        // Définir les catégories recommandées selon le pack
+        let targetCategories: string[] = [];
+        
+        if (pack.id === 1) {
+          // Pack S Petit : micros, câbles, accessoires
+          targetCategories = ['micros', 'accessoires'];
+        } else if (pack.id === 2) {
+          // Pack M Confort : micros, câbles, accessoires, peut-être lumières
+          targetCategories = ['micros', 'accessoires', 'lumieres'];
+        } else if (pack.id === 3) {
+          // Pack L Grand : micros, câbles, accessoires, lumières
+          targetCategories = ['micros', 'accessoires', 'lumieres'];
+        } else if (pack.id === 4) {
+          // Pack XL : tout ce qui est professionnel
+          targetCategories = ['micros', 'accessoires', 'lumieres', 'sonorisation'];
+        } else {
+          // Par défaut
+          targetCategories = ['micros', 'accessoires'];
+        }
+
+        // Charger les produits depuis Supabase
+        const { data: allProducts, error } = await supabase
+          .from('products')
+          .select('*')
+          .in('category', targetCategories)
+          .limit(20);
+
+        // Exclure Pioneer XDJ des produits recommandés
+        const filteredByPioneer = allProducts?.filter(p => 
+          !p.name.toLowerCase().includes('pioneer') && !p.name.toLowerCase().includes('xdj')
+        ) || [];
+
+        if (error) {
+          console.error('Erreur chargement produits recommandés:', error);
+          return;
+        }
+
+        if (filteredByPioneer && filteredByPioneer.length > 0) {
+          // Trier et sélectionner les produits les plus pertinents selon le pack
+          let filtered = filteredByPioneer;
+
+          if (pack.id === 1 || pack.id === 2) {
+            // Pour packs S et M : prioriser micros, puis câbles XLR, puis autres accessoires
+            filtered = filteredByPioneer.sort((a, b) => {
+              const aIsMicro = a.category === 'micros' ? 3 : 0;
+              const bIsMicro = b.category === 'micros' ? 3 : 0;
+              const aIsCableXlr = a.name.toLowerCase().includes('xlr') && a.category === 'accessoires' ? 2 : 0;
+              const bIsCableXlr = b.name.toLowerCase().includes('xlr') && b.category === 'accessoires' ? 2 : 0;
+              const aIsAccessoire = a.category === 'accessoires' ? 1 : 0;
+              const bIsAccessoire = b.category === 'accessoires' ? 1 : 0;
+              
+              const aScore = aIsMicro + aIsCableXlr + aIsAccessoire;
+              const bScore = bIsMicro + bIsCableXlr + bIsAccessoire;
+              return bScore - aScore;
+            });
+          } else if (pack.id === 3) {
+            // Pour pack L : prioriser micros, lumières, puis câbles
+            filtered = filteredByPioneer.sort((a, b) => {
+              const aIsMicro = a.category === 'micros' ? 3 : 0;
+              const bIsMicro = b.category === 'micros' ? 3 : 0;
+              const aIsLumiere = a.category === 'lumieres' ? 2 : 0;
+              const bIsLumiere = b.category === 'lumieres' ? 2 : 0;
+              const aIsCable = a.category === 'accessoires' ? 1 : 0;
+              const bIsCable = b.category === 'accessoires' ? 1 : 0;
+              
+              const aScore = aIsMicro + aIsLumiere + aIsCable;
+              const bScore = bIsMicro + bIsLumiere + bIsCable;
+              return bScore - aScore;
+            });
+          } else if (pack.id === 4) {
+            // Pour pack XL : prioriser tout ce qui est professionnel
+            filtered = filteredByPioneer.sort((a, b) => {
+              const aIsMicro = a.category === 'micros' ? 3 : 0;
+              const bIsMicro = b.category === 'micros' ? 3 : 0;
+              const aIsLumiere = a.category === 'lumieres' ? 2 : 0;
+              const bIsLumiere = b.category === 'lumieres' ? 2 : 0;
+              const aIsAccessoire = a.category === 'accessoires' ? 1 : 0;
+              const bIsAccessoire = b.category === 'accessoires' ? 1 : 0;
+              
+              const aScore = aIsMicro + aIsLumiere + aIsAccessoire;
+              const bScore = bIsMicro + bIsLumiere + bIsAccessoire;
+              return bScore - aScore;
+            });
+          }
+
+          // Prendre les 4 premiers
+          setRecommendedProducts(filtered.slice(0, 4));
+        }
+      } catch (err) {
+        console.error('Erreur chargement produits recommandés:', err);
+      }
+    }
+
+    loadRecommendedProducts();
+  }, [pack]);
+
   // Sticky bar visibility
 
 
@@ -419,113 +522,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
 
   const capacity = parseCapacity(pack.ideal);
 
-  // Produits recommandés
-  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
-
-  // Charger les produits recommandés depuis Supabase selon le pack
-  useEffect(() => {
-    async function loadRecommendedProducts() {
-      if (!pack || !supabase) return;
-
-      try {
-        // Définir les catégories recommandées selon le pack
-        let targetCategories: string[] = [];
-        
-        if (pack.id === 1) {
-          // Pack S Petit : micros, câbles, accessoires
-          targetCategories = ['micros', 'accessoires'];
-        } else if (pack.id === 2) {
-          // Pack M Confort : micros, câbles, accessoires, peut-être lumières
-          targetCategories = ['micros', 'accessoires', 'lumieres'];
-        } else if (pack.id === 3) {
-          // Pack L Grand : micros, câbles, accessoires, lumières
-          targetCategories = ['micros', 'accessoires', 'lumieres'];
-        } else if (pack.id === 4) {
-          // Pack XL : tout ce qui est professionnel
-          targetCategories = ['micros', 'accessoires', 'lumieres', 'sonorisation'];
-        } else {
-          // Par défaut
-          targetCategories = ['micros', 'accessoires'];
-        }
-
-        // Charger les produits depuis Supabase
-        const { data: allProducts, error } = await supabase
-          .from('products')
-          .select('*')
-          .in('category', targetCategories)
-          .limit(20);
-
-        // Exclure Pioneer XDJ des produits recommandés
-        const filteredByPioneer = allProducts?.filter(p => 
-          !p.name.toLowerCase().includes('pioneer') && !p.name.toLowerCase().includes('xdj')
-        ) || [];
-
-        if (error) {
-          console.error('Erreur chargement produits recommandés:', error);
-          return;
-        }
-
-        if (filteredByPioneer && filteredByPioneer.length > 0) {
-          // Trier et sélectionner les produits les plus pertinents selon le pack
-          let filtered = filteredByPioneer;
-
-          if (pack.id === 1 || pack.id === 2) {
-            // Pour packs S et M : prioriser micros, puis câbles XLR, puis autres accessoires
-            filtered = filteredByPioneer.sort((a, b) => {
-              const aIsMicro = a.category === 'micros' ? 3 : 0;
-              const bIsMicro = b.category === 'micros' ? 3 : 0;
-              const aIsCableXlr = a.name.toLowerCase().includes('xlr') && a.category === 'accessoires' ? 2 : 0;
-              const bIsCableXlr = b.name.toLowerCase().includes('xlr') && b.category === 'accessoires' ? 2 : 0;
-              const aIsAccessoire = a.category === 'accessoires' ? 1 : 0;
-              const bIsAccessoire = b.category === 'accessoires' ? 1 : 0;
-              
-              const aScore = aIsMicro + aIsCableXlr + aIsAccessoire;
-              const bScore = bIsMicro + bIsCableXlr + bIsAccessoire;
-              return bScore - aScore;
-            });
-          } else if (pack.id === 3) {
-            // Pour pack L : prioriser micros, lumières, puis câbles
-            filtered = filteredByPioneer.sort((a, b) => {
-              const aIsMicro = a.category === 'micros' ? 3 : 0;
-              const bIsMicro = b.category === 'micros' ? 3 : 0;
-              const aIsLumiere = a.category === 'lumieres' ? 2 : 0;
-              const bIsLumiere = b.category === 'lumieres' ? 2 : 0;
-              const aIsCable = a.category === 'accessoires' ? 1 : 0;
-              const bIsCable = b.category === 'accessoires' ? 1 : 0;
-              
-              const aScore = aIsMicro + aIsLumiere + aIsCable;
-              const bScore = bIsMicro + bIsLumiere + bIsCable;
-              return bScore - aScore;
-            });
-          } else if (pack.id === 4) {
-            // Pour pack XL : prioriser tout ce qui est professionnel
-            filtered = filteredByPioneer.sort((a, b) => {
-              const aIsMicro = a.category === 'micros' ? 3 : 0;
-              const bIsMicro = b.category === 'micros' ? 3 : 0;
-              const aIsLumiere = a.category === 'lumieres' ? 2 : 0;
-              const bIsLumiere = b.category === 'lumieres' ? 2 : 0;
-              const aIsAccessoire = a.category === 'accessoires' ? 1 : 0;
-              const bIsAccessoire = b.category === 'accessoires' ? 1 : 0;
-              
-              const aScore = aIsMicro + aIsLumiere + aIsAccessoire;
-              const bScore = bIsMicro + bIsLumiere + bIsAccessoire;
-              return bScore - aScore;
-            });
-          }
-
-          // Prendre les 4 premiers
-          setRecommendedProducts(filtered.slice(0, 4));
-        }
-      } catch (err) {
-        console.error('Erreur chargement produits recommandés:', err);
-      }
-    }
-
-    loadRecommendedProducts();
-  }, [pack]);
-
   return (
-    <div className="pt-[104px] bg-white">
+    <div className="pt-[112px] bg-white">
       {/* Hero Section - Image + Infos principales */}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
@@ -703,6 +701,40 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
               }
             </button>
 
+            {/* Carte Installation */}
+            {(() => {
+              const installationPrice = pack.id === 1 ? 60 : pack.id === 2 ? 80 : pack.id === 3 ? 120 : null;
+              return (
+                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-3 hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-sm text-gray-900">{language === 'fr' ? 'Installation' : 'Installation'}</h3>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-3">
+                    {language === 'fr' 
+                      ? 'Installation par technicien professionnel'
+                      : 'Installation by professional technician'}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-900">
+                      {installationPrice !== null 
+                        ? `${installationPrice}€`
+                        : (language === 'fr' ? 'Sur devis' : 'On quote')
+                      }
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {language === 'fr' ? 'Optionnel' : 'Optional'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Caution */}
             <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
               <span>🔒</span>
@@ -796,7 +828,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             <div className="bg-white rounded-xl p-4 text-center">
               <div className="text-3xl mb-2">📐</div>
               <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Dimensions' : 'Dimensions'}</p>
-              <p className="text-lg font-bold text-black text-xs">
+              <p className="text-lg font-bold text-black">
                 {pack.id === 1 && (language === 'fr' ? 'Enceinte: 15" + Console compacte' : 'Speaker: 15" + Compact console')}
                 {pack.id === 2 && (language === 'fr' ? 'Enceintes: 2×15" + Console HPA Promix 8' : 'Speakers: 2×15" + HPA Promix 8 console')}
                 {pack.id === 3 && (language === 'fr' ? 'Enceintes: 2×15", Caisson: 18", Console: HPA Promix 16' : 'Speakers: 2×15", Sub: 18", Console: HPA Promix 16')}
@@ -854,9 +886,9 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                 };
 
                 return (
-                  <div key={product.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                  <div key={product.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
                     <Link href={`/catalogue/${product.slug || product.id}`}>
-                      <div className="relative h-48 bg-gray-100 cursor-pointer">
+                      <div className="relative h-48 bg-gray-100 cursor-pointer flex-shrink-0">
                         <Image
                           src={productImage}
                           alt={product.name}
@@ -865,19 +897,25 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                         />
                       </div>
                     </Link>
-                    <div className="p-4">
-                      <Link href={`/catalogue/${product.slug || product.id}`}>
-                        <h3 className="font-bold text-black mb-2 hover:text-[#F2431E] transition-colors cursor-pointer">
-                          {product.name}
-                        </h3>
-                      </Link>
-                      <p className="text-lg font-bold text-[#F2431E] mb-4">{productPrice}</p>
-                      <button 
-                        onClick={handleAddProduct}
-                        className="w-full bg-[#F2431E] text-white py-2 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
-                      >
-                        {language === 'fr' ? 'Ajouter au panier' : 'Add to cart'}
-                      </button>
+                    <div className="p-4 flex flex-col flex-grow">
+                      <div className="h-[3rem] mb-2 flex items-start">
+                        <Link href={`/catalogue/${product.slug || product.id}`}>
+                          <h3 className="font-bold text-black hover:text-[#F2431E] transition-colors cursor-pointer line-clamp-2">
+                            {product.name}
+                          </h3>
+                        </Link>
+                      </div>
+                      <div className="h-[2rem] mb-4 flex items-end">
+                        <p className="text-lg font-bold text-[#F2431E]">{productPrice}</p>
+                      </div>
+                      <div className="mt-auto">
+                        <button 
+                          onClick={handleAddProduct}
+                          className="w-full bg-[#F2431E] text-white py-2 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
+                        >
+                          {language === 'fr' ? 'Ajouter au panier' : 'Add to cart'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

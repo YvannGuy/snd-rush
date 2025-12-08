@@ -104,6 +104,7 @@ export default function AdminClientsPage() {
       reservations: 'Réservations',
       totalSpent: 'Total dépensé',
       lastOrder: 'Dernière commande',
+      actions: 'Actions',
       view: 'Voir',
       signInRequired: 'Connexion requise',
       signInDescription: 'Connectez-vous pour accéder aux clients.',
@@ -119,6 +120,7 @@ export default function AdminClientsPage() {
       reservations: 'Reservations',
       totalSpent: 'Total spent',
       lastOrder: 'Last order',
+      actions: 'Actions',
       view: 'View',
       signInRequired: 'Sign in required',
       signInDescription: 'Sign in to access clients.',
@@ -228,7 +230,7 @@ export default function AdminClientsPage() {
                       </tbody>
                     </table>
                   </div>
-                </div>
+                  </div>
 
                 {totalPages > 1 && (
                   <div className="mt-6 flex justify-center gap-2">

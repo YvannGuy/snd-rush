@@ -66,6 +66,25 @@ export async function GET(req: NextRequest) {
     // Récupérer les informations utilisateur depuis auth.users
     let customerName = '';
     let customerEmail = '';
+    let customerPhone = '';
+    
+    // Essayer de récupérer le téléphone depuis les notes de la réservation
+    if (reservation.notes) {
+      try {
+        const notesData = JSON.parse(reservation.notes);
+        if (notesData.customerPhone) {
+          customerPhone = notesData.customerPhone;
+        }
+        if (notesData.customerName) {
+          customerName = notesData.customerName;
+        }
+        if (notesData.customerEmail) {
+          customerEmail = notesData.customerEmail;
+        }
+      } catch (e) {
+        // Ignorer les erreurs de parsing
+      }
+    }
     
     if (reservation.user_id) {
       try {
@@ -73,10 +92,14 @@ export async function GET(req: NextRequest) {
         if (authError) {
           console.error('Erreur récupération utilisateur:', authError);
         } else if (authUser?.user) {
-          customerEmail = authUser.user.email || '';
+          customerEmail = customerEmail || authUser.user.email || '';
           const firstName = authUser.user.user_metadata?.first_name || authUser.user.user_metadata?.firstName || '';
           const lastName = authUser.user.user_metadata?.last_name || authUser.user.user_metadata?.lastName || '';
-          customerName = `${firstName} ${lastName}`.trim() || customerEmail.split('@')[0];
+          customerName = customerName || `${firstName} ${lastName}`.trim() || customerEmail.split('@')[0];
+          // Récupérer le téléphone depuis user_metadata si pas déjà dans les notes
+          if (!customerPhone && authUser.user.user_metadata?.phone) {
+            customerPhone = authUser.user.user_metadata.phone;
+          }
         }
       } catch (error) {
         console.error('Erreur lors de la récupération des infos utilisateur:', error);
@@ -86,11 +109,11 @@ export async function GET(req: NextRequest) {
     // Si toujours pas d'email, utiliser une valeur par défaut
     if (!customerEmail) {
       customerEmail = 'Non spécifié';
-      customerName = 'Client';
+      customerName = customerName || 'Client';
     }
 
     // Générer le contrat PDF
-    const pdfBuffer = await generateContractPDF(reservation, customerName, customerEmail);
+    const pdfBuffer = await generateContractPDF(reservation, customerName, customerEmail, customerPhone);
 
     // Retourner le PDF
     const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
@@ -124,7 +147,7 @@ async function getProviderSignature(): Promise<string> {
   }
 }
 
-async function generateContractPDF(reservation: any, customerName: string, customerEmail: string): Promise<Buffer> {
+async function generateContractPDF(reservation: any, customerName: string, customerEmail: string, customerPhone: string = ''): Promise<Buffer> {
   const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
   const contractDate = new Date(reservation.created_at || new Date()).toLocaleDateString('fr-FR', {
     day: 'numeric',
@@ -297,6 +320,11 @@ async function generateContractPDF(reservation: any, customerName: string, custo
     <div class="info-row">
       <span class="info-label">Email :</span>
       <span class="info-value">${customerEmail || 'Non spécifié'}</span>
+    </div>
+    
+    <div class="info-row">
+      <span class="info-label">Téléphone :</span>
+      <span class="info-value">${customerPhone || 'Non spécifié'}</span>
     </div>
     
     <div class="info-row">
