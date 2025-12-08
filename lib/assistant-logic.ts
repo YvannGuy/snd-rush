@@ -211,13 +211,16 @@ export function computePrice(
 
 /**
  * Calcule le total des options avec concordance besoins
+ * @param answers - Réponses de l'utilisateur
+ * @param basePrice - Prix de base du pack
+ * @param accessories - Liste des accessoires du catalogue (optionnel)
  */
-export function computeOptionsTotal(answers: Answers, basePrice: number): number {
+export function computeOptionsTotal(answers: Answers, basePrice: number, accessories?: Array<{ id: string; dailyPrice: number }>): number {
   let total = 0;
   
   // Options supplémentaires
   if (answers.extras) {
-    total += getExtrasPrice(answers.extras);
+    total += getExtrasPrice(answers.extras, accessories);
   }
   
   // Concordance besoins - retirer lumière si pas demandée
@@ -252,14 +255,25 @@ function getGuestCount(guests: string): number {
 
 /**
  * Obtient le prix des options supplémentaires
+ * @param extras - Liste des extras sélectionnés
+ * @param accessories - Liste des accessoires du catalogue (optionnel)
  */
-function getExtrasPrice(extras: string[]): number {
+function getExtrasPrice(extras: string[], accessories?: Array<{ id: string; dailyPrice: number }>): number {
   return extras.reduce((total, extra) => {
     switch (extra) {
       case 'micros_filaire': return total + PRICING_CONFIG.extras.micros_filaire;
       case 'micros_sans_fil': return total + PRICING_CONFIG.extras.micros_sans_fil;
       case 'technicien': return total + PRICING_CONFIG.extras.technicien;
-      default: return total;
+      default:
+        // Si c'est un accessoire du catalogue (format: accessory_123)
+        if (extra.startsWith('accessory_') && accessories) {
+          const accessoryId = extra.replace('accessory_', '');
+          const accessory = accessories.find(a => a.id === accessoryId);
+          if (accessory) {
+            return total + accessory.dailyPrice;
+          }
+        }
+        return total;
     }
   }, 0);
 }

@@ -9,6 +9,7 @@ import { processReservation } from '@/lib/assistant-api';
 import { trackAssistantEvent } from '@/lib/analytics';
 import { useCart } from '@/contexts/CartContext';
 import { CartItem, ProductAddon } from '@/types/db';
+import { fetchProductsByCategory, AssistantProduct } from '@/lib/assistant-products';
 import Chip from './assistant/Chip';
 import Radio from './assistant/Radio';
 import Input from './assistant/Input';
@@ -37,6 +38,8 @@ export default function AssistantRefactored({
   const [isLoading, setIsLoading] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [currentRecommendation, setCurrentRecommendation] = useState<any>(null);
+  const [accessories, setAccessories] = useState<AssistantProduct[]>([]);
+  const [loadingAccessories, setLoadingAccessories] = useState(false);
   const { addToCart } = useCart();
   
   const modalRef = useRef<HTMLDivElement>(null);
@@ -94,11 +97,34 @@ export default function AssistantRefactored({
       setAnswers({});
       setErrors({});
       setShowSummary(false);
+      setAccessories([]);
       
       // Track assistant start
       trackAssistantEvent.started();
     }
   }, [isOpen]);
+
+  // Charger les accessoires quand on arrive à l'étape extras
+  useEffect(() => {
+    const step = STEPS[currentStep];
+    if (step?.id === 'extras' && accessories.length === 0 && !loadingAccessories) {
+      setLoadingAccessories(true);
+      fetchProductsByCategory('accessoires')
+        .then((products) => {
+          // Filtrer les produits avec stock disponible et prix > 0
+          const availableAccessories = products.filter(
+            (p) => p.quantity > 0 && p.dailyPrice > 0
+          );
+          setAccessories(availableAccessories);
+        })
+        .catch((error) => {
+          console.error('Erreur lors du chargement des accessoires:', error);
+        })
+        .finally(() => {
+          setLoadingAccessories(false);
+        });
+    }
+  }, [currentStep, accessories.length, loadingAccessories]);
 
   const handleAnswerChange = (stepId: string, value: any) => {
     const newAnswers = { ...answers, [stepId]: value };
@@ -245,16 +271,41 @@ export default function AssistantRefactored({
 
     // Convertir les extras en addons pour le panier
     const addons: ProductAddon[] = [];
+    const accessoryItems: CartItem[] = [];
+    
     if (answers.extras) {
-      answers.extras.forEach((extra) => {
+      for (const extra of answers.extras) {
+        // Gérer les extras standards (micros, technicien)
         if (extra === 'micros_filaire') {
           addons.push({ id: 'micro-fil', name: 'Micro filaire', price: 10 });
         } else if (extra === 'micros_sans_fil') {
           addons.push({ id: 'micro-sans-fil', name: 'Micro sans fil', price: 20 });
         } else if (extra === 'technicien') {
           addons.push({ id: 'technicien', name: 'Technicien sur place', price: 150 });
+        } 
+        // Gérer les accessoires du catalogue (format: accessory_123)
+        else if (extra.startsWith('accessory_')) {
+          const accessoryId = extra.replace('accessory_', '');
+          const accessory = accessories.find(a => a.id === accessoryId);
+          if (accessory) {
+            // Ajouter l'accessoire comme un item séparé dans le panier
+            const accessoryCartItem: CartItem = {
+              productId: accessory.id,
+              productName: accessory.name,
+              productSlug: accessory.slug,
+              quantity: 1,
+              rentalDays: rentalDays,
+              startDate: startDate,
+              endDate: endDate,
+              dailyPrice: accessory.dailyPrice,
+              deposit: accessory.deposit || 0,
+              addons: [],
+              images: accessory.images || [],
+            };
+            accessoryItems.push(accessoryCartItem);
+          }
         }
-      });
+      }
     }
 
     // Créer l'item du panier avec tous les détails
@@ -285,6 +336,11 @@ export default function AssistantRefactored({
     };
 
     addToCart(cartItem);
+
+    // Ajouter les accessoires comme items séparés
+    accessoryItems.forEach((item) => {
+      addToCart(item);
+    });
 
     // Ajouter la livraison comme item séparé si une zone est sélectionnée
     if (answers.zone && answers.zone !== 'retrait') {
@@ -405,6 +461,7 @@ export default function AssistantRefactored({
 
           {step.type === 'multiple' && step.options && (
             <div className="space-y-3">
+              {/* Options par défaut (micros, technicien) */}
               {step.options.map((option) => (
                 <Chip
                   key={option.value}
@@ -423,6 +480,46 @@ export default function AssistantRefactored({
                 />
               ))}
               
+              {/* Accessoires du catalogue */}
+              {step.id === 'extras' && (
+                <>
+                  {loadingAccessories && (
+                    <div className="text-center py-4 text-gray-500">
+                      Chargement des accessoires...
+                    </div>
+                  )}
+                  {!loadingAccessories && accessories.length > 0 && (
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        {language === 'fr' ? 'Accessoires du catalogue' : 'Catalogue accessories'}
+                      </h3>
+                      <div className="space-y-3">
+                        {accessories.map((accessory) => {
+                          const accessoryValue = `accessory_${accessory.id}`;
+                          const isSelected = Array.isArray(value) && value.includes(accessoryValue);
+                          return (
+                            <Chip
+                              key={accessory.id}
+                              value={accessoryValue}
+                              label={`${accessory.name} (+${accessory.dailyPrice} €)`}
+                              icon="📦"
+                              price={accessory.dailyPrice}
+                              selected={isSelected}
+                              onClick={(val) => {
+                                const currentValues = Array.isArray(value) ? value : [];
+                                const newValues = currentValues.includes(val)
+                                  ? currentValues.filter(v => v !== val)
+                                  : [...currentValues, val];
+                                handleAnswerChange(step.id, newValues);
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
@@ -461,6 +558,26 @@ export default function AssistantRefactored({
     if (!recommendation) return null;
 
     const isUrgentEvent = isUrgent(answers.startDate || '', answers.startTime);
+    
+    // Calculer le prix des accessoires sélectionnés
+    const accessoriesPrice = answers.extras?.reduce((total, extra) => {
+      if (extra.startsWith('accessory_')) {
+        const accessoryId = extra.replace('accessory_', '');
+        const accessory = accessories.find(a => a.id === accessoryId);
+        if (accessory) {
+          return total + accessory.dailyPrice;
+        }
+      }
+      return total;
+    }, 0) || 0;
+    
+    // Ajuster le breakdown pour inclure les accessoires
+    const adjustedBreakdown = {
+      ...recommendation.breakdown,
+      extras: recommendation.breakdown.extras + accessoriesPrice,
+    };
+    
+    const adjustedTotalPrice = recommendation.totalPrice + accessoriesPrice;
     
     // Track pack recommendation
     trackAssistantEvent.packRecommended(recommendation.pack.name, recommendation.confidence);
@@ -503,27 +620,27 @@ export default function AssistantRefactored({
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>Pack de base :</span>
-                <span>{recommendation.breakdown.base} €</span>
+                <span>{adjustedBreakdown.base} €</span>
               </div>
               <div className="flex justify-between">
                 <span>Livraison A/R :</span>
-                <span>{recommendation.breakdown.delivery} €</span>
+                <span>{adjustedBreakdown.delivery} €</span>
               </div>
-              {recommendation.breakdown.extras > 0 && (
+              {adjustedBreakdown.extras > 0 && (
                 <div className="flex justify-between">
                   <span>Options :</span>
-                  <span>{recommendation.breakdown.extras} €</span>
+                  <span>{adjustedBreakdown.extras} €</span>
                 </div>
               )}
-              {recommendation.breakdown.urgency > 0 && (
+              {adjustedBreakdown.urgency > 0 && (
                 <div className="flex justify-between text-red-600">
                   <span>Majoration urgence :</span>
-                  <span>{recommendation.breakdown.urgency} €</span>
+                  <span>{adjustedBreakdown.urgency} €</span>
                 </div>
               )}
               <div className="border-t pt-2 flex justify-between font-bold text-lg">
                 <span>Total TTC :</span>
-                <span className="text-[#e27431]">{recommendation.totalPrice} €</span>
+                <span className="text-[#e27431]">{adjustedTotalPrice} €</span>
               </div>
             </div>
           </div>
