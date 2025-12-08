@@ -31,7 +31,7 @@ const PRICING = {
   LIVRAISON_RETRAIT: 0,
 
   // Urgence
-  URGENCE_MAJORATION: 0.20, // +20% si <48h
+  URGENCE_MAJORATION: 0.20, // +20% si <2h
 };
 
 const styles: Record<string, React.CSSProperties> = {
@@ -362,8 +362,30 @@ function isUrgent(dateStr: string): boolean {
   if (!dateStr) return false;
   const now = new Date();
   const target = new Date(dateStr);
+  
+  // Vérifier le jour de la semaine (0 = dimanche, 6 = samedi)
+  const dayOfWeek = target.getDay();
+  
+  // Condition 1: Dimanche (toute la journée) → majoration
+  if (dayOfWeek === 0) {
+    return true;
+  }
+  
+  // Condition 2: Samedi à partir de 15h → majoration
+  if (dayOfWeek === 6) {
+    const eventHour = target.getHours();
+    if (eventHour >= 15) {
+      return true;
+    }
+  }
+  
+  // Condition 3: Événement dans moins de 2 heures
   const diffH = (target.getTime() - now.getTime()) / 36e5;
-  return diffH > 0 && diffH <= 48;
+  if (diffH > 0 && diffH <= 2) {
+    return true;
+  }
+  
+  return false;
 }
 
 export default function PriceGeneratorPage() {
@@ -1057,7 +1079,7 @@ ${notes ? `Notes : ${notes}` : ''}`;
           </label>
         </div>
         <button style={styles.btn} onClick={addCustomLine}>
-          Obtenir un devis
+          Utiliser l'assistant SoundRush Paris
         </button>
         
         {customLines.length > 0 && (

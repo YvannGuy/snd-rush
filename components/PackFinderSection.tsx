@@ -60,8 +60,8 @@ export default function PackFinderSection({ language }: PackFinderSectionProps) 
   const currentTexts = texts[language];
 
   const handleFindPack = () => {
-    // Rediriger vers la page de devis
-    window.location.href = '/devis';
+    // Ouvrir l'assistant SoundRush Paris
+    window.dispatchEvent(new CustomEvent('openAssistantModal'));
   };
 
   const isComplete = selectedEvent && selectedSize;

@@ -1,4 +1,4 @@
-// Fonctions pures pour l'assistant SND Rush
+// Fonctions pures pour l'assistant SoundRush Paris
 
 import { Answers, Recommendation, PRICING_CONFIG } from '@/types/assistant';
 import { recommendPackByGuests, packMatchesNeeds } from './packs';
@@ -32,17 +32,60 @@ export function getDeliveryPrice(zone: string): number {
 }
 
 /**
- * Vérifie si un événement est urgent (même jour)
+ * Vérifie si un événement est urgent
+ * Conditions :
+ * - Dans moins de 2 heures
+ * - Dimanche (toute la journée)
+ * - Samedi à partir de 15h
+ * @param dateStr Format YYYY-MM-DD
+ * @param timeStr Format HH:MM (optionnel)
  */
-export function isUrgent(dateStr: string): boolean {
+export function isUrgent(dateStr: string, timeStr?: string): boolean {
   if (!dateStr) return false;
   
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const eventDate = new Date(y, (m-1), d);
-  const today = new Date();
+  const now = new Date();
   
-  // Comparer seulement les dates (sans l'heure)
-  return eventDate.toDateString() === today.toDateString();
+  // Construire la date/heure de l'événement
+  const [y, m, d] = dateStr.split('-').map(Number);
+  let eventDateTime = new Date(y, (m-1), d);
+  
+  // Si l'heure est fournie, l'ajouter
+  if (timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    if (!isNaN(hours) && !isNaN(minutes)) {
+      eventDateTime.setHours(hours, minutes, 0, 0);
+    } else {
+      // Si l'heure n'est pas valide, utiliser 12h00 par défaut
+      eventDateTime.setHours(12, 0, 0, 0);
+    }
+  } else {
+    // Si pas d'heure fournie, utiliser 12h00 par défaut
+    eventDateTime.setHours(12, 0, 0, 0);
+  }
+  
+  // Vérifier le jour de la semaine (0 = dimanche, 6 = samedi)
+  const dayOfWeek = eventDateTime.getDay();
+  
+  // Condition 1: Dimanche (toute la journée) → majoration
+  if (dayOfWeek === 0) {
+    return true;
+  }
+  
+  // Condition 2: Samedi à partir de 15h → majoration
+  if (dayOfWeek === 6) {
+    const eventHour = eventDateTime.getHours();
+    if (eventHour >= 15) {
+      return true;
+    }
+  }
+  
+  // Condition 3: Événement dans moins de 2 heures
+  const diffHours = (eventDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+  if (diffHours > 0 && diffHours <= 2) {
+    return true;
+  }
+  
+  return false;
 }
 
 /**
@@ -91,7 +134,7 @@ export function recommendPack(answers: Answers): Recommendation | null {
         base: basePrice,
         delivery: getDeliveryPrice(answers.zone || ''),
         extras: computeOptionsTotal(answers, basePrice),
-        urgency: isUrgent(answers.date || '') ? Math.round(totalPrice * 0.2) : 0
+        urgency: isUrgent(answers.startDate || '', answers.startTime) ? Math.round(totalPrice * 0.2) : 0
       },
       compositionFinale
     };
@@ -135,7 +178,7 @@ export function recommendPack(answers: Answers): Recommendation | null {
       base: basePrice,
       delivery: getDeliveryPrice(answers.zone || ''),
       extras: computeOptionsTotal(answers, basePrice),
-      urgency: isUrgent(answers.date || '') ? Math.round(totalPrice * 0.2) : 0
+      urgency: isUrgent(answers.startDate || '', answers.startTime) ? Math.round(totalPrice * 0.2) : 0
     },
     compositionFinale: customConfig.items.map(item => `${item.label} (${item.qty}x)`),
     customConfig: customConfig.items
@@ -158,8 +201,8 @@ export function computePrice(
   // Options supplémentaires avec concordance besoins
   total += computeOptionsTotal(answers, basePrice);
   
-  // Majoration d'urgence
-  if (isUrgent(answers.date || '')) {
+  // Majoration d'urgence (basée sur la date et heure de début)
+  if (isUrgent(answers.startDate || '', answers.startTime)) {
     total = Math.round(total * pricing.urgencyMultiplier);
   }
   
@@ -247,15 +290,24 @@ export function validateStep(stepId: string, value: any): boolean {
       return Array.isArray(value) && value.length > 0;
     case 'extras':
       return true; // Optionnel - peut être un tableau vide
-    case 'date':
+    case 'startDate':
       if (!value) return false;
-      const date = new Date(value);
-      const today = new Date();
+      const startDate = new Date(value);
+      const todayStart = new Date();
       // Comparer seulement les dates (sans l'heure) pour permettre la sélection d'aujourd'hui
-      const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      return dateOnly >= todayOnly;
-    case 'time':
+      const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const todayOnlyStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), todayStart.getDate());
+      return startDateOnly >= todayOnlyStart;
+    case 'endDate':
+      if (!value) return false;
+      const endDate = new Date(value);
+      const todayEnd = new Date();
+      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      const todayOnlyEnd = new Date(todayEnd.getFullYear(), todayEnd.getMonth(), todayEnd.getDate());
+      return endDateOnly >= todayOnlyEnd;
+    case 'startTime':
+      return true; // Optionnel
+    case 'endTime':
       return true; // Optionnel
     default:
       return false;
@@ -279,8 +331,11 @@ export function generateReservationMessage(
   message += `- Zone : ${getZoneLabel(answers.zone)}\n`;
   message += `- Environnement : ${getEnvironmentLabel(answers.environment)}\n`;
   message += `- Besoins : ${answers.needs?.join(', ') || 'Non spécifié'}\n`;
-  if (answers.date) {
-    message += `- Date : ${answers.date}\n`;
+  if (answers.startDate) {
+    message += `- Date de début : ${answers.startDate}${answers.startTime ? ` à ${answers.startTime}` : ''}\n`;
+  }
+  if (answers.endDate) {
+    message += `- Date de fin : ${answers.endDate}${answers.endTime ? ` à ${answers.endTime}` : ''}\n`;
   }
   message += `\nDétail des coûts :\n`;
   message += `- Pack : ${breakdown.base} €\n`;

@@ -417,7 +417,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
       perDay: '/jour',
       rating: '4.9/5',
       events: 'Événements',
-      addToQuote: 'Obtenir un devis pour événement',
+      addToQuote: 'Utiliser l\'assistant SoundRush Paris',
       included: 'Inclus dans ce pack',
       capacities: 'Capacités & Utilisation',
       capacity: 'Capacité',

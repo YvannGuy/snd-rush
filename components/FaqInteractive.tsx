@@ -129,12 +129,15 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
               Appeler maintenant
             </a>
             {onOpenAssistant && (
-              <Link
-                href="/devis"
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('openAssistantModal'));
+                  onOpenAssistant();
+                }}
                 className="inline-flex items-center justify-center px-6 py-3 bg-white border-2 border-[#F2431E] text-[#F2431E] font-semibold rounded-lg hover:bg-[#F2431E] hover:text-white transition-colors"
               >
-                Obtenir un devis
-              </Link>
+                🤖 Utiliser l'assistant SoundRush Paris
+              </button>
             )}
           </div>
         </div>

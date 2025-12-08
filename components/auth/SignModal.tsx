@@ -108,8 +108,15 @@ export default function SignModal({
     e.preventDefault();
     const result = await signInWithEmail(email, password);
     if (!result.error) {
-      onSuccess?.();
-      onClose();
+      // Attendre un peu pour que la session soit bien établie
+      setTimeout(() => {
+        onSuccess?.();
+        onClose();
+        // Si pas de callback onSuccess, rediriger vers le dashboard
+        if (!onSuccess && typeof window !== 'undefined') {
+          window.location.href = isAdmin ? '/admin' : '/dashboard';
+        }
+      }, 500);
     }
   };
 
@@ -131,6 +138,12 @@ export default function SignModal({
     if (!result.error) {
       setSignUpSuccess(true);
       // Ne pas fermer immédiatement pour afficher le message
+      // Si l'utilisateur a une session, on peut appeler onSuccess après un délai
+      if (result.data?.session && onSuccess) {
+        setTimeout(() => {
+          onSuccess();
+        }, 2000);
+      }
     }
   };
 

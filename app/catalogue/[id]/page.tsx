@@ -434,7 +434,7 @@ export default function ProductDetailPage() {
       rentalDuration: 'Durée',
       days: 'jours',
       totalPrice: 'Total',
-      getQuote: 'Obtenir un devis pour événement',
+      getQuote: 'Utiliser l\'assistant SoundRush Paris',
       goToCart: 'Voir le panier',
       testimonials: 'Avis clients',
     },

@@ -31,8 +31,10 @@ export default function ReservationModal({
     lastName: '',
     email: '',
     phone: '',
-    date: '',
-    time: '',
+    startDate: '',
+    endDate: '',
+    startTime: '',
+    endTime: '',
     postalCode: '',
     address: '',
     specialRequests: ''
@@ -49,8 +51,10 @@ export default function ReservationModal({
         lastName: '',
         email: '',
         phone: '',
-        date: answers.date || '', // Pre-remplir avec la date de l'assistant
-        time: answers.time || '', // Pre-remplir avec l'heure de l'assistant
+        startDate: answers.startDate || '', // Pre-remplir avec la date de début de l'assistant
+        endDate: answers.endDate || '', // Pre-remplir avec la date de fin de l'assistant
+        startTime: answers.startTime || '', // Pre-remplir avec l'heure de début de l'assistant
+        endTime: answers.endTime || '', // Pre-remplir avec l'heure de fin de l'assistant
         postalCode: '',
         address: '',
         specialRequests: ''
@@ -58,7 +62,7 @@ export default function ReservationModal({
       setCgvAccepted(false);
       setErrors({});
     }
-  }, [isOpen, answers.date, answers.time]); // Dépendre de date et time pour les mettre à jour
+  }, [isOpen, answers.startDate, answers.endDate, answers.startTime, answers.endTime]); // Dépendre des dates et heures pour les mettre à jour
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -77,8 +81,10 @@ export default function ReservationModal({
     if (!formData.email.trim()) newErrors.email = 'L\'email est obligatoire';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide';
     if (!formData.phone.trim()) newErrors.phone = 'Le téléphone est obligatoire';
-    if (!formData.date.trim()) newErrors.date = 'La date est obligatoire';
-    if (!formData.time.trim()) newErrors.time = 'L\'horaire est obligatoire';
+    if (!formData.startDate.trim()) newErrors.startDate = 'La date de début est obligatoire';
+    if (!formData.endDate.trim()) newErrors.endDate = 'La date de fin est obligatoire';
+    if (!formData.startTime.trim()) newErrors.startTime = 'L\'heure de début est obligatoire';
+    if (!formData.endTime.trim()) newErrors.endTime = 'L\'heure de fin est obligatoire';
     if (!formData.postalCode.trim()) newErrors.postalCode = 'Le code postal est obligatoire';
     
     if (!cgvAccepted) newErrors.cgv = 'Vous devez accepter les conditions générales';
@@ -109,8 +115,10 @@ export default function ReservationModal({
         phone: formData.phone,
       },
       eventDetails: {
-        date: formData.date || answers.date || '',
-        time: formData.time || answers.time || '',
+        startDate: formData.startDate || answers.startDate || '',
+        endDate: formData.endDate || answers.endDate || '',
+        startTime: formData.startTime || answers.startTime || '',
+        endTime: formData.endTime || answers.endTime || '',
         postalCode: formData.postalCode,
         address: formData.address,
         specialRequests: formData.specialRequests,
@@ -126,8 +134,10 @@ export default function ReservationModal({
                      formData.email.trim() && 
                      /\S+@\S+\.\S+/.test(formData.email) &&
                      formData.phone.trim() && 
-                     formData.date.trim() && 
-                     formData.time.trim() && 
+                     formData.startDate.trim() &&
+                     formData.endDate.trim() &&
+                     formData.startTime.trim() &&
+                     formData.endTime.trim() &&
                      formData.postalCode.trim() && 
                      cgvAccepted;
 
@@ -138,8 +148,10 @@ export default function ReservationModal({
     email: formData.email.trim(),
     emailValid: /\S+@\S+\.\S+/.test(formData.email),
     phone: formData.phone.trim(),
-    date: formData.date.trim(),
-    time: formData.time.trim(),
+    startDate: formData.startDate.trim(),
+    endDate: formData.endDate.trim(),
+    startTime: formData.startTime.trim(),
+    endTime: formData.endTime.trim(),
     postalCode: formData.postalCode.trim(),
     cgvAccepted,
     isFormValid
@@ -413,7 +425,7 @@ export default function ReservationModal({
             }`}
             title={!isFormValid ? 'Veuillez remplir tous les champs obligatoires' : ''}
           >
-            {isLoading ? 'Traitement...' : isFormValid ? 'Confirmer' : `Champs manquants (${!formData.firstName.trim() ? 'Prénom ' : ''}${!formData.lastName.trim() ? 'Nom ' : ''}${!formData.email.trim() ? 'Email ' : ''}${!/\S+@\S+\.\S+/.test(formData.email) ? 'Email invalide ' : ''}${!formData.phone.trim() ? 'Téléphone ' : ''}${!formData.date.trim() ? 'Date ' : ''}${!formData.time.trim() ? 'Horaire ' : ''}${!formData.postalCode.trim() ? 'Code postal ' : ''}${!cgvAccepted ? 'CGV ' : ''})`}
+            {isLoading ? 'Traitement...' : isFormValid ? 'Confirmer' : `Champs manquants (${!formData.firstName.trim() ? 'Prénom ' : ''}${!formData.lastName.trim() ? 'Nom ' : ''}${!formData.email.trim() ? 'Email ' : ''}${!/\S+@\S+\.\S+/.test(formData.email) ? 'Email invalide ' : ''}${!formData.phone.trim() ? 'Téléphone ' : ''}${!formData.startDate.trim() ? 'Date début ' : ''}${!formData.endDate.trim() ? 'Date fin ' : ''}${!formData.startTime.trim() ? 'Heure début ' : ''}${!formData.endTime.trim() ? 'Heure fin ' : ''}${!formData.postalCode.trim() ? 'Code postal ' : ''}${!cgvAccepted ? 'CGV ' : ''})`}
           </button>
         </div>
       </div>

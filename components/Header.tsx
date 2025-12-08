@@ -155,10 +155,11 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       <div className="bg-black shadow-md relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="flex items-center justify-between h-16">
-            {/* Logo SndRush */}
+            {/* Logo SoundRush */}
             <Link href="/" className="flex items-center">
-              <span className="text-2xl font-bold text-[#F2431E]">
-                SndRush
+              <span className="text-2xl font-bold">
+                <span className="text-[#F2431E]">SoundRush</span>
+                <span className="text-white"> Paris</span>
               </span>
             </Link>
 

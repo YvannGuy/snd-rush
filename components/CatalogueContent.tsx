@@ -365,8 +365,8 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
   }, [searchQuery, selectedCategory, selectedUsageType, selectedCapacity, selectedPriceRange]);
 
   const handleAddToQuote = (productId: number) => {
-    // Rediriger vers la page de devis
-    window.location.href = '/devis';
+    // Ouvrir l'assistant SoundRush Paris
+    window.dispatchEvent(new CustomEvent('openAssistantModal'));
   };
 
   const scrollToHelp = () => {
@@ -519,12 +519,14 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                   {/* Buttons - alignés en bas */}
                   <div className="flex flex-col gap-2 mt-auto pt-2">
                     {product.category === 'packs' && (product.price.includes('devis') || product.price.includes('quote')) ? (
-                      <Link
-                        href="/devis"
+                      <button
+                        onClick={() => {
+                          window.dispatchEvent(new CustomEvent('openAssistantModal'));
+                        }}
                         className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors text-center min-h-[44px] flex items-center justify-center"
                       >
-                        {language === 'fr' ? 'Demander un devis' : 'Request a quote'}
-                      </Link>
+                        {language === 'fr' ? '🤖 Utiliser l\'assistant SoundRush Paris' : '🤖 Use SoundRush Paris Assistant'}
+                      </button>
                     ) : (
                       <button
                         onClick={() => {

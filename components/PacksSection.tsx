@@ -32,7 +32,7 @@ export default function PacksSection({ language }: PacksSectionProps) {
       titleHighlight: 'tous vos événements',
       subtitle: 'Mariage, anniversaire, conférence, entreprise… choisissez la solution adaptée.',
       reserveNow: 'Réserver maintenant',
-      requestQuote: 'Demander un devis précis',
+      requestQuote: 'Utiliser l\'assistant SoundRush Paris',
       keyInHand: 'Clé en main',
       parisPrice: 'Paris intra-muros',
       horsParisPrice: 'Hors Paris',

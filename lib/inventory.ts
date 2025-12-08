@@ -1,3 +1,6 @@
+// ⚠️ DEPRECATED: Utilisez lib/unified-inventory.ts à la place
+// Ce fichier est conservé pour compatibilité mais sera progressivement remplacé
+
 export interface InventoryItem {
   label: string;
   qty: number;
@@ -12,6 +15,7 @@ export interface Inventory {
   lights: Record<string, InventoryItem>;
 }
 
+// Inventaire par défaut (fallback)
 export const INVENTORY: Inventory = {
   speakers: {
     macmah_as108_pair: { 
@@ -86,6 +90,7 @@ export const INVENTORY: Inventory = {
 
 /**
  * Génère une configuration à-la-carte basée sur les besoins
+ * Utilise les prix de l'inventaire par défaut, mais peut être amélioré pour utiliser Supabase
  */
 export function generateCustomConfig(
   guests: string,

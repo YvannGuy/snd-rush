@@ -157,10 +157,15 @@ export default function AskBox() {
 
                 {/* Actions */}
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <a href="#devis" className="flex-1 bg-[#F2431E] text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-[#E63A1A] transition-all duration-300 shadow-lg hover:shadow-xl text-center">
-                    <i className="ri-file-text-line mr-2"></i>
-                    Obtenir un devis en &lt; 5 min
-                  </a>
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('openAssistantModal'));
+                    }}
+                    className="flex-1 bg-[#F2431E] text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-[#E63A1A] transition-all duration-300 shadow-lg hover:shadow-xl text-center"
+                  >
+                    <i className="ri-robot-line mr-2"></i>
+                    Utiliser l'assistant SoundRush Paris
+                  </button>
                   <a href="tel:+33651084994" className="flex-1 border-2 border-[#F2431E] text-[#F2431E] px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-[#F2431E] hover:text-white transition-all duration-300 text-center">
                     <i className="ri-phone-line mr-2"></i>
                     C'est urgent ? Appelez-nous

@@ -88,6 +88,13 @@ export interface CartItem {
   deposit: number;
   addons: ProductAddon[];
   images?: string[];
+  // Détails de l'événement depuis l'assistant
+  eventType?: string;
+  startTime?: string;
+  endTime?: string;
+  zone?: string;
+  // Metadata pour stocker des infos supplémentaires
+  metadata?: Record<string, any>;
 }
 
 export interface Cart {

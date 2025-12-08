@@ -1,13 +1,14 @@
-// Assistant SND Rush refactorisé avec nouvelle UI et logique complète
+// Assistant SoundRush Paris refactorisé avec nouvelle UI et logique complète
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Answers, Step, STEPS, PRICING_CONFIG, ReservationPayload } from '@/types/assistant';
+import { Answers, Step, STEPS, PRICING_CONFIG, ReservationPayload, Recommendation } from '@/types/assistant';
 import { recommendPack, computePrice, isUrgent, validateStep } from '@/lib/assistant-logic';
+import { recommendPackWithStock } from '@/lib/assistant-recommendation';
 import { processReservation } from '@/lib/assistant-api';
 import { trackAssistantEvent } from '@/lib/analytics';
 import { useCart } from '@/contexts/CartContext';
-import { CartItem } from '@/types/db';
+import { CartItem, ProductAddon } from '@/types/db';
 import Chip from './assistant/Chip';
 import Radio from './assistant/Radio';
 import Input from './assistant/Input';
@@ -147,8 +148,16 @@ export default function AssistantRefactored({
         return;
       }
 
-      if (!validateStep(step.id, value)) {
-        setErrors({ ...errors, [step.id]: 'Valeur invalide' });
+      // Utiliser la validation personnalisée de l'étape si elle existe (pour endDate qui doit être >= startDate)
+      let isValid: boolean;
+      if (step.validation) {
+        isValid = step.validation(value, answers);
+      } else {
+        isValid = validateStep(step.id, value);
+      }
+      
+      if (!isValid) {
+        setErrors({ ...errors, [step.id]: step.id === 'endDate' ? 'La date de fin doit être supérieure ou égale à la date de début' : 'Valeur invalide' });
         return;
       }
     }
@@ -176,6 +185,11 @@ export default function AssistantRefactored({
     // Pour les autres étapes, validation stricte
     if (!value || (Array.isArray(value) && value.length === 0)) {
       return false;
+    }
+    
+    // Utiliser la validation personnalisée de l'étape si elle existe
+    if (step.validation) {
+      return step.validation(value, answers);
     }
     
     return validateStep(step.id, value);
@@ -207,8 +221,8 @@ export default function AssistantRefactored({
     }
 
     // Calculer les dates de location
-    const startDate = answers.date || new Date().toISOString().split('T')[0];
-    const endDate = answers.date || new Date().toISOString().split('T')[0];
+    const startDate = answers.startDate || new Date().toISOString().split('T')[0];
+    const endDate = answers.endDate || answers.startDate || new Date().toISOString().split('T')[0];
     
     // Calculer les jours de location (par défaut 1 jour)
     let rentalDays = 1;
@@ -216,35 +230,90 @@ export default function AssistantRefactored({
       const start = new Date(startDate);
       const end = new Date(endDate);
       const diffTime = end.getTime() - start.getTime();
-      rentalDays = Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+      rentalDays = Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1); // +1 car inclusif
     }
 
-    // Mapper le pack ID
-    const packIdMapping: Record<string, number> = {
-      'pack_petit': 1,
-      'pack_confort': 2,
-      'pack_grand': 3,
-      'pack_maxi': 5,
+    // Mapper le pack ID avec les images correspondantes
+    const packIdMapping: Record<string, { id: number; image: string; deposit: number }> = {
+      'pack_petit': { id: 1, image: '/pack2c.jpg', deposit: 700 },
+      'pack_confort': { id: 2, image: '/pack2cc.jpg', deposit: 1100 },
+      'pack_grand': { id: 3, image: '/pack4cc.jpg', deposit: 1600 },
+      'pack_maxi': { id: 5, image: '/concert.jpg', deposit: 500 },
     };
     
-    const packId = packIdMapping[recommendation.pack.id] || 2; // Fallback sur Pack M Confort
+    const packInfo = packIdMapping[recommendation.pack.id] || { id: 2, image: '/pack2cc.jpg', deposit: 1100 };
 
-    // Créer l'item du panier
+    // Convertir les extras en addons pour le panier
+    const addons: ProductAddon[] = [];
+    if (answers.extras) {
+      answers.extras.forEach((extra) => {
+        if (extra === 'micros_filaire') {
+          addons.push({ id: 'micro-fil', name: 'Micro filaire', price: 10 });
+        } else if (extra === 'micros_sans_fil') {
+          addons.push({ id: 'micro-sans-fil', name: 'Micro sans fil', price: 20 });
+        } else if (extra === 'technicien') {
+          addons.push({ id: 'technicien', name: 'Technicien sur place', price: 150 });
+        }
+      });
+    }
+
+    // Créer l'item du panier avec tous les détails
     const cartItem: CartItem = {
-      productId: `pack-${packId}`,
-      productName: `Pack ${recommendation.pack.name}`,
-      productSlug: `pack-${packId}`,
+      productId: `pack-${packInfo.id}`,
+      productName: recommendation.pack.name, // Utiliser le nom exact du pack
+      productSlug: `pack-${packInfo.id}`,
       quantity: 1,
       rentalDays: rentalDays,
       startDate: startDate,
       endDate: endDate,
       dailyPrice: recommendation.breakdown.base,
-      deposit: 500, // Dépôt par défaut
-      addons: [], // Les extras seront gérés séparément si nécessaire
-      images: [], // Pas d'image pour les packs de l'assistant
+      deposit: packInfo.deposit,
+      addons: addons,
+      images: [packInfo.image],
+      // Détails de l'événement
+      eventType: answers.eventType,
+      startTime: answers.startTime,
+      endTime: answers.endTime,
+      zone: answers.zone,
+      metadata: {
+        guests: answers.guests,
+        environment: answers.environment,
+        needs: answers.needs,
+        urgency: isUrgent(answers.startDate || '', answers.startTime),
+        breakdown: recommendation.breakdown,
+      },
     };
 
     addToCart(cartItem);
+
+    // Ajouter la livraison comme item séparé si une zone est sélectionnée
+    if (answers.zone && answers.zone !== 'retrait') {
+      const deliveryPrices: Record<string, number> = {
+        paris: 80,
+        petite: 120,
+        grande: 160,
+      };
+      
+      const deliveryPrice = deliveryPrices[answers.zone] || 0;
+      if (deliveryPrice > 0) {
+        const deliveryItem: CartItem = {
+          productId: `delivery-${answers.zone}`,
+          productName: language === 'fr' 
+            ? `Livraison ${answers.zone === 'paris' ? 'Paris' : answers.zone === 'petite' ? 'Petite Couronne' : 'Grande Couronne'}`
+            : `Delivery ${answers.zone === 'paris' ? 'Paris' : answers.zone === 'petite' ? 'Inner suburbs' : 'Outer suburbs'}`,
+          productSlug: `delivery-${answers.zone}`,
+          quantity: 1,
+          rentalDays: 1,
+          startDate: startDate,
+          endDate: endDate,
+          dailyPrice: deliveryPrice,
+          deposit: 0,
+          addons: [],
+          images: ['/livraison.jpg'],
+        };
+        addToCart(deliveryItem);
+      }
+    }
     
     // Track add to cart
     trackAssistantEvent.addToCart(recommendation.pack.name);
@@ -263,7 +332,7 @@ export default function AssistantRefactored({
   const handleCallExpert = () => {
     // Ouvrir WhatsApp avec un message pré-rempli
     const message = encodeURIComponent(
-      `Bonjour, j'ai utilisé l'assistant SND Rush et j'aimerais parler avec un expert pour finaliser ma réservation.`
+      `Bonjour, j'ai utilisé l'assistant SoundRush Paris et j'aimerais parler avec un expert pour finaliser ma réservation.`
     );
     window.open(`https://wa.me/33651084994?text=${message}`, '_blank');
     
@@ -367,12 +436,12 @@ export default function AssistantRefactored({
             />
           )}
 
-          {step.id === 'time' && (
+          {(step.id === 'startTime' || step.id === 'endTime') && (
             <Input
               type="text"
               value={value as string || ''}
               onChange={(val) => handleAnswerChange(step.id, val)}
-              placeholder="Ex: 19h00, 20h30..."
+              placeholder={step.id === 'startTime' ? "Ex: 19h00, 20h30..." : "Ex: 23h00, 00h30..."}
               required={step.required}
               error={error}
             />
@@ -387,10 +456,11 @@ export default function AssistantRefactored({
   };
 
   const renderSummary = () => {
+    // Utiliser recommendPack standard (la vérification de stock se fait côté serveur lors de la réservation)
     const recommendation = recommendPack(answers);
     if (!recommendation) return null;
 
-    const isUrgentEvent = isUrgent(answers.date || '');
+    const isUrgentEvent = isUrgent(answers.startDate || '', answers.startTime);
     
     // Track pack recommendation
     trackAssistantEvent.packRecommended(recommendation.pack.name, recommendation.confidence);
@@ -524,7 +594,7 @@ export default function AssistantRefactored({
                   <span className="text-3xl">🤖</span>
                 </div>
                 <div>
-                  <h1 id="assistant-title" className="text-2xl font-bold mb-1">Assistant SND Rush</h1>
+                  <h1 id="assistant-title" className="text-2xl font-bold mb-1">Assistant SoundRush Paris</h1>
                   <p className="text-white/90 text-sm">Trouvez le pack parfait en 2 minutes</p>
                 </div>
               </div>

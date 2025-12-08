@@ -84,7 +84,7 @@ export default function AllPacksPage() {
         }
       ],
       viewPack: 'Voir ce pack',
-      requestQuote: 'Demander un devis',
+      requestQuote: 'Utiliser l\'assistant SoundRush Paris',
       needHelp: 'Besoin d\'aide pour choisir ?',
       needHelpDescription: 'Répondez à 3 questions et trouvez le pack idéal pour votre événement',
       openAssistant: 'Ouvrir l\'assistant'
@@ -223,12 +223,14 @@ export default function AllPacksPage() {
 
                     {/* Button */}
                     {pack.price === 'Sur devis' || pack.price === 'On quote' ? (
-                      <Link
-                        href="/devis"
+                      <button
+                        onClick={() => {
+                          window.dispatchEvent(new CustomEvent('openAssistantModal'));
+                        }}
                         className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors text-center mt-auto"
                       >
                         {currentTexts.requestQuote}
-                      </Link>
+                      </button>
                     ) : (
                       <Link
                         href={`/packs/${pack.id}`}

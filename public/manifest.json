@@ -1,0 +1,32 @@
+{
+  "name": "SoundRush Paris - Location Sono Urgence 24/7",
+  "short_name": "SoundRush Paris",
+  "description": "Location de matériel de sonorisation professionnelle en urgence 24/7 à Paris et Île-de-France. Packs clé en main pour mariages, anniversaires, événements corporate.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#F2431E",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["business", "shopping"],
+  "lang": "fr-FR",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false
+}

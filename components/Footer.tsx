@@ -112,8 +112,9 @@ export default function Footer({ language }: FooterProps) {
             {/* Logo et baseline */}
             <div className="space-y-4">
               <Link href="/" className="inline-block">
-                <span className="text-3xl font-bold tracking-tight text-white">
-                  SoundRush
+                <span className="text-3xl font-bold tracking-tight">
+                  <span className="text-[#F2431E]">SoundRush</span>
+                  <span className="text-white"> Paris</span>
                 </span>
               </Link>
               <p className="text-gray-300 text-sm">
@@ -190,7 +191,7 @@ export default function Footer({ language }: FooterProps) {
           <div className="mt-12 pt-8 border-t border-gray-800">
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
               <p className="text-gray-400 text-sm">
-                © 2025 SoundRush - Tous droits réservés.
+                © 2025 <span className="text-[#F2431E]">SoundRush</span><span className="text-white"> Paris</span> - Tous droits réservés.
               </p>
               <div className="flex items-center gap-4 md:gap-6">
                 <Link 

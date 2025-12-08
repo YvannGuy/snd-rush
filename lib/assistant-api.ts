@@ -1,4 +1,4 @@
-// Services API pour l'assistant SND Rush
+// Services API pour l'assistant SoundRush Paris
 
 import { ReservationPayload } from '@/types/assistant';
 
@@ -106,7 +106,7 @@ function generateInfoMessage(payload: ReservationPayload): string {
   const { personalInfo, eventDetails, packName, totalPrice } = payload;
   
   return `
-Nouvelle demande d'information - Assistant SND Rush
+Nouvelle demande d'information - Assistant SoundRush Paris
 
 Informations client :
 - Nom : ${personalInfo.firstName} ${personalInfo.lastName}
@@ -135,7 +135,7 @@ function generateReservationMessage(payload: ReservationPayload): string {
   const { personalInfo, eventDetails, packName, totalPrice, depositAmount } = payload;
   
   return `
-Nouvelle réservation - Assistant SND Rush
+Nouvelle réservation - Assistant SoundRush Paris
 
 Informations client :
 - Nom : ${personalInfo.firstName} ${personalInfo.lastName}

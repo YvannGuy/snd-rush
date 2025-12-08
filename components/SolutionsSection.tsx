@@ -13,7 +13,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
       title: 'Nos packs les plus populaires',
       subtitle: '',
       viewPack: 'Voir ce pack',
-      requestQuote: 'Demander un devis',
+      requestQuote: 'Utiliser l\'assistant SoundRush Paris',
       viewAllPacks: 'Voir tous les packs',
       findPackSection: {
         sectionTitle: 'TROUVER RAPIDEMENT LE BON PACK',
@@ -86,7 +86,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
             'Technicien & régie',
             'Logistique complète'
           ],
-          cta: 'Demander un devis',
+          cta: 'Utiliser l\'assistant SoundRush Paris',
           ctaType: 'quote' as const
         }
       ]
@@ -95,7 +95,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
       title: 'Our most popular packs',
       subtitle: '',
       viewPack: 'View this pack',
-      requestQuote: 'Request a quote',
+      requestQuote: 'Use SoundRush Paris Assistant',
       viewAllPacks: 'View all packs',
       findPackSection: {
         sectionTitle: 'QUICKLY FIND THE RIGHT PACK',
@@ -168,7 +168,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
             'Technician & control room',
             'Complete logistics'
           ],
-          cta: 'Request a quote',
+          cta: 'Use SoundRush Paris Assistant',
           ctaType: 'quote' as const
         }
       ]
@@ -182,7 +182,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
   };
 
   const handleRequestQuote = () => {
-    window.location.href = '/devis';
+    window.dispatchEvent(new CustomEvent('openAssistantModal'));
   };
 
   return (

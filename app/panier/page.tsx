@@ -34,7 +34,7 @@ export default function CartPage() {
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [showDepositInfo, setShowDepositInfo] = useState(false);
   const depositInfoRef = useRef<HTMLDivElement>(null);
-  const { cart, removeFromCart, increaseQuantity, decreaseQuantity, addToCart } = useCart();
+  const { cart, removeFromCart, increaseQuantity, decreaseQuantity, addToCart, clearCart } = useCart();
   const { user } = useUser();
 
   // Pré-remplir l'email avec celui de l'utilisateur connecté
@@ -533,11 +533,31 @@ export default function CartPage() {
       <main className="pt-[112px] pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           {/* Header épuré */}
-          <div className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">{currentTexts.title}</h1>
-            <p className="text-gray-600 text-sm sm:text-base">
-              {cart.items.length} {cart.items.length === 1 ? (language === 'fr' ? 'article' : 'item') : (language === 'fr' ? 'articles' : 'items')}
-            </p>
+          <div className="mb-8 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">{currentTexts.title}</h1>
+              <p className="text-gray-600 text-sm sm:text-base">
+                {cart.items.length} {cart.items.length === 1 ? (language === 'fr' ? 'article' : 'item') : (language === 'fr' ? 'articles' : 'items')}
+              </p>
+            </div>
+            {cart.items.length > 0 && (
+              <button
+                onClick={() => {
+                  if (confirm(language === 'fr' 
+                    ? 'Êtes-vous sûr de vouloir vider votre panier ?' 
+                    : 'Are you sure you want to clear your cart?')) {
+                    clearCart();
+                  }
+                }}
+                className="text-sm text-gray-600 hover:text-red-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-red-50 whitespace-nowrap"
+                title={currentTexts.clear}
+              >
+                <svg className="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                {currentTexts.clear}
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -577,18 +597,58 @@ export default function CartPage() {
                         <div className="flex items-start justify-between gap-4 mb-3">
                           <div className="flex-1 min-w-0">
                             <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">{item.productName}</h3>
-                            {/* Dates - Affichage clair */}
-                            <div className="flex items-center gap-2 mb-2">
-                              <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              <span className="text-sm font-medium text-gray-700">
-                                {new Date(item.startDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                              </span>
-                              <span className="text-gray-400">→</span>
-                              <span className="text-sm font-medium text-gray-700">
-                                {new Date(item.endDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                              </span>
+                            {/* Dates et heures - Affichage clair */}
+                            <div className="space-y-1.5 mb-2">
+                              <div className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span className="text-sm font-medium text-gray-700">
+                                  {new Date(item.startDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                  {item.startTime && ` à ${item.startTime}`}
+                                </span>
+                                <span className="text-gray-400">→</span>
+                                <span className="text-sm font-medium text-gray-700">
+                                  {new Date(item.endDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                  {item.endTime && ` à ${item.endTime}`}
+                                </span>
+                              </div>
+                              {/* Type d'événement et zone si disponibles */}
+                              {(item.eventType || item.zone) && (
+                                <div className="flex items-center gap-3 flex-wrap text-xs text-gray-600">
+                                  {item.eventType && (
+                                    <span className="flex items-center gap-1">
+                                      <span className="text-gray-400">📅</span>
+                                      <span className="capitalize">
+                                        {item.eventType === 'mariage' ? (language === 'fr' ? 'Mariage' : 'Wedding') :
+                                         item.eventType === 'anniversaire' ? (language === 'fr' ? 'Anniversaire' : 'Birthday') :
+                                         item.eventType === 'corporate' ? (language === 'fr' ? 'Corporate' : 'Corporate') :
+                                         item.eventType === 'soiree' ? (language === 'fr' ? 'Soirée' : 'Party') :
+                                         item.eventType === 'eglise' ? (language === 'fr' ? 'Église' : 'Church') :
+                                         item.eventType === 'association' ? (language === 'fr' ? 'Association' : 'Association') :
+                                         item.eventType}
+                                      </span>
+                                    </span>
+                                  )}
+                                  {item.zone && item.zone !== 'retrait' && (
+                                    <span className="flex items-center gap-1">
+                                      <span className="text-gray-400">📍</span>
+                                      <span>
+                                        {item.zone === 'paris' ? 'Paris' :
+                                         item.zone === 'petite' ? (language === 'fr' ? 'Petite Couronne' : 'Inner suburbs') :
+                                         item.zone === 'grande' ? (language === 'fr' ? 'Grande Couronne' : 'Outer suburbs') :
+                                         item.zone}
+                                      </span>
+                                    </span>
+                                  )}
+                                  {item.metadata?.urgency && (
+                                    <span className="flex items-center gap-1 text-orange-600 font-semibold">
+                                      <span>⚡</span>
+                                      <span>{language === 'fr' ? 'Urgence +20%' : 'Urgency +20%'}</span>
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">

@@ -39,7 +39,7 @@ export function computeQuote(input: PricingInput): QuoteResult {
     LIVRAISON_RETRAIT: 0,
     
     // Urgence
-    URGENCE_MAJORATION: 0.20, // +20% si <48h
+    URGENCE_MAJORATION: 0.20, // +20% si <2h
   };
 
   // Calcul du prix de base (matériel)
@@ -102,6 +102,28 @@ export function computeQuote(input: PricingInput): QuoteResult {
 function isUrgentDate(dateISO: string): boolean {
   const eventDate = new Date(dateISO);
   const now = new Date();
+  
+  // Vérifier le jour de la semaine (0 = dimanche, 6 = samedi)
+  const dayOfWeek = eventDate.getDay();
+  
+  // Condition 1: Dimanche (toute la journée) → majoration
+  if (dayOfWeek === 0) {
+    return true;
+  }
+  
+  // Condition 2: Samedi à partir de 15h → majoration
+  if (dayOfWeek === 6) {
+    const eventHour = eventDate.getHours();
+    if (eventHour >= 15) {
+      return true;
+    }
+  }
+  
+  // Condition 3: Événement dans moins de 2 heures
   const diffHours = (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-  return diffHours > 0 && diffHours <= 48; // Même logique que le générateur : < 48h
+  if (diffHours > 0 && diffHours <= 2) {
+    return true;
+  }
+  
+  return false;
 }

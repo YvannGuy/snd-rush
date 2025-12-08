@@ -1,4 +1,4 @@
-// Types stricts pour l'assistant SND Rush
+// Types stricts pour l'assistant SoundRush Paris
 
 export interface Answers {
   eventType?: 'mariage' | 'anniversaire' | 'association' | 'corporate' | 'eglise' | 'soiree' | 'autre';
@@ -10,8 +10,10 @@ export interface Answers {
   needs?: string[]; // ['son', 'lumiere', 'micros', 'dj']
   extras?: string[]; // ['promix16', 'lumiere_basique', 'technicien']
   noExtras?: boolean;
-  date?: string; // format YYYY-MM-DD
-  time?: string; // format HH:MM
+  startDate?: string; // format YYYY-MM-DD
+  endDate?: string; // format YYYY-MM-DD
+  startTime?: string; // format HH:MM
+  endTime?: string; // format HH:MM
 }
 
 export interface Pack {
@@ -74,6 +76,7 @@ export interface Recommendation {
     price: number;
     qty: number;
   }>;
+  warnings?: string[]; // Avertissements sur le stock ou la disponibilité
 }
 
 export interface ReservationPayload {
@@ -95,8 +98,10 @@ export interface ReservationPayload {
     phone: string;
   };
   eventDetails: {
-    date: string;
-    time: string;
+    startDate: string;
+    endDate: string;
+    startTime: string;
+    endTime: string;
     postalCode: string;
     address?: string;
     specialRequests?: string;
@@ -117,7 +122,7 @@ export interface Step {
     allowMultiple?: boolean;
   }>;
   required: boolean;
-  validation?: (value: any) => boolean;
+  validation?: (value: any, allAnswers?: any) => boolean;
 }
 
 export interface UIState {
@@ -273,9 +278,9 @@ export const STEPS: Step[] = [
     required: false,
   },
   {
-    id: 'date',
-    title: 'Quelle est la date de votre événement ?',
-    subtitle: 'Si l\'événement est le même jour, une majoration d\'urgence de +20 % s\'applique.',
+    id: 'startDate',
+    title: 'Quelle est la date de début de votre événement ?',
+    subtitle: 'Date de début de la location du matériel.',
     type: 'date',
     required: true,
     validation: (value: string) => {
@@ -288,9 +293,37 @@ export const STEPS: Step[] = [
     },
   },
   {
-    id: 'time',
+    id: 'endDate',
+    title: 'Quelle est la date de fin de votre événement ?',
+    subtitle: 'Date de fin de la location du matériel.',
+    type: 'date',
+    required: true,
+    validation: (value: string, allAnswers?: any) => {
+      if (!value) return false;
+      const endDate = new Date(value);
+      const startDate = allAnswers?.startDate ? new Date(allAnswers.startDate) : null;
+      if (startDate) {
+        const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        return endDateOnly >= startDateOnly;
+      }
+      const today = new Date();
+      const dateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      return dateOnly >= todayOnly;
+    },
+  },
+  {
+    id: 'startTime',
     title: 'À quelle heure commence votre événement ?',
-    subtitle: 'Cela nous aide à calculer la majoration d\'urgence.',
+    subtitle: 'Heure de début. Majoration d\'urgence +20% : événement dans moins de 2h, dimanche (toute la journée), ou samedi à partir de 15h.',
+    type: 'text',
+    required: false,
+  },
+  {
+    id: 'endTime',
+    title: 'À quelle heure se termine votre événement ?',
+    subtitle: 'Heure de fin de l\'événement.',
     type: 'text',
     required: false,
   },
