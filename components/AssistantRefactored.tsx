@@ -15,6 +15,7 @@ import Radio from './assistant/Radio';
 import Input from './assistant/Input';
 import ErrorText from './assistant/ErrorText';
 import ReservationModal from './assistant/ReservationModal';
+import QuantitySelector from './assistant/QuantitySelector';
 
 interface AssistantRefactoredProps {
   isOpen: boolean;
@@ -40,6 +41,11 @@ export default function AssistantRefactored({
   const [currentRecommendation, setCurrentRecommendation] = useState<any>(null);
   const [accessories, setAccessories] = useState<AssistantProduct[]>([]);
   const [loadingAccessories, setLoadingAccessories] = useState(false);
+  const [speakers, setSpeakers] = useState<AssistantProduct[]>([]);
+  const [subwoofers, setSubwoofers] = useState<AssistantProduct[]>([]);
+  const [loadingSpeakers, setLoadingSpeakers] = useState(false);
+  const [speakerQuantities, setSpeakerQuantities] = useState<Record<string, number>>({});
+  const [subwooferQuantities, setSubwooferQuantities] = useState<Record<string, number>>({});
   const { addToCart } = useCart();
   
   const modalRef = useRef<HTMLDivElement>(null);
@@ -98,33 +104,92 @@ export default function AssistantRefactored({
       setErrors({});
       setShowSummary(false);
       setAccessories([]);
+      setSpeakers([]);
+      setSubwoofers([]);
+      setSpeakerQuantities({});
+      setSubwooferQuantities({});
       
       // Track assistant start
       trackAssistantEvent.started();
     }
   }, [isOpen]);
 
-  // Charger les accessoires quand on arrive à l'étape extras
+  // Charger les accessoires, enceintes et caissons quand on arrive à l'étape extras
   useEffect(() => {
     const step = STEPS[currentStep];
-    if (step?.id === 'extras' && accessories.length === 0 && !loadingAccessories) {
-      setLoadingAccessories(true);
-      fetchProductsByCategory('accessoires')
-        .then((products) => {
-          // Filtrer les produits avec stock disponible et prix > 0
-          const availableAccessories = products.filter(
-            (p) => p.quantity > 0 && p.dailyPrice > 0
-          );
-          setAccessories(availableAccessories);
-        })
-        .catch((error) => {
-          console.error('Erreur lors du chargement des accessoires:', error);
-        })
-        .finally(() => {
-          setLoadingAccessories(false);
-        });
+    if (step?.id === 'extras') {
+      // Toujours charger les accessoires
+      if (accessories.length === 0 && !loadingAccessories) {
+        setLoadingAccessories(true);
+        fetchProductsByCategory('accessoires')
+          .then((products) => {
+            const availableAccessories = products.filter(
+              (p) => p.quantity > 0 && p.dailyPrice > 0
+            );
+            setAccessories(availableAccessories);
+          })
+          .catch((error) => {
+            console.error('Erreur lors du chargement des accessoires:', error);
+          })
+          .finally(() => {
+            setLoadingAccessories(false);
+          });
+      }
+
+      // Charger les enceintes et caissons si guests > 250
+      const guestsValue = answers.guests;
+      const needsMorePower = guestsValue === '200+' || (typeof guestsValue === 'string' && parseInt(guestsValue) >= 200);
+      
+      if (needsMorePower && speakers.length === 0 && subwoofers.length === 0 && !loadingSpeakers) {
+        setLoadingSpeakers(true);
+        Promise.all([
+          fetchProductsByCategory('sonorisation')
+        ])
+          .then(([sonorisationProducts]) => {
+            // Filtrer les enceintes (nom contient "enceinte" ou "speaker" mais pas "caisson" ni "sub")
+            const availableSpeakers = sonorisationProducts.filter(
+              (p) => {
+                const nameLower = p.name.toLowerCase();
+                return p.quantity > 0 && 
+                       p.dailyPrice > 0 &&
+                       (nameLower.includes('enceinte') || nameLower.includes('speaker') || nameLower.includes('haut-parleur')) &&
+                       !nameLower.includes('caisson') &&
+                       !nameLower.includes('sub');
+              }
+            );
+            
+            // Filtrer les caissons de basse
+            const availableSubwoofers = sonorisationProducts.filter(
+              (p) => {
+                const nameLower = p.name.toLowerCase();
+                return p.quantity > 0 && 
+                       p.dailyPrice > 0 &&
+                       (nameLower.includes('caisson') || nameLower.includes('sub') || nameLower.includes('basse'));
+              }
+            );
+            
+            setSpeakers(availableSpeakers);
+            setSubwoofers(availableSubwoofers);
+            
+            // Suggestion automatique : pré-sélectionner 1 caisson ou 1 enceinte si 200+ personnes
+            // Priorité au caisson de basse, sinon une enceinte
+            if (availableSubwoofers.length > 0) {
+              const suggestedSub = availableSubwoofers[0];
+              setSubwooferQuantities({ [suggestedSub.id]: 1 });
+            } else if (availableSpeakers.length > 0) {
+              const suggestedSpeaker = availableSpeakers[0];
+              setSpeakerQuantities({ [suggestedSpeaker.id]: 1 });
+            }
+          })
+          .catch((error) => {
+            console.error('Erreur lors du chargement des enceintes/caissons:', error);
+          })
+          .finally(() => {
+            setLoadingSpeakers(false);
+          });
+      }
     }
-  }, [currentStep, accessories.length, loadingAccessories]);
+  }, [currentStep, accessories.length, loadingAccessories, speakers.length, subwoofers.length, loadingSpeakers, answers.guests]);
 
   const handleAnswerChange = (stepId: string, value: any) => {
     const newAnswers = { ...answers, [stepId]: value };
@@ -308,6 +373,52 @@ export default function AssistantRefactored({
       }
     }
 
+    // Ajouter les enceintes sélectionnées au panier
+    Object.entries(speakerQuantities).forEach(([productId, quantity]) => {
+      if (quantity > 0) {
+        const speaker = speakers.find(s => s.id === productId);
+        if (speaker) {
+          const speakerCartItem: CartItem = {
+            productId: speaker.id,
+            productName: speaker.name,
+            productSlug: speaker.slug,
+            quantity: quantity,
+            rentalDays: rentalDays,
+            startDate: startDate,
+            endDate: endDate,
+            dailyPrice: speaker.dailyPrice,
+            deposit: speaker.deposit || 0,
+            addons: [],
+            images: speaker.images || [],
+          };
+          accessoryItems.push(speakerCartItem);
+        }
+      }
+    });
+
+    // Ajouter les caissons sélectionnés au panier
+    Object.entries(subwooferQuantities).forEach(([productId, quantity]) => {
+      if (quantity > 0) {
+        const subwoofer = subwoofers.find(s => s.id === productId);
+        if (subwoofer) {
+          const subwooferCartItem: CartItem = {
+            productId: subwoofer.id,
+            productName: subwoofer.name,
+            productSlug: subwoofer.slug,
+            quantity: quantity,
+            rentalDays: rentalDays,
+            startDate: startDate,
+            endDate: endDate,
+            dailyPrice: subwoofer.dailyPrice,
+            deposit: subwoofer.deposit || 0,
+            addons: [],
+            images: subwoofer.images || [],
+          };
+          accessoryItems.push(subwooferCartItem);
+        }
+      }
+    });
+
     // Créer l'item du panier avec tous les détails
     const cartItem: CartItem = {
       productId: `pack-${packInfo.id}`,
@@ -485,7 +596,7 @@ export default function AssistantRefactored({
                 <>
                   {loadingAccessories && (
                     <div className="text-center py-4 text-gray-500">
-                      Chargement des accessoires...
+                      {language === 'fr' ? 'Chargement des accessoires...' : 'Loading accessories...'}
                     </div>
                   )}
                   {!loadingAccessories && accessories.length > 0 && (
@@ -496,7 +607,7 @@ export default function AssistantRefactored({
                       <div className="space-y-3">
                         {accessories.map((accessory) => {
                           const accessoryValue = `accessory_${accessory.id}`;
-                          const isSelected = Array.isArray(value) && value.includes(accessoryValue);
+                          const isSelected = Array.isArray(value) ? value.includes(accessoryValue) : false;
                           return (
                             <Chip
                               key={accessory.id}
@@ -517,6 +628,104 @@ export default function AssistantRefactored({
                         })}
                       </div>
                     </div>
+                  )}
+
+                  {/* Enceintes et caissons pour événements 200+ personnes */}
+                  {(answers.guests === '200+' || (typeof answers.guests === 'string' && parseInt(answers.guests) >= 200)) && (
+                    <>
+                      {loadingSpeakers && (
+                        <div className="text-center py-4 text-gray-500">
+                          {language === 'fr' ? 'Chargement des enceintes et caissons...' : 'Loading speakers and subwoofers...'}
+                        </div>
+                      )}
+                      
+                      {!loadingSpeakers && (speakers.length > 0 || subwoofers.length > 0) && (
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            {language === 'fr' ? 'Enceintes et caissons supplémentaires' : 'Additional speakers and subwoofers'}
+                          </h3>
+                          <p className="text-sm text-gray-600 mb-4">
+                            {language === 'fr' 
+                              ? 'Pour un événement de 200+ personnes, nous recommandons d\'ajouter des enceintes ou un caisson de basse pour une puissance sonore optimale.'
+                              : 'For events with 200+ people, we recommend adding speakers or a subwoofer for optimal sound power.'}
+                          </p>
+                          
+                          {/* Caissons de basse */}
+                          {subwoofers.length > 0 && (
+                            <div className="mb-6">
+                              <h4 className="text-md font-semibold text-gray-800 mb-3">
+                                {language === 'fr' ? 'Caissons de basse' : 'Subwoofers'}
+                              </h4>
+                              <div className="space-y-3">
+                                {subwoofers.map((subwoofer) => {
+                                  const currentQuantity = subwooferQuantities[subwoofer.id] || 0;
+                                  // Marquer comme suggéré si c'est le premier caisson et qu'il est pré-sélectionné automatiquement
+                                  const isSuggested = subwoofers[0]?.id === subwoofer.id && currentQuantity === 1 &&
+                                                    Object.keys(subwooferQuantities).length === 1 &&
+                                                    Object.keys(speakerQuantities).length === 0;
+                                  return (
+                                    <QuantitySelector
+                                      key={subwoofer.id}
+                                      productId={subwoofer.id}
+                                      productName={subwoofer.name}
+                                      price={subwoofer.dailyPrice}
+                                      icon="🔊"
+                                      quantity={currentQuantity}
+                                      onQuantityChange={(productId, quantity) => {
+                                        setSubwooferQuantities(prev => ({
+                                          ...prev,
+                                          [productId]: quantity
+                                        }));
+                                      }}
+                                      maxQuantity={subwoofer.quantity}
+                                      suggested={isSuggested && currentQuantity === 1}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Enceintes */}
+                          {speakers.length > 0 && (
+                            <div>
+                              <h4 className="text-md font-semibold text-gray-800 mb-3">
+                                {language === 'fr' ? 'Enceintes' : 'Speakers'}
+                              </h4>
+                              <div className="space-y-3">
+                                {speakers.map((speaker) => {
+                                  const currentQuantity = speakerQuantities[speaker.id] || 0;
+                                  // Marquer comme suggéré si c'est la première enceinte et qu'elle est pré-sélectionnée automatiquement
+                                  const isSuggested = subwoofers.length === 0 && 
+                                                    speakers[0]?.id === speaker.id && 
+                                                    currentQuantity === 1 &&
+                                                    Object.keys(subwooferQuantities).length === 0 &&
+                                                    Object.keys(speakerQuantities).length === 1;
+                                  return (
+                                    <QuantitySelector
+                                      key={speaker.id}
+                                      productId={speaker.id}
+                                      productName={speaker.name}
+                                      price={speaker.dailyPrice}
+                                      icon="🔊"
+                                      quantity={currentQuantity}
+                                      onQuantityChange={(productId, quantity) => {
+                                        setSpeakerQuantities(prev => ({
+                                          ...prev,
+                                          [productId]: quantity
+                                        }));
+                                      }}
+                                      maxQuantity={speaker.quantity}
+                                      suggested={isSuggested && currentQuantity === 1}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               )}
@@ -571,13 +780,35 @@ export default function AssistantRefactored({
       return total;
     }, 0) || 0;
     
-    // Ajuster le breakdown pour inclure les accessoires
+    // Calculer le prix des enceintes sélectionnées
+    const speakersPrice = Object.entries(speakerQuantities).reduce((total, [productId, quantity]) => {
+      if (quantity > 0) {
+        const speaker = speakers.find(s => s.id === productId);
+        if (speaker) {
+          return total + (speaker.dailyPrice * quantity);
+        }
+      }
+      return total;
+    }, 0);
+    
+    // Calculer le prix des caissons sélectionnés
+    const subwoofersPrice = Object.entries(subwooferQuantities).reduce((total, [productId, quantity]) => {
+      if (quantity > 0) {
+        const subwoofer = subwoofers.find(s => s.id === productId);
+        if (subwoofer) {
+          return total + (subwoofer.dailyPrice * quantity);
+        }
+      }
+      return total;
+    }, 0);
+    
+    // Ajuster le breakdown pour inclure les accessoires, enceintes et caissons
     const adjustedBreakdown = {
       ...recommendation.breakdown,
-      extras: recommendation.breakdown.extras + accessoriesPrice,
+      extras: recommendation.breakdown.extras + accessoriesPrice + speakersPrice + subwoofersPrice,
     };
     
-    const adjustedTotalPrice = recommendation.totalPrice + accessoriesPrice;
+    const adjustedTotalPrice = recommendation.totalPrice + accessoriesPrice + speakersPrice + subwoofersPrice;
     
     // Track pack recommendation
     trackAssistantEvent.packRecommended(recommendation.pack.name, recommendation.confidence);
@@ -627,10 +858,25 @@ export default function AssistantRefactored({
                 <span>{adjustedBreakdown.delivery} €</span>
               </div>
               {adjustedBreakdown.extras > 0 && (
-                <div className="flex justify-between">
-                  <span>Options :</span>
-                  <span>{adjustedBreakdown.extras} €</span>
-                </div>
+                <>
+                  <div className="flex justify-between">
+                    <span>Options :</span>
+                    <span>{adjustedBreakdown.extras} €</span>
+                  </div>
+                  {/* Détail des enceintes et caissons */}
+                  {speakersPrice > 0 && (
+                    <div className="flex justify-between text-xs text-gray-600 pl-4">
+                      <span>Enceintes supplémentaires :</span>
+                      <span>{speakersPrice} €</span>
+                    </div>
+                  )}
+                  {subwoofersPrice > 0 && (
+                    <div className="flex justify-between text-xs text-gray-600 pl-4">
+                      <span>Caissons de basse :</span>
+                      <span>{subwoofersPrice} €</span>
+                    </div>
+                  )}
+                </>
               )}
               {adjustedBreakdown.urgency > 0 && (
                 <div className="flex justify-between text-red-600">

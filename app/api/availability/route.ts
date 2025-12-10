@@ -15,6 +15,8 @@ export async function GET(request: NextRequest) {
     const packId = searchParams.get('packId');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const startTime = searchParams.get('startTime') || null;
+    const endTime = searchParams.get('endTime') || null;
 
     if ((!productId && !packId) || !startDate || !endDate) {
       return NextResponse.json(
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return await checkAvailability(productId || null, packId || null, startDate, endDate);
+    return await checkAvailability(productId || null, packId || null, startDate, endDate, startTime, endTime);
   } catch (error) {
     console.error('Erreur API availability:', error);
     return NextResponse.json(
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { productId, packId, startDate, endDate } = body;
+    const { productId, packId, startDate, endDate, startTime, endTime } = body;
 
     if ((!productId && !packId) || !startDate || !endDate) {
       return NextResponse.json(
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return await checkAvailability(productId || null, packId || null, startDate, endDate);
+    return await checkAvailability(productId || null, packId || null, startDate, endDate, startTime || null, endTime || null);
   } catch (error) {
     console.error('Erreur API availability:', error);
     return NextResponse.json(
@@ -59,7 +61,9 @@ async function checkAvailability(
   productId: string | null,
   packId: string | null,
   startDate: string,
-  endDate: string
+  endDate: string,
+  startTime: string | null = null,
+  endTime: string | null = null
 ) {
   if (!supabase) {
     return NextResponse.json(
@@ -99,9 +103,10 @@ async function checkAvailability(
   }
 
   // 2. Récupérer toutes les réservations confirmées qui se chevauchent avec la période demandée
+  // Si les heures sont fournies, on doit vérifier les chevauchements temporels plus précisément
   let query = supabase
     .from('reservations')
-    .select('quantity')
+    .select('quantity, start_date, end_date, notes')
     .eq('status', 'CONFIRMED')
     .lt('start_date', endDate) // start_date < endDate
     .gt('end_date', startDate); // end_date > startDate
@@ -123,7 +128,61 @@ async function checkAvailability(
   }
 
   // 3. Calculer la quantité déjà réservée
-  const bookedQuantity = reservations?.reduce((sum, res) => sum + res.quantity, 0) || 0;
+  // Si les heures sont fournies, vérifier les chevauchements temporels précis
+  let bookedQuantity = 0;
+  
+  if (reservations) {
+    for (const res of reservations) {
+      // Si même jour et heures fournies, vérifier le chevauchement horaire
+      if (startTime && endTime && res.start_date === startDate && res.end_date === endDate) {
+        try {
+          // Récupérer les heures de la réservation depuis les notes ou metadata
+          let resStartTime = null;
+          let resEndTime = null;
+          
+          if (res.notes) {
+            try {
+              const notesData = JSON.parse(res.notes);
+              resStartTime = notesData.startTime || null;
+              resEndTime = notesData.endTime || null;
+            } catch (e) {
+              // Ignorer les erreurs de parsing
+            }
+          }
+          
+          // Si les heures sont définies pour cette réservation, vérifier le chevauchement
+          if (resStartTime && resEndTime) {
+            // Convertir les heures en minutes pour faciliter la comparaison
+            const requestedStart = timeToMinutes(startTime);
+            const requestedEnd = timeToMinutes(endTime);
+            const reservedStart = timeToMinutes(resStartTime);
+            const reservedEnd = timeToMinutes(resEndTime);
+            
+            // Vérifier si les périodes se chevauchent
+            if (!(requestedEnd <= reservedStart || requestedStart >= reservedEnd)) {
+              // Il y a chevauchement, compter cette réservation
+              bookedQuantity += res.quantity;
+            }
+          } else {
+            // Si pas d'heures pour cette réservation, considérer qu'elle occupe toute la journée
+            bookedQuantity += res.quantity;
+          }
+        } catch (e) {
+          // En cas d'erreur, compter la réservation par sécurité
+          bookedQuantity += res.quantity;
+        }
+      } else {
+        // Si pas le même jour ou pas d'heures, compter normalement
+        bookedQuantity += res.quantity;
+      }
+    }
+  }
+  
+  // Fonction helper pour convertir une heure (HH:MM) en minutes
+  function timeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + (minutes || 0);
+  }
 
   // 4. Calculer la disponibilité
   const remaining = totalQuantity - bookedQuantity;

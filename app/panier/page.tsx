@@ -37,12 +37,72 @@ export default function CartPage() {
   const { cart, removeFromCart, increaseQuantity, decreaseQuantity, addToCart, clearCart } = useCart();
   const { user, loading: userLoading } = useUser();
 
-  // Pré-remplir l'email avec celui de l'utilisateur connecté
+  // Pré-remplir les champs avec les informations de l'utilisateur connecté
   useEffect(() => {
-    if (user?.email && !customerEmail) {
-      setCustomerEmail(user.email);
-    }
-  }, [user, customerEmail]);
+    if (!user || !supabase) return;
+
+    const loadUserProfile = async () => {
+      try {
+        // Charger le profil utilisateur
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!error && profile) {
+          // Pré-remplir l'email
+          if (user.email && !customerEmail) {
+            setCustomerEmail(user.email);
+          }
+          
+          // Pré-remplir le nom depuis user_metadata ou profile
+          if (!customerName) {
+            const firstName = user.user_metadata?.first_name || user.user_metadata?.firstName || '';
+            const lastName = user.user_metadata?.last_name || user.user_metadata?.lastName || '';
+            const fullName = `${firstName} ${lastName}`.trim();
+            if (fullName) {
+              setCustomerName(fullName);
+            } else if (user.email) {
+              // Utiliser la partie avant @ de l'email comme nom par défaut
+              setCustomerName(user.email.split('@')[0]);
+            }
+          }
+          
+          // Pré-remplir le téléphone depuis le profil
+          if (profile.phone && !customerPhone) {
+            setCustomerPhone(profile.phone);
+          } else if (user.user_metadata?.phone && !customerPhone) {
+            setCustomerPhone(user.user_metadata.phone);
+          }
+        } else {
+          // Si pas de profil, utiliser au moins l'email
+          if (user.email && !customerEmail) {
+            setCustomerEmail(user.email);
+          }
+          // Essayer de récupérer le nom depuis user_metadata
+          if (!customerName && user.user_metadata) {
+            const firstName = user.user_metadata.first_name || user.user_metadata.firstName || '';
+            const lastName = user.user_metadata.last_name || user.user_metadata.lastName || '';
+            const fullName = `${firstName} ${lastName}`.trim();
+            if (fullName) {
+              setCustomerName(fullName);
+            } else if (user.email) {
+              setCustomerName(user.email.split('@')[0]);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erreur chargement profil utilisateur:', error);
+        // Au minimum, pré-remplir l'email
+        if (user.email && !customerEmail) {
+          setCustomerEmail(user.email);
+        }
+      }
+    };
+
+    loadUserProfile();
+  }, [user, customerEmail, customerName, customerPhone]);
 
   // Fermer le tooltip si on clique ailleurs
   useEffect(() => {

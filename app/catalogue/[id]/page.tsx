@@ -25,6 +25,8 @@ export default function ProductDetailPage() {
   // État du formulaire
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
+  const [startTime, setStartTime] = useState<string>('');
+  const [endTime, setEndTime] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [rentalDays, setRentalDays] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<ProductAddon[]>([]);
@@ -320,7 +322,7 @@ export default function ProductDetailPage() {
     }
   }, [product]);
 
-  // Vérifier la disponibilité quand les dates changent
+  // Vérifier la disponibilité quand les dates ou heures changent
   useEffect(() => {
     async function checkAvailability() {
       if (!product?.id || !startDate || !endDate) {
@@ -337,6 +339,8 @@ export default function ProductDetailPage() {
             productId: product.id,
             startDate,
             endDate,
+            startTime: startTime || null,
+            endTime: endTime || null,
           }),
         });
 
@@ -352,7 +356,7 @@ export default function ProductDetailPage() {
     }
 
     checkAvailability();
-  }, [product?.id, startDate, endDate]);
+  }, [product?.id, startDate, endDate, startTime, endTime]);
 
   // Calculer les jours de location
   useEffect(() => {
@@ -402,6 +406,8 @@ export default function ProductDetailPage() {
       rentalDays,
       startDate,
       endDate,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
       dailyPrice: product.daily_price_ttc,
       deposit: product.deposit,
       addons: selectedAddons,
@@ -486,7 +492,13 @@ export default function ProductDetailPage() {
   }
 
   const isAvailable = availability?.available ?? null;
-  const canAddToCart = !checkingAvailability && startDate && endDate && (isAvailable === null || isAvailable === true);
+  const isSameDay = startDate === endDate;
+  const needsTime = isSameDay && (!startTime || !endTime);
+  const canAddToCart = !checkingAvailability && startDate && endDate && (isAvailable === null || isAvailable === true) && !needsTime;
+  
+  // Validation : si même jour, les heures sont requises
+  const isSameDay = startDate === endDate;
+  const needsTime = isSameDay && (!startTime || !endTime);
 
 
   return (
@@ -617,40 +629,68 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Sélecteur de dates */}
+              {/* Sélecteur de dates et heures */}
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
                   {language === 'fr' ? 'Période de location' : 'Rental period'}
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1.5">
-                      {language === 'fr' ? 'Début' : 'Start'}
-                    </label>
-                    <input
-                      type="date"
-                      value={startDate || ''}
-                      onChange={(e) => {
-                        setStartDate(e.target.value);
-                        if (e.target.value && endDate && e.target.value > endDate) {
-                          setEndDate(null);
-                        }
-                      }}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
-                    />
+                <div className="space-y-3">
+                  {/* Dates */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1.5">
+                        {language === 'fr' ? 'Date de début' : 'Start date'}
+                      </label>
+                      <input
+                        type="date"
+                        value={startDate || ''}
+                        onChange={(e) => {
+                          setStartDate(e.target.value);
+                          if (e.target.value && endDate && e.target.value > endDate) {
+                            setEndDate(null);
+                          }
+                        }}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1.5">
+                        {language === 'fr' ? 'Date de fin' : 'End date'}
+                      </label>
+                      <input
+                        type="date"
+                        value={endDate || ''}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        min={startDate || new Date().toISOString().split('T')[0]}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1.5">
-                      {language === 'fr' ? 'Fin' : 'End'}
-                    </label>
-                    <input
-                      type="date"
-                      value={endDate || ''}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      min={startDate || new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
-                    />
+                  {/* Heures */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1.5">
+                        {language === 'fr' ? 'Heure de début' : 'Start time'}
+                      </label>
+                      <input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1.5">
+                        {language === 'fr' ? 'Heure de fin' : 'End time'}
+                      </label>
+                      <input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -684,13 +724,24 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
+              {/* Message si heures requises */}
+              {needsTime && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    {language === 'fr' 
+                      ? '⚠️ Pour une location sur la même journée, veuillez spécifier les heures de début et de fin pour éviter les conflits.'
+                      : '⚠️ For same-day rental, please specify start and end times to avoid conflicts.'}
+                  </p>
+                </div>
+              )}
+              
               {/* Bouton Ajouter au panier */}
               <button
                 onClick={handleAddToCart}
-                disabled={!canAddToCart}
+                disabled={!canAddToCart || checkingAvailability}
                 className={`
                   w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2
-                  ${canAddToCart
+                  ${canAddToCart && !checkingAvailability
                     ? 'bg-[#F2431E] text-white hover:bg-[#E63A1A] hover:shadow-xl'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }
@@ -699,6 +750,8 @@ export default function ProductDetailPage() {
                 <span>🛒</span>
                 {checkingAvailability 
                   ? currentTexts.checking
+                  : needsTime
+                  ? (language === 'fr' ? 'Veuillez spécifier les heures' : 'Please specify times')
                   : currentTexts.addToCart
                 }
               </button>
@@ -1288,6 +1341,8 @@ export default function ProductDetailPage() {
                       rentalDays: 1,
                       startDate: null,
                       endDate: null,
+                      startTime: '',
+                      endTime: '',
                       deposit: parseFloat(recProduct.deposit?.toString() || '0'),
                       image: productImage,
                     };

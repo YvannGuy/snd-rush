@@ -38,6 +38,18 @@ export default function DashboardPage() {
     }
   }, [user, loading, router]);
 
+  // Vider le panier si demandé (après paiement principal)
+  useEffect(() => {
+    const clearCartParam = searchParams.get('clear_cart');
+    if (clearCartParam === 'true' && typeof window !== 'undefined') {
+      // Vider le localStorage du panier
+      localStorage.removeItem('sndrush_cart');
+      sessionStorage.setItem('cart_cleared', 'true');
+      // Dispatcher un événement pour mettre à jour le badge du header
+      window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { items: [], total: 0, depositTotal: 0 } }));
+    }
+  }, [searchParams]);
+
   // Confirmer la caution si on vient du succès du paiement
   useEffect(() => {
     const deposit = searchParams.get('deposit');

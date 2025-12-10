@@ -121,7 +121,7 @@ export async function GET(req: NextRequest) {
             "Selon l'ampleur des dégâts, le montant correspondant sera déduit de la caution.",
         },
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?deposit=success&session_id={CHECKOUT_SESSION_ID}&reservation_id=${reservationId || ''}`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?deposit=success&session_id={CHECKOUT_SESSION_ID}&reservation_id=${reservationId || ''}&clear_cart=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/panier?deposit=cancelled`,
       // IMPORTANT: Les métadonnées doivent être au niveau de la session, pas seulement dans payment_intent_data
       metadata: {

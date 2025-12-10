@@ -167,6 +167,9 @@ export async function POST(req: NextRequest) {
             customerName,
             customerPhone: customerPhone || '',
             deliveryOption: deliveryOption || 'paris',
+            // Stocker les heures si disponibles dans les cartItems
+            startTime: cartItems?.[0]?.startTime || null,
+            endTime: cartItems?.[0]?.endTime || null,
           }),
         })
         .select()
