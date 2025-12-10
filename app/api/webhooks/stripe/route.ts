@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
       console.log('✅ Paiement réussi - Session ID:', session.id);
+      console.log('📋 Métadonnées de la session:', JSON.stringify(session.metadata || {}, null, 2));
       
       if (!supabaseAdmin) {
         console.error('❌ Supabase non configuré');
@@ -70,6 +71,86 @@ export async function POST(req: NextRequest) {
       try {
         // Récupérer les métadonnées de la session
         const metadata = session.metadata || {};
+        const paymentType = metadata.type || 'cart'; // 'cart' pour paiement principal, 'deposit' pour caution
+        
+        console.log('🔍 Type de paiement détecté:', paymentType);
+        console.log('🔍 Métadonnées complètes:', JSON.stringify(metadata, null, 2));
+        
+        // Si c'est un paiement de caution, traiter différemment
+        if (paymentType === 'deposit') {
+          const reservationId = metadata.reservationId;
+          const mainSessionId = metadata.mainSessionId;
+          
+          console.log('💰 Webhook caution reçu:', {
+            sessionId: session.id,
+            reservationId,
+            mainSessionId,
+            metadata: JSON.stringify(metadata),
+          });
+          
+          if (reservationId) {
+            // Récupérer le PaymentIntent pour obtenir l'ID de paiement
+            let paymentIntentId = null;
+            if (session.payment_intent) {
+              if (typeof session.payment_intent === 'string') {
+                paymentIntentId = session.payment_intent;
+              } else {
+                paymentIntentId = session.payment_intent.id;
+              }
+            }
+
+            // Récupérer les notes existantes de la réservation
+            let existingNotes = {};
+            try {
+              const { data: existingReservation } = await supabaseClient
+                .from('reservations')
+                .select('notes')
+                .eq('id', reservationId)
+                .single();
+              
+              if (existingReservation?.notes) {
+                existingNotes = JSON.parse(existingReservation.notes);
+              }
+            } catch (e) {
+              console.warn('⚠️ Impossible de récupérer les notes existantes:', e);
+            }
+
+            // Mettre à jour la réservation pour indiquer que la caution a été autorisée
+            const { data: updatedReservation, error: updateError } = await supabaseClient
+              .from('reservations')
+              .update({
+                status: 'CONFIRMED',
+                stripe_deposit_session_id: session.id,
+                stripe_deposit_payment_intent_id: paymentIntentId,
+                notes: JSON.stringify({
+                  ...existingNotes,
+                  depositAuthorized: true,
+                  depositSessionId: session.id,
+                  depositPaymentIntentId: paymentIntentId,
+                  depositAuthorizedAt: new Date().toISOString(),
+                }),
+              })
+              .eq('id', reservationId)
+              .select()
+              .single();
+
+            if (updateError) {
+              console.error('❌ Erreur mise à jour réservation pour caution:', updateError);
+            } else {
+              console.log('✅ Caution autorisée - Réservation mise à jour:', {
+                reservationId,
+                status: updatedReservation?.status,
+                depositSessionId: session.id,
+              });
+            }
+          } else {
+            console.warn('⚠️ Aucun reservationId dans les métadonnées de la session caution');
+          }
+          
+          return NextResponse.json({ received: true });
+        }
+        
+        // Traitement du paiement principal (type: 'cart')
         const userId = metadata.userId;
         const customerEmail = session.customer_email || metadata.customerEmail || '';
         const customerName = metadata.customerName || '';
@@ -230,59 +311,13 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // Créer ou mettre à jour les réservations à partir des order_items ou des cartItems
-        if (userId && order) {
-          let itemsToProcess: any[] = [];
-          
-          // Si on a des order_items créés, les utiliser
-          if (orderItemsToInsert.length > 0) {
-            itemsToProcess = orderItemsToInsert;
-          } 
-          // Sinon, utiliser les cartItems depuis les métadonnées
-          else if (cartItems.length > 0) {
-            itemsToProcess = cartItems.map((item: any) => ({
-              product_id: item.productId?.startsWith('pack-') ? null : item.productId,
-              pack_id: item.productId?.startsWith('pack-') ? item.productId.replace('pack-', '') : null,
-              quantity: item.quantity || 1,
-              start_date: item.startDate,
-              end_date: item.endDate,
-              rental_days: item.rentalDays || 1,
-              daily_price: item.dailyPrice || 0,
-              deposit: item.deposit || 0,
-              addons: item.addons || [],
-            }));
-          }
-
-          if (itemsToProcess.length > 0) {
-            // Créer une réservation pour chaque item
-            const reservationsToCreate = itemsToProcess.map((item: any) => ({
-              user_id: userId,
-              product_id: item.product_id || null,
-              pack_id: item.pack_id || null,
-              quantity: item.quantity || 1,
-              start_date: item.start_date || item.startDate,
-              end_date: item.end_date || item.endDate,
-              status: 'CONFIRMED',
-              total_price: (item.daily_price || item.dailyPrice || 0) * (item.quantity || 1) * (item.rental_days || item.rentalDays || 1) + ((item.addons || []).reduce((sum: number, addon: any) => sum + (addon.price || 0), 0) || 0),
-              deposit_amount: (item.deposit || item.deposit || 0) * (item.quantity || 1),
-              stripe_payment_intent_id: paymentIntentId,
-              address: address || '',
-              notes: `Commande ${order.id.slice(0, 8).toUpperCase()} - Facture créée automatiquement`,
-            }));
-
-            const { data: createdReservations, error: reservationsError } = await supabaseClient
-              .from('reservations')
-              .insert(reservationsToCreate)
-              .select();
-
-            if (reservationsError) {
-              console.error('❌ Erreur création réservations:', reservationsError);
-            } else {
-              console.log(`✅ ${createdReservations?.length || 0} réservations créées`);
-            }
-          }
+        // NOTE: On ne crée plus de nouvelles réservations ici car elles sont déjà créées lors du checkout
+        // La réservation PENDING est créée dans /api/checkout/create-session et mise à jour ci-dessous
+        // Cette section est désactivée pour éviter les doublons
+        console.log('ℹ️ Réservations déjà créées lors du checkout, pas de création supplémentaire nécessaire');
 
           // Mettre à jour la réservation PENDING créée lors du checkout avec les bonnes données
+          // IMPORTANT : On garde le statut PENDING jusqu'à ce que la caution soit autorisée
           if (reservationId) {
             try {
               // Récupérer la réservation PENDING originale
@@ -293,19 +328,41 @@ export async function POST(req: NextRequest) {
                 .single();
 
               if (!pendingError && pendingReservation && pendingReservation.status === 'PENDING') {
-                // Mettre à jour avec les données complètes
+                // Récupérer les notes existantes
+                let existingNotes = {};
+                try {
+                  if (pendingReservation.notes) {
+                    existingNotes = JSON.parse(pendingReservation.notes);
+                  }
+                } catch (e) {
+                  console.error('Erreur parsing notes existantes:', e);
+                }
+
+                // Mettre à jour avec les données complètes (mais garder le statut PENDING)
                 const updatedNotes = {
+                  ...existingNotes,
                   sessionId: session.id,
                   cartItems: cartItems,
                   customerEmail,
                   customerName,
                   deliveryOption: deliveryOption || 'paris',
                   orderId: order.id,
+                  mainPaymentCompleted: true,
+                  mainPaymentCompletedAt: new Date().toISOString(),
                 };
 
                 await supabaseClient
                   .from('reservations')
                   .update({
+                    // Garder le statut PENDING jusqu'à ce que la caution soit autorisée
+                    status: 'PENDING',
+                    stripe_payment_intent_id: paymentIntentId,
+                    total_price: (session.amount_total || 0) / 100,
+                    notes: JSON.stringify(updatedNotes),
+                  })
+                  .eq('id', reservationId);
+
+                console.log(`✅ Réservation PENDING ${reservationId} mise à jour (paiement principal complété, en attente de caution)`);
                     status: 'CONFIRMED',
                     stripe_payment_intent_id: paymentIntentId,
                     total_price: (session.amount_total || 0) / 100,
@@ -313,7 +370,6 @@ export async function POST(req: NextRequest) {
                   })
                   .eq('id', reservationId);
 
-                console.log(`✅ Réservation PENDING ${reservationId} mise à jour en CONFIRMED`);
               }
             } catch (e) {
               console.error('Erreur mise à jour réservation PENDING:', e);

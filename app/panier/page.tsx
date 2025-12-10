@@ -35,7 +35,7 @@ export default function CartPage() {
   const [showDepositInfo, setShowDepositInfo] = useState(false);
   const depositInfoRef = useRef<HTMLDivElement>(null);
   const { cart, removeFromCart, increaseQuantity, decreaseQuantity, addToCart, clearCart } = useCart();
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
 
   // Pré-remplir l'email avec celui de l'utilisateur connecté
   useEffect(() => {
@@ -358,14 +358,22 @@ export default function CartPage() {
   const handleCheckout = async () => {
     if (cart.items.length === 0) return;
 
+    // Attendre que le chargement de l'utilisateur soit terminé
+    if (userLoading) {
+      alert(language === 'fr' 
+        ? 'Chargement en cours, veuillez patienter...' 
+        : 'Loading, please wait...');
+      return;
+    }
+
     // Vérifier que les champs requis sont remplis
     if (!customerEmail || !customerName || !customerPhone) {
       alert(currentTexts.requiredFields);
       return;
     }
 
-    // Si l'utilisateur n'est pas connecté, ouvrir le modal de connexion
-    if (!user) {
+    // Si l'utilisateur n'est pas connecté ou n'a pas d'ID, ouvrir le modal de connexion
+    if (!user || !user.id) {
       setPendingCheckout(true);
       setIsSignModalOpen(true);
       return;
@@ -409,7 +417,7 @@ export default function CartPage() {
           'Content-Type': 'application/json',
         },
           body: JSON.stringify({
-            userId: user?.id, // Envoyer l'ID de l'utilisateur connecté
+            userId: user.id, // Envoyer l'ID de l'utilisateur connecté (garanti d'exister grâce à la vérification ci-dessus)
             cartItems: cart.items, // Utiliser cartItems pour le webhook
             items, // Format Stripe
             total,
@@ -425,6 +433,24 @@ export default function CartPage() {
 
       const data = await response.json();
       
+      if (!response.ok) {
+        // Si la réponse n'est pas OK, afficher le message d'erreur de l'API
+        const errorMessage = data.error || data.message || 'Erreur lors de la création de la session';
+        console.error('❌ Erreur API checkout:', errorMessage, data);
+        
+        // Si c'est une erreur d'authentification, ouvrir le modal de connexion
+        if (response.status === 401) {
+          setPendingCheckout(true);
+          setIsSignModalOpen(true);
+          alert(language === 'fr' 
+            ? 'Veuillez vous connecter pour continuer.' 
+            : 'Please sign in to continue.');
+          return;
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -432,9 +458,10 @@ export default function CartPage() {
       }
     } catch (error: any) {
       console.error('Erreur checkout:', error);
-      alert(language === 'fr' 
+      const errorMessage = error.message || (language === 'fr' 
         ? 'Erreur lors du paiement. Veuillez réessayer.' 
         : 'Payment error. Please try again.');
+      alert(errorMessage);
     } finally {
       setIsProcessing(false);
     }

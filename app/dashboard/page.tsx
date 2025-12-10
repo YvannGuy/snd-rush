@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import SignModal from '@/components/auth/SignModal';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 
@@ -25,6 +25,8 @@ export default function DashboardPage() {
     totalRentals: 0,
   });
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isConfirmingDeposit, setIsConfirmingDeposit] = useState(false);
 
   // Rediriger vers l'accueil si l'utilisateur n'est pas connecté
   useEffect(() => {
@@ -36,6 +38,62 @@ export default function DashboardPage() {
     }
   }, [user, loading, router]);
 
+  // Confirmer la caution si on vient du succès du paiement
+  useEffect(() => {
+    const deposit = searchParams.get('deposit');
+    const sessionId = searchParams.get('session_id');
+    const reservationId = searchParams.get('reservation_id');
+
+    if (deposit === 'success' && sessionId && reservationId && !isConfirmingDeposit) {
+      setIsConfirmingDeposit(true);
+      
+      const confirmDeposit = async () => {
+        try {
+          console.log('💰 Confirmation de la caution via API:', { sessionId, reservationId });
+          
+          const response = await fetch('/api/deposit/confirm', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              sessionId,
+              reservationId,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            console.log('✅ Caution confirmée avec succès');
+            // Recharger les données du dashboard
+            if (user && supabase) {
+              const loadDashboardData = async () => {
+                const { data: reservationsData } = await supabase
+                  .from('reservations')
+                  .select('*')
+                  .eq('user_id', user.id)
+                  .order('start_date', { ascending: true });
+                setReservations(reservationsData || []);
+              };
+              loadDashboardData();
+            }
+            // Nettoyer l'URL
+            router.replace('/dashboard');
+          } else {
+            console.error('❌ Erreur confirmation caution:', data.error);
+          }
+        } catch (error) {
+          console.error('❌ Erreur lors de la confirmation de la caution:', error);
+        } finally {
+          setIsConfirmingDeposit(false);
+        }
+      };
+
+      confirmDeposit();
+    }
+  }, [searchParams, user, router, isConfirmingDeposit]);
+
   useEffect(() => {
     if (!user || !supabase) return;
 
@@ -45,14 +103,19 @@ export default function DashboardPage() {
       
       try {
         // Charger les réservations
+        console.log('🔍 Chargement réservations pour user.id:', user.id);
         const { data: reservationsData, error: reservationsError } = await supabaseClient
           .from('reservations')
           .select('*')
           .eq('user_id', user.id)
           .order('start_date', { ascending: true });
 
-        if (reservationsError) throw reservationsError;
+        if (reservationsError) {
+          console.error('❌ Erreur chargement réservations:', reservationsError);
+          throw reservationsError;
+        }
 
+        console.log('✅ Réservations trouvées:', reservationsData?.length || 0, reservationsData);
         setReservations(reservationsData || []);
 
         // Charger les commandes (factures)

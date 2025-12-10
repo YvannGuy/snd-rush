@@ -119,3 +119,5 @@ export function calculateInstallationPrice(cartItems: CartItem[]): number | null
   return null;
 }
 
+
+
