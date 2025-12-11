@@ -14,9 +14,9 @@ export interface Answers {
   endDate?: string; // format YYYY-MM-DD
   startTime?: string; // format HH:MM
   endTime?: string; // format HH:MM
-  micros?: 'none' | 'one' | 'multiple'; // Nouveau : quantité de micros
-  morePower?: boolean; // Nouveau : puissance renforcée (enceintes/caissons supplémentaires)
-  deliveryInstallation?: boolean; // Nouveau : livraison et installation
+  micros?: 'none' | 'one' | 'multiple' | string[]; // Quantité de micros ou tableau de micros sélectionnés
+  morePower?: boolean | string[]; // Puissance renforcée (enceintes/caissons supplémentaires) ou tableau d'options
+  deliveryOptions?: string[]; // Options de livraison : ['livraison', 'installation', 'retrait'] - au moins un requis
 }
 
 export interface Pack {
@@ -296,7 +296,7 @@ export const STEPS: Step[] = [
     subtitle: 'Sélectionnez les micros dont vous avez besoin. Nous recommandons au moins 1 micro pour les mariages, églises et événements corporate.',
     type: 'multiple', // Changé en 'multiple' pour permettre l'affichage des cartes
     options: [], // Les options seront chargées dynamiquement depuis Supabase
-    required: false,
+    required: true, // Obligatoire
   },
   {
     id: 'morePower',
@@ -304,18 +304,19 @@ export const STEPS: Step[] = [
     subtitle: '👉 Pour éviter toute frustration sur le volume ou les basses, voici ce que nous recommandons :',
     type: 'multiple', // Changé en 'multiple' pour permettre l'affichage des cartes
     options: [], // Les options seront chargées dynamiquement depuis Supabase
-    required: false,
+    required: true, // Obligatoire
   },
   {
-    id: 'deliveryInstallation',
+    id: 'deliveryOptions',
     title: 'Pour plus de confort le jour J, souhaitez-vous la livraison et l\'installation du matériel ?',
-    subtitle: '',
-    type: 'single',
+    subtitle: 'Sélectionnez au moins une option',
+    type: 'multiple',
     options: [
-      { value: 'yes', label: 'Oui, livraison et installation', icon: '🚚' },
-      { value: 'no', label: 'Non, retrait sur place', icon: '🚗' },
+      { value: 'livraison', label: 'Livraison', icon: '🚚' },
+      { value: 'installation', label: 'Installation', icon: '🔧' },
+      { value: 'retrait', label: 'Retrait sur place', icon: '🚗' },
     ],
-    required: false,
+    required: true, // Obligatoire - au moins un choix requis
   },
   {
     id: 'zone',

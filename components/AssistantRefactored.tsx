@@ -1,7 +1,7 @@
 // Assistant SoundRush Paris refactorisé avec nouvelle UI et logique complète
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Answers, Step, STEPS, PRICING_CONFIG, ReservationPayload, Recommendation } from '@/types/assistant';
 import { recommendPack, computePrice, isUrgent, validateStep } from '@/lib/assistant-logic';
 import { recommendPackWithStock } from '@/lib/assistant-recommendation';
@@ -311,6 +311,89 @@ export default function AssistantRefactored({
     }
   }, [currentStep, wiredMics.length, wirelessMics.length, loadingMics, answers.micros, answers.eventType]);
 
+  // Créer des clés stables pour les dépendances des useEffect
+  const wiredMicQuantitiesKey = useMemo(() => {
+    return Object.entries(wiredMicQuantities)
+      .filter(([, qty]) => qty > 0)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([id, qty]) => `${id}:${qty}`)
+      .join(',');
+  }, [wiredMicQuantities]);
+
+  const wirelessMicQuantitiesKey = useMemo(() => {
+    return Object.entries(wirelessMicQuantities)
+      .filter(([, qty]) => qty > 0)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([id, qty]) => `${id}:${qty}`)
+      .join(',');
+  }, [wirelessMicQuantities]);
+
+  const speakerQuantitiesKey = useMemo(() => {
+    return Object.entries(speakerQuantities)
+      .filter(([, qty]) => qty > 0)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([id, qty]) => `${id}:${qty}`)
+      .join(',');
+  }, [speakerQuantities]);
+
+  const subwooferQuantitiesKey = useMemo(() => {
+    return Object.entries(subwooferQuantities)
+      .filter(([, qty]) => qty > 0)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([id, qty]) => `${id}:${qty}`)
+      .join(',');
+  }, [subwooferQuantities]);
+
+  // Synchroniser answers.micros avec les quantités de micros sélectionnés
+  useEffect(() => {
+    const step = STEPS[currentStep];
+    if (step?.id === 'micros') {
+      const allMicIds = [
+        ...Object.keys(wiredMicQuantities).filter(id => wiredMicQuantities[id] > 0),
+        ...Object.keys(wirelessMicQuantities).filter(id => wirelessMicQuantities[id] > 0)
+      ];
+      
+      if (allMicIds.length > 0) {
+        // Si des micros sont sélectionnés, mettre à jour avec le tableau d'IDs
+        setAnswers(prev => {
+          const currentMicros = Array.isArray(prev.micros) ? prev.micros : [];
+          const currentSorted = [...currentMicros].sort().join(',');
+          const newSorted = [...allMicIds].sort().join(',');
+          if (currentSorted !== newSorted) {
+            return { ...prev, micros: allMicIds };
+          }
+          return prev;
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wiredMicQuantitiesKey, wirelessMicQuantitiesKey, currentStep]);
+
+  // Synchroniser answers.morePower avec les quantités d'enceintes/caissons sélectionnés
+  useEffect(() => {
+    const step = STEPS[currentStep];
+    if (step?.id === 'morePower') {
+      const allProductIds = [
+        ...Object.keys(speakerQuantities).filter(id => speakerQuantities[id] > 0),
+        ...Object.keys(subwooferQuantities).filter(id => subwooferQuantities[id] > 0)
+      ];
+      
+      if (allProductIds.length > 0) {
+        // Si des enceintes/caissons sont sélectionnés, mettre à jour avec le tableau d'IDs
+        setAnswers(prev => {
+          const currentMorePower = Array.isArray(prev.morePower) ? prev.morePower : [];
+          const currentSorted = [...currentMorePower].sort().join(',');
+          const newSorted = [...allProductIds].sort().join(',');
+          if (currentSorted !== newSorted) {
+            return { ...prev, morePower: allProductIds };
+          }
+          return prev;
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speakerQuantitiesKey, subwooferQuantitiesKey, currentStep]);
+
   // Charger les enceintes et caissons quand on arrive à l'étape morePower
   useEffect(() => {
     const step = STEPS[currentStep];
@@ -461,12 +544,79 @@ export default function AssistantRefactored({
   };
 
   const handleNext = () => {
+    // Vérifier d'abord si on peut procéder
+    if (!canProceed) {
+      return;
+    }
+    
     const step = STEPS[currentStep];
     const value = answers[step.id as keyof Answers];
     
-    // Pour les étapes optionnelles (extras, micros, morePower, deliveryInstallation, zone), on peut passer même si vide
-    if (step.id === 'extras' || step.id === 'micros' || step.id === 'morePower' || step.id === 'deliveryInstallation' || step.id === 'zone') {
+    // Pour les étapes optionnelles (extras, zone), on peut passer même si vide
+    if (step.id === 'extras' || step.id === 'zone') {
       // Toujours valide, même si vide
+      setErrors({ ...errors, [step.id]: '' });
+    } else if (step.id === 'micros') {
+      // Étape obligatoire : doit avoir soit 'none', soit des micros sélectionnés
+      // Vérifier d'abord les quantités directement (au cas où answers.micros n'est pas encore synchronisé)
+      const hasWiredMics = Object.values(wiredMicQuantities).some(qty => qty > 0);
+      const hasWirelessMics = Object.values(wirelessMicQuantities).some(qty => qty > 0);
+      const hasSelectedMics = hasWiredMics || hasWirelessMics;
+      
+      // Si des micros sont sélectionnés via les quantités, c'est valide
+      if (hasSelectedMics) {
+        setErrors({ ...errors, [step.id]: '' });
+      } else if (Array.isArray(value)) {
+        // Si c'est un tableau mais vide, erreur
+        if (value.length === 0) {
+          setErrors({ ...errors, [step.id]: language === 'fr' ? 'Veuillez sélectionner au moins une option ou choisir "Non"' : 'Please select at least one option or choose "No"' });
+          return;
+        }
+        setErrors({ ...errors, [step.id]: '' });
+      } else if (value === 'none') {
+        // Si 'none' est sélectionné, c'est valide
+        setErrors({ ...errors, [step.id]: '' });
+      } else {
+        // Sinon, aucun choix n'a été fait
+        setErrors({ ...errors, [step.id]: language === 'fr' ? 'Veuillez sélectionner au moins une option ou choisir "Non"' : 'Please select at least one option or choose "No"' });
+        return;
+      }
+    } else if (step.id === 'morePower') {
+      // Étape obligatoire : doit avoir soit 'no', soit des enceintes/caissons sélectionnés
+      // Vérifier d'abord les quantités directement (au cas où answers.morePower n'est pas encore synchronisé)
+      const hasSpeakers = Object.values(speakerQuantities).some(qty => qty > 0);
+      const hasSubwoofers = Object.values(subwooferQuantities).some(qty => qty > 0);
+      const hasSelectedProducts = hasSpeakers || hasSubwoofers;
+      
+      // Si des enceintes/caissons sont sélectionnés via les quantités, c'est valide
+      if (hasSelectedProducts) {
+        setErrors({ ...errors, [step.id]: '' });
+      } else if (Array.isArray(value)) {
+        // Si c'est un tableau mais vide, erreur
+        if (value.length === 0) {
+          setErrors({ ...errors, [step.id]: language === 'fr' ? 'Veuillez sélectionner au moins une option ou choisir "Non"' : 'Please select at least one option or choose "No"' });
+          return;
+        }
+        setErrors({ ...errors, [step.id]: '' });
+      } else if (value === 'no') {
+        // Si 'no' est sélectionné, c'est valide
+        setErrors({ ...errors, [step.id]: '' });
+      } else {
+        // Sinon, aucun choix n'a été fait
+        setErrors({ ...errors, [step.id]: language === 'fr' ? 'Veuillez sélectionner au moins une option ou choisir "Non"' : 'Please select at least one option or choose "No"' });
+        return;
+      }
+    } else if (step.id === 'deliveryOptions') {
+      // Étape obligatoire : au moins un choix requis (livraison, installation, ou retrait)
+      if (Array.isArray(value)) {
+        if (value.length === 0) {
+          setErrors({ ...errors, [step.id]: language === 'fr' ? 'Veuillez sélectionner au moins une option (livraison, installation ou retrait)' : 'Please select at least one option (delivery, installation or pickup)' });
+          return;
+        }
+      } else {
+        setErrors({ ...errors, [step.id]: language === 'fr' ? 'Veuillez sélectionner au moins une option' : 'Please select at least one option' });
+        return;
+      }
       setErrors({ ...errors, [step.id]: '' });
     } else {
       // Validation stricte pour les autres étapes
@@ -495,12 +645,16 @@ export default function AssistantRefactored({
     // Gérer les étapes conditionnelles
     let nextStep = currentStep + 1;
     
-    // Si on vient de répondre à deliveryInstallation = 'no', sauter l'étape zone
-    if (step.id === 'deliveryInstallation' && (value === 'no' || value === false)) {
-      // Chercher l'index de l'étape zone et la sauter
-      const zoneStepIndex = STEPS.findIndex(s => s.id === 'zone');
-      if (zoneStepIndex > currentStep) {
-        nextStep = zoneStepIndex + 1;
+    // Si retrait est sélectionné et que ni livraison ni installation ne sont sélectionnées, sauter l'étape zone
+    // Si retrait est sélectionné et que ni livraison ni installation ne sont sélectionnées, sauter la zone
+    if (step.id === 'deliveryOptions') {
+      const deliveryOptions = Array.isArray(value) ? value : [];
+      if (deliveryOptions.includes('retrait') && !deliveryOptions.includes('livraison') && !deliveryOptions.includes('installation')) {
+        // Chercher l'index de l'étape zone et la sauter
+        const zoneStepIndex = STEPS.findIndex(s => s.id === 'zone');
+        if (zoneStepIndex > currentStep) {
+          nextStep = zoneStepIndex + 1;
+        }
       }
     }
     
@@ -517,26 +671,110 @@ export default function AssistantRefactored({
     }
   };
 
-  const canProceed = () => {
+  // Calculer canProceed directement (pas de useMemo pour éviter les problèmes de cache)
+  const canProceed = (() => {
     const step = STEPS[currentStep];
     const value = answers[step.id as keyof Answers];
     
-    // Pour les étapes optionnelles (extras, micros, morePower, startTime, endTime), on peut avoir un tableau vide ou valeur vide
-    if (step.id === 'extras' || step.id === 'micros' || step.id === 'morePower' || step.id === 'startTime' || step.id === 'endTime') {
+    // Étapes obligatoires : micros, morePower, deliveryOptions
+    if (step.id === 'micros') {
+      // Vérifier d'abord si 'none' est explicitement sélectionné (chaîne exacte)
+      if (value === 'none') {
+        return true;
+      }
+      
+      // Vérifier les quantités directement (au cas où answers.micros n'est pas encore synchronisé)
+      // Calculer le total de toutes les quantités
+      let totalWired = 0;
+      let totalWireless = 0;
+      for (const key in wiredMicQuantities) {
+        const qty = wiredMicQuantities[key];
+        if (qty && qty > 0) {
+          totalWired += qty;
+        }
+      }
+      for (const key in wirelessMicQuantities) {
+        const qty = wirelessMicQuantities[key];
+        if (qty && qty > 0) {
+          totalWireless += qty;
+        }
+      }
+      const hasSelectedMics = totalWired > 0 || totalWireless > 0;
+      
+      // Si des micros sont sélectionnés via les quantités, c'est valide
+      if (hasSelectedMics) {
+        return true;
+      }
+      
+      // Vérifier si answers.micros contient un tableau non vide
+      if (Array.isArray(value) && value.length > 0) {
+        return true;
+      }
+      
+      // BLOQUER : aucune des conditions ci-dessus n'est vraie
+      // value est undefined, null, '', ou un tableau vide
+      return false;
+    }
+    
+    if (step.id === 'morePower') {
+      // Vérifier d'abord si 'no' est explicitement sélectionné (chaîne exacte)
+      if (value === 'no') {
+        return true;
+      }
+      
+      // Vérifier les quantités directement (au cas où answers.morePower n'est pas encore synchronisé)
+      // Calculer le total de toutes les quantités
+      let totalSpeakers = 0;
+      let totalSubwoofers = 0;
+      for (const key in speakerQuantities) {
+        const qty = speakerQuantities[key];
+        if (qty && qty > 0) {
+          totalSpeakers += qty;
+        }
+      }
+      for (const key in subwooferQuantities) {
+        const qty = subwooferQuantities[key];
+        if (qty && qty > 0) {
+          totalSubwoofers += qty;
+        }
+      }
+      const hasSelectedProducts = totalSpeakers > 0 || totalSubwoofers > 0;
+      
+      // Si des enceintes/caissons sont sélectionnés via les quantités, c'est valide
+      if (hasSelectedProducts) {
+        return true;
+      }
+      
+      // Vérifier si answers.morePower contient un tableau non vide
+      if (Array.isArray(value) && value.length > 0) {
+        return true;
+      }
+      
+      // BLOQUER : aucune des conditions ci-dessus n'est vraie
+      // value est undefined, null, '', ou un tableau vide
+      return false;
+    }
+    
+    // deliveryOptions : au moins un choix requis (livraison, installation, ou retrait)
+    if (step.id === 'deliveryOptions') {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return false;
+    }
+    
+    // Pour les étapes optionnelles (extras, startTime, endTime)
+    if (step.id === 'extras' || step.id === 'startTime' || step.id === 'endTime') {
       return true; // Toujours valide, même si vide
     }
     
-    // Zone est obligatoire si livraison/installation est sélectionné
+    // Zone est obligatoire si livraison ou installation est sélectionné
     if (step.id === 'zone') {
-      if (answers.deliveryInstallation === 'yes') {
-        return !!value; // Obligatoire si livraison/installation
+      const deliveryOptions = answers.deliveryOptions || [];
+      if (Array.isArray(deliveryOptions) && (deliveryOptions.includes('livraison') || deliveryOptions.includes('installation'))) {
+        return !!value; // Obligatoire si livraison ou installation
       }
       return true; // Optionnel sinon
-    }
-    
-    // deliveryInstallation est optionnel
-    if (step.id === 'deliveryInstallation') {
-      return true;
     }
     
     // Pour les autres étapes, validation stricte
@@ -550,7 +788,7 @@ export default function AssistantRefactored({
     }
     
     return validateStep(step.id, value);
-  };
+  })();
 
   const handlePrevious = () => {
     if (currentStep > 0) {
@@ -766,23 +1004,43 @@ export default function AssistantRefactored({
       addToCart(item);
     });
 
-    // Ajouter la livraison comme item séparé si livraison/installation est demandée
-    if (answers.deliveryInstallation === true || answers.deliveryInstallation === 'yes') {
-      // Utiliser la zone si disponible, sinon paris par défaut
-      const deliveryZone = answers.zone || 'paris';
-      const deliveryPrices: Record<string, number> = {
-        paris: 80,
-        petite: 120,
-        grande: 160,
-      };
-      
+    // Ajouter la livraison et/ou l'installation selon les choix
+    const deliveryOptions = Array.isArray(answers.deliveryOptions) ? answers.deliveryOptions : [];
+    const deliveryZone = answers.zone || 'paris';
+    
+    // Prix de livraison selon la zone
+    const deliveryPrices: Record<string, number> = {
+      paris: 80,
+      petite: 120,
+      grande: 160,
+    };
+    
+    // Prix d'installation selon le pack
+    const packId = packIdMapping[recommendation.pack.id]?.id || 1;
+    let installationPrice = 0;
+    switch (packId) {
+      case 1: // Pack S Petit
+        installationPrice = 60;
+        break;
+      case 2: // Pack M Confort
+        installationPrice = 80;
+        break;
+      case 3: // Pack L Grand
+        installationPrice = 120;
+        break;
+      default:
+        installationPrice = 0; // Sur devis pour pack XL
+    }
+    
+    // Ajouter la livraison si sélectionnée
+    if (deliveryOptions.includes('livraison') && deliveryZone !== 'retrait') {
       const deliveryPrice = deliveryPrices[deliveryZone] || 0;
       if (deliveryPrice > 0) {
         const deliveryItem: CartItem = {
           productId: `delivery-${deliveryZone}`,
           productName: language === 'fr' 
-            ? `Livraison et installation ${deliveryZone === 'paris' ? 'Paris' : deliveryZone === 'petite' ? 'Petite Couronne' : 'Grande Couronne'}`
-            : `Delivery and installation ${deliveryZone === 'paris' ? 'Paris' : deliveryZone === 'petite' ? 'Inner suburbs' : 'Outer suburbs'}`,
+            ? `Livraison ${deliveryZone === 'paris' ? 'Paris' : deliveryZone === 'petite' ? 'Petite Couronne' : 'Grande Couronne'}`
+            : `Delivery ${deliveryZone === 'paris' ? 'Paris' : deliveryZone === 'petite' ? 'Inner suburbs' : 'Outer suburbs'}`,
           productSlug: `delivery-${deliveryZone}`,
           quantity: 1,
           rentalDays: 1,
@@ -795,7 +1053,28 @@ export default function AssistantRefactored({
         };
         addToCart(deliveryItem);
       }
-    } else if (answers.zone && answers.zone !== 'retrait') {
+    }
+    
+    // Ajouter l'installation si sélectionnée
+    if (deliveryOptions.includes('installation') && installationPrice > 0) {
+      const installationItem: CartItem = {
+        productId: `installation-${packIdMapping[recommendation.pack.id]?.id || 1}`,
+        productName: language === 'fr' ? 'Installation' : 'Installation',
+        productSlug: `installation-${packIdMapping[recommendation.pack.id]?.id || 1}`,
+        quantity: 1,
+        rentalDays: 1,
+        startDate: startDate,
+        endDate: endDate,
+        dailyPrice: installationPrice,
+        deposit: 0,
+        addons: [],
+        images: ['/installation.jpg'],
+      };
+      addToCart(installationItem);
+    }
+    
+    // Ancien système de livraison (pour compatibilité)
+    if (!deliveryOptions.includes('livraison') && !deliveryOptions.includes('installation') && answers.zone && answers.zone !== 'retrait') {
       // Ancien système de livraison (pour compatibilité)
       const deliveryPrices: Record<string, number> = {
         paris: 80,
@@ -967,10 +1246,7 @@ export default function AssistantRefactored({
                                     ...prev,
                                     [productId]: quantity
                                   }));
-                                  // Si on sélectionne un micro, enlever 'none'
-                                  if (quantity > 0 && answers.micros === 'none') {
-                                    handleAnswerChange(step.id, '');
-                                  }
+                                  // La synchronisation se fera automatiquement via le useEffect
                                 }
                               }}
                               maxQuantity={maxForThisMic}
@@ -1016,10 +1292,7 @@ export default function AssistantRefactored({
                                     ...prev,
                                     [productId]: quantity
                                   }));
-                                  // Si on sélectionne un micro, enlever 'none'
-                                  if (quantity > 0 && answers.micros === 'none') {
-                                    handleAnswerChange(step.id, '');
-                                  }
+                                  // La synchronisation se fera automatiquement via le useEffect
                                 }
                               }}
                               maxQuantity={maxForThisMic}
@@ -1040,6 +1313,7 @@ export default function AssistantRefactored({
                   )}
                 </div>
               )}
+              {error && <ErrorText message={error} />}
             </>
           )}
 
@@ -1113,10 +1387,7 @@ export default function AssistantRefactored({
                                   ...prev,
                                   [productId]: quantity
                                 }));
-                                // Si on sélectionne un caisson, enlever 'no'
-                                if (quantity > 0 && answers.morePower === 'no') {
-                                  handleAnswerChange('morePower', 'yes');
-                                }
+                                  // La synchronisation se fera automatiquement via le useEffect
                               }}
                               maxQuantity={Math.min(subwoofer.quantity, 2)}
                               suggested={isSuggested}
@@ -1160,10 +1431,7 @@ export default function AssistantRefactored({
                                   ...prev,
                                   [productId]: quantity
                                 }));
-                                // Si on sélectionne une enceinte, enlever 'no'
-                                if (quantity > 0 && answers.morePower === 'no') {
-                                  handleAnswerChange('morePower', 'yes');
-                                }
+                                  // La synchronisation se fera automatiquement via le useEffect
                               }}
                               maxQuantity={Math.min(speaker.quantity, 2)}
                               suggested={isSuggested}
@@ -1185,16 +1453,20 @@ export default function AssistantRefactored({
                   )}
                 </div>
               )}
+              {error && <ErrorText message={error} />}
             </>
           )}
 
-          {step.type === 'single' && step.options && step.id !== 'micros' && step.id !== 'morePower' && (
+          {step.type === 'single' && step.options && step.id !== 'micros' && step.id !== 'morePower' && step.id !== 'deliveryOptions' && (
             <div className="space-y-3">
               {step.options
                 .filter((option) => {
-                  // Si on est à l'étape zone et que livraison/installation est sélectionné, cacher "retrait sur place"
-                  if (step.id === 'zone' && answers.deliveryInstallation === 'yes') {
-                    return option.value !== 'retrait';
+                  // Si on est à l'étape zone et que livraison ou installation est sélectionné, cacher "retrait sur place"
+                  if (step.id === 'zone') {
+                    const deliveryOptions = answers.deliveryOptions || [];
+                    if (Array.isArray(deliveryOptions) && (deliveryOptions.includes('livraison') || deliveryOptions.includes('installation'))) {
+                      return option.value !== 'retrait';
+                    }
                   }
                   return true;
                 })
@@ -1212,7 +1484,38 @@ export default function AssistantRefactored({
             </div>
           )}
 
-          {step.type === 'multiple' && step.options && (
+          {/* Étape deliveryOptions avec choix multiples */}
+          {step.id === 'deliveryOptions' && step.type === 'multiple' && step.options && (
+            <div className="space-y-3">
+              {step.options.map((option) => {
+                const deliveryOptions = Array.isArray(value) ? value : [];
+                const isSelected = deliveryOptions.includes(option.value);
+                return (
+                  <Chip
+                    key={option.value}
+                    value={option.value}
+                    label={option.label}
+                    icon={option.icon}
+                    selected={isSelected}
+                    onClick={(val) => {
+                      const currentOptions = Array.isArray(value) ? [...value] : [];
+                      if (currentOptions.includes(val)) {
+                        // Désélectionner
+                        const newOptions = currentOptions.filter(v => v !== val);
+                        handleAnswerChange(step.id, newOptions.length > 0 ? newOptions : undefined);
+                      } else {
+                        // Sélectionner
+                        handleAnswerChange(step.id, [...currentOptions, val]);
+                      }
+                    }}
+                  />
+                );
+              })}
+              {error && <ErrorText message={error} />}
+            </div>
+          )}
+
+          {step.type === 'multiple' && step.options && step.id !== 'deliveryOptions' && (
             <div className="space-y-3">
               {/* Options par défaut (micros, technicien) */}
               {step.options.map((option) => (
@@ -1322,7 +1625,8 @@ export default function AssistantRefactored({
   // Calculer le prix d'installation quand les données changent
   useEffect(() => {
     const calculateInstallation = async () => {
-      if (answers.deliveryInstallation !== 'yes' && answers.deliveryInstallation !== true) {
+      const deliveryOptions = Array.isArray(answers.deliveryOptions) ? answers.deliveryOptions : [];
+      if (!deliveryOptions.includes('installation')) {
         setInstallationPrice(0);
         return;
       }
@@ -1472,7 +1776,7 @@ export default function AssistantRefactored({
     if (showSummary) {
       calculateInstallation();
     }
-  }, [showSummary, answers.deliveryInstallation, answers.startDate, answers.endDate, answers.extras, wiredMicQuantities, wirelessMicQuantities, speakerQuantities, subwooferQuantities, wiredMics, wirelessMics, speakers, subwoofers, accessories]);
+  }, [showSummary, answers.deliveryOptions, answers.startDate, answers.endDate, answers.extras, wiredMicQuantities, wirelessMicQuantities, speakerQuantities, subwooferQuantities, wiredMics, wirelessMics, speakers, subwoofers, accessories]);
 
   const renderSummary = () => {
     // Utiliser recommendPack standard (la vérification de stock se fait côté serveur lors de la réservation)
@@ -1881,11 +2185,12 @@ export default function AssistantRefactored({
                 buttonRef.current = node;
               }}
               onClick={handleNext}
-              disabled={!canProceed()}
+              disabled={!canProceed}
+              style={{ pointerEvents: canProceed ? 'auto' : 'none' }}
               className={`flex-1 py-3 sm:py-4 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] text-sm sm:text-base ${
-                canProceed()
+                canProceed
                   ? 'bg-gradient-to-r from-[#F2431E] to-[#e27431] text-white hover:from-[#E63A1A] hover:to-[#F2431E]'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
               }`}
             >
               {currentStep === STEPS.length - 1 ? '✨ Voir la recommandation' : 'Suivant →'}

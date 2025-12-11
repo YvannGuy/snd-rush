@@ -617,16 +617,18 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             </p>
 
             {/* Prix */}
-            <div className="mb-6">
-              {hasPrice ? (
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-black">{basePrice}€</span>
-                  <span className="text-xl text-gray-500">{currentTexts.perDay}</span>
-                </div>
-              ) : (
-                <p className="text-2xl font-semibold text-gray-700">{pack.priceParis}</p>
-              )}
-            </div>
+            {pack.id !== 4 && (
+              <div className="mb-6">
+                {hasPrice ? (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-black">{basePrice}€</span>
+                    <span className="text-xl text-gray-500">{currentTexts.perDay}</span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-semibold text-gray-700">{pack.priceParis}</p>
+                )}
+              </div>
+            )}
 
             {/* Sélecteur de dates */}
             <div className="mb-6">
@@ -830,18 +832,19 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-4">
-              <div className="text-4xl">👥</div>
-              <div>
-                <h3 className="font-bold text-black mb-1">{capacity}</h3>
-                <p className="text-gray-600 text-sm">
-                  {pack.id === 1 && (language === 'fr' ? 'Idéal pour conférences, mariages, DJ sets' : 'Ideal for conferences, weddings, DJ sets')}
-                  {pack.id === 2 && (language === 'fr' ? 'Parfait pour conférences, fêtes, DJ sets' : 'Perfect for conferences, parties, DJ sets')}
-                  {pack.id === 3 && (language === 'fr' ? 'Idéal pour concerts, DJ sets, grandes conférences' : 'Ideal for concerts, DJ sets, large conferences')}
-                  {pack.id === 4 && (language === 'fr' ? 'Parfait pour très grands événements, festivals, concerts' : 'Perfect for very large events, festivals, concerts')}
-                </p>
+            {pack.id !== 4 && (
+              <div className="flex items-start gap-4">
+                <div className="text-4xl">👥</div>
+                <div>
+                  <h3 className="font-bold text-black mb-1">{capacity}</h3>
+                  <p className="text-gray-600 text-sm">
+                    {pack.id === 1 && (language === 'fr' ? 'Idéal pour conférences, mariages, DJ sets' : 'Ideal for conferences, weddings, DJ sets')}
+                    {pack.id === 2 && (language === 'fr' ? 'Parfait pour conférences, fêtes, DJ sets' : 'Perfect for conferences, parties, DJ sets')}
+                    {pack.id === 3 && (language === 'fr' ? 'Idéal pour concerts, DJ sets, grandes conférences' : 'Ideal for concerts, DJ sets, large conferences')}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
