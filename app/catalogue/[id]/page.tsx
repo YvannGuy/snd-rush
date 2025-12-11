@@ -325,7 +325,7 @@ export default function ProductDetailPage() {
   // Vérifier la disponibilité quand les dates ou heures changent
   useEffect(() => {
     async function checkAvailability() {
-      if (!product?.id || !startDate || !endDate) {
+      if (!product?.id || !startDate || !endDate || !startTime || !endTime) {
         setAvailability(null);
         return;
       }
@@ -391,10 +391,17 @@ export default function ProductDetailPage() {
       return;
     }
 
+    if (!startTime || !endTime) {
+      alert(language === 'fr' 
+        ? 'Veuillez sélectionner les heures de début et de fin pour éviter les doublons de réservation.' 
+        : 'Please select start and end times to prevent duplicate reservations.');
+      return;
+    }
+
     if (availability !== null && !availability.available) {
       alert(language === 'fr' 
-        ? 'Ce produit n\'est pas disponible sur ces dates. Veuillez choisir d\'autres dates.' 
-        : 'This product is not available for these dates. Please choose other dates.');
+        ? 'Ce produit n\'est pas disponible sur ces dates et heures. Veuillez choisir d\'autres dates ou heures.' 
+        : 'This product is not available for these dates and times. Please choose other dates or times.');
       return;
     }
 
@@ -493,12 +500,9 @@ export default function ProductDetailPage() {
 
   const isAvailable = availability?.available ?? null;
   const isSameDay = startDate === endDate;
-  const needsTime = isSameDay && (!startTime || !endTime);
-  const canAddToCart = !checkingAvailability && startDate && endDate && (isAvailable === null || isAvailable === true) && !needsTime;
-  
-  // Validation : si même jour, les heures sont requises
-  const isSameDay = startDate === endDate;
-  const needsTime = isSameDay && (!startTime || !endTime);
+  // Les heures sont requises pour éviter les doublons, surtout si même jour
+  const needsTime = (!startTime || !endTime);
+  const canAddToCart = !checkingAvailability && startDate && endDate && startTime && endTime && (isAvailable === null || isAvailable === true);
 
 
   return (
@@ -667,27 +671,29 @@ export default function ProductDetailPage() {
                       />
                     </div>
                   </div>
-                  {/* Heures */}
+                  {/* Heures - Requises pour éviter les doublons */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs text-gray-600 mb-1.5">
-                        {language === 'fr' ? 'Heure de début' : 'Start time'}
+                        {language === 'fr' ? 'Heure de début *' : 'Start time *'}
                       </label>
                       <input
                         type="time"
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
+                        required
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
                       />
                     </div>
                     <div>
                       <label className="block text-xs text-gray-600 mb-1.5">
-                        {language === 'fr' ? 'Heure de fin' : 'End time'}
+                        {language === 'fr' ? 'Heure de fin *' : 'End time *'}
                       </label>
                       <input
                         type="time"
                         value={endTime}
                         onChange={(e) => setEndTime(e.target.value)}
+                        required
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
                       />
                     </div>
@@ -696,7 +702,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Disponibilité */}
-              {startDate && endDate && (
+              {startDate && endDate && startTime && endTime && (
                 <div className="mb-6">
                   {checkingAvailability ? (
                     <div className="text-sm text-gray-600 py-2">{currentTexts.checking}</div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import SignModal from '@/components/auth/SignModal';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import Header from '@/components/Header';
@@ -15,7 +16,9 @@ export default function MesInformationsPage() {
   const { user, loading } = useUser();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const { isCollapsed: isSidebarCollapsed, toggleSidebar: handleToggleSidebar } = useSidebarCollapse();
   const [formData, setFormData] = useState({
     phone: '',
     address: '',
@@ -25,7 +28,6 @@ export default function MesInformationsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [confirmDeleteChecked, setConfirmDeleteChecked] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Rediriger vers l'accueil si l'utilisateur n'est pas connecté
   useEffect(() => {
@@ -228,13 +230,15 @@ export default function MesInformationsPage() {
       <div className="flex flex-1 pt-[112px] lg:flex-row">
         {/* Sidebar */}
         <DashboardSidebar 
-        language={language} 
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
+          language={language}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={handleToggleSidebar}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
       />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto w-full lg:w-auto">
+        <main className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
           <Link href="/dashboard" className="flex items-center gap-2">

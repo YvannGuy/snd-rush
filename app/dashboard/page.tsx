@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
+import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import SignModal from '@/components/auth/SignModal';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import Header from '@/components/Header';
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isCollapsed: isSidebarCollapsed, toggleSidebar: handleToggleSidebar } = useSidebarCollapse();
   const [reservations, setReservations] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [stats, setStats] = useState({
@@ -388,10 +390,12 @@ export default function DashboardPage() {
           language={language} 
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={handleToggleSidebar}
         />
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto w-full lg:w-auto">
+        <main className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           {/* Header Mobile-First */}
           <div className="flex items-center justify-between mb-4 sm:mb-6 lg:mb-8">

@@ -127,61 +127,101 @@ async function checkAvailability(
     );
   }
 
+  // Fonction helper pour convertir une heure (HH:MM) en minutes
+  function timeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + (minutes || 0);
+  }
+
+  // Fonction pour vérifier si deux périodes avec heures se chevauchent
+  function timeRangesOverlap(
+    reqStartDate: string, reqEndDate: string, reqStartTime: string | null, reqEndTime: string | null,
+    resStartDate: string, resEndDate: string, resStartTime: string | null, resEndTime: string | null
+  ): boolean {
+    // Si les dates ne se chevauchent pas du tout, pas de chevauchement
+    if (reqEndDate < resStartDate || reqStartDate > resEndDate) {
+      return false;
+    }
+
+    // Si les dates se chevauchent mais qu'aucune heure n'est fournie, considérer comme chevauchement
+    if (!reqStartTime || !reqEndTime || !resStartTime || !resEndTime) {
+      return true; // Chevauchement par défaut si heures manquantes
+    }
+
+    // Cas 1: Même jour de début et de fin
+    if (reqStartDate === reqEndDate && resStartDate === resEndDate && reqStartDate === resStartDate) {
+      const reqStart = timeToMinutes(reqStartTime);
+      const reqEnd = timeToMinutes(reqEndTime);
+      const resStart = timeToMinutes(resStartTime);
+      const resEnd = timeToMinutes(resEndTime);
+      // Chevauchement si les périodes horaires se chevauchent
+      return !(reqEnd <= resStart || reqStart >= resEnd);
+    }
+
+    // Cas 2: Dates qui se chevauchent - vérifier les heures du premier jour commun
+    // Si la demande commence le même jour qu'une réservation existante
+    if (reqStartDate === resStartDate) {
+      const reqStart = timeToMinutes(reqStartTime);
+      const reqEnd = timeToMinutes(reqEndTime);
+      const resStart = timeToMinutes(resStartTime);
+      const resEnd = timeToMinutes(resEndTime);
+      
+      // Si les heures du premier jour se chevauchent, c'est un chevauchement
+      if (!(reqEnd <= resStart || reqStart >= resEnd)) {
+        return true;
+      }
+      
+      // Si la demande commence après la fin de la réservation ce jour-là et que c'est le dernier jour de la réservation
+      if (reqStart >= resEnd && resEndDate === resStartDate) {
+        return false; // Pas de chevauchement
+      }
+    }
+
+    // Cas 3: Si la demande se termine le même jour qu'une réservation commence
+    if (reqEndDate === resStartDate && reqEndDate === resStartDate) {
+      const reqEnd = timeToMinutes(reqEndTime);
+      const resStart = timeToMinutes(resStartTime);
+      // Si la demande se termine avant que la réservation ne commence, pas de chevauchement
+      if (reqEnd <= resStart) {
+        return false;
+      }
+    }
+
+    // Si les dates se chevauchent mais qu'on n'a pas pu déterminer avec les heures,
+    // considérer comme chevauchement par sécurité
+    return true;
+  }
+
   // 3. Calculer la quantité déjà réservée
   // Si les heures sont fournies, vérifier les chevauchements temporels précis
   let bookedQuantity = 0;
   
   if (reservations) {
     for (const res of reservations) {
-      // Si même jour et heures fournies, vérifier le chevauchement horaire
-      if (startTime && endTime && res.start_date === startDate && res.end_date === endDate) {
+      // Récupérer les heures de la réservation depuis les notes
+      let resStartTime = null;
+      let resEndTime = null;
+      
+      if (res.notes) {
         try {
-          // Récupérer les heures de la réservation depuis les notes ou metadata
-          let resStartTime = null;
-          let resEndTime = null;
-          
-          if (res.notes) {
-            try {
-              const notesData = JSON.parse(res.notes);
-              resStartTime = notesData.startTime || null;
-              resEndTime = notesData.endTime || null;
-            } catch (e) {
-              // Ignorer les erreurs de parsing
-            }
-          }
-          
-          // Si les heures sont définies pour cette réservation, vérifier le chevauchement
-          if (resStartTime && resEndTime) {
-            // Convertir les heures en minutes pour faciliter la comparaison
-            const requestedStart = timeToMinutes(startTime);
-            const requestedEnd = timeToMinutes(endTime);
-            const reservedStart = timeToMinutes(resStartTime);
-            const reservedEnd = timeToMinutes(resEndTime);
-            
-            // Vérifier si les périodes se chevauchent
-            if (!(requestedEnd <= reservedStart || requestedStart >= reservedEnd)) {
-              // Il y a chevauchement, compter cette réservation
-              bookedQuantity += res.quantity;
-            }
-          } else {
-            // Si pas d'heures pour cette réservation, considérer qu'elle occupe toute la journée
-            bookedQuantity += res.quantity;
-          }
+          const notesData = JSON.parse(res.notes);
+          resStartTime = notesData.startTime || null;
+          resEndTime = notesData.endTime || null;
         } catch (e) {
-          // En cas d'erreur, compter la réservation par sécurité
-          bookedQuantity += res.quantity;
+          // Ignorer les erreurs de parsing
         }
-      } else {
-        // Si pas le même jour ou pas d'heures, compter normalement
+      }
+
+      // Vérifier le chevauchement avec prise en compte des heures
+      const hasOverlap = timeRangesOverlap(
+        startDate, endDate, startTime, endTime,
+        res.start_date, res.end_date, resStartTime, resEndTime
+      );
+
+      if (hasOverlap) {
         bookedQuantity += res.quantity;
       }
     }
-  }
-  
-  // Fonction helper pour convertir une heure (HH:MM) en minutes
-  function timeToMinutes(time: string): number {
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + (minutes || 0);
   }
 
   // 4. Calculer la disponibilité

@@ -33,6 +33,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
   // État pour le calendrier et la réservation
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
+  const [startTime, setStartTime] = useState<string>('');
+  const [endTime, setEndTime] = useState<string>('');
   const [quantity] = useState(1);
   const [rentalDays, setRentalDays] = useState(1);
   const [selectedAddons] = useState<ProductAddon[]>([]);
@@ -223,10 +225,10 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
     }
   }, [pack?.id]); // Utiliser pack.id au lieu de pack pour éviter les re-renders infinis
 
-  // Vérifier la disponibilité quand les dates changent
+  // Vérifier la disponibilité quand les dates ou heures changent
   useEffect(() => {
     async function checkAvailability() {
-      if (!pack?.id || !startDate || !endDate) {
+      if (!pack?.id || !startDate || !endDate || !startTime || !endTime) {
         setAvailability(null);
         return;
       }
@@ -240,6 +242,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             packId: pack.id.toString(),
             startDate,
             endDate,
+            startTime: startTime || null,
+            endTime: endTime || null,
           }),
         });
 
@@ -255,7 +259,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
     }
 
     checkAvailability();
-  }, [pack?.id, startDate, endDate]);
+  }, [pack?.id, startDate, endDate, startTime, endTime]);
 
   // Calculer les jours de location
   useEffect(() => {
@@ -388,10 +392,17 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
       return;
     }
 
+    if (!startTime || !endTime) {
+      alert(language === 'fr' 
+        ? 'Veuillez sélectionner les heures de début et de fin pour éviter les doublons de réservation.' 
+        : 'Please select start and end times to prevent duplicate reservations.');
+      return;
+    }
+
     if (availability !== null && !availability.available) {
       alert(language === 'fr' 
-        ? 'Ce pack n\'est pas disponible sur ces dates. Veuillez choisir d\'autres dates.' 
-        : 'This pack is not available for these dates. Please choose other dates.');
+        ? 'Ce pack n\'est pas disponible sur ces dates et heures. Veuillez choisir d\'autres dates ou heures.' 
+        : 'This pack is not available for these dates and times. Please choose other dates or times.');
       return;
     }
 
@@ -403,6 +414,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
       rentalDays,
       startDate,
       endDate,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
       dailyPrice: basePrice || 0,
       deposit: pack.id === 1 ? 700 : pack.id === 2 ? 1100 : pack.id === 3 ? 1600 : 500,
       addons: selectedAddons,
@@ -653,8 +666,41 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
               </div>
             </div>
 
+            {/* Heures - Requises pour éviter les doublons */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                {language === 'fr' ? 'Heures de location' : 'Rental times'}
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1.5">
+                    {language === 'fr' ? 'Heure de début *' : 'Start time *'}
+                  </label>
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1.5">
+                    {language === 'fr' ? 'Heure de fin *' : 'End time *'}
+                  </label>
+                  <input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Disponibilité */}
-            {startDate && endDate && (
+            {startDate && endDate && startTime && endTime && (
               <div className="mb-6">
                 {checkingAvailability ? (
                   <div className="text-sm text-gray-600 py-2">{currentTexts.checking}</div>
@@ -685,10 +731,10 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             {/* Bouton Ajouter au panier */}
             <button
               onClick={handleAddToCart}
-              disabled={checkingAvailability || (availability !== null && !availability.available) || !startDate || !endDate}
+              disabled={checkingAvailability || (availability !== null && !availability.available) || !startDate || !endDate || !startTime || !endTime}
               className={`
                 w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2
-                ${!checkingAvailability && startDate && endDate && (availability === null || availability.available)
+                ${!checkingAvailability && startDate && endDate && startTime && endTime && (availability === null || availability.available)
                   ? 'bg-[#F2431E] text-white hover:bg-[#E63A1A] hover:shadow-xl'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }

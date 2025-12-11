@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import MiniCart from '@/components/cart/MiniCart';
@@ -19,23 +19,6 @@ const UserIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const LogOutIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-  </svg>
-);
-
-const FileTextIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-  </svg>
-);
-
-const CalendarIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-);
 
 interface HeaderProps {
   language: 'fr' | 'en';
@@ -49,8 +32,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
   const { getCartItemCount } = useCart();
   const [cartCount, setCartCount] = useState(0);
   const { user } = useUser();
@@ -91,22 +72,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]); // Inclure pathname pour vérifier la page actuelle
 
-  // Fermer le menu profil quand on clique en dehors
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-        setIsProfileMenuOpen(false);
-      }
-    };
-
-    if (isProfileMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isProfileMenuOpen]);
 
   const getUserInitials = (user: any) => {
     const email = user?.email || '';
@@ -115,7 +80,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
 
   const handleSignOut = async () => {
     await signOut();
-    setIsProfileMenuOpen(false);
   };
 
   const toggleLanguage = () => {
@@ -195,49 +159,23 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               </button>
 
               {/* Auth Icon - Desktop only */}
-              <div className="hidden lg:block relative" ref={profileMenuRef}>
-                <button
-                  onClick={() => user ? setIsProfileMenuOpen(!isProfileMenuOpen) : setIsSignModalOpen(true)}
-                  className="relative p-2 text-white hover:text-[#F2431E] transition-colors cursor-pointer rounded-full"
-                  aria-label={user ? texts[language].account : 'Se connecter'}
-                >
-                  {user ? (
+              <div className="hidden lg:block relative">
+                {user ? (
+                  <Link
+                    href="/dashboard"
+                    className="relative p-2 text-white hover:text-[#F2431E] transition-colors cursor-pointer rounded-full"
+                    aria-label={texts[language].account}
+                  >
                     <UserIconWithName iconSize="md" className="text-white" />
-                  ) : (
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => setIsSignModalOpen(true)}
+                    className="relative p-2 text-white hover:text-[#F2431E] transition-colors cursor-pointer rounded-full"
+                    aria-label="Se connecter"
+                  >
                     <UserIcon className="w-6 h-6" />
-                  )}
-                </button>
-
-                {/* Profile Menu Dropdown */}
-                {user && isProfileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[100]">
-                    <div className="px-4 py-2 border-b border-gray-200">
-                      <p className="text-sm font-semibold text-black truncate">{user.email}</p>
-                    </div>
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setIsProfileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <CalendarIcon className="w-4 h-4" />
-                      {texts[language].reservations}
-                    </Link>
-                    <Link
-                      href="/mes-factures"
-                      onClick={() => setIsProfileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <FileTextIcon className="w-4 h-4" />
-                      {texts[language].invoices}
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <LogOutIcon className="w-4 h-4" />
-                      {texts[language].signOut}
-                    </button>
-                  </div>
+                  </button>
                 )}
               </div>
 
@@ -276,17 +214,23 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               {/* Mobile buttons - Toggle et Auth côte à côte */}
               <div className="lg:hidden flex items-center gap-2">
                 {/* Auth Icon - Mobile */}
-                <button
-                  onClick={() => user ? setIsProfileMenuOpen(!isProfileMenuOpen) : setIsSignModalOpen(true)}
-                  className="p-2 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative"
-                  aria-label={user ? texts[language].account : 'Se connecter'}
-                >
-                  {user ? (
+                {user ? (
+                  <Link
+                    href="/dashboard"
+                    className="p-2 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative"
+                    aria-label={texts[language].account}
+                  >
                     <UserIconWithName iconSize="sm" className="text-white" />
-                  ) : (
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => setIsSignModalOpen(true)}
+                    className="p-2 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative"
+                    aria-label="Se connecter"
+                  >
                     <UserIcon className="w-6 h-6" />
-                  )}
-                </button>
+                  </button>
+                )}
 
                 {/* Mobile menu button */}
                 <button 
@@ -394,39 +338,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
         }}
       />
 
-      {/* Mobile Profile Menu */}
-      {user && isProfileMenuOpen && (
-        <div className="lg:hidden fixed top-[112px] left-0 right-0 bg-black/95 backdrop-blur-md z-40 border-t border-white/20">
-          <div className="px-4 py-4 space-y-2">
-            <div className="px-2 py-2 border-b border-white/20">
-              <p className="text-sm font-semibold text-white truncate">{user.email}</p>
-            </div>
-            <Link
-              href="/mes-reservations"
-              onClick={() => setIsProfileMenuOpen(false)}
-              className="flex items-center gap-3 px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md transition-colors"
-            >
-              <CalendarIcon className="w-5 h-5" />
-              {texts[language].reservations}
-            </Link>
-            <Link
-              href="/mes-factures"
-              onClick={() => setIsProfileMenuOpen(false)}
-              className="flex items-center gap-3 px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md transition-colors"
-            >
-              <FileTextIcon className="w-5 h-5" />
-              {texts[language].invoices}
-            </Link>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-3 w-full px-2 py-2.5 text-sm font-medium text-red-400 hover:bg-red-900/20 rounded-md transition-colors"
-            >
-              <LogOutIcon className="w-5 h-5" />
-              {texts[language].signOut}
-            </button>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

@@ -6,6 +6,7 @@ import DashboardSidebar from '@/components/DashboardSidebar';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useUser } from '@/hooks/useUser';
+import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import SignModal from '@/components/auth/SignModal';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -21,6 +22,7 @@ export default function MesFacturesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const itemsPerPage = 2;
+  const { isCollapsed: isSidebarCollapsed, toggleSidebar: handleToggleSidebar } = useSidebarCollapse();
 
   // Rediriger vers l'accueil si l'utilisateur n'est pas connecté
   useEffect(() => {
@@ -207,8 +209,14 @@ export default function MesFacturesPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header language={language} onLanguageChange={setLanguage} />
       <div className="flex flex-1 pt-[112px] lg:flex-row">
-      <DashboardSidebar language={language} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
-      <main className="flex-1 overflow-y-auto w-full lg:w-auto">
+      <DashboardSidebar 
+        language={language} 
+        isOpen={isMobileMenuOpen} 
+        onClose={() => setIsMobileMenuOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={handleToggleSidebar}
+      />
+      <main className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
           <Link href="/dashboard" className="flex items-center gap-2">
