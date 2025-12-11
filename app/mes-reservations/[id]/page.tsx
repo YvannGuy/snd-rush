@@ -19,6 +19,7 @@ export default function ReservationDetailPage() {
   const [loadingReservation, setLoadingReservation] = useState(true);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [etatLieux, setEtatLieux] = useState<any>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -42,6 +43,21 @@ export default function ReservationDetailPage() {
 
         if (error) throw error;
         setReservation(data);
+
+        // Charger l'état des lieux si existant
+        const { data: etatLieuxData, error: etatLieuxError } = await supabase
+          .from('etat_lieux')
+          .select('*')
+          .eq('reservation_id', reservationId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (etatLieuxError) {
+          console.error('Erreur chargement état des lieux:', etatLieuxError);
+        } else if (etatLieuxData) {
+          setEtatLieux(etatLieuxData);
+        }
       } catch (error) {
         console.error('Erreur chargement réservation:', error);
         router.push('/mes-reservations');
@@ -104,6 +120,11 @@ export default function ReservationDetailPage() {
       contractSigned: 'Contrat signé',
       noReservation: 'Réservation non trouvée',
       loading: 'Chargement...',
+      etatLieux: 'États des lieux',
+      etatLieuxLivraison: 'Livraison effectuée',
+      etatLieuxReprise: 'Reprise effectuée',
+      etatLieuxEnAttente: 'En attente',
+      downloadEtatLieux: 'Télécharger le PDF',
     },
     en: {
       title: 'Reservation Details',
@@ -124,6 +145,11 @@ export default function ReservationDetailPage() {
       contractSigned: 'Contract signed',
       noReservation: 'Reservation not found',
       loading: 'Loading...',
+      etatLieux: 'Condition report',
+      etatLieuxLivraison: 'Delivery completed',
+      etatLieuxReprise: 'Return completed',
+      etatLieuxEnAttente: 'Pending',
+      downloadEtatLieux: 'Download PDF',
     },
   };
 
@@ -319,6 +345,44 @@ export default function ReservationDetailPage() {
                   </div>
                 ) : null;
               })()}
+
+              {/* États des lieux */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">{currentTexts.etatLieux}</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  {etatLieux ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {etatLieux.status === 'livraison_complete' 
+                              ? currentTexts.etatLieuxLivraison
+                              : etatLieux.status === 'reprise_complete'
+                              ? currentTexts.etatLieuxReprise
+                              : currentTexts.etatLieuxEnAttente}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {formatDate(etatLieux.created_at)}
+                          </p>
+                        </div>
+                        <a
+                          href={`/api/etat-lieux/download?reservationId=${reservationId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          {currentTexts.downloadEtatLieux}
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">{currentTexts.etatLieuxEnAttente}</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

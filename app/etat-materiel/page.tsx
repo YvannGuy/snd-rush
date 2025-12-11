@@ -1,8 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { PACKS } from '@/lib/packs';
 
 type EtatAvant = 'Bon' | 'Traces légères' | 'Rayures' | 'Choc' | 'Dégradation' | 'Non-fonctionnel';
 type EtatApres = 'Bon' | 'Usure normale' | 'Dégradation visible' | 'Matériel manquant' | 'Casse' | 'Salissure importante';
@@ -102,7 +104,7 @@ function fileToDataURL(file: File): Promise<string> {
   });
 }
 
-export default function PageEtatMateriel() {
+function PageEtatMaterielContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   
@@ -128,14 +130,211 @@ export default function PageEtatMateriel() {
   const canvasAvantRef = useRef<HTMLCanvasElement>(null);
   const canvasApresRef = useRef<HTMLCanvasElement>(null);
   const [showRestoreMessage, setShowRestoreMessage] = useState(false);
+  const [reservationId, setReservationId] = useState<string | null>(null);
+  const [reservationLoaded, setReservationLoaded] = useState(false);
+  const searchParams = useSearchParams();
 
-  // Vérifier l'authentification au démarrage
+  // Charger reservationId depuis l'URL
   useEffect(() => {
-    const authToken = sessionStorage.getItem('etat-materiel-auth');
-    if (authToken === 'sndrush2025') {
+    const reservationIdParam = searchParams?.get('reservationId');
+    if (reservationIdParam) {
+      setReservationId(reservationIdParam);
+      // Si un reservationId est présent, accès direct sans authentification
       setIsAuthenticated(true);
+    } else {
+      // Sinon, vérifier l'authentification classique
+      const authToken = sessionStorage.getItem('etat-materiel-auth');
+      if (authToken === 'sndrush2025') {
+        setIsAuthenticated(true);
+      }
     }
-  }, []);
+  }, [searchParams]);
+
+  // Charger les équipements depuis la réservation
+  useEffect(() => {
+    if (!reservationId || reservationLoaded || !supabase) return;
+
+    const loadReservationData = async () => {
+      try {
+        // Charger la réservation
+        const { data: reservation, error } = await supabase
+          .from('reservations')
+          .select('*')
+          .eq('id', reservationId)
+          .single();
+
+        if (error) {
+          console.error('Erreur chargement réservation:', error);
+          return;
+        }
+
+        if (!reservation) return;
+
+        // Extraire les infos client depuis les notes
+        let customerName = '';
+        let customerEmail = '';
+        let customerPhone = '';
+        let postalCode = '';
+        let deliveryOption = '';
+        let cartItems: any[] = [];
+        let startTime = '';
+        let endTime = '';
+
+        if (reservation.notes) {
+          try {
+            const notesData = JSON.parse(reservation.notes);
+            customerName = notesData.customerName || '';
+            customerEmail = notesData.customerEmail || '';
+            customerPhone = notesData.customerPhone || '';
+            postalCode = notesData.postalCode || notesData.eventDetails?.postalCode || '';
+            deliveryOption = notesData.deliveryOption || '';
+            startTime = notesData.startTime || notesData.eventDetails?.startTime || '';
+            endTime = notesData.endTime || notesData.eventDetails?.endTime || '';
+            cartItems = notesData.cartItems || [];
+          } catch (e) {
+            console.error('Erreur parsing notes:', e);
+          }
+        }
+
+        // Extraire le code postal depuis l'adresse si pas dans les notes
+        if (!postalCode && reservation.address) {
+          const postalCodeMatch = reservation.address.match(/\b\d{5}\b/);
+          if (postalCodeMatch) {
+            postalCode = postalCodeMatch[0];
+          }
+        }
+
+        // Formater le contact (email / téléphone)
+        let contactFormatted = '';
+        if (customerEmail && customerPhone) {
+          contactFormatted = `${customerEmail} / ${customerPhone}`;
+        } else if (customerEmail) {
+          contactFormatted = customerEmail;
+        } else if (customerPhone) {
+          contactFormatted = customerPhone;
+        }
+
+        // Formater les heures depuis les dates et heures
+        const formatHeure = (dateString: string, timeString: string) => {
+          if (!dateString) return '';
+          const date = new Date(dateString);
+          if (timeString) {
+            // Si on a une heure, l'ajouter
+            const [hours, minutes] = timeString.split(':');
+            if (hours && minutes) {
+              date.setHours(parseInt(hours), parseInt(minutes));
+            }
+          }
+          return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        };
+
+        const heureDepot = formatHeure(reservation.start_date, startTime);
+        const heureRecup = formatHeure(reservation.end_date, endTime);
+
+        // Déterminer si c'est une livraison ou récupération
+        // Si deliveryOption est 'paris' ou contient 'livraison', c'est une livraison
+        const isLivraison = deliveryOption === 'paris' || 
+                           deliveryOption?.toLowerCase().includes('livraison') ||
+                           cartItems.some((item: any) => 
+                             item.productName?.toLowerCase().includes('livraison')
+                           );
+
+        // Pré-remplir les champs
+        if (customerName) setClient(customerName);
+        if (contactFormatted) setContact(contactFormatted);
+        
+        // Adresse seulement si c'est une livraison
+        if (isLivraison && reservation.address) {
+          setAdresse(reservation.address);
+        }
+        
+        if (postalCode) setCodePostal(postalCode);
+        if (heureDepot) setHeureDepot(heureDepot);
+        if (heureRecup) setHeureRecup(heureRecup);
+
+        // Convertir les cartItems en équipements
+        const equipmentItems: ItemEtat[] = [];
+        
+        for (const cartItem of cartItems) {
+          // Ignorer les items de livraison/installation
+          if (cartItem.productName?.toLowerCase().includes('livraison') || 
+              cartItem.productName?.toLowerCase().includes('installation')) {
+            continue;
+          }
+
+          const productName = cartItem.productName || 'Équipement';
+          const quantity = cartItem.quantity || 1;
+
+          // Si c'est un pack, extraire la composition
+          if (cartItem.productId?.startsWith('pack-')) {
+            const packId = cartItem.productId.replace('pack-', '');
+            const pack = Object.values(PACKS).find(p => p.id === packId);
+            
+            if (pack) {
+              // Ajouter chaque élément de la composition du pack
+              pack.composition.forEach((item, index) => {
+                const uniqueId = `${packId}-${index}-${Date.now()}`;
+                equipmentItems.push({
+                  id: uniqueId,
+                  nom: item,
+                  photosAvant: [],
+                  photosApres: []
+                });
+              });
+            } else {
+              // Pack non trouvé, ajouter le nom du pack
+              for (let i = 0; i < quantity; i++) {
+                const uniqueId = `${cartItem.productId}-${i}-${Date.now()}`;
+                equipmentItems.push({
+                  id: uniqueId,
+                  nom: productName,
+                  photosAvant: [],
+                  photosApres: []
+                });
+              }
+            }
+          } else {
+            // Produit individuel ou accessoire
+            for (let i = 0; i < quantity; i++) {
+              const uniqueId = `${cartItem.productId || 'item'}-${i}-${Date.now()}`;
+              equipmentItems.push({
+                id: uniqueId,
+                nom: productName,
+                photosAvant: [],
+                photosApres: []
+              });
+            }
+          }
+
+          // Ajouter les addons/accessoires
+          if (cartItem.addons && Array.isArray(cartItem.addons)) {
+            cartItem.addons.forEach((addon: any) => {
+              const addonQuantity = addon.quantity || 1;
+              for (let i = 0; i < addonQuantity; i++) {
+                const uniqueId = `addon-${addon.id || 'addon'}-${i}-${Date.now()}`;
+                equipmentItems.push({
+                  id: uniqueId,
+                  nom: addon.name || 'Accessoire',
+                  photosAvant: [],
+                  photosApres: []
+                });
+              }
+            });
+          }
+        }
+
+        if (equipmentItems.length > 0) {
+          setItems(equipmentItems);
+          setReservationLoaded(true);
+          console.log(`✅ ${equipmentItems.length} équipement(s) chargé(s) depuis la réservation`);
+        }
+      } catch (error) {
+        console.error('Erreur chargement données réservation:', error);
+      }
+    };
+
+    loadReservationData();
+  }, [isAuthenticated, reservationId, reservationLoaded, supabase]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,7 +367,7 @@ export default function PageEtatMateriel() {
 
   // Sauvegarde automatique dans IndexedDB pour gérer les gros volumes (photos + signatures)
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated && !reservationId) return;
     
     const loadData = async () => {
       try {
@@ -212,7 +411,7 @@ export default function PageEtatMateriel() {
 
   // Sauvegarder automatiquement à chaque modification
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated && !reservationId) return;
     
     const saveData = async () => {
       // Nettoyer les analyses IA avant sauvegarde (trop volumineuses pour IndexedDB)
@@ -271,7 +470,7 @@ export default function PageEtatMateriel() {
 
   // Avertir avant de quitter la page si des données sont présentes
   useEffect(() => {
-    if (!isAuthenticated) return; // Seulement si authentifié
+    if (!isAuthenticated && !reservationId) return; // Seulement si authentifié ou si reservationId présent
     
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (client || contact || items.length > 0 || signatureAvant || signatureApres) {
@@ -531,7 +730,7 @@ export default function PageEtatMateriel() {
 
   // Gestion du canvas de signature AVANT
   useEffect(() => {
-    if (!isAuthenticated) return; // Attendre d'être authentifié
+    if (!isAuthenticated && !reservationId) return; // Attendre d'être authentifié ou avoir reservationId
     
     const canvas = canvasAvantRef.current;
     if (!canvas) {
@@ -637,7 +836,7 @@ export default function PageEtatMateriel() {
 
   // Gestion du canvas de signature APRÈS
   useEffect(() => {
-    if (!isAuthenticated) return; // Attendre d'être authentifié
+    if (!isAuthenticated && !reservationId) return; // Attendre d'être authentifié ou avoir reservationId
     
     const canvas = canvasApresRef.current;
     if (!canvas) {
@@ -1033,8 +1232,8 @@ export default function PageEtatMateriel() {
     }
   };
 
-  // Écran de connexion si non authentifié
-  if (!isAuthenticated) {
+  // Écran de connexion si non authentifié ET pas de reservationId
+  if (!isAuthenticated && !reservationId) {
     return (
       <div style={{ 
         minHeight: '100vh', 
@@ -1887,6 +2086,20 @@ export default function PageEtatMateriel() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PageEtatMateriel() {
+  return (
+    <Suspense fallback={
+      <div style={styles.wrap}>
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <p>Chargement...</p>
+        </div>
+      </div>
+    }>
+      <PageEtatMaterielContent />
+    </Suspense>
   );
 }
 

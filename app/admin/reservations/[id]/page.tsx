@@ -20,6 +20,7 @@ export default function AdminReservationDetailPage() {
   const [reservation, setReservation] = useState<any>(null);
   const [loadingReservation, setLoadingReservation] = useState(true);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [etatLieux, setEtatLieux] = useState<any>(null);
 
   useEffect(() => {
     if (!user || !supabase || !reservationId) return;
@@ -53,6 +54,19 @@ export default function AdminReservationDetailPage() {
         }
 
         setReservation({ ...data, order });
+
+        // Charger l'état des lieux si existant
+        const { data: etatLieuxData } = await supabase
+          .from('etat_lieux')
+          .select('*')
+          .eq('reservation_id', reservationId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (etatLieuxData) {
+          setEtatLieux(etatLieuxData);
+        }
       } catch (error) {
         console.error('Erreur chargement réservation:', error);
         router.push('/admin/reservations');
@@ -126,6 +140,12 @@ export default function AdminReservationDetailPage() {
       loading: 'Chargement...',
       orderInfo: 'Informations de commande',
       paymentStatus: 'Statut de paiement',
+      etatLieux: 'États des lieux',
+      verifierMateriel: 'Vérifier matériel',
+      etatLieuxLivraison: 'Livraison effectuée',
+      etatLieuxReprise: 'Reprise effectuée',
+      etatLieuxEnAttente: 'En attente',
+      downloadEtatLieux: 'Télécharger le PDF',
     },
     en: {
       title: 'Reservation Details',
@@ -151,6 +171,12 @@ export default function AdminReservationDetailPage() {
       loading: 'Loading...',
       orderInfo: 'Order information',
       paymentStatus: 'Payment status',
+      etatLieux: 'Condition report',
+      verifierMateriel: 'Check equipment',
+      etatLieuxLivraison: 'Delivery completed',
+      etatLieuxReprise: 'Return completed',
+      etatLieuxEnAttente: 'Pending',
+      downloadEtatLieux: 'Download PDF',
     },
   };
 
@@ -387,6 +413,55 @@ export default function AdminReservationDetailPage() {
                       <p className={`font-semibold ${isSigned ? 'text-green-600' : 'text-yellow-600'}`}>
                         {isSigned ? currentTexts.contractSigned : currentTexts.contractNotSigned}
                       </p>
+                    </div>
+                  </div>
+
+                  {/* États des lieux */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">{currentTexts.etatLieux}</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                      {etatLieux ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-semibold text-gray-900">
+                                {etatLieux.status === 'livraison_complete' 
+                                  ? currentTexts.etatLieuxLivraison
+                                  : etatLieux.status === 'reprise_complete'
+                                  ? currentTexts.etatLieuxReprise
+                                  : currentTexts.etatLieuxEnAttente}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {formatDate(etatLieux.created_at)}
+                              </p>
+                            </div>
+                            <a
+                              href={`/api/etat-lieux/download?reservationId=${reservationId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                              {currentTexts.downloadEtatLieux}
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <p className="text-gray-600">{currentTexts.etatLieuxEnAttente}</p>
+                          <Link
+                            href={`/etat-materiel?reservationId=${reservationId}`}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            {currentTexts.verifierMateriel}
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   </div>
 

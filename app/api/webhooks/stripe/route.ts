@@ -13,71 +13,78 @@ const supabaseAdmin = (supabaseUrl && supabaseServiceKey && supabaseUrl.trim() !
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null;
 
-// Désactiver le body parsing pour Stripe webhook
+// Configuration pour Stripe webhook
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// Gérer les requêtes OPTIONS (CORS preflight)
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, stripe-signature',
+    },
+  });
+}
+
 export async function POST(req: NextRequest) {
-  const body = await req.text();
-  const signature = req.headers.get('stripe-signature');
-
-  if (!signature) {
-    console.error('❌ Stripe signature manquante');
-    return NextResponse.json(
-      { error: 'Signature manquante' },
-      { status: 400 }
-    );
-  }
-
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!webhookSecret) {
-    console.error('❌ STRIPE_WEBHOOK_SECRET manquante dans les variables d\'environnement');
-    return NextResponse.json(
-      { error: 'Configuration webhook manquante' },
-      { status: 500 }
-    );
-  }
-
-  let event: Stripe.Event;
-
   try {
-    // Vérifier la signature du webhook
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-  } catch (err: any) {
-    console.error('❌ Erreur vérification signature Stripe:', err.message);
-    return NextResponse.json(
-      { error: `Webhook signature verification failed: ${err.message}` },
-      { status: 400 }
-    );
-  }
+    const body = await req.text();
+    const signature = req.headers.get('stripe-signature');
 
-  console.log('✅ Webhook Stripe reçu:', event.type);
+    if (!signature) {
+      console.error('❌ Stripe signature manquante');
+      // Retourner 200 pour éviter que Stripe réessaie
+      return NextResponse.json({ received: false, error: 'Signature manquante' }, { status: 200 });
+    }
 
-  // Gérer les différents types d'événements
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session;
-      console.log('✅ Paiement réussi - Session ID:', session.id);
-      console.log('📋 Métadonnées de la session:', JSON.stringify(session.metadata || {}, null, 2));
-      
-      if (!supabaseAdmin) {
-        console.error('❌ Supabase non configuré');
-        return NextResponse.json({ received: true });
-      }
-      
-      const supabaseClient = supabaseAdmin;
-      
-      try {
-        // Récupérer les métadonnées de la session
-        const metadata = session.metadata || {};
-        const paymentType = metadata.type || 'cart'; // 'cart' pour paiement principal, 'deposit' pour caution
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      console.error('❌ STRIPE_WEBHOOK_SECRET manquante dans les variables d\'environnement');
+      // Retourner 200 pour éviter que Stripe réessaie
+      return NextResponse.json({ received: false, error: 'Configuration webhook manquante' }, { status: 200 });
+    }
+
+    let event: Stripe.Event;
+
+    try {
+      // Vérifier la signature du webhook
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    } catch (err: any) {
+      console.error('❌ Erreur vérification signature Stripe:', err.message);
+      // Retourner 200 pour éviter que Stripe réessaie
+      return NextResponse.json({ received: false, error: `Webhook signature verification failed: ${err.message}` }, { status: 200 });
+    }
+
+    console.log('✅ Webhook Stripe reçu:', event.type);
+
+    // Gérer les différents types d'événements
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        console.log('✅ Paiement réussi - Session ID:', session.id);
+        console.log('📋 Métadonnées de la session:', JSON.stringify(session.metadata || {}, null, 2));
         
-        console.log('🔍 Type de paiement détecté:', paymentType);
-        console.log('🔍 Métadonnées complètes:', JSON.stringify(metadata, null, 2));
+        if (!supabaseAdmin) {
+          console.error('❌ Supabase non configuré');
+          return NextResponse.json({ received: true });
+        }
         
-        // Si c'est un paiement de caution, traiter différemment
-        if (paymentType === 'deposit') {
+        const supabaseClient = supabaseAdmin;
+        
+        try {
+          // Récupérer les métadonnées de la session
+          const metadata = session.metadata || {};
+          const paymentType = metadata.type || 'cart'; // 'cart' pour paiement principal, 'deposit' pour caution
+          
+          console.log('🔍 Type de paiement détecté:', paymentType);
+          console.log('🔍 Métadonnées complètes:', JSON.stringify(metadata, null, 2));
+          
+          // Si c'est un paiement de caution, traiter différemment
+          if (paymentType === 'deposit') {
           const reservationId = metadata.reservationId;
           const mainSessionId = metadata.mainSessionId;
           
@@ -147,36 +154,36 @@ export async function POST(req: NextRequest) {
             console.warn('⚠️ Aucun reservationId dans les métadonnées de la session caution');
           }
           
-          return NextResponse.json({ received: true });
-        }
-        
-        // Traitement du paiement principal (type: 'cart')
-        const userId = metadata.userId;
-        const customerEmail = session.customer_email || metadata.customerEmail || '';
-        const customerName = metadata.customerName || '';
-        const customerPhone = metadata.customerPhone || '';
-        const deliveryOption = metadata.deliveryOption || 'paris';
-        const deliveryFee = parseFloat(metadata.deliveryFee || '0');
-        const total = parseFloat(metadata.total || '0');
-        const depositTotal = parseFloat(metadata.depositTotal || '0');
-        const address = metadata.address || '';
-        
-        // Récupérer le PaymentIntent pour obtenir l'ID de paiement
-        let paymentIntentId = null;
-        if (session.payment_intent) {
-          if (typeof session.payment_intent === 'string') {
-            paymentIntentId = session.payment_intent;
-          } else {
-            paymentIntentId = session.payment_intent.id;
+            return NextResponse.json({ received: true });
           }
-        }
+          
+          // Traitement du paiement principal (type: 'cart')
+          const userId = metadata.userId;
+          const customerEmail = session.customer_email || metadata.customerEmail || '';
+          const customerName = metadata.customerName || '';
+          const customerPhone = metadata.customerPhone || '';
+          const deliveryOption = metadata.deliveryOption || 'paris';
+          const deliveryFee = parseFloat(metadata.deliveryFee || '0');
+          const total = parseFloat(metadata.total || '0');
+          const depositTotal = parseFloat(metadata.depositTotal || '0');
+          const address = metadata.address || '';
+          
+          // Récupérer le PaymentIntent pour obtenir l'ID de paiement
+          let paymentIntentId = null;
+          if (session.payment_intent) {
+            if (typeof session.payment_intent === 'string') {
+              paymentIntentId = session.payment_intent;
+            } else {
+              paymentIntentId = session.payment_intent.id;
+            }
+          }
 
-        // Calculer le subtotal (total - frais de livraison)
-        const subtotal = total;
+          // Calculer le subtotal (total - frais de livraison)
+          const subtotal = total;
 
-        // Récupérer les items du panier depuis la réservation (au lieu des métadonnées)
-        let cartItems: any[] = [];
-        const reservationId = metadata.reservationId;
+          // Récupérer les items du panier depuis la réservation (au lieu des métadonnées)
+          let cartItems: any[] = [];
+          const reservationId = metadata.reservationId;
         
         if (reservationId) {
           try {
@@ -311,10 +318,10 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // NOTE: On ne crée plus de nouvelles réservations ici car elles sont déjà créées lors du checkout
-        // La réservation PENDING est créée dans /api/checkout/create-session et mise à jour ci-dessous
-        // Cette section est désactivée pour éviter les doublons
-        console.log('ℹ️ Réservations déjà créées lors du checkout, pas de création supplémentaire nécessaire');
+          // NOTE: On ne crée plus de nouvelles réservations ici car elles sont déjà créées lors du checkout
+          // La réservation PENDING est créée dans /api/checkout/create-session et mise à jour ci-dessous
+          // Cette section est désactivée pour éviter les doublons
+          console.log('ℹ️ Réservations déjà créées lors du checkout, pas de création supplémentaire nécessaire');
 
           // Mettre à jour la réservation PENDING créée lors du checkout avec les bonnes données
           // IMPORTANT : On garde le statut PENDING jusqu'à ce que la caution soit autorisée
@@ -363,13 +370,6 @@ export async function POST(req: NextRequest) {
                   .eq('id', reservationId);
 
                 console.log(`✅ Réservation PENDING ${reservationId} mise à jour (paiement principal complété, en attente de caution)`);
-                    status: 'CONFIRMED',
-                    stripe_payment_intent_id: paymentIntentId,
-                    total_price: (session.amount_total || 0) / 100,
-                    notes: JSON.stringify(updatedNotes),
-                  })
-                  .eq('id', reservationId);
-
               }
             } catch (e) {
               console.error('Erreur mise à jour réservation PENDING:', e);
@@ -414,47 +414,53 @@ export async function POST(req: NextRequest) {
               console.error('❌ Erreur lors de la suppression du panier:', e);
             }
           }
+
+          console.log('✅ Commande traitée avec succès pour la session:', session.id);
+        } catch (error: any) {
+          console.error('❌ Erreur lors du traitement de la commande:', error);
+          // Ne pas retourner d'erreur pour éviter que Stripe réessaie indéfiniment
+          // Vous pouvez logger l'erreur et la traiter manuellement
         }
-
-        console.log('✅ Commande traitée avec succès pour la session:', session.id);
-      } catch (error: any) {
-        console.error('❌ Erreur lors du traitement de la commande:', error);
-        // Ne pas retourner d'erreur pour éviter que Stripe réessaie indéfiniment
-        // Vous pouvez logger l'erreur et la traiter manuellement
+        break;
       }
-      break;
+
+      case 'checkout.session.async_payment_succeeded': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        console.log('✅ Paiement asynchrone réussi - Session ID:', session.id);
+        // Traiter le paiement asynchrone (ex: virement bancaire)
+        break;
+      }
+
+      case 'checkout.session.async_payment_failed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        console.log('❌ Paiement asynchrone échoué - Session ID:', session.id);
+        // Notifier le client que le paiement a échoué
+        break;
+      }
+
+      case 'payment_intent.succeeded': {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        console.log('✅ PaymentIntent réussi:', paymentIntent.id);
+        break;
+      }
+
+      case 'payment_intent.payment_failed': {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        console.log('❌ PaymentIntent échoué:', paymentIntent.id);
+        break;
+      }
+
+      default:
+        console.log(`⚠️ Événement non géré: ${event.type}`);
     }
 
-    case 'checkout.session.async_payment_succeeded': {
-      const session = event.data.object as Stripe.Checkout.Session;
-      console.log('✅ Paiement asynchrone réussi - Session ID:', session.id);
-      // Traiter le paiement asynchrone (ex: virement bancaire)
-      break;
-    }
-
-    case 'checkout.session.async_payment_failed': {
-      const session = event.data.object as Stripe.Checkout.Session;
-      console.log('❌ Paiement asynchrone échoué - Session ID:', session.id);
-      // Notifier le client que le paiement a échoué
-      break;
-    }
-
-    case 'payment_intent.succeeded': {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      console.log('✅ PaymentIntent réussi:', paymentIntent.id);
-      break;
-    }
-
-    case 'payment_intent.payment_failed': {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      console.log('❌ PaymentIntent échoué:', paymentIntent.id);
-      break;
-    }
-
-    default:
-      console.log(`⚠️ Événement non géré: ${event.type}`);
+    // Toujours retourner 200 pour que Stripe considère l'événement comme traité
+    return NextResponse.json({ received: true }, { status: 200 });
+  } catch (error: any) {
+    // Gérer toutes les erreurs non capturées
+    console.error('❌ Erreur générale dans le webhook Stripe:', error);
+    // Toujours retourner 200 pour éviter que Stripe réessaie indéfiniment
+    return NextResponse.json({ received: false, error: error.message || 'Erreur serveur' }, { status: 200 });
   }
-
-  return NextResponse.json({ received: true });
 }
 

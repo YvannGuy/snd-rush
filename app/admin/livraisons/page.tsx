@@ -16,6 +16,7 @@ export default function AdminLivraisonsPage() {
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [deliveries, setDeliveries] = useState<any[]>([]);
   const [filteredDeliveries, setFilteredDeliveries] = useState<any[]>([]);
+  const [reservationsData, setReservationsData] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'livraison' | 'retrait'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,6 +40,8 @@ export default function AdminLivraisonsPage() {
           .from('reservations')
           .select('*')
           .order('start_date', { ascending: false });
+
+        setReservationsData(reservationsData || []);
 
         // Créer la liste des livraisons/récupérations
         const deliveriesList: any[] = [];
@@ -188,8 +191,11 @@ export default function AdminLivraisonsPage() {
       phone: 'Téléphone',
       dates: 'Dates',
       deliveryOption: 'Option',
+      status: 'Statut',
       actions: 'Actions',
       view: 'Voir',
+      start: 'Commencer',
+      complete: 'Terminé',
       signInRequired: 'Connexion requise',
       signInDescription: 'Connectez-vous pour accéder aux livraisons.',
       signIn: 'Se connecter',
@@ -207,8 +213,11 @@ export default function AdminLivraisonsPage() {
       phone: 'Phone',
       dates: 'Dates',
       deliveryOption: 'Option',
+      status: 'Status',
       actions: 'Actions',
       view: 'View',
+      start: 'Start',
+      complete: 'Complete',
       signInRequired: 'Sign in required',
       signInDescription: 'Sign in to access deliveries.',
       signIn: 'Sign in',
@@ -323,10 +332,34 @@ export default function AdminLivraisonsPage() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.phone}</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.dates}</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.deliveryOption}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.status}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.actions}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                          {paginatedDeliveries.map((delivery) => (
+                          {paginatedDeliveries.map((delivery) => {
+                            // Trouver la réservation associée
+                            let reservation = delivery.reservation;
+                            if (!reservation && delivery.order?.metadata?.reservation_id) {
+                              reservation = reservationsData.find((r: any) => r.id === delivery.order.metadata.reservation_id);
+                            }
+                            // Si toujours pas trouvé, chercher par order_id dans les notes des réservations
+                            if (!reservation && delivery.order?.id) {
+                              reservation = reservationsData.find((r: any) => {
+                                if (r.notes) {
+                                  try {
+                                    const notes = JSON.parse(r.notes);
+                                    return notes.orderId === delivery.order.id || notes.sessionId === delivery.order.stripe_session_id;
+                                  } catch (e) {
+                                    return false;
+                                  }
+                                }
+                                return false;
+                              });
+                            }
+                            const deliveryStatus = reservation?.delivery_status || null;
+                            
+                            return (
                             <tr key={delivery.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -357,8 +390,69 @@ export default function AdminLivraisonsPage() {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {getDeliveryOptionText(delivery.delivery_option)}
                               </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                  deliveryStatus === 'termine'
+                                    ? 'bg-green-100 text-green-800'
+                                    : deliveryStatus === 'en_cours'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {deliveryStatus === 'termine' 
+                                    ? (language === 'fr' ? '✅ Terminé' : '✅ Completed')
+                                    : deliveryStatus === 'en_cours'
+                                    ? (language === 'fr' ? '🔄 En cours' : '🔄 In progress')
+                                    : (language === 'fr' ? '⏳ En attente' : '⏳ Pending')}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                {reservation && (
+                                  <div className="flex gap-2">
+                                    {deliveryStatus !== 'en_cours' && deliveryStatus !== 'termine' && (
+                                      <button
+                                        onClick={async () => {
+                                          if (!supabase || !reservation) return;
+                                          const { error } = await supabase
+                                            .from('reservations')
+                                            .update({ delivery_status: 'en_cours' })
+                                            .eq('id', reservation.id);
+                                          if (error) {
+                                            console.error('Erreur mise à jour statut:', error);
+                                            alert(language === 'fr' ? 'Erreur lors de la mise à jour' : 'Update error');
+                                          } else {
+                                            window.location.reload();
+                                          }
+                                        }}
+                                        className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-semibold"
+                                      >
+                                        {currentTexts.start}
+                                      </button>
+                                    )}
+                                    {deliveryStatus === 'en_cours' && (
+                                      <button
+                                        onClick={async () => {
+                                          if (!supabase || !reservation) return;
+                                          const { error } = await supabase
+                                            .from('reservations')
+                                            .update({ delivery_status: 'termine' })
+                                            .eq('id', reservation.id);
+                                          if (error) {
+                                            console.error('Erreur mise à jour statut:', error);
+                                            alert(language === 'fr' ? 'Erreur lors de la mise à jour' : 'Update error');
+                                          } else {
+                                            window.location.reload();
+                                          }
+                                        }}
+                                        className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs font-semibold"
+                                      >
+                                        {currentTexts.complete}
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
                             </tr>
-                          ))}
+                          )})}
                         </tbody>
                       </table>
                     </div>

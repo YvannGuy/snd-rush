@@ -19,7 +19,7 @@ export default function AdminCataloguePage() {
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const itemsPerPage = 3;
 
   useEffect(() => {
     if (!user || !supabase) return;
