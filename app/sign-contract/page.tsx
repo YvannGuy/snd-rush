@@ -16,6 +16,7 @@ function SignContractContent() {
   const [isSigned, setIsSigned] = useState(false);
   const [error, setError] = useState('');
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
+  const [isContractModalOpen, setIsContractModalOpen] = useState(false);
 
   useEffect(() => {
     const reservationIdParam = searchParams.get('reservationId');
@@ -96,29 +97,35 @@ function SignContractContent() {
   const texts = {
     fr: {
       title: 'Signature du contrat de location',
-      subtitle: 'SND Rush - Location Sono & Événementiel',
+      subtitle: 'SoundRush Paris - Location Sono & Événementiel',
       signatureLabel: 'Votre signature',
       signaturePlaceholder: 'Tapez votre nom complet pour signer',
       signatureNote: 'En signant, vous acceptez les conditions générales de location et confirmez votre accord avec ce contrat.',
+      readContract: '📄 Lire le contrat avant de signer',
       signButton: 'Signer le contrat',
       signing: 'Signature en cours...',
       signed: 'Contrat signé avec succès !',
       successMessage: 'Merci pour votre signature. Votre contrat a été enregistré et vous pouvez le télécharger depuis votre espace client.',
       legalNote: '🔒 Cette signature a une valeur légale. En signant, vous confirmez votre accord avec les conditions du contrat.',
       redirecting: 'Redirection vers vos réservations...',
+      contractModalTitle: 'Contrat de location',
+      closeModal: 'Fermer',
     },
     en: {
       title: 'Sign rental contract',
-      subtitle: 'SND Rush - Sound Rental & Events',
+      subtitle: 'SoundRush Paris - Sound Rental & Events',
       signatureLabel: 'Your signature',
       signaturePlaceholder: 'Type your full name to sign',
       signatureNote: 'By signing, you accept the rental terms and conditions and confirm your agreement with this contract.',
+      readContract: '📄 Read the contract before signing',
       signButton: 'Sign contract',
       signing: 'Signing...',
       signed: 'Contract signed successfully!',
       successMessage: 'Thank you for your signature. Your contract has been saved and you can download it from your client area.',
       legalNote: '🔒 This signature has legal value. By signing, you confirm your agreement with the contract terms.',
       redirecting: 'Redirecting to your reservations...',
+      contractModalTitle: 'Rental contract',
+      closeModal: 'Close',
     },
   };
 
@@ -170,15 +177,29 @@ function SignContractContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header language={language} onLanguageChange={setLanguage} />
-      <div className="flex items-center justify-center min-h-[60vh] py-12">
-        <div className="bg-white rounded-2xl p-6 sm:p-10 max-w-2xl mx-4 w-full shadow-lg">
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-4">✍️</div>
+      <div className="flex items-center justify-center min-h-[60vh] pt-24 sm:pt-28 pb-8 sm:pb-12 px-4">
+        <div className="bg-white rounded-2xl p-6 sm:p-10 max-w-2xl w-full shadow-lg overflow-visible">
+          <div className="text-center mb-8 pt-2">
+            <div className="text-5xl mb-4 leading-none">✍️</div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{currentTexts.title}</h1>
-            <p className="text-gray-600">{currentTexts.subtitle}</p>
+            <p className="text-gray-600 text-sm sm:text-base">{currentTexts.subtitle}</p>
           </div>
 
           <form onSubmit={handleSignature} className="space-y-6">
+            {/* Lien pour lire le contrat */}
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={() => setIsContractModalOpen(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors border-2 border-gray-300"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {currentTexts.readContract}
+              </button>
+            </div>
+
             <div>
               <label className="block font-semibold text-gray-700 mb-2">
                 {currentTexts.signatureLabel}
@@ -216,6 +237,54 @@ function SignContractContent() {
           </div>
         </div>
       </div>
+
+      {/* Modal pour afficher le contrat */}
+      {isContractModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setIsContractModalOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header du modal */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900">{currentTexts.contractModalTitle}</h2>
+              <button
+                onClick={() => setIsContractModalOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label={currentTexts.closeModal}
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Contenu du modal - PDF dans un iframe */}
+            <div className="flex-1 overflow-hidden">
+              {reservationId ? (
+                <iframe
+                  src={`/api/contract/download?reservationId=${reservationId}&display=inline`}
+                  className="w-full h-full min-h-[600px]"
+                  title={currentTexts.contractModalTitle}
+                  style={{ border: 'none' }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full p-8">
+                  <p className="text-gray-500">{language === 'fr' ? 'Chargement du contrat...' : 'Loading contract...'}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer du modal */}
+            <div className="p-6 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={() => setIsContractModalOpen(false)}
+                className="px-6 py-3 bg-[#F2431E] text-white rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors"
+              >
+                {currentTexts.closeModal}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer language={language} />
     </div>
   );

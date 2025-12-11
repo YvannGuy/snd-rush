@@ -89,12 +89,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Mettre à jour la réservation pour indiquer que la caution a été autorisée
+    // Stocker les infos de caution dans notes (pas de colonnes dédiées)
     const { data: updatedReservation, error: updateError } = await supabaseAdmin
       .from('reservations')
       .update({
         status: 'CONFIRMED',
-        stripe_deposit_session_id: sessionId,
-        stripe_deposit_payment_intent_id: paymentIntentId,
         notes: JSON.stringify({
           ...existingNotes,
           depositAuthorized: true,

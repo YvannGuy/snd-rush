@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const reservationId = searchParams.get('reservationId');
+  const display = searchParams.get('display'); // 'inline' pour affichage dans iframe, sinon 'attachment' pour téléchargement
 
   if (!reservationId) {
     return NextResponse.json(
@@ -117,10 +118,14 @@ export async function GET(req: NextRequest) {
 
     // Retourner le PDF
     const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
+    const contentDisposition = display === 'inline' 
+      ? `inline; filename="contrat-${reservationNumber}.pdf"`
+      : `attachment; filename="contrat-${reservationNumber}.pdf"`;
+    
     return new NextResponse(pdfBuffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="contrat-${reservationNumber}.pdf"`,
+        'Content-Disposition': contentDisposition,
       },
     });
   } catch (error: any) {

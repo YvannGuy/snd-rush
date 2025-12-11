@@ -18,7 +18,7 @@ export default function MesFacturesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const itemsPerPage = 10;
+  const itemsPerPage = 2;
 
   // Rediriger vers l'accueil si l'utilisateur n'est pas connecté
   useEffect(() => {

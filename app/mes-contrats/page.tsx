@@ -18,7 +18,7 @@ export default function MesContratsPage() {
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 2;
 
   // Rediriger vers l'accueil si l'utilisateur n'est pas connecté
   useEffect(() => {
