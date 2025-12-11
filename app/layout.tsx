@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CartProvider } from "@/contexts/CartContext";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import CookieBanner from "@/components/CookieBanner";
+import ChatboxProvider from "@/components/ChatboxProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -220,6 +221,9 @@ export default function RootLayout({
 
         <CartProvider>
           {children}
+          
+          {/* Chatbox Provider - Chatbox et bouton flottant sur toutes les pages */}
+          <ChatboxProvider language="fr" />
         </CartProvider>
 
         {/* Cookie Banner - Apparaît sur toutes les pages */}

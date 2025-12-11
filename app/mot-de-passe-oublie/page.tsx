@@ -22,12 +22,24 @@ export default function ForgotPasswordPage() {
       return;
     }
 
+    // Validation basique de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Veuillez entrer une adresse email valide');
+      return;
+    }
+
     const result = await resetPasswordForEmail(email);
 
     if (result.error) {
       setError(result.error);
     } else {
-      setMessage('Un email de réinitialisation a été envoyé à votre adresse. Vérifiez votre boîte de réception et cliquez sur le lien pour réinitialiser votre mot de passe.');
+      // Message amélioré avec instructions
+      setMessage(
+        'Si cette adresse email est associée à un compte, un email de réinitialisation a été envoyé. ' +
+        'Vérifiez votre boîte de réception (et vos spams) et cliquez sur le lien pour réinitialiser votre mot de passe. ' +
+        'Si vous ne recevez pas l\'email dans quelques minutes, vérifiez que l\'adresse est correcte ou contactez le support.'
+      );
     }
   };
 

@@ -464,10 +464,12 @@ export default function CartPage() {
       const items = cart.items.map(item => {
         const itemTotal = item.dailyPrice * item.quantity * item.rentalDays;
         const addonsTotal = item.addons.reduce((sum, addon) => sum + addon.price, 0);
+        // La majoration d'urgence devrait être incluse dans dailyPrice, mais on ajoute pour compatibilité
+        const urgencySurcharge = item.metadata?.urgencySurcharge || 0;
         return {
           name: item.productName,
           quantity: item.quantity,
-          price: Math.round((itemTotal + addonsTotal) * 100), // En centimes
+          price: Math.round((itemTotal + addonsTotal + urgencySurcharge) * 100), // En centimes
         };
       });
 
@@ -651,8 +653,12 @@ export default function CartPage() {
             {/* Liste des produits - Design épuré */}
             <div className="lg:col-span-2 space-y-4">
               {cart.items.map((item, index) => {
-                const itemTotal = item.dailyPrice * item.quantity * item.rentalDays + 
-                  item.addons.reduce((sum, addon) => sum + addon.price, 0);
+                // Calculer le total de l'item avec majoration d'urgence si présente
+                const baseItemTotal = item.dailyPrice * item.quantity * item.rentalDays;
+                const addonsTotal = item.addons.reduce((sum, addon) => sum + addon.price, 0);
+                // La majoration d'urgence devrait être incluse dans dailyPrice, mais on ajoute pour compatibilité
+                const urgencySurcharge = item.metadata?.urgencySurcharge || 0;
+                const itemTotal = baseItemTotal + addonsTotal + urgencySurcharge;
                 
                 return (
                   <div

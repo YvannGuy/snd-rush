@@ -209,16 +209,50 @@ export function useAuth() {
     setError(null);
 
     try {
+      const baseUrl = getBaseUrl();
+      const redirectUrl = `${baseUrl}/reinitialiser-mot-de-passe`;
+      
+      console.log('🔐 Tentative de réinitialisation de mot de passe pour:', email);
+      console.log('📍 URL de redirection:', redirectUrl);
+
       const { data, error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${getBaseUrl()}/reinitialiser-mot-de-passe`,
+        redirectTo: redirectUrl,
       });
 
-      if (resetError) throw resetError;
+      if (resetError) {
+        console.error('❌ Erreur Supabase resetPasswordForEmail:', {
+          message: resetError.message,
+          status: resetError.status,
+          name: resetError.name,
+        });
+        throw resetError;
+      }
 
+      console.log('✅ Email de réinitialisation envoyé avec succès');
+      console.log('📧 Données retournées:', data);
+
+      // Note: Supabase retourne toujours un succès même si l'email n'existe pas
+      // pour des raisons de sécurité. L'email sera envoyé seulement si l'utilisateur existe.
       return { data, error: null };
     } catch (err: any) {
-      setError(err.message);
-      return { data: null, error: err.message };
+      console.error('❌ Erreur complète lors de la réinitialisation:', {
+        message: err.message,
+        status: err.status,
+        name: err.name,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+      });
+
+      // Gérer les erreurs spécifiques
+      let errorMessage = err.message;
+      
+      if (err.message?.includes('SMTP') || err.message?.includes('smtp') || err.message?.includes('email')) {
+        errorMessage = 'Erreur de configuration email. Veuillez vérifier que le service d\'email est configuré dans Supabase. Si le problème persiste, contactez le support.';
+      } else if (err.message?.includes('rate limit') || err.message?.includes('too many')) {
+        errorMessage = 'Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.';
+      }
+      
+      setError(errorMessage);
+      return { data: null, error: errorMessage };
     } finally {
       setLoading(false);
     }

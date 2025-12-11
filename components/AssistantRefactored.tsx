@@ -24,6 +24,7 @@ interface AssistantRefactoredProps {
   language?: 'fr' | 'en';
   onReservationComplete?: (payload: ReservationPayload) => void;
   onRentalConditionsClick?: () => void;
+  mode?: 'modal' | 'chatbox'; // Nouveau prop pour le mode
 }
 
 export default function AssistantRefactored({ 
@@ -31,7 +32,8 @@ export default function AssistantRefactored({
   onClose, 
   language = 'fr',
   onReservationComplete,
-  onRentalConditionsClick
+  onRentalConditionsClick,
+  mode = 'modal'
 }: AssistantRefactoredProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
@@ -47,6 +49,17 @@ export default function AssistantRefactored({
   const [loadingSpeakers, setLoadingSpeakers] = useState(false);
   const [speakerQuantities, setSpeakerQuantities] = useState<Record<string, number>>({});
   const [subwooferQuantities, setSubwooferQuantities] = useState<Record<string, number>>({});
+
+  // Fonction pour mapper le nom du caisson dans l'assistant
+  const getSubwooferDisplayName = (subwoofer: AssistantProduct): string => {
+    const nameLower = subwoofer.name.toLowerCase();
+    // Si c'est le caisson de basse 18", afficher "FBT X-Lite 115A"
+    if (nameLower.includes('caisson de basse') && nameLower.includes('18')) {
+      return 'FBT X-Lite 115A';
+    }
+    // Sinon, retourner le nom original
+    return subwoofer.name;
+  };
   const [wiredMics, setWiredMics] = useState<AssistantProduct[]>([]);
   const [wirelessMics, setWirelessMics] = useState<AssistantProduct[]>([]);
   const [loadingMics, setLoadingMics] = useState(false);
@@ -888,15 +901,13 @@ export default function AssistantRefactored({
       }
     });
     
-    // Gérer les extras standards (micros depuis extras, technicien)
+    // Gérer les extras standards (technicien et accessoires du catalogue)
+    // NOTE: Les micros sont maintenant gérés via wiredMicQuantities/wirelessMicQuantities
+    // et sont ajoutés comme items séparés, donc on ne les ajoute plus via answers.extras
     if (answers.extras) {
       for (const extra of answers.extras) {
-        // Gérer les extras standards (micros, technicien)
-        if (extra === 'micros_filaire') {
-          addons.push({ id: 'micro-fil', name: 'Micro filaire', price: 10 });
-        } else if (extra === 'micros_sans_fil') {
-          addons.push({ id: 'micro-sans-fil', name: 'Micro sans fil', price: 20 });
-        } else if (extra === 'technicien') {
+        // Gérer le technicien
+        if (extra === 'technicien') {
           addons.push({ id: 'technicien', name: 'Technicien sur place', price: 150 });
         } 
         // Gérer les accessoires du catalogue (format: accessory_123)
@@ -921,6 +932,8 @@ export default function AssistantRefactored({
             accessoryItems.push(accessoryCartItem);
           }
         }
+        // Ignorer les anciens extras micros_filaire et micros_sans_fil car ils sont maintenant gérés
+        // via wiredMicQuantities et wirelessMicQuantities qui sont ajoutés comme items séparés
       }
     }
 
@@ -970,6 +983,30 @@ export default function AssistantRefactored({
       }
     });
 
+    // Calculer le prix avec majoration d'urgence si applicable
+    const isUrgentEvent = isUrgent(answers.startDate || '', answers.startTime);
+    const baseDailyPrice = recommendation.breakdown.base;
+    
+    // La majoration d'urgence est de 20% du total (base + delivery + extras)
+    // On calcule le total pour toute la période avant majoration
+    const totalBase = baseDailyPrice * rentalDays;
+    const totalDelivery = recommendation.breakdown.delivery || 0;
+    const totalExtras = recommendation.breakdown.extras || 0;
+    const totalBeforeUrgency = totalBase + totalDelivery + totalExtras;
+    
+    // Calculer la majoration d'urgence (20% du total)
+    const urgencySurcharge = isUrgentEvent ? Math.round(totalBeforeUrgency * 0.2) : 0;
+    
+    // Ajouter la majoration comme addon pour qu'elle soit visible et comptabilisée dans le panier
+    // La majoration s'applique au total (pack + livraison + extras), donc on l'ajoute comme addon au pack
+    if (isUrgentEvent && urgencySurcharge > 0) {
+      addons.push({
+        id: 'urgence-majoration',
+        name: language === 'fr' ? 'Majoration urgence (+20%)' : 'Urgency surcharge (+20%)',
+        price: urgencySurcharge
+      });
+    }
+
     // Créer l'item du panier avec tous les détails
     const cartItem: CartItem = {
       productId: `pack-${packInfo.id}`,
@@ -979,7 +1016,7 @@ export default function AssistantRefactored({
       rentalDays: rentalDays,
       startDate: startDate,
       endDate: endDate,
-      dailyPrice: recommendation.breakdown.base,
+      dailyPrice: baseDailyPrice, // Prix de base journalier (la majoration est dans les addons)
       deposit: packInfo.deposit,
       addons: addons,
       images: [packInfo.image],
@@ -992,7 +1029,8 @@ export default function AssistantRefactored({
         guests: answers.guests,
         environment: answers.environment,
         needs: answers.needs,
-        urgency: isUrgent(answers.startDate || '', answers.startTime),
+        urgency: isUrgentEvent,
+        urgencySurcharge: urgencySurcharge, // Montant de la majoration pour affichage
         breakdown: recommendation.breakdown,
       },
     };
@@ -1015,9 +1053,11 @@ export default function AssistantRefactored({
       grande: 160,
     };
     
-    // Prix d'installation selon le pack
+    // Prix d'installation selon le pack + équipements supplémentaires
     const packId = packIdMapping[recommendation.pack.id]?.id || 1;
     let installationPrice = 0;
+    
+    // Prix de base selon le pack
     switch (packId) {
       case 1: // Pack S Petit
         installationPrice = 60;
@@ -1031,6 +1071,39 @@ export default function AssistantRefactored({
       default:
         installationPrice = 0; // Sur devis pour pack XL
     }
+    
+    // Ajouter un supplément selon les équipements supplémentaires
+    // Compter les micros supplémentaires
+    const totalWiredMics = Object.values(wiredMicQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    const totalWirelessMics = Object.values(wirelessMicQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    const totalMics = totalWiredMics + totalWirelessMics;
+    
+    // Compter les enceintes supplémentaires
+    const totalSpeakers = Object.values(speakerQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    
+    // Compter les caissons supplémentaires
+    const totalSubwoofers = Object.values(subwooferQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    
+    // Calculer le supplément selon la complexité
+    let additionalComplexity = 0;
+    
+    // Chaque micro supplémentaire ajoute 5€
+    if (totalMics > 0) {
+      additionalComplexity += totalMics * 5;
+    }
+    
+    // Chaque enceinte supplémentaire ajoute 10€
+    if (totalSpeakers > 0) {
+      additionalComplexity += totalSpeakers * 10;
+    }
+    
+    // Chaque caisson supplémentaire ajoute 15€
+    if (totalSubwoofers > 0) {
+      additionalComplexity += totalSubwoofers * 15;
+    }
+    
+    // Ajouter le supplément à l'installation
+    installationPrice += additionalComplexity;
     
     // Ajouter la livraison si sélectionnée
     if (deliveryOptions.includes('livraison') && deliveryZone !== 'retrait') {
@@ -1161,15 +1234,21 @@ export default function AssistantRefactored({
     const error = errors[step.id];
 
     return (
-      <div className="space-y-8 animate-fadeIn">
-        {/* Titre et sous-titre améliorés */}
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#F2431E]/10 to-[#e27431]/10 rounded-2xl mb-4">
-            <span className="text-2xl">✨</span>
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">{step.title}</h2>
+      <div className={`space-y-8 ${mode === 'chatbox' ? 'space-y-4' : 'animate-fadeIn'}`}>
+        {/* Titre et sous-titre - adapté selon le mode */}
+        <div className={mode === 'chatbox' ? 'mb-3' : 'text-center'}>
+          {mode !== 'chatbox' && (
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#F2431E]/10 to-[#e27431]/10 rounded-2xl mb-4">
+              <span className="text-2xl">✨</span>
+            </div>
+          )}
+          <h2 className={`font-bold text-gray-900 mb-3 ${mode === 'chatbox' ? 'text-base' : 'text-3xl'}`}>
+            {step.title}
+          </h2>
           {step.subtitle && (
-            <p className="text-lg text-gray-600 max-w-md mx-auto leading-relaxed">{step.subtitle}</p>
+            <p className={`text-gray-600 ${mode === 'chatbox' ? 'text-xs mb-3' : 'text-lg max-w-md mx-auto leading-relaxed'}`}>
+              {step.subtitle}
+            </p>
           )}
         </div>
 
@@ -1378,7 +1457,7 @@ export default function AssistantRefactored({
                             <QuantitySelector
                               key={subwoofer.id}
                               productId={subwoofer.id}
-                              productName={subwoofer.name}
+                              productName={getSubwooferDisplayName(subwoofer)}
                               price={subwoofer.dailyPrice}
                               icon="🔊"
                               quantity={currentQuantity}
@@ -2029,8 +2108,8 @@ export default function AssistantRefactored({
                       <div className="w-1.5 h-1.5 bg-[#e27431] rounded-full" />
                       <span>
                         {language === 'fr' 
-                          ? `🔊 ${subwoofer.name} (${quantity}x)`
-                          : `🔊 ${subwoofer.name} (${quantity}x)`}
+                          ? `🔊 ${getSubwooferDisplayName(subwoofer)} (${quantity}x)`
+                          : `🔊 ${getSubwooferDisplayName(subwoofer)} (${quantity}x)`}
                       </span>
                     </li>
                   );
@@ -2082,6 +2161,57 @@ export default function AssistantRefactored({
 
   if (!isOpen) return null;
 
+  // Mode chatbox : rendu simplifié sans overlay ni modal
+  if (mode === 'chatbox') {
+    return (
+      <div className="w-full">
+        {/* Contenu de l'assistant adapté pour chatbox */}
+        <div className="space-y-3 sm:space-y-4">
+          {showSummary ? (
+            <div className="flex justify-start">
+              <div className="max-w-[90%] sm:max-w-[85%] bg-white rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-sm">
+                {renderSummary()}
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Question de l'assistant */}
+              <div className="flex justify-start">
+                <div className="max-w-[90%] sm:max-w-[85%] bg-white rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-sm">
+                  {renderStep()}
+                </div>
+              </div>
+              
+              {/* Navigation */}
+              <div className="flex gap-2 pt-2">
+                {currentStep > 0 && (
+                  <button
+                    onClick={handlePrevious}
+                    className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 active:bg-gray-300 transition-colors text-xs sm:text-sm touch-manipulation"
+                  >
+                    ← Précédent
+                  </button>
+                )}
+                <button
+                  onClick={handleNext}
+                  disabled={!canProceed}
+                  className={`flex-1 px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all touch-manipulation ${
+                    canProceed
+                      ? 'bg-[#F2431E] text-white hover:bg-[#E63A1A] active:bg-[#D32F0F]'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
+                  }`}
+                >
+                  {currentStep === STEPS.length - 1 ? '✨ Voir la recommandation' : 'Suivant →'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Mode modal : rendu complet avec overlay
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}

@@ -268,7 +268,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const total = items.reduce((sum, item) => {
       const itemTotal = item.dailyPrice * item.quantity * item.rentalDays;
       const addonsTotal = item.addons.reduce((addonSum, addon) => addonSum + addon.price, 0);
-      return sum + itemTotal + addonsTotal;
+      
+      // Ajouter la majoration d'urgence si présente (pour compatibilité avec anciens items)
+      // Note: La majoration devrait maintenant être incluse dans dailyPrice, mais on garde cette logique pour les anciens items
+      const urgencySurcharge = item.metadata?.urgencySurcharge || 0;
+      
+      return sum + itemTotal + addonsTotal + urgencySurcharge;
     }, 0);
 
     const depositTotal = items.reduce((sum, item) => {
