@@ -7,12 +7,15 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import UserIconWithName from '@/components/UserIconWithName';
 
 interface AdminSidebarProps {
   language?: 'fr' | 'en';
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
+export default function AdminSidebar({ language = 'fr', isOpen = false, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
   const { signOut } = useAuth();
   const router = useRouter();
@@ -106,10 +109,22 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
   }, [user]);
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
+    <>
+      {/* Overlay pour mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside
+        className={`fixed lg:sticky top-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col h-screen transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200">
-        <Link href="/admin" className="flex items-center gap-2">
+      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <Link href="/admin" className="flex items-center gap-2" onClick={onClose}>
           <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
             <span className="text-white text-xl">♪</span>
           </div>
@@ -118,12 +133,22 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
             <span className="text-xs text-gray-500 font-semibold">{currentTexts.adminPanel}</span>
           </div>
         </Link>
+        {/* Bouton fermer pour mobile */}
+        <button
+          onClick={onClose}
+          className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-4 overflow-y-auto">
         <Link
           href="/admin"
+          onClick={onClose}
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
             isActive('/admin')
               ? 'bg-[#F2431E] text-white'
@@ -137,6 +162,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
         </Link>
         <Link
           href="/admin/reservations"
+          onClick={onClose}
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors relative ${
             isActive('/admin/reservations')
               ? 'bg-[#F2431E] text-white'
@@ -156,6 +182,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
         </Link>
         <Link
           href="/admin/catalogue"
+          onClick={onClose}
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
             isActive('/admin/catalogue')
               ? 'bg-[#F2431E] text-white'
@@ -169,6 +196,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
         </Link>
         <Link
           href="/admin/packs"
+          onClick={onClose}
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
             isActive('/admin/packs')
               ? 'bg-[#F2431E] text-white'
@@ -182,6 +210,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
         </Link>
         <Link
           href="/admin/planning"
+          onClick={onClose}
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
             isActive('/admin/planning')
               ? 'bg-[#F2431E] text-white'
@@ -195,6 +224,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
         </Link>
         <Link
           href="/admin/clients"
+          onClick={onClose}
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
             isActive('/admin/clients')
               ? 'bg-[#F2431E] text-white'
@@ -208,6 +238,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
         </Link>
         <Link
           href="/admin/factures"
+          onClick={onClose}
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
             isActive('/admin/factures')
               ? 'bg-[#F2431E] text-white'
@@ -221,6 +252,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
         </Link>
         <Link
           href="/admin/contrats"
+          onClick={onClose}
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
             isActive('/admin/contrats')
               ? 'bg-[#F2431E] text-white'
@@ -234,6 +266,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
         </Link>
         <Link
           href="/admin/livraisons"
+          onClick={onClose}
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
             isActive('/admin/livraisons')
               ? 'bg-[#F2431E] text-white'
@@ -247,6 +280,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
         </Link>
         <Link
           href="/admin/parametres"
+          onClick={onClose}
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
             isActive('/admin/parametres')
               ? 'bg-[#F2431E] text-white'
@@ -263,14 +297,9 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
 
       {/* User Profile */}
       <div className="p-4 border-t border-gray-200">
-        <div className="flex items-center gap-3 mb-3 px-2">
-          <div className="w-10 h-10 rounded-full bg-[#F2431E] flex items-center justify-center text-white font-bold text-sm">
-            {getUserInitials()}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{getUserName()}</p>
-            <p className="text-xs text-gray-500">{currentTexts.administrator}</p>
-          </div>
+        <div className="flex flex-col items-center gap-2 mb-3 px-2">
+          <UserIconWithName iconSize="md" className="text-gray-700" />
+          <p className="text-xs text-gray-500 text-center">{currentTexts.administrator}</p>
         </div>
         <button
           onClick={async () => {
@@ -286,6 +315,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
         </button>
       </div>
     </aside>
+    </>
   );
 }
 

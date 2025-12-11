@@ -5,8 +5,15 @@ import { useEffect, useState } from 'react';
 
 export default function GoogleAnalytics() {
   const [shouldLoad, setShouldLoad] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     // Vérifier le consentement des cookies
     const cookieConsent = localStorage.getItem('cookieConsent');
     if (cookieConsent === 'accepted') {
@@ -31,9 +38,9 @@ export default function GoogleAnalytics() {
         window.removeEventListener('cookieConsentChanged', handleStorageChange);
       };
     }
-  }, []);
+  }, [mounted]);
 
-  if (!shouldLoad) return null;
+  if (!mounted || !shouldLoad) return null;
 
   return (
     <>

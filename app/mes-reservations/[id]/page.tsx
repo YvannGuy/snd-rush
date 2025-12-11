@@ -349,34 +349,62 @@ export default function ReservationDetailPage() {
               {/* États des lieux */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">{currentTexts.etatLieux}</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                   {etatLieux ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {etatLieux.status === 'livraison_complete' 
-                              ? currentTexts.etatLieuxLivraison
-                              : etatLieux.status === 'reprise_complete'
-                              ? currentTexts.etatLieuxReprise
-                              : currentTexts.etatLieuxEnAttente}
-                          </p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {formatDate(etatLieux.created_at)}
-                          </p>
+                    <div className="space-y-4">
+                      {/* Rapport de LIVRAISON */}
+                      {etatLieux.signature_avant && (
+                        <div className="bg-white rounded-lg p-4 border border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-semibold text-gray-900">
+                                {currentTexts.etatLieuxLivraison}
+                              </p>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {formatDate(etatLieux.created_at)}
+                              </p>
+                            </div>
+                            <a
+                              href={`/api/etat-lieux/download?reservationId=${reservationId}&type=livraison`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                              {currentTexts.downloadEtatLieux}
+                            </a>
+                          </div>
                         </div>
-                        <a
-                          href={`/api/etat-lieux/download?reservationId=${reservationId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          {currentTexts.downloadEtatLieux}
-                        </a>
-                      </div>
+                      )}
+                      
+                      {/* Rapport de RÉCUPÉRATION */}
+                      {etatLieux.signature_apres && (
+                        <div className="bg-white rounded-lg p-4 border border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-semibold text-gray-900">
+                                {currentTexts.etatLieuxReprise}
+                              </p>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {formatDate(etatLieux.updated_at || etatLieux.created_at)}
+                              </p>
+                            </div>
+                            <a
+                              href={`/api/etat-lieux/download?reservationId=${reservationId}&type=reprise`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                              {currentTexts.downloadEtatLieux}
+                            </a>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <p className="text-gray-600">{currentTexts.etatLieuxEnAttente}</p>

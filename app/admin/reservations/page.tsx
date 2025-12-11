@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 
@@ -15,11 +17,12 @@ export default function AdminReservationsPage() {
   const { user, loading } = useUser();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
   const [filteredReservations, setFilteredReservations] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -40,11 +43,39 @@ export default function AdminReservationsPage() {
           .select('*')
           .order('created_at', { ascending: false });
 
+        // Récupérer tous les user_profiles pour enrichir avec les noms/prénoms
+        const userIds = [...new Set((reservationsData || []).map((r: any) => r.user_id).filter(Boolean))];
+        const { data: userProfiles } = userIds.length > 0 ? await supabase
+          .from('user_profiles')
+          .select('user_id, first_name, last_name, email')
+          .in('user_id', userIds) : { data: [] };
+
+        // Créer un map pour accès rapide aux profils utilisateur
+        const userProfilesMap = new Map();
+        (userProfiles || []).forEach((profile: any) => {
+          userProfilesMap.set(profile.user_id, profile);
+        });
+
         // Enrichir avec les informations des orders
         const enrichedReservations = (reservationsData || []).map((reservation) => {
           let customerName = 'Client';
           let customerEmail = '';
           let order = null;
+
+          // D'abord, essayer de récupérer depuis user_profiles si user_id existe
+          if (reservation.user_id && userProfilesMap.has(reservation.user_id)) {
+            const profile = userProfilesMap.get(reservation.user_id);
+            if (profile.first_name && profile.last_name) {
+              customerName = `${profile.first_name} ${profile.last_name}`;
+            } else if (profile.first_name) {
+              customerName = profile.first_name;
+            } else if (profile.last_name) {
+              customerName = profile.last_name;
+            }
+            if (profile.email) {
+              customerEmail = profile.email;
+            }
+          }
 
           // Chercher l'order associé via sessionId dans notes
           if (reservation.notes) {
@@ -53,18 +84,26 @@ export default function AdminReservationsPage() {
               if (notesData.sessionId && allOrders) {
                 order = allOrders.find((o: any) => o.stripe_session_id === notesData.sessionId);
               }
-              // Utiliser les infos du notes si disponibles
-              if (notesData.customerName) customerName = notesData.customerName;
-              if (notesData.customerEmail) customerEmail = notesData.customerEmail;
+              // Utiliser les infos du notes si disponibles et que le nom n'a pas été trouvé
+              if (!customerName || customerName === 'Client') {
+                if (notesData.customerName) customerName = notesData.customerName;
+              }
+              if (!customerEmail && notesData.customerEmail) {
+                customerEmail = notesData.customerEmail;
+              }
             } catch (e) {
               // Ignorer les erreurs de parsing
             }
           }
 
-          // Si on a trouvé un order, utiliser ses infos
+          // Si on a trouvé un order, utiliser ses infos (priorité moindre que user_profiles)
           if (order) {
-            customerName = order.customer_name || customerName;
-            customerEmail = order.customer_email || customerEmail;
+            if (!customerName || customerName === 'Client') {
+              customerName = order.customer_name || customerName;
+            }
+            if (!customerEmail) {
+              customerEmail = order.customer_email || customerEmail;
+            }
           }
 
           return {
@@ -209,12 +248,34 @@ export default function AdminReservationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="flex flex-1">
-        <AdminSidebar language={language} />
-        <main className="flex-1 flex flex-col overflow-hidden">
-          <AdminHeader language={language} />
+      <Header language={language} onLanguageChange={setLanguage} />
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
+        <AdminSidebar language={language} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">
+            <Link href="/admin" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">SoundRush</span>
+            </Link>
+            <button 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Header Desktop */}
+          <div className="hidden lg:block">
+            <AdminHeader language={language} />
+          </div>
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
               <div className="mb-6">
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">{currentTexts.title}</h1>
                 <div className="flex gap-4 mb-4">
@@ -238,8 +299,8 @@ export default function AdminReservationsPage() {
               ) : (
                 <>
                   <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
+                    <div className="overflow-x-auto -mx-4 sm:mx-0">
+                      <table className="w-full min-w-[640px]">
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -328,6 +389,7 @@ export default function AdminReservationsPage() {
           <AdminFooter language={language} />
         </main>
       </div>
+      <Footer language={language} />
     </div>
   );
 }

@@ -11,8 +11,15 @@ export default function CookieBanner({ language }: CookieBannerProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [detectedLanguage, setDetectedLanguage] = useState<'fr' | 'en'>('fr');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     // Détecter la langue depuis localStorage ou depuis l'attribut lang du HTML
     const detectLanguage = () => {
       if (language) {
@@ -62,7 +69,7 @@ export default function CookieBanner({ language }: CookieBannerProps) {
       window.removeEventListener('languageChanged', handleLanguageChange);
       window.removeEventListener('storage', handleLanguageChange);
     };
-  }, [language]);
+  }, [language, mounted]);
 
   const handleAccept = () => {
     localStorage.setItem('cookieConsent', 'accepted');
@@ -80,7 +87,7 @@ export default function CookieBanner({ language }: CookieBannerProps) {
     setTimeout(() => setIsVisible(false), 300);
   };
 
-  if (!isVisible) return null;
+  if (!mounted || !isVisible) return null;
 
   const texts = {
     fr: {

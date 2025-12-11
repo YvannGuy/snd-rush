@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import DashboardSidebar from '@/components/DashboardSidebar';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { useUser } from '@/hooks/useUser';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
@@ -226,9 +228,11 @@ export default function MesReservationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex lg:flex-row">
-      <DashboardSidebar language={language} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
-      <main className="flex-1 overflow-y-auto w-full lg:w-auto">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Header language={language} onLanguageChange={setLanguage} />
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
+        <DashboardSidebar language={language} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+        <main className="flex-1 overflow-y-auto w-full lg:w-auto">
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
           <Link href="/dashboard" className="flex items-center gap-2">
@@ -595,6 +599,8 @@ export default function MesReservationsPage() {
           )}
         </div>
       </main>
+      </div>
+      <Footer language={language} />
     </div>
   );
 }

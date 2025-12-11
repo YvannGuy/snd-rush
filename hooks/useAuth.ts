@@ -199,6 +199,56 @@ export function useAuth() {
   };
 
 
+  const resetPasswordForEmail = async (email: string) => {
+    if (!supabase) {
+      setError('Supabase non configuré');
+      return { error: 'Supabase non configuré' };
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${getBaseUrl()}/reinitialiser-mot-de-passe`,
+      });
+
+      if (resetError) throw resetError;
+
+      return { data, error: null };
+    } catch (err: any) {
+      setError(err.message);
+      return { data: null, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    if (!supabase) {
+      setError('Supabase non configuré');
+      return { error: 'Supabase non configuré' };
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) throw updateError;
+
+      return { data, error: null };
+    } catch (err: any) {
+      setError(err.message);
+      return { data: null, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signOut = async () => {
     if (!supabase) return;
 
@@ -219,6 +269,8 @@ export function useAuth() {
     signInWithEmail,
     signUpWithEmail,
     signInWithMagicLink,
+    resetPasswordForEmail,
+    updatePassword,
     signOut,
   };
 }

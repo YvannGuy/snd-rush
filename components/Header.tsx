@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import SignModal from '@/components/auth/SignModal';
 import TopBanner from '@/components/TopBanner';
 import SearchBar from '@/components/SearchBar';
+import UserIconWithName from '@/components/UserIconWithName';
 // Icônes inline pour éviter la dépendance lucide-react
 const UserIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,9 +202,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                   aria-label={user ? texts[language].account : 'Se connecter'}
                 >
                   {user ? (
-                    <div className="w-8 h-8 rounded-full bg-[#F2431E] flex items-center justify-center text-white font-bold text-sm">
-                      {getUserInitials(user)}
-                    </div>
+                    <UserIconWithName iconSize="md" className="text-white" />
                   ) : (
                     <UserIcon className="w-6 h-6" />
                   )}
@@ -279,13 +278,11 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 {/* Auth Icon - Mobile */}
                 <button
                   onClick={() => user ? setIsProfileMenuOpen(!isProfileMenuOpen) : setIsSignModalOpen(true)}
-                  className="p-3 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative"
+                  className="p-2 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative"
                   aria-label={user ? texts[language].account : 'Se connecter'}
                 >
                   {user ? (
-                    <div className="w-6 h-6 rounded-full bg-[#F2431E] flex items-center justify-center text-white font-bold text-xs">
-                      {getUserInitials(user)}
-                    </div>
+                    <UserIconWithName iconSize="sm" className="text-white" />
                   ) : (
                     <UserIcon className="w-6 h-6" />
                   )}

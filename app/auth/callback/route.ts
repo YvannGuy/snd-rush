@@ -7,6 +7,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 export async function GET(req: NextRequest) {
   const requestUrl = new URL(req.url);
   const code = requestUrl.searchParams.get('code');
+  const type = requestUrl.searchParams.get('type');
 
   // Utiliser NEXT_PUBLIC_BASE_URL ou localhost correctement
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -33,7 +34,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL('/', redirectUrl));
     }
 
-    // Si succès, rediriger vers le dashboard
+    // Si c'est une réinitialisation de mot de passe, rediriger vers la page de réinitialisation
+    if (type === 'recovery') {
+      return NextResponse.redirect(new URL('/reinitialiser-mot-de-passe', redirectUrl));
+    }
+
+    // Sinon, rediriger vers le dashboard
     return NextResponse.redirect(new URL('/dashboard', redirectUrl));
   }
 

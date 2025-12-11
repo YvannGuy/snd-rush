@@ -170,10 +170,79 @@ function PageEtatMaterielContent() {
 
         if (!reservation) return;
 
-        // Extraire les infos client depuis les notes
+        // Récupérer les informations utilisateur depuis user_profiles si user_id existe
         let customerName = '';
         let customerEmail = '';
         let customerPhone = '';
+        
+        if (reservation.user_id && supabase) {
+          try {
+            const { data: userProfile } = await supabase
+              .from('user_profiles')
+              .select('first_name, last_name, email')
+              .eq('user_id', reservation.user_id)
+              .maybeSingle();
+            
+            if (userProfile) {
+              if (userProfile.first_name && userProfile.last_name) {
+                customerName = `${userProfile.first_name} ${userProfile.last_name}`;
+              } else if (userProfile.first_name) {
+                customerName = userProfile.first_name;
+              } else if (userProfile.last_name) {
+                customerName = userProfile.last_name;
+              }
+              if (userProfile.email) {
+                customerEmail = userProfile.email;
+              }
+            }
+          } catch (e) {
+            console.error('Erreur récupération user_profiles:', e);
+          }
+        }
+
+        // Récupérer l'order associé pour enrichir les informations
+        let order = null;
+        if (reservation.notes) {
+          try {
+            const notesData = JSON.parse(reservation.notes);
+            if (notesData.sessionId && supabase) {
+              const { data: orderData } = await supabase
+                .from('orders')
+                .select('customer_name, customer_email, customer_phone')
+                .eq('stripe_session_id', notesData.sessionId)
+                .maybeSingle();
+              order = orderData;
+            }
+            
+            // Utiliser les infos du notes si disponibles et que le nom n'a pas été trouvé
+            if (!customerName && notesData.customerName) {
+              customerName = notesData.customerName;
+            }
+            if (!customerEmail && notesData.customerEmail) {
+              customerEmail = notesData.customerEmail;
+            }
+            if (!customerPhone && notesData.customerPhone) {
+              customerPhone = notesData.customerPhone;
+            }
+          } catch (e) {
+            console.error('Erreur parsing notes:', e);
+          }
+        }
+
+        // Utiliser les infos de l'order si disponibles
+        if (order) {
+          if (!customerName && order.customer_name) {
+            customerName = order.customer_name;
+          }
+          if (!customerEmail && order.customer_email) {
+            customerEmail = order.customer_email;
+          }
+          if (!customerPhone && order.customer_phone) {
+            customerPhone = order.customer_phone;
+          }
+        }
+
+        // Extraire les autres infos depuis les notes
         let postalCode = '';
         let deliveryOption = '';
         let cartItems: any[] = [];
@@ -183,9 +252,6 @@ function PageEtatMaterielContent() {
         if (reservation.notes) {
           try {
             const notesData = JSON.parse(reservation.notes);
-            customerName = notesData.customerName || '';
-            customerEmail = notesData.customerEmail || '';
-            customerPhone = notesData.customerPhone || '';
             postalCode = notesData.postalCode || notesData.eventDetails?.postalCode || '';
             deliveryOption = notesData.deliveryOption || '';
             startTime = notesData.startTime || notesData.eventDetails?.startTime || '';
@@ -204,22 +270,34 @@ function PageEtatMaterielContent() {
           }
         }
 
-        // Formater le contact (email / téléphone)
-        let contactFormatted = '';
-        if (customerEmail && customerPhone) {
-          contactFormatted = `${customerEmail} / ${customerPhone}`;
-        } else if (customerEmail) {
-          contactFormatted = customerEmail;
-        } else if (customerPhone) {
-          contactFormatted = customerPhone;
-        }
+        // Formater les dates avec heures au format "12 décembre 2025 à 01:00"
+        const formatDateWithTime = (dateString: string, timeString: string) => {
+          if (!dateString) return '';
+          const date = new Date(dateString);
+          if (timeString) {
+            const [hours, minutes] = timeString.split(':');
+            if (hours && minutes) {
+              date.setHours(parseInt(hours), parseInt(minutes));
+            }
+          }
+          // Formater manuellement pour avoir "12 décembre 2025 à 01:00"
+          const day = date.getDate();
+          const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+          const month = monthNames[date.getMonth()];
+          const year = date.getFullYear();
+          const hours = date.getHours().toString().padStart(2, '0');
+          const minutes = date.getMinutes().toString().padStart(2, '0');
+          return `${day} ${month} ${year} à ${hours}:${minutes}`;
+        };
 
-        // Formater les heures depuis les dates et heures
+        const dateDebutFormatted = formatDateWithTime(reservation.start_date, startTime);
+        const dateFinFormatted = formatDateWithTime(reservation.end_date, endTime);
+
+        // Formater les heures simples pour les champs heureDepot/heureRecup
         const formatHeure = (dateString: string, timeString: string) => {
           if (!dateString) return '';
           const date = new Date(dateString);
           if (timeString) {
-            // Si on a une heure, l'ajouter
             const [hours, minutes] = timeString.split(':');
             if (hours && minutes) {
               date.setHours(parseInt(hours), parseInt(minutes));
@@ -241,6 +319,16 @@ function PageEtatMaterielContent() {
 
         // Pré-remplir les champs
         if (customerName) setClient(customerName);
+        
+        // Formater le contact avec email et téléphone séparés
+        let contactFormatted = '';
+        if (customerEmail && customerPhone) {
+          contactFormatted = `Email: ${customerEmail}\nTéléphone: ${customerPhone}`;
+        } else if (customerEmail) {
+          contactFormatted = `Email: ${customerEmail}`;
+        } else if (customerPhone) {
+          contactFormatted = `Téléphone: ${customerPhone}`;
+        }
         if (contactFormatted) setContact(contactFormatted);
         
         // Adresse seulement si c'est une livraison
@@ -249,12 +337,71 @@ function PageEtatMaterielContent() {
         }
         
         if (postalCode) setCodePostal(postalCode);
-        if (heureDepot) setHeureDepot(heureDepot);
-        if (heureRecup) setHeureRecup(heureRecup);
+        
+        // Utiliser les dates formatées avec heures pour affichage
+        if (dateDebutFormatted) {
+          setHeureDepot(dateDebutFormatted);
+        } else if (heureDepot) {
+          // Fallback si pas d'heure dans les notes
+          const date = new Date(reservation.start_date);
+          const day = date.getDate();
+          const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+          const month = monthNames[date.getMonth()];
+          const year = date.getFullYear();
+          setHeureDepot(`${day} ${month} ${year}`);
+        }
+        
+        if (dateFinFormatted) {
+          setHeureRecup(dateFinFormatted);
+        } else if (heureRecup) {
+          // Fallback si pas d'heure dans les notes
+          const date = new Date(reservation.end_date);
+          const day = date.getDate();
+          const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+          const month = monthNames[date.getMonth()];
+          const year = date.getFullYear();
+          setHeureRecup(`${day} ${month} ${year}`);
+        }
 
-        // Convertir les cartItems en équipements
+        // Convertir les équipements depuis le pack_id de la réservation et les cartItems
         const equipmentItems: ItemEtat[] = [];
         
+        // D'abord, charger le matériel du pack si pack_id existe
+        if (reservation.pack_id) {
+          // Mapper pack_id numérique vers les IDs de PACKS
+          const packIdMap: Record<number | string, string> = {
+            '1': 'pack_petit',
+            '2': 'pack_confort',
+            '3': 'pack_grand',
+            '4': 'pack_maxi',
+            'pack-1': 'pack_petit',
+            'pack-2': 'pack_confort',
+            'pack-3': 'pack_grand',
+            'pack-4': 'pack_maxi',
+          };
+          
+          const packIdStr = String(reservation.pack_id);
+          const packKey = packIdMap[packIdStr] || packIdMap[reservation.pack_id];
+          
+          if (packKey) {
+            const pack = PACKS[packKey.replace('pack_', '') as keyof typeof PACKS];
+            
+            if (pack) {
+              // Ajouter chaque élément de la composition du pack
+              pack.composition.forEach((item, index) => {
+                const uniqueId = `${packKey}-${index}-${Date.now()}`;
+                equipmentItems.push({
+                  id: uniqueId,
+                  nom: item,
+                  photosAvant: [],
+                  photosApres: []
+                });
+              });
+            }
+          }
+        }
+        
+        // Ensuite, ajouter les équipements supplémentaires depuis cartItems
         for (const cartItem of cartItems) {
           // Ignorer les items de livraison/installation
           if (cartItem.productName?.toLowerCase().includes('livraison') || 
@@ -265,36 +412,11 @@ function PageEtatMaterielContent() {
           const productName = cartItem.productName || 'Équipement';
           const quantity = cartItem.quantity || 1;
 
-          // Si c'est un pack, extraire la composition
+          // Si c'est un pack dans cartItems, on l'ignore car déjà traité via pack_id
           if (cartItem.productId?.startsWith('pack-')) {
-            const packId = cartItem.productId.replace('pack-', '');
-            const pack = Object.values(PACKS).find(p => p.id === packId);
-            
-            if (pack) {
-              // Ajouter chaque élément de la composition du pack
-              pack.composition.forEach((item, index) => {
-                const uniqueId = `${packId}-${index}-${Date.now()}`;
-                equipmentItems.push({
-                  id: uniqueId,
-                  nom: item,
-                  photosAvant: [],
-                  photosApres: []
-                });
-              });
-            } else {
-              // Pack non trouvé, ajouter le nom du pack
-              for (let i = 0; i < quantity; i++) {
-                const uniqueId = `${cartItem.productId}-${i}-${Date.now()}`;
-                equipmentItems.push({
-                  id: uniqueId,
-                  nom: productName,
-                  photosAvant: [],
-                  photosApres: []
-                });
-              }
-            }
+            continue; // Déjà traité via pack_id
           } else {
-            // Produit individuel ou accessoire
+            // Produit individuel ou accessoire (micros, enceintes supplémentaires, etc.)
             for (let i = 0; i < quantity; i++) {
               const uniqueId = `${cartItem.productId || 'item'}-${i}-${Date.now()}`;
               equipmentItems.push({
@@ -327,6 +449,10 @@ function PageEtatMaterielContent() {
           setItems(equipmentItems);
           setReservationLoaded(true);
           console.log(`✅ ${equipmentItems.length} équipement(s) chargé(s) depuis la réservation`);
+          console.log('📦 Équipements chargés:', equipmentItems.map(i => i.nom).join(', '));
+        } else {
+          console.warn('⚠️ Aucun équipement trouvé pour cette réservation');
+          setReservationLoaded(true);
         }
       } catch (error) {
         console.error('Erreur chargement données réservation:', error);
@@ -409,7 +535,7 @@ function PageEtatMaterielContent() {
     loadData();
   }, [isAuthenticated]);
 
-  // Sauvegarder automatiquement à chaque modification
+  // Sauvegarder automatiquement à chaque modification (IndexedDB + Supabase si reservationId)
   useEffect(() => {
     if (!isAuthenticated && !reservationId) return;
     
@@ -441,6 +567,7 @@ function PageEtatMaterielContent() {
         lastSaved: new Date().toISOString()
       };
       
+      // Sauvegarder dans IndexedDB
       try {
         const db = await openDB();
         const tx = db.transaction(['drafts'], 'readwrite');
@@ -463,10 +590,55 @@ function PageEtatMaterielContent() {
           console.warn('⚠️ Erreur sauvegarde:', err);
         }
       }
+
+      // Sauvegarder automatiquement dans Supabase si reservationId existe (même sans PDF généré)
+      if (reservationId && isSupabaseConfigured() && supabase && items.length > 0) {
+        try {
+          // Vérifier si un état des lieux existe déjà
+          const { data: existing } = await supabase
+            .from('etat_lieux')
+            .select('id')
+            .eq('reservation_id', reservationId)
+            .maybeSingle();
+
+          const dataToSaveSupabase = {
+            ...(existing ? { id: existing.id } : {}),
+            reservation_id: reservationId,
+            client: client || null,
+            contact: contact || null,
+            adresse: adresse || null,
+            code_postal: codePostal || null,
+            heure_depot: heureDepot || null,
+            heure_recuperation: heureRecup || null,
+            notes_internes: notes || null,
+            items: items, // Avec toutes les photos
+            signature_avant: signatureAvant || null,
+            signature_apres: signatureApres || null,
+            status: signatureApres ? 'reprise_complete' : (signatureAvant ? 'livraison_complete' : 'draft'),
+          };
+
+          if (existing) {
+            await supabase
+              .from('etat_lieux')
+              .update(dataToSaveSupabase)
+              .eq('id', existing.id);
+            console.log('✅ État des lieux mis à jour automatiquement dans Supabase');
+          } else {
+            await supabase
+              .from('etat_lieux')
+              .insert(dataToSaveSupabase);
+            console.log('✅ État des lieux créé automatiquement dans Supabase');
+          }
+        } catch (err) {
+          console.warn('⚠️ Erreur sauvegarde automatique Supabase:', err);
+        }
+      }
     };
     
-    saveData();
-  }, [isAuthenticated, client, contact, adresse, codePostal, heureDepot, heureRecup, notes, items, signatureAvant, signatureApres]);
+    // Délai pour éviter trop de sauvegardes
+    const timeoutId = setTimeout(saveData, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [isAuthenticated, reservationId, client, contact, adresse, codePostal, heureDepot, heureRecup, notes, items, signatureAvant, signatureApres]);
 
   // Avertir avant de quitter la page si des données sont présentes
   useEffect(() => {
@@ -1051,22 +1223,46 @@ function PageEtatMaterielContent() {
 
       // Sauvegarder dans Supabase si configuré
       if (isSupabaseConfigured() && supabase) {
-        const { data: savedData, error: dbError } = await supabase
-          .from('rapports_materiel')
-          .insert({
-            dossier_id: dossier.id,
-            client: dossier.client,
-            contact: dossier.contact,
-            adresse: dossier.adresse,
-            code_postal: dossier.codePostal,
-            heure_depot: heureDepot,
-            heure_recup: heureRecup,
-            notes: dossier.notes,
-            items: dossier.items,
-            signature_avant: signatureAvant,
-            signature_apres: null, // Pas encore de signature après
-            created_at: dossier.createdAt,
-          });
+        // Vérifier si un état des lieux existe déjà pour cette réservation
+        let etatLieuxId = null;
+        if (reservationId) {
+          const { data: existing } = await supabase
+            .from('etat_lieux')
+            .select('id')
+            .eq('reservation_id', reservationId)
+            .single();
+          
+          if (existing) {
+            etatLieuxId = existing.id;
+          }
+        }
+
+        const dataToSave = {
+          ...(etatLieuxId ? { id: etatLieuxId } : {}),
+          ...(reservationId ? { reservation_id: reservationId } : {}),
+          client: dossier.client,
+          contact: dossier.contact,
+          adresse: dossier.adresse,
+          code_postal: dossier.codePostal,
+          heure_depot: heureDepot,
+          heure_recuperation: heureRecup,
+          notes_internes: dossier.notes,
+          items: dossier.items,
+          signature_avant: signatureAvant,
+          signature_apres: null, // Pas encore de signature après
+          status: 'livraison_complete',
+        };
+
+        const { data: savedData, error: dbError } = etatLieuxId
+          ? await supabase
+              .from('etat_lieux')
+              .update(dataToSave)
+              .eq('id', etatLieuxId)
+              .select()
+          : await supabase
+              .from('etat_lieux')
+              .insert(dataToSave)
+              .select();
 
         if (dbError) {
           console.error('Erreur sauvegarde Supabase:', dbError);
@@ -1151,22 +1347,46 @@ function PageEtatMaterielContent() {
 
       // Sauvegarder dans Supabase si configuré (avec les DEUX signatures)
       if (isSupabaseConfigured() && supabase) {
-        const { data: savedData, error: dbError } = await supabase
-          .from('rapports_materiel')
-          .insert({
-            dossier_id: dossier.id,
-            client: dossier.client,
-            contact: dossier.contact,
-            adresse: dossier.adresse,
-            code_postal: dossier.codePostal,
-            heure_depot: heureDepot,
-            heure_recup: heureRecup,
-            notes: dossier.notes,
-            items: dossier.items,
-            signature_avant: signatureAvant,
-            signature_apres: signatureApres,
-            created_at: dossier.createdAt,
-          });
+        // Vérifier si un état des lieux existe déjà pour cette réservation
+        let etatLieuxId = null;
+        if (reservationId) {
+          const { data: existing } = await supabase
+            .from('etat_lieux')
+            .select('id')
+            .eq('reservation_id', reservationId)
+            .single();
+          
+          if (existing) {
+            etatLieuxId = existing.id;
+          }
+        }
+
+        const dataToSave = {
+          ...(etatLieuxId ? { id: etatLieuxId } : {}),
+          ...(reservationId ? { reservation_id: reservationId } : {}),
+          client: dossier.client,
+          contact: dossier.contact,
+          adresse: dossier.adresse,
+          code_postal: dossier.codePostal,
+          heure_depot: heureDepot,
+          heure_recuperation: heureRecup,
+          notes_internes: dossier.notes,
+          items: dossier.items,
+          signature_avant: signatureAvant,
+          signature_apres: signatureApres,
+          status: 'reprise_complete',
+        };
+
+        const { data: savedData, error: dbError } = etatLieuxId
+          ? await supabase
+              .from('etat_lieux')
+              .update(dataToSave)
+              .eq('id', etatLieuxId)
+              .select()
+          : await supabase
+              .from('etat_lieux')
+              .insert(dataToSave)
+              .select();
 
         if (dbError) {
           console.error('Erreur sauvegarde Supabase:', dbError);
@@ -1463,11 +1683,11 @@ function PageEtatMaterielContent() {
             />
           </label>
           <label>Contact (email / tél.) <span style={{ color: '#ef4444' }}>*</span>
-            <input 
-              style={styles.input} 
+            <textarea 
+              style={{ ...styles.input, minHeight: '60px', resize: 'vertical' }} 
               value={contact} 
               onChange={e => setContact(e.target.value)}
-              placeholder="contact@example.com ou 06..." 
+              placeholder="Email: email@exemple.com&#10;Téléphone: 06 12 34 56 78" 
             />
           </label>
           <label>Adresse
@@ -1488,20 +1708,22 @@ function PageEtatMaterielContent() {
               placeholder="Ex: 75001 (optionnel)" 
             />
           </label>
-          <label>Heure de dépôt (livraison) <span style={{ color: '#ef4444' }}>*</span>
+          <label>Date de début <span style={{ color: '#ef4444' }}>*</span>
             <input 
-              type="datetime-local" 
+              type="text" 
               style={styles.input} 
               value={heureDepot} 
-              onChange={e => setHeureDepot(e.target.value)} 
+              onChange={e => setHeureDepot(e.target.value)}
+              placeholder="Ex: 12 décembre 2025 à 01:00"
             />
           </label>
-          <label>Heure de récupération <span style={{ color: '#ef4444', fontSize: 11 }}>(* pour PDF final)</span>
+          <label>Date de fin <span style={{ color: '#ef4444', fontSize: 11 }}>(* pour PDF final)</span>
             <input 
-              type="datetime-local" 
+              type="text" 
               style={styles.input} 
               value={heureRecup} 
-              onChange={e => setHeureRecup(e.target.value)} 
+              onChange={e => setHeureRecup(e.target.value)}
+              placeholder="Ex: 13 décembre 2025 à 01:00"
             />
           </label>
         </div>
@@ -1518,9 +1740,27 @@ function PageEtatMaterielContent() {
       </div>
 
       <div style={styles.card}>
-        <h2 style={styles.h2}>Ajouter du matériel</h2>
+        <h2 style={styles.h2}>Équipement</h2>
+        {items.length > 0 && (
+          <div style={{ 
+            marginBottom: 16, 
+            padding: 12, 
+            background: '#f0f9ff', 
+            border: '1px solid #bae6fd', 
+            borderRadius: 8 
+          }}>
+            <p style={{ fontSize: 13, color: '#0369a1', marginBottom: 8, fontWeight: 600 }}>
+              ✅ {items.length} équipement(s) chargé(s) depuis la réservation :
+            </p>
+            <ul style={{ fontSize: 13, color: '#0369a1', margin: 0, paddingLeft: 20 }}>
+              {items.map((item, idx) => (
+                <li key={item.id}>{item.nom}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <p style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>
-          💡 Vous pouvez ajouter plusieurs fois le même équipement
+          💡 Vous pouvez ajouter du matériel supplémentaire si nécessaire
         </p>
         <input
           placeholder="Rechercher dans le catalogue (ex: FBT, Mac Mah, micro...)"

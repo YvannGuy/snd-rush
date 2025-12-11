@@ -512,13 +512,13 @@ export default function SignModal({
     
     if (!result.error) {
       setSignUpSuccess(true);
-      // Ne pas fermer immédiatement pour afficher le message
-      // Si l'utilisateur a une session, on peut appeler onSuccess après un délai
-      if (result.data?.session && onSuccess) {
-        setTimeout(() => {
-          onSuccess();
-        }, 2000);
-      }
+      // Fermer le modal et rediriger vers la page d'accueil après 3 secondes
+      setTimeout(() => {
+        onClose();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      }, 3000);
     }
   };
 
@@ -605,12 +605,14 @@ export default function SignModal({
               <button
                 onClick={() => {
                   setSignUpSuccess(false);
-                  onSuccess?.();
                   onClose();
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/';
+                  }
                 }}
                 className="mt-2 w-full bg-[#F2431E] text-white py-2 px-4 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
               >
-                {language === 'fr' ? 'Compris' : 'Got it'}
+                {language === 'fr' ? 'Retour à l\'accueil' : 'Back to home'}
               </button>
             </div>
           )}
@@ -646,6 +648,15 @@ export default function SignModal({
                   className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-[#F2431E] focus:outline-none"
                   placeholder="••••••••"
                 />
+              </div>
+              <div className="text-right">
+                <Link
+                  href="/mot-de-passe-oublie"
+                  onClick={() => onClose()}
+                  className="text-sm text-[#F2431E] hover:text-[#E63A1A] font-medium"
+                >
+                  {language === 'fr' ? 'Mot de passe oublié ?' : 'Forgot password?'}
+                </Link>
               </div>
               <button
                 type="submit"

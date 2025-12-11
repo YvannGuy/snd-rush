@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import DashboardSidebar from '@/components/DashboardSidebar';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { useUser } from '@/hooks/useUser';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
@@ -118,26 +120,30 @@ export default function MesLivraisonsPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
-        <DashboardSidebar language={language} />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-md mx-auto px-6">
-            <div className="text-6xl mb-6">🔒</div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Connexion requise</h1>
-            <p className="text-xl text-gray-600 mb-8">Connectez-vous pour voir vos livraisons.</p>
-            <button
-              onClick={() => setIsSignModalOpen(true)}
-              className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
-            >
-              Se connecter
-            </button>
-          </div>
-        </main>
-        <SignModal
-          isOpen={isSignModalOpen}
-          onClose={() => setIsSignModalOpen(false)}
-          language={language}
-        />
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header language={language} onLanguageChange={setLanguage} />
+        <div className="flex flex-1 pt-[112px]">
+          <DashboardSidebar language={language} />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center max-w-md mx-auto px-6">
+              <div className="text-6xl mb-6">🔒</div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">Connexion requise</h1>
+              <p className="text-xl text-gray-600 mb-8">Connectez-vous pour voir vos livraisons.</p>
+              <button
+                onClick={() => setIsSignModalOpen(true)}
+                className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
+              >
+                Se connecter
+              </button>
+            </div>
+          </main>
+          <SignModal
+            isOpen={isSignModalOpen}
+            onClose={() => setIsSignModalOpen(false)}
+            language={language}
+          />
+        </div>
+        <Footer language={language} />
       </div>
     );
   }
@@ -148,7 +154,9 @@ export default function MesLivraisonsPage() {
   const paginatedReservations = reservations.slice(startIndex, endIndex);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex lg:flex-row">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Header language={language} onLanguageChange={setLanguage} />
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
       <DashboardSidebar language={language} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
       <main className="flex-1 overflow-y-auto w-full lg:w-auto">
         {/* Mobile Header */}
@@ -315,6 +323,8 @@ export default function MesLivraisonsPage() {
           )}
         </div>
       </main>
+      </div>
+      <Footer language={language} />
     </div>
   );
 }

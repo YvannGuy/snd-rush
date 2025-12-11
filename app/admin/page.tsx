@@ -8,6 +8,8 @@ import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 
@@ -17,6 +19,7 @@ export default function AdminDashboardPage() {
   const { signOut } = useAuth();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Stats
   const [stats, setStats] = useState({
@@ -441,64 +444,87 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="flex flex-1">
+      {/* Header */}
+      <Header language={language} onLanguageChange={setLanguage} />
+
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
         {/* Sidebar */}
-        <AdminSidebar language={language} />
+        <AdminSidebar language={language} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Header */}
-          <AdminHeader language={language} />
+        <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">
+            <Link href="/admin" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">SoundRush</span>
+            </Link>
+            <button 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Header Desktop */}
+          <div className="hidden lg:block">
+            <AdminHeader language={language} />
+          </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
               {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
-                  <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-[#F2431E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-3 sm:mb-4">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#F2431E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold text-gray-900 mb-1">{stats.reservationsToday}</div>
-                  <div className="text-gray-600">{currentTexts.reservationsToday}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats.reservationsToday}</div>
+                  <div className="text-sm sm:text-base text-gray-600">{currentTexts.reservationsToday}</div>
                 </div>
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-3 sm:mb-4">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold text-gray-900 mb-1">{stats.revenueThisWeek.toLocaleString('fr-FR')}€</div>
-                  <div className="text-gray-600">{currentTexts.revenueThisWeek}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats.revenueThisWeek.toLocaleString('fr-FR')}€</div>
+                  <div className="text-sm sm:text-base text-gray-600">{currentTexts.revenueThisWeek}</div>
                 </div>
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center mb-3 sm:mb-4">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold text-gray-900 mb-1">{stats.equipmentOut}/{stats.totalEquipment}</div>
-                  <div className="text-gray-600">{currentTexts.equipmentOut}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats.equipmentOut}/{stats.totalEquipment}</div>
+                  <div className="text-sm sm:text-base text-gray-600">{currentTexts.equipmentOut}</div>
                 </div>
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
-                  <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-xl flex items-center justify-center mb-3 sm:mb-4">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                   </div>
-                  <div className="text-3xl font-bold text-gray-900 mb-1">{stats.lateReturns}</div>
-                  <div className="text-gray-600">{currentTexts.lateReturns}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats.lateReturns}</div>
+                  <div className="text-sm sm:text-base text-gray-600">{currentTexts.lateReturns}</div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 {/* Réservations du jour */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-gray-900">{currentTexts.reservationsOfDay}</h2>
-                    <Link href="/admin/reservations" className="text-[#F2431E] font-semibold hover:underline text-sm">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">{currentTexts.reservationsOfDay}</h2>
+                    <Link href="/admin/reservations" className="text-[#F2431E] font-semibold hover:underline text-xs sm:text-sm">
                       {currentTexts.viewAll}
                     </Link>
                   </div>
@@ -539,8 +565,8 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Actions rapides */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">{currentTexts.quickActions}</h2>
+                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">{currentTexts.quickActions}</h2>
                   <div className="space-y-3">
                     <Link
                       href="/admin/catalogue/nouveau"
@@ -610,11 +636,11 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 {/* État du matériel */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-gray-900">{currentTexts.equipmentStatus}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">{currentTexts.equipmentStatus}</h2>
                     <Link href="/admin/planning" className="text-[#F2431E] font-semibold hover:underline text-sm">
                       {currentTexts.viewPlanning}
                     </Link>
@@ -669,9 +695,9 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Clients récents */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-gray-900">{currentTexts.recentClients}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">{currentTexts.recentClients}</h2>
                     <Link href="/admin/clients" className="text-[#F2431E] font-semibold hover:underline text-sm">
                       {currentTexts.viewAllClients}
                     </Link>
@@ -706,9 +732,9 @@ export default function AdminDashboardPage() {
               </div>
 
               {/* Planning des réservations */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">{currentTexts.reservationPlanning}</h2>
+              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">{currentTexts.reservationPlanning}</h2>
                   <div className="flex items-center gap-4">
                     <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                       <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -725,24 +751,24 @@ export default function AdminDashboardPage() {
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1 sm:gap-2">
                   {/* Jours de la semaine */}
                   {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
-                    <div key={day} className="text-center text-sm font-semibold text-gray-600 py-2">
+                    <div key={day} className="text-center text-xs sm:text-sm font-semibold text-gray-600 py-1 sm:py-2">
                       {day}
                     </div>
                   ))}
                   {/* Jours du mois */}
                   {calendar.days.map((day, index) => {
                     if (day === null) {
-                      return <div key={`empty-${index}`} className="h-12"></div>;
+                      return <div key={`empty-${index}`} className="h-8 sm:h-12"></div>;
                     }
                     const hasReservation = calendar.daysWithReservations.has(day);
                     const isToday = day === currentDay;
                     return (
                       <div
                         key={day}
-                        className={`h-12 flex items-center justify-center rounded-lg text-sm font-semibold ${
+                        className={`h-8 sm:h-12 flex items-center justify-center rounded-lg text-xs sm:text-sm font-semibold ${
                           isToday
                             ? 'bg-[#F2431E] text-white'
                             : hasReservation
@@ -759,10 +785,13 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Footer */}
+          {/* Admin Footer */}
           <AdminFooter language={language} />
         </main>
       </div>
+
+      {/* Footer principal */}
+      <Footer language={language} />
     </div>
   );
 }

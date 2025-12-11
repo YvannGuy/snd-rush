@@ -81,8 +81,13 @@ export default function Home() {
             console.log('✅ Session créée avec succès');
             // Nettoyer le hash de l'URL
             window.history.replaceState(null, '', window.location.pathname);
-            // Rediriger vers le dashboard
-            router.push('/dashboard');
+            // Si c'est une réinitialisation de mot de passe, rediriger vers la page de réinitialisation
+            if (type === 'recovery') {
+              router.push('/reinitialiser-mot-de-passe');
+            } else {
+              // Sinon, rediriger vers le dashboard
+              router.push('/dashboard');
+            }
           }
         } catch (err: any) {
           console.error('Erreur lors du traitement des tokens:', err);

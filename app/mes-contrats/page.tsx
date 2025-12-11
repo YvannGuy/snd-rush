@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import DashboardSidebar from '@/components/DashboardSidebar';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { useUser } from '@/hooks/useUser';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
@@ -155,7 +157,9 @@ export default function MesContratsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex lg:flex-row">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Header language={language} onLanguageChange={setLanguage} />
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
       <DashboardSidebar 
         language={language} 
         isOpen={isMobileMenuOpen} 
@@ -385,6 +389,8 @@ export default function MesContratsPage() {
           )}
         </div>
       </main>
+      </div>
+      <Footer language={language} />
     </div>
   );
 }

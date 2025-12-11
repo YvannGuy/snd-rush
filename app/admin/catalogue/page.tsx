@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 
@@ -15,6 +17,7 @@ export default function AdminCataloguePage() {
   const { user, loading } = useUser();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,17 +145,38 @@ export default function AdminCataloguePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="flex flex-1">
-        <AdminSidebar language={language} />
-        <main className="flex-1 flex flex-col overflow-hidden">
-          <AdminHeader language={language} />
+      <div className="flex flex-1 lg:flex-row">
+        <AdminSidebar language={language} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">
+            <Link href="/admin" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">SoundRush</span>
+            </Link>
+            <button 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Header Desktop */}
+          <div className="hidden lg:block">
+            <AdminHeader language={language} />
+          </div>
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
-              <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-gray-900">{currentTexts.title}</h1>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{currentTexts.title}</h1>
                 <Link
                   href="/admin/catalogue/nouveau"
-                  className="bg-[#F2431E] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors"
+                  className="bg-[#F2431E] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors text-sm sm:text-base whitespace-nowrap"
                 >
                   {currentTexts.addProduct}
                 </Link>
@@ -177,7 +201,7 @@ export default function AdminCataloguePage() {
                   <div className="mb-4 text-sm text-gray-600">
                     {filteredProducts.length} {filteredProducts.length === 1 ? 'produit' : 'produits'}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {paginatedProducts.map((product) => (
                     <div key={product.id} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
                       <div className="mb-4 flex-shrink-0">
@@ -253,6 +277,7 @@ export default function AdminCataloguePage() {
           <AdminFooter language={language} />
         </main>
       </div>
+      <Footer language={language} />
     </div>
   );
 }

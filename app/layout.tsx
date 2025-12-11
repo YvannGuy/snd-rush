@@ -181,7 +181,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <head>
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />
@@ -208,7 +208,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {/* Google Analytics - Chargé conditionnellement selon le consentement */}
         <GoogleAnalytics />
 

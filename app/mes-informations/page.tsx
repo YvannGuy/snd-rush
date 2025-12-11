@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
 import SignModal from '@/components/auth/SignModal';
 import DashboardSidebar from '@/components/DashboardSidebar';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -23,6 +25,7 @@ export default function MesInformationsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [confirmDeleteChecked, setConfirmDeleteChecked] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Rediriger vers l'accueil si l'utilisateur n'est pas connecté
   useEffect(() => {
@@ -220,14 +223,38 @@ export default function MesInformationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <DashboardSidebar language={language} />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Header language={language} onLanguageChange={setLanguage} />
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
+        {/* Sidebar */}
+        <DashboardSidebar 
+        language={language} 
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 py-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-8">{currentTexts.title}</h1>
+      <main className="flex-1 overflow-y-auto w-full lg:w-auto">
+        {/* Mobile Header */}
+        <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+              <span className="text-white text-xl">♪</span>
+            </div>
+            <span className="text-xl font-bold text-gray-900">SoundRush</span>
+          </Link>
+          <button 
+            onClick={() => setIsSidebarOpen(true)} 
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">{currentTexts.title}</h1>
 
           <div className="bg-white rounded-2xl p-8 shadow-sm">
             <div className="space-y-6">
@@ -365,6 +392,8 @@ export default function MesInformationsPage() {
         onClose={() => setIsSignModalOpen(false)}
         language={language}
       />
+      </div>
+      <Footer language={language} />
     </div>
   );
 }

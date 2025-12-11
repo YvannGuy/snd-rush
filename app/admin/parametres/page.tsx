@@ -7,8 +7,11 @@ import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
 import { useAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
 
 export default function AdminParametresPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -16,6 +19,7 @@ export default function AdminParametresPage() {
   const { signOut } = useAuth();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalPacks: 0,
@@ -142,13 +146,35 @@ export default function AdminParametresPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="flex flex-1">
-        <AdminSidebar language={language} />
-        <main className="flex-1 flex flex-col overflow-hidden">
-          <AdminHeader language={language} />
+      <Header language={language} onLanguageChange={setLanguage} />
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
+        <AdminSidebar language={language} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">
+            <Link href="/admin" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">SoundRush</span>
+            </Link>
+            <button 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Header Desktop */}
+          <div className="hidden lg:block">
+            <AdminHeader language={language} />
+          </div>
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-6">{currentTexts.title}</h1>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">{currentTexts.title}</h1>
               
               {/* Statistiques */}
               <div className="mb-8">
@@ -214,6 +240,7 @@ export default function AdminParametresPage() {
           <AdminFooter language={language} />
         </main>
       </div>
+      <Footer language={language} />
     </div>
   );
 }

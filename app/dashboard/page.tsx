@@ -5,6 +5,8 @@ import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import SignModal from '@/components/auth/SignModal';
 import DashboardSidebar from '@/components/DashboardSidebar';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -376,16 +378,20 @@ export default function DashboardPage() {
   const upcomingReservations = getUpcomingReservations();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <DashboardSidebar 
-        language={language} 
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-      />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
+      <Header language={language} onLanguageChange={setLanguage} />
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto w-full lg:w-auto">
+      <div className="flex flex-1 pt-[112px]">
+        {/* Sidebar */}
+        <DashboardSidebar 
+          language={language} 
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto w-full lg:w-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           {/* Header Mobile-First */}
           <div className="flex items-center justify-between mb-4 sm:mb-6 lg:mb-8">
@@ -689,6 +695,10 @@ export default function DashboardPage() {
         onClose={() => setIsSignModalOpen(false)}
         language={language}
       />
+      </div>
+
+      {/* Footer */}
+      <Footer language={language} />
     </div>
   );
 }
