@@ -14,6 +14,9 @@ export interface Answers {
   endDate?: string; // format YYYY-MM-DD
   startTime?: string; // format HH:MM
   endTime?: string; // format HH:MM
+  micros?: 'none' | 'one' | 'multiple'; // Nouveau : quantité de micros
+  morePower?: boolean; // Nouveau : puissance renforcée (enceintes/caissons supplémentaires)
+  deliveryInstallation?: boolean; // Nouveau : livraison et installation
 }
 
 export interface Pack {
@@ -202,12 +205,12 @@ export const PRICING_CONFIG: Pricing = {
   urgencyMultiplier: 1.2,
 };
 
-// Configuration des étapes
+// Configuration des étapes selon la méthode de conseil PRO
 export const STEPS: Step[] = [
   {
     id: 'eventType',
-    title: 'Quel type d\'événement organisez-vous ?',
-    subtitle: 'Votre réponse nous aide à recommander le pack le plus adapté.',
+    title: '🎧 Bonjour et bienvenue chez SoundRush Paris',
+    subtitle: 'Je vous aide à choisir la sonorisation idéale pour votre événement, même si vous n\'êtes pas du tout expert.\n\n👉 Quel type d\'événement organisez-vous ?',
     type: 'single',
     options: [
       { value: 'mariage', label: 'Mariage', icon: '💒' },
@@ -222,8 +225,8 @@ export const STEPS: Step[] = [
   },
   {
     id: 'guests',
-    title: 'Combien d\'invités prévoyez-vous ?',
-    subtitle: 'Plus le nombre d\'invités est élevé, plus il faut de puissance sonore.',
+    title: 'Super 👍',
+    subtitle: 'Combien de personnes environ seront présentes ?',
     type: 'single',
     options: [
       { value: '0-50', label: '0-50 personnes', icon: '👥' },
@@ -232,6 +235,87 @@ export const STEPS: Step[] = [
       { value: '200+', label: '200+ personnes', icon: '👥👥👥👥' },
     ],
     required: true,
+  },
+  {
+    id: 'environment',
+    title: 'Très bien.',
+    subtitle: 'L\'événement aura lieu en intérieur ou en extérieur ?',
+    type: 'single',
+    options: [
+      { value: 'interieur', label: 'En intérieur', icon: '🏠' },
+      { value: 'exterieur', label: 'En extérieur', icon: '🌳' },
+    ],
+    required: true,
+  },
+  {
+    id: 'startDate',
+    title: 'Pour bien organiser votre location, pouvez-vous me préciser la date de début de location ?',
+    subtitle: 'Date de début de la location du matériel.',
+    type: 'date',
+    required: true,
+    validation: (value: string) => {
+      const date = new Date(value);
+      const today = new Date();
+      const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      return dateOnly >= todayOnly;
+    },
+  },
+  {
+    id: 'endDate',
+    title: 'Quelle est la date de fin de location ?',
+    subtitle: 'Date de fin de la location du matériel (peut être la même que la date de début).',
+    type: 'date',
+    required: true,
+    validation: (value: string, allAnswers?: any) => {
+      if (!value) return false;
+      const endDate = new Date(value);
+      const startDate = allAnswers?.startDate ? new Date(allAnswers.startDate) : new Date();
+      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      return endDateOnly >= startDateOnly;
+    },
+  },
+  {
+    id: 'startTime',
+    title: 'Merci 🙏',
+    subtitle: 'À quelle heure commence l\'événement ?',
+    type: 'time',
+    required: false,
+  },
+  {
+    id: 'endTime',
+    title: '',
+    subtitle: 'Heure de fin estimée',
+    type: 'time',
+    required: false,
+  },
+  {
+    id: 'micros',
+    title: 'Y aura-t-il des discours ou annonces pendant l\'événement ?',
+    subtitle: 'Sélectionnez les micros dont vous avez besoin. Nous recommandons au moins 1 micro pour les mariages, églises et événements corporate.',
+    type: 'multiple', // Changé en 'multiple' pour permettre l'affichage des cartes
+    options: [], // Les options seront chargées dynamiquement depuis Supabase
+    required: false,
+  },
+  {
+    id: 'morePower',
+    title: 'Pour ce type d\'événement, souhaitez-vous un rendu plus puissant, avec plus de volume et de basses, surtout pour l\'ambiance dansante ?',
+    subtitle: '👉 Pour éviter toute frustration sur le volume ou les basses, voici ce que nous recommandons :',
+    type: 'multiple', // Changé en 'multiple' pour permettre l'affichage des cartes
+    options: [], // Les options seront chargées dynamiquement depuis Supabase
+    required: false,
+  },
+  {
+    id: 'deliveryInstallation',
+    title: 'Pour plus de confort le jour J, souhaitez-vous la livraison et l\'installation du matériel ?',
+    subtitle: '',
+    type: 'single',
+    options: [
+      { value: 'yes', label: 'Oui, livraison et installation', icon: '🚚' },
+      { value: 'no', label: 'Non, retrait sur place', icon: '🚗' },
+    ],
+    required: false,
   },
   {
     id: 'zone',
@@ -244,87 +328,6 @@ export const STEPS: Step[] = [
       { value: 'grande', label: 'Grande couronne (77, 78, 91, 95)', icon: '🌆', price: 156 },
       { value: 'retrait', label: 'Retrait sur place', icon: '🚗', price: 0 },
     ],
-    required: true,
-  },
-  {
-    id: 'environment',
-    title: 'Votre événement se déroule-t-il ?',
-    type: 'single',
-    options: [
-      { value: 'interieur', label: 'En intérieur', icon: '🏠' },
-      { value: 'exterieur', label: 'En extérieur', icon: '🌳' },
-    ],
-    required: true,
-  },
-  {
-    id: 'needs',
-    title: 'Quels sont vos besoins ?',
-    type: 'multiple',
-    options: [
-      { value: 'son', label: 'Son', icon: '🔊' },
-      { value: 'lumiere', label: 'Lumière', icon: '💡' },
-    ],
-    required: true,
-  },
-  {
-    id: 'extras',
-    title: 'Options supplémentaires',
-    type: 'multiple',
-    options: [
-      { value: 'micros_filaire', label: 'Micros filaires (+10 €)', icon: '🎤', price: 10, allowMultiple: true },
-      { value: 'micros_sans_fil', label: 'Micros sans fil (+20 €)', icon: '🎤', price: 20, allowMultiple: true },
-      { value: 'technicien', label: 'Technicien sur place (+150 €)', icon: '👨‍🔧', price: 150 },
-    ],
-    required: false,
-  },
-  {
-    id: 'startDate',
-    title: 'Quelle est la date de début de votre événement ?',
-    subtitle: 'Date de début de la location du matériel.',
-    type: 'date',
-    required: true,
-    validation: (value: string) => {
-      const date = new Date(value);
-      const today = new Date();
-      // Comparer seulement les dates (sans l'heure) pour permettre la sélection d'aujourd'hui
-      const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      return dateOnly >= todayOnly;
-    },
-  },
-  {
-    id: 'endDate',
-    title: 'Quelle est la date de fin de votre événement ?',
-    subtitle: 'Date de fin de la location du matériel.',
-    type: 'date',
-    required: true,
-    validation: (value: string, allAnswers?: any) => {
-      if (!value) return false;
-      const endDate = new Date(value);
-      const startDate = allAnswers?.startDate ? new Date(allAnswers.startDate) : null;
-      if (startDate) {
-        const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-        const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-        return endDateOnly >= startDateOnly;
-      }
-      const today = new Date();
-      const dateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      return dateOnly >= todayOnly;
-    },
-  },
-  {
-    id: 'startTime',
-    title: 'À quelle heure commence votre événement ?',
-    subtitle: 'Heure de début. Majoration d\'urgence +20% : événement dans moins de 2h, dimanche (toute la journée), ou samedi à partir de 15h.',
-    type: 'text',
-    required: false,
-  },
-  {
-    id: 'endTime',
-    title: 'À quelle heure se termine votre événement ?',
-    subtitle: 'Heure de fin de l\'événement.',
-    type: 'text',
-    required: false,
+    required: false, // Devient optionnel si deliveryInstallation = 'no'
   },
 ];

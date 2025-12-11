@@ -89,29 +89,106 @@ export function isUrgent(dateStr: string, timeStr?: string): boolean {
 }
 
 /**
- * Recommande un pack basé sur les réponses (nouvelle logique avec packs fixes + à-la-carte)
+ * Recommande un pack basé sur les réponses selon la méthode PRO
+ * Règles PRO :
+ * - Toujours proposer micros pour mariage/église/conférence
+ * - Proposer plus de puissance si extérieur, musique festive, DJ, grande salle
  */
 export function recommendPack(answers: Answers): Recommendation | null {
-  if (!answers.guests || !answers.needs) return null;
+  if (!answers.guests) return null;
+  
+  // Par défaut, on assume que le son est toujours nécessaire
+  if (!answers.needs) {
+    answers.needs = ['son'];
+  }
 
   // 1. Essayer d'abord les packs fixes
   const recommendedPack = recommendPackByGuests(answers.guests);
   
-  if (recommendedPack && packMatchesNeeds(recommendedPack, answers.needs, answers.environment || 'interieur')) {
+  if (recommendedPack) {
+    // Si c'est le Pack XL Maxi (sur mesure), ne pas le recommander automatiquement
+    // Recommander plutôt le Pack L Grand avec des options supplémentaires
+    if (recommendedPack.id === 'pack_maxi' || recommendedPack.basePrice === null) {
+      // Recommander le Pack L Grand à la place avec suggestion de contacter un expert
+      const packGrand = recommendPackByGuests('100-200'); // Force Pack L Grand
+      if (packGrand && packGrand.basePrice) {
+        const basePrice = packGrand.basePrice;
+        const microsToAdd = getRecommendedMicros(answers);
+        const needsMorePower = shouldProposeMorePower(answers);
+        const totalPrice = computePrice(basePrice, answers, PRICING_CONFIG);
+        
+        const compositionFinale = [...packGrand.composition];
+        if (microsToAdd.filaire > 0) {
+          compositionFinale.push(`${microsToAdd.filaire} micro${microsToAdd.filaire > 1 ? 's' : ''} filaire${microsToAdd.filaire > 1 ? 's' : ''}`);
+        }
+        if (microsToAdd.sansFil > 0) {
+          compositionFinale.push(`${microsToAdd.sansFil} micro${microsToAdd.sansFil > 1 ? 's' : ''} sans fil`);
+        }
+        
+        const reasons = buildRecommendationReasons(packGrand, answers, needsMorePower);
+        reasons.push('💡 Pour un événement de plus de 250 personnes, nous recommandons de contacter un expert pour une configuration sur mesure.');
+        
+        return {
+          pack: {
+            id: packGrand.id,
+            name: packGrand.name,
+            priceId: `price_${packGrand.id}`,
+            basePrice: basePrice,
+            capacity: packGrand.capacity,
+            description: buildPackDescription(packGrand, answers),
+            features: compositionFinale
+          },
+          totalPrice,
+          confidence: 0.85,
+          reasons,
+          breakdown: {
+            base: basePrice,
+            delivery: getDeliveryPrice(answers.zone || ''),
+            extras: computeOptionsTotal(answers, basePrice),
+            urgency: isUrgent(answers.startDate || '', answers.startTime) ? Math.round(totalPrice * 0.2) : 0
+          },
+          compositionFinale,
+          warnings: ['Pour plus de 250 personnes, contactez un expert pour une configuration sur mesure optimale.']
+        };
+      }
+    }
+    
     // Pack fixe qui correspond
-    const basePrice = recommendedPack.basePrice || 0;
+    // Vérifier que le prix n'est pas null AVANT de l'utiliser
+    if (recommendedPack.basePrice === null || recommendedPack.basePrice === undefined) {
+      console.warn('Pack avec prix null détecté:', recommendedPack.id);
+      // Si c'est le Pack XL Maxi ou un pack sans prix, recommander le Pack L Grand à la place
+      const packGrand = recommendPackByGuests('100-200');
+      if (packGrand && packGrand.basePrice !== null && packGrand.basePrice !== undefined) {
+        return recommendPack({ ...answers, guests: '100-200' as any });
+      }
+      // Si même le Pack L Grand n'a pas de prix, retourner null
+      return null;
+    }
+    
+    const basePrice = recommendedPack.basePrice;
+    
+    // Gérer les micros selon les règles PRO
+    const microsToAdd = getRecommendedMicros(answers);
+    
+    // Vérifier si on doit proposer plus de puissance
+    const needsMorePower = shouldProposeMorePower(answers);
+    
     const totalPrice = computePrice(basePrice, answers, PRICING_CONFIG);
     
-    // Ajouter les micros supplémentaires à la composition
-    const microsCount = getMicrosCount(answers.extras || []);
+    // Construire la composition finale
     const compositionFinale = [...recommendedPack.composition];
     
-    if (microsCount.filaire > 0) {
-      compositionFinale.push(`+ ${microsCount.filaire} micro${microsCount.filaire > 1 ? 's' : ''} filaire${microsCount.filaire > 1 ? 's' : ''} (${microsCount.filaire * 10}€)`);
+    // Ajouter les micros recommandés
+    if (microsToAdd.filaire > 0) {
+      compositionFinale.push(`${microsToAdd.filaire} micro${microsToAdd.filaire > 1 ? 's' : ''} filaire${microsToAdd.filaire > 1 ? 's' : ''}`);
     }
-    if (microsCount.sansFil > 0) {
-      compositionFinale.push(`+ ${microsCount.sansFil} micro${microsCount.sansFil > 1 ? 's' : ''} sans fil (${microsCount.sansFil * 20}€)`);
+    if (microsToAdd.sansFil > 0) {
+      compositionFinale.push(`${microsToAdd.sansFil} micro${microsToAdd.sansFil > 1 ? 's' : ''} sans fil`);
     }
+    
+    // Construire les raisons de recommandation selon la méthode PRO
+    const reasons = buildRecommendationReasons(recommendedPack, answers, needsMorePower);
     
     return {
       pack: {
@@ -120,16 +197,12 @@ export function recommendPack(answers: Answers): Recommendation | null {
         priceId: `price_${recommendedPack.id}`,
         basePrice: basePrice,
         capacity: recommendedPack.capacity,
-        description: compositionFinale.join(', '),
+        description: buildPackDescription(recommendedPack, answers),
         features: compositionFinale
       },
       totalPrice,
-      confidence: 0.9,
-      reasons: [
-        'Pack optimisé pour vos besoins',
-        'Solution clé en main',
-        'Meilleur rapport qualité/prix'
-      ],
+      confidence: 0.95,
+      reasons,
       breakdown: {
         base: basePrice,
         delivery: getDeliveryPrice(answers.zone || ''),
@@ -285,6 +358,111 @@ export function getMicrosCount(extras: string[]): { filaire: number; sansFil: nu
   const filaire = extras.filter(extra => extra === 'micros_filaire').length;
   const sansFil = extras.filter(extra => extra === 'micros_sans_fil').length;
   return { filaire, sansFil };
+}
+
+/**
+ * Détermine les micros à recommander selon les règles PRO
+ * Règles :
+ * - 1 personne parle → 1 micro conseillé
+ * - Plusieurs discours / animations → 2 micros minimum
+ * - Mariage / église / conférence → toujours proposer
+ */
+function getRecommendedMicros(answers: Answers): { filaire: number; sansFil: number } {
+  // Si l'utilisateur a déjà sélectionné des micros, utiliser sa sélection
+  if (answers.micros === 'one') {
+    return { filaire: 1, sansFil: 0 };
+  }
+  if (answers.micros === 'multiple') {
+    return { filaire: 2, sansFil: 0 };
+  }
+  if (answers.micros === 'none') {
+    return { filaire: 0, sansFil: 0 };
+  }
+  
+  // Sinon, recommander selon le type d'événement
+  const eventType = answers.eventType;
+  if (eventType === 'mariage' || eventType === 'eglise' || eventType === 'corporate') {
+    // Toujours proposer au moins 1 micro pour ces événements
+    return { filaire: 1, sansFil: 0 };
+  }
+  
+  return { filaire: 0, sansFil: 0 };
+}
+
+/**
+ * Détermine si on doit proposer plus de puissance selon les règles PRO
+ * Conditions :
+ * - extérieur
+ * - musique très festive
+ * - DJ
+ * - grande salle
+ * - client exigeant sur le son
+ * - client hésitant entre deux packs
+ */
+function shouldProposeMorePower(answers: Answers): boolean {
+  // Si l'utilisateur a déjà répondu, utiliser sa réponse
+  if (answers.morePower === true || answers.morePower === 'yes') {
+    return true;
+  }
+  if (answers.morePower === false || answers.morePower === 'no') {
+    return false;
+  }
+  
+  // Sinon, déterminer automatiquement selon les critères PRO
+  if (answers.environment === 'exterieur') {
+    return true; // Extérieur → toujours proposer plus de puissance
+  }
+  
+  if (answers.eventType === 'soiree' || answers.eventType === 'anniversaire') {
+    return true; // Musique festive → proposer plus de puissance
+  }
+  
+  if (answers.needs?.includes('dj')) {
+    return true; // DJ → proposer plus de puissance
+  }
+  
+  // Grande salle (200+ personnes) → proposer plus de puissance
+  if (answers.guests === '200+') {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Construit les raisons de recommandation selon la méthode PRO
+ */
+function buildRecommendationReasons(pack: any, answers: Answers, needsMorePower: boolean): string[] {
+  const reasons: string[] = [];
+  
+  // Raison principale selon le pack
+  const guestCount = getGuestCount(answers.guests || '0-50');
+  if (pack.capacity.min <= guestCount && guestCount <= pack.capacity.max) {
+    reasons.push(`Idéal pour une vraie ambiance de soirée jusqu'à ${pack.capacity.max} personnes.`);
+  }
+  
+  // Qualité sonore
+  reasons.push('🔊 Le son est bien réparti, suffisamment puissant et confortable pour danser sans saturation.');
+  
+  // Si extérieur, mentionner l'adaptation
+  if (answers.environment === 'exterieur') {
+    reasons.push('Adapté pour un événement en extérieur avec une portée sonore optimale.');
+  }
+  
+  // Si besoin de plus de puissance
+  if (needsMorePower) {
+    reasons.push('💡 Pour éviter toute frustration sur le volume ou les basses, nous recommandons d\'ajouter une enceinte ou un caisson supplémentaire.');
+  }
+  
+  return reasons;
+}
+
+/**
+ * Construit la description du pack selon la méthode PRO
+ */
+function buildPackDescription(pack: any, answers: Answers): string {
+  const guestCount = getGuestCount(answers.guests || '0-50');
+  return `Pack recommandé : ${pack.name} (${pack.basePrice} €)\n\nIdéal pour une vraie ambiance de soirée jusqu'à ${pack.capacity.max} personnes.\n\n🔊 Le son est bien réparti, suffisamment puissant et confortable pour danser sans saturation.`;
 }
 
 /**

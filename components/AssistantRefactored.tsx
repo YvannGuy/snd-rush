@@ -9,7 +9,8 @@ import { processReservation } from '@/lib/assistant-api';
 import { trackAssistantEvent } from '@/lib/analytics';
 import { useCart } from '@/contexts/CartContext';
 import { CartItem, ProductAddon } from '@/types/db';
-import { fetchProductsByCategory, AssistantProduct } from '@/lib/assistant-products';
+import { fetchProductsByCategory, AssistantProduct, getPacksInfo } from '@/lib/assistant-products';
+import { calculateInstallationPrice } from '@/lib/calculateInstallationPrice';
 import Chip from './assistant/Chip';
 import Radio from './assistant/Radio';
 import Input from './assistant/Input';
@@ -46,6 +47,12 @@ export default function AssistantRefactored({
   const [loadingSpeakers, setLoadingSpeakers] = useState(false);
   const [speakerQuantities, setSpeakerQuantities] = useState<Record<string, number>>({});
   const [subwooferQuantities, setSubwooferQuantities] = useState<Record<string, number>>({});
+  const [wiredMics, setWiredMics] = useState<AssistantProduct[]>([]);
+  const [wirelessMics, setWirelessMics] = useState<AssistantProduct[]>([]);
+  const [loadingMics, setLoadingMics] = useState(false);
+  const [wiredMicQuantities, setWiredMicQuantities] = useState<Record<string, number>>({});
+  const [wirelessMicQuantities, setWirelessMicQuantities] = useState<Record<string, number>>({});
+  const [installationPrice, setInstallationPrice] = useState<number>(0);
   const { addToCart } = useCart();
   
   const modalRef = useRef<HTMLDivElement>(null);
@@ -108,6 +115,10 @@ export default function AssistantRefactored({
       setSubwoofers([]);
       setSpeakerQuantities({});
       setSubwooferQuantities({});
+      setWiredMics([]);
+      setWirelessMics([]);
+      setWiredMicQuantities({});
+      setWirelessMicQuantities({});
       
       // Track assistant start
       trackAssistantEvent.started();
@@ -136,25 +147,45 @@ export default function AssistantRefactored({
           });
       }
 
-      // Charger les enceintes et caissons si guests > 250
+      // Charger les enceintes et caissons si guests >= 200 OU si extérieur/musique festive (pour l'étape extras)
       const guestsValue = answers.guests;
-      const needsMorePower = guestsValue === '200+' || (typeof guestsValue === 'string' && parseInt(guestsValue) >= 200);
+      const shouldLoadSpeakers = guestsValue === '200+' || 
+                                 (typeof guestsValue === 'string' && parseInt(guestsValue) >= 200) ||
+                                 answers.environment === 'exterieur' ||
+                                 answers.eventType === 'soiree' ||
+                                 answers.eventType === 'anniversaire';
       
-      if (needsMorePower && speakers.length === 0 && subwoofers.length === 0 && !loadingSpeakers) {
+      if (shouldLoadSpeakers && speakers.length === 0 && subwoofers.length === 0 && !loadingSpeakers) {
         setLoadingSpeakers(true);
         Promise.all([
           fetchProductsByCategory('sonorisation')
         ])
           .then(([sonorisationProducts]) => {
-            // Filtrer les enceintes (nom contient "enceinte" ou "speaker" mais pas "caisson" ni "sub")
+            console.log('Produits sonorisation chargés (extras):', sonorisationProducts);
+            
+            // Filtrer les enceintes (nom contient "enceinte", "speaker", "haut-parleur" OU des noms spécifiques comme FBT, Mac Mah)
             const availableSpeakers = sonorisationProducts.filter(
               (p) => {
                 const nameLower = p.name.toLowerCase();
+                const isSpeaker = 
+                  nameLower.includes('enceinte') || 
+                  nameLower.includes('speaker') || 
+                  nameLower.includes('haut-parleur') ||
+                  nameLower.includes('fbt') ||
+                  nameLower.includes('mac mah') ||
+                  nameLower.includes('as108') ||
+                  nameLower.includes('as115') ||
+                  nameLower.includes('xlite');
+                
+                const isNotSubwoofer = 
+                  !nameLower.includes('caisson') && 
+                  !nameLower.includes('sub') && 
+                  !nameLower.includes('basse');
+                
                 return p.quantity > 0 && 
                        p.dailyPrice > 0 &&
-                       (nameLower.includes('enceinte') || nameLower.includes('speaker') || nameLower.includes('haut-parleur')) &&
-                       !nameLower.includes('caisson') &&
-                       !nameLower.includes('sub');
+                       isSpeaker &&
+                       isNotSubwoofer;
               }
             );
             
@@ -168,17 +199,57 @@ export default function AssistantRefactored({
               }
             );
             
+            console.log('Enceintes filtrées (extras):', availableSpeakers);
+            console.log('Caissons filtrés (extras):', availableSubwoofers);
+            
             setSpeakers(availableSpeakers);
             setSubwoofers(availableSubwoofers);
             
-            // Suggestion automatique : pré-sélectionner 1 caisson ou 1 enceinte si 200+ personnes
-            // Priorité au caisson de basse, sinon une enceinte
-            if (availableSubwoofers.length > 0) {
-              const suggestedSub = availableSubwoofers[0];
-              setSubwooferQuantities({ [suggestedSub.id]: 1 });
-            } else if (availableSpeakers.length > 0) {
-              const suggestedSpeaker = availableSpeakers[0];
-              setSpeakerQuantities({ [suggestedSpeaker.id]: 1 });
+            // Suggestion automatique selon le contexte et le nombre de personnes
+            const shouldSuggest = answers.environment === 'exterieur' ||
+                                 answers.eventType === 'soiree' ||
+                                 answers.eventType === 'anniversaire' ||
+                                 guestsValue === '200+' ||
+                                 (typeof guestsValue === 'string' && parseInt(guestsValue) >= 200);
+            
+            if (shouldSuggest) {
+              // Suggestion intelligente selon le nombre de personnes
+              let guestCount = 0;
+              if (guestsValue === '0-50') guestCount = 50;
+              else if (guestsValue === '50-100') guestCount = 100;
+              else if (guestsValue === '100-200') guestCount = 200;
+              else if (guestsValue === '200+') guestCount = 250;
+              else if (typeof guestsValue === 'string') guestCount = parseInt(guestsValue) || 0;
+              
+              // Pour 200+ personnes ou extérieur : priorité au caisson de basse
+              if (guestCount >= 200 || answers.environment === 'exterieur') {
+                if (availableSubwoofers.length > 0) {
+                  const suggestedSub = availableSubwoofers[0];
+                  setSubwooferQuantities({ [suggestedSub.id]: 1 });
+                } else if (availableSpeakers.length > 0) {
+                  // Chercher une enceinte plus puissante (FBT X-Lite)
+                  const powerfulSpeaker = availableSpeakers.find(s => 
+                    s.name.toLowerCase().includes('fbt') || s.name.toLowerCase().includes('xlite')
+                  ) || availableSpeakers[0];
+                  setSpeakerQuantities({ [powerfulSpeaker.id]: 1 });
+                }
+              } else if (guestCount >= 100) {
+                // Pour 100-200 personnes : enceinte supplémentaire (Mac Mah AS115 ou FBT)
+                if (availableSpeakers.length > 0) {
+                  const suggestedSpeaker = availableSpeakers.find(s => 
+                    s.name.toLowerCase().includes('as115') || 
+                    s.name.toLowerCase().includes('fbt') ||
+                    s.name.toLowerCase().includes('xlite')
+                  ) || availableSpeakers[0];
+                  setSpeakerQuantities({ [suggestedSpeaker.id]: 1 });
+                }
+              } else {
+                // Pour moins de 100 personnes : caisson de basse si disponible
+                if (availableSubwoofers.length > 0) {
+                  const suggestedSub = availableSubwoofers[0];
+                  setSubwooferQuantities({ [suggestedSub.id]: 1 });
+                }
+              }
             }
           })
           .catch((error) => {
@@ -189,7 +260,172 @@ export default function AssistantRefactored({
           });
       }
     }
-  }, [currentStep, accessories.length, loadingAccessories, speakers.length, subwoofers.length, loadingSpeakers, answers.guests]);
+  }, [currentStep, accessories.length, loadingAccessories, speakers.length, subwoofers.length, loadingSpeakers, answers.guests, answers.morePower, answers.environment, answers.eventType]);
+
+  // Charger les micros quand on arrive à l'étape micros
+  useEffect(() => {
+    const step = STEPS[currentStep];
+    if (step?.id === 'micros' && wiredMics.length === 0 && wirelessMics.length === 0 && !loadingMics) {
+      setLoadingMics(true);
+      fetchProductsByCategory('micros')
+        .then((products) => {
+          // Filtrer les micros filaires
+          const availableWiredMics = products.filter(
+            (p) => {
+              const nameLower = p.name.toLowerCase();
+              return p.quantity > 0 && 
+                     p.dailyPrice > 0 &&
+                     (nameLower.includes('filaire') || nameLower.includes('wired') || nameLower.includes('shure sm58') || 
+                      (!nameLower.includes('sans fil') && !nameLower.includes('wireless') && !nameLower.includes('hf')));
+            }
+          );
+          
+          // Filtrer les micros sans fil
+          const availableWirelessMics = products.filter(
+            (p) => {
+              const nameLower = p.name.toLowerCase();
+              return p.quantity > 0 && 
+                     p.dailyPrice > 0 &&
+                     (nameLower.includes('sans fil') || nameLower.includes('wireless') || nameLower.includes('hf') || 
+                      nameLower.includes('mipro'));
+            }
+          );
+          
+          setWiredMics(availableWiredMics);
+          setWirelessMics(availableWirelessMics);
+          
+          // Suggestion automatique selon le type d'événement
+          // Mariage/église/corporate → toujours suggérer au moins 1 micro filaire
+          if (answers.eventType === 'mariage' || answers.eventType === 'eglise' || answers.eventType === 'corporate') {
+            if (availableWiredMics.length > 0) {
+              setWiredMicQuantities({ [availableWiredMics[0].id]: 1 });
+            }
+          }
+        })
+        .catch((error) => {
+          console.error('Erreur lors du chargement des micros:', error);
+        })
+        .finally(() => {
+          setLoadingMics(false);
+        });
+    }
+  }, [currentStep, wiredMics.length, wirelessMics.length, loadingMics, answers.micros, answers.eventType]);
+
+  // Charger les enceintes et caissons quand on arrive à l'étape morePower
+  useEffect(() => {
+    const step = STEPS[currentStep];
+    if (step?.id === 'morePower' && speakers.length === 0 && subwoofers.length === 0 && !loadingSpeakers) {
+      setLoadingSpeakers(true);
+      fetchProductsByCategory('sonorisation')
+        .then((sonorisationProducts) => {
+          console.log('Produits sonorisation chargés:', sonorisationProducts);
+          
+          // Filtrer les enceintes (nom contient "enceinte", "speaker", "haut-parleur" OU des noms spécifiques comme FBT, Mac Mah)
+          const availableSpeakers = sonorisationProducts.filter(
+            (p) => {
+              const nameLower = p.name.toLowerCase();
+              const isSpeaker = 
+                nameLower.includes('enceinte') || 
+                nameLower.includes('speaker') || 
+                nameLower.includes('haut-parleur') ||
+                nameLower.includes('fbt') ||
+                nameLower.includes('mac mah') ||
+                nameLower.includes('as108') ||
+                nameLower.includes('as115') ||
+                nameLower.includes('xlite');
+              
+              const isNotSubwoofer = 
+                !nameLower.includes('caisson') && 
+                !nameLower.includes('sub') && 
+                !nameLower.includes('basse');
+              
+              return p.quantity > 0 && 
+                     p.dailyPrice > 0 &&
+                     isSpeaker &&
+                     isNotSubwoofer;
+            }
+          );
+          
+          // Filtrer les caissons de basse
+          const availableSubwoofers = sonorisationProducts.filter(
+            (p) => {
+              const nameLower = p.name.toLowerCase();
+              return p.quantity > 0 && 
+                     p.dailyPrice > 0 &&
+                     (nameLower.includes('caisson') || nameLower.includes('sub') || nameLower.includes('basse'));
+            }
+          );
+          
+          console.log('Enceintes filtrées:', availableSpeakers);
+          console.log('Caissons filtrés:', availableSubwoofers);
+          
+          setSpeakers(availableSpeakers);
+          setSubwoofers(availableSubwoofers);
+          
+          // Suggestion automatique selon le contexte et le nombre de personnes
+          // Toujours suggérer quelque chose si on arrive à cette étape
+          const guestsValue = answers.guests;
+          
+          // Suggestion intelligente selon le nombre de personnes
+          let guestCount = 0;
+          if (guestsValue === '0-50') guestCount = 50;
+          else if (guestsValue === '50-100') guestCount = 100;
+          else if (guestsValue === '100-200') guestCount = 200;
+          else if (guestsValue === '200+') guestCount = 250;
+          else if (typeof guestsValue === 'string') guestCount = parseInt(guestsValue) || 0;
+          
+          // Toujours suggérer quelque chose selon le contexte
+          // Pour 200+ personnes ou extérieur : priorité au caisson de basse
+          if (guestCount >= 200 || answers.environment === 'exterieur') {
+            if (availableSubwoofers.length > 0) {
+              const suggestedSub = availableSubwoofers[0];
+              setSubwooferQuantities({ [suggestedSub.id]: 1 });
+            } else if (availableSpeakers.length > 0) {
+              // Chercher une enceinte plus puissante (FBT X-Lite)
+              const powerfulSpeaker = availableSpeakers.find(s => 
+                s.name.toLowerCase().includes('fbt') || s.name.toLowerCase().includes('xlite')
+              ) || availableSpeakers[0];
+              setSpeakerQuantities({ [powerfulSpeaker.id]: 1 });
+            }
+          } else if (guestCount >= 100) {
+            // Pour 100-200 personnes : enceinte supplémentaire (Mac Mah AS115 ou FBT)
+            if (availableSpeakers.length > 0) {
+              const suggestedSpeaker = availableSpeakers.find(s => 
+                s.name.toLowerCase().includes('as115') || 
+                s.name.toLowerCase().includes('fbt') ||
+                s.name.toLowerCase().includes('xlite')
+              ) || availableSpeakers[0];
+              setSpeakerQuantities({ [suggestedSpeaker.id]: 1 });
+            }
+          } else if (guestCount > 0) {
+            // Pour moins de 100 personnes : caisson de basse si disponible
+            if (availableSubwoofers.length > 0) {
+              const suggestedSub = availableSubwoofers[0];
+              setSubwooferQuantities({ [suggestedSub.id]: 1 });
+            } else if (availableSpeakers.length > 0) {
+              // Sinon, suggérer une enceinte
+              const suggestedSpeaker = availableSpeakers[0];
+              setSpeakerQuantities({ [suggestedSpeaker.id]: 1 });
+            }
+          } else {
+            // Par défaut, suggérer un caisson ou une enceinte
+            if (availableSubwoofers.length > 0) {
+              const suggestedSub = availableSubwoofers[0];
+              setSubwooferQuantities({ [suggestedSub.id]: 1 });
+            } else if (availableSpeakers.length > 0) {
+              const suggestedSpeaker = availableSpeakers[0];
+              setSpeakerQuantities({ [suggestedSpeaker.id]: 1 });
+            }
+          }
+        })
+        .catch((error) => {
+          console.error('Erreur lors du chargement des enceintes/caissons:', error);
+        })
+        .finally(() => {
+          setLoadingSpeakers(false);
+        });
+    }
+  }, [currentStep, speakers.length, subwoofers.length, loadingSpeakers, answers.guests, answers.environment, answers.eventType]);
 
   const handleAnswerChange = (stepId: string, value: any) => {
     const newAnswers = { ...answers, [stepId]: value };
@@ -228,8 +464,8 @@ export default function AssistantRefactored({
     const step = STEPS[currentStep];
     const value = answers[step.id as keyof Answers];
     
-    // Pour les options supplémentaires, on peut passer même si vide
-    if (step.id === 'extras') {
+    // Pour les étapes optionnelles (extras, micros, morePower, deliveryInstallation, zone), on peut passer même si vide
+    if (step.id === 'extras' || step.id === 'micros' || step.id === 'morePower' || step.id === 'deliveryInstallation' || step.id === 'zone') {
       // Toujours valide, même si vide
       setErrors({ ...errors, [step.id]: '' });
     } else {
@@ -256,9 +492,26 @@ export default function AssistantRefactored({
     // Effacer les erreurs si validation OK
     setErrors({ ...errors, [step.id]: '' });
 
+    // Gérer les étapes conditionnelles
+    let nextStep = currentStep + 1;
+    
+    // Si on vient de répondre à deliveryInstallation = 'no', sauter l'étape zone
+    if (step.id === 'deliveryInstallation' && (value === 'no' || value === false)) {
+      // Chercher l'index de l'étape zone et la sauter
+      const zoneStepIndex = STEPS.findIndex(s => s.id === 'zone');
+      if (zoneStepIndex > currentStep) {
+        nextStep = zoneStepIndex + 1;
+      }
+    }
+    
+    // Si on vient de répondre à morePower = 'yes', s'assurer que les enceintes/caissons sont chargés
+    if (step.id === 'morePower' && (value === 'yes' || value === true)) {
+      // Les enceintes/caissons seront chargés automatiquement dans le useEffect si guests >= 200
+    }
+
     // Passer à l'étape suivante ou au résumé
-    if (currentStep < STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
+    if (nextStep < STEPS.length) {
+      setCurrentStep(nextStep);
     } else {
       setShowSummary(true);
     }
@@ -268,9 +521,22 @@ export default function AssistantRefactored({
     const step = STEPS[currentStep];
     const value = answers[step.id as keyof Answers];
     
-    // Pour les étapes optionnelles (comme extras), on peut avoir un tableau vide
-    if (step.id === 'extras') {
+    // Pour les étapes optionnelles (extras, micros, morePower, startTime, endTime), on peut avoir un tableau vide ou valeur vide
+    if (step.id === 'extras' || step.id === 'micros' || step.id === 'morePower' || step.id === 'startTime' || step.id === 'endTime') {
       return true; // Toujours valide, même si vide
+    }
+    
+    // Zone est obligatoire si livraison/installation est sélectionné
+    if (step.id === 'zone') {
+      if (answers.deliveryInstallation === 'yes') {
+        return !!value; // Obligatoire si livraison/installation
+      }
+      return true; // Optionnel sinon
+    }
+    
+    // deliveryInstallation est optionnel
+    if (step.id === 'deliveryInstallation') {
+      return true;
     }
     
     // Pour les autres étapes, validation stricte
@@ -338,6 +604,53 @@ export default function AssistantRefactored({
     const addons: ProductAddon[] = [];
     const accessoryItems: CartItem[] = [];
     
+    // Ajouter les micros filaires sélectionnés au panier
+    Object.entries(wiredMicQuantities).forEach(([productId, quantity]) => {
+      if (quantity > 0) {
+        const mic = wiredMics.find(m => m.id === productId);
+        if (mic) {
+          const micCartItem: CartItem = {
+            productId: mic.id,
+            productName: mic.name,
+            productSlug: mic.slug,
+            quantity: quantity,
+            rentalDays: rentalDays,
+            startDate: startDate,
+            endDate: endDate,
+            dailyPrice: mic.dailyPrice,
+            deposit: mic.deposit || 0,
+            addons: [],
+            images: mic.images || [],
+          };
+          accessoryItems.push(micCartItem);
+        }
+      }
+    });
+
+    // Ajouter les micros sans fil sélectionnés au panier
+    Object.entries(wirelessMicQuantities).forEach(([productId, quantity]) => {
+      if (quantity > 0) {
+        const mic = wirelessMics.find(m => m.id === productId);
+        if (mic) {
+          const micCartItem: CartItem = {
+            productId: mic.id,
+            productName: mic.name,
+            productSlug: mic.slug,
+            quantity: quantity,
+            rentalDays: rentalDays,
+            startDate: startDate,
+            endDate: endDate,
+            dailyPrice: mic.dailyPrice,
+            deposit: mic.deposit || 0,
+            addons: [],
+            images: mic.images || [],
+          };
+          accessoryItems.push(micCartItem);
+        }
+      }
+    });
+    
+    // Gérer les extras standards (micros depuis extras, technicien)
     if (answers.extras) {
       for (const extra of answers.extras) {
         // Gérer les extras standards (micros, technicien)
@@ -453,8 +766,37 @@ export default function AssistantRefactored({
       addToCart(item);
     });
 
-    // Ajouter la livraison comme item séparé si une zone est sélectionnée
-    if (answers.zone && answers.zone !== 'retrait') {
+    // Ajouter la livraison comme item séparé si livraison/installation est demandée
+    if (answers.deliveryInstallation === true || answers.deliveryInstallation === 'yes') {
+      // Utiliser la zone si disponible, sinon paris par défaut
+      const deliveryZone = answers.zone || 'paris';
+      const deliveryPrices: Record<string, number> = {
+        paris: 80,
+        petite: 120,
+        grande: 160,
+      };
+      
+      const deliveryPrice = deliveryPrices[deliveryZone] || 0;
+      if (deliveryPrice > 0) {
+        const deliveryItem: CartItem = {
+          productId: `delivery-${deliveryZone}`,
+          productName: language === 'fr' 
+            ? `Livraison et installation ${deliveryZone === 'paris' ? 'Paris' : deliveryZone === 'petite' ? 'Petite Couronne' : 'Grande Couronne'}`
+            : `Delivery and installation ${deliveryZone === 'paris' ? 'Paris' : deliveryZone === 'petite' ? 'Inner suburbs' : 'Outer suburbs'}`,
+          productSlug: `delivery-${deliveryZone}`,
+          quantity: 1,
+          rentalDays: 1,
+          startDate: startDate,
+          endDate: endDate,
+          dailyPrice: deliveryPrice,
+          deposit: 0,
+          addons: [],
+          images: ['/livraison.jpg'],
+        };
+        addToCart(deliveryItem);
+      }
+    } else if (answers.zone && answers.zone !== 'retrait') {
+      // Ancien système de livraison (pour compatibilité)
       const deliveryPrices: Record<string, number> = {
         paris: 80,
         petite: 120,
@@ -554,19 +896,319 @@ export default function AssistantRefactored({
 
         {/* Contenu de l'étape */}
         <div className="space-y-3">
-          {step.type === 'single' && step.options && (
+          {/* Étape micros : afficher les cartes de micros avec incrémentation */}
+          {step.id === 'micros' && (
+            <>
+              {loadingMics && (
+                <div className="text-center py-4 text-gray-500">
+                  {language === 'fr' ? 'Chargement des micros...' : 'Loading microphones...'}
+                </div>
+              )}
+              
+              {!loadingMics && (
+                <div className="space-y-6">
+                  {/* Option "Non" pour passer sans micros */}
+                  <div className="mb-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWiredMicQuantities({});
+                        setWirelessMicQuantities({});
+                        handleAnswerChange(step.id, 'none');
+                      }}
+                      className={`w-full px-6 py-4 rounded-xl border-2 transition-all ${
+                        answers.micros === 'none'
+                          ? 'border-[#F2431E] bg-[#F2431E]/10 text-[#F2431E]'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-3">
+                        <span className="text-2xl">🚫</span>
+                        <span className="font-semibold">
+                          {language === 'fr' ? 'Non, pas besoin de micros' : 'No, no microphones needed'}
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                  
+                  {/* Micros filaires */}
+                  {wiredMics.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        {language === 'fr' ? 'Micros filaires' : 'Wired microphones'}
+                      </h3>
+                      <div className="space-y-3">
+                        {wiredMics.map((mic) => {
+                          const currentQuantity = wiredMicQuantities[mic.id] || 0;
+                          const totalWired = Object.values(wiredMicQuantities).reduce((sum, qty) => sum + qty, 0);
+                          // Suggestion automatique selon le type d'événement
+                          const isSuggested = (answers.eventType === 'mariage' || answers.eventType === 'eglise' || answers.eventType === 'corporate') && 
+                                            currentQuantity === 1 && totalWired === 1 && Object.keys(wiredMicQuantities).length === 1;
+                          // Calculer le maxQuantity : limite globale de 5, moins ce qui est déjà sélectionné ailleurs, plus ce qui est déjà sélectionné pour ce micro
+                          const otherQuantities = totalWired - currentQuantity;
+                          const remainingGlobal = 5 - otherQuantities;
+                          const maxForThisMic = Math.min(mic.quantity || 5, remainingGlobal);
+                          return (
+                            <QuantitySelector
+                              key={mic.id}
+                              productId={mic.id}
+                              productName={mic.name}
+                              price={mic.dailyPrice}
+                              icon="🎤"
+                              quantity={currentQuantity}
+                              onQuantityChange={(productId, quantity) => {
+                                // Vérifier que la quantité totale ne dépasse pas 5
+                                const otherQuantities = Object.entries(wiredMicQuantities)
+                                  .filter(([id]) => id !== productId)
+                                  .reduce((sum, [, qty]) => sum + qty, 0);
+                                const newTotal = otherQuantities + quantity;
+                                if (newTotal <= 5) {
+                                  setWiredMicQuantities(prev => ({
+                                    ...prev,
+                                    [productId]: quantity
+                                  }));
+                                  // Si on sélectionne un micro, enlever 'none'
+                                  if (quantity > 0 && answers.micros === 'none') {
+                                    handleAnswerChange(step.id, '');
+                                  }
+                                }
+                              }}
+                              maxQuantity={maxForThisMic}
+                              suggested={isSuggested}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Micros sans fil */}
+                  {wirelessMics.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        {language === 'fr' ? 'Micros sans fil' : 'Wireless microphones'}
+                      </h3>
+                      <div className="space-y-3">
+                        {wirelessMics.map((mic) => {
+                          const currentQuantity = wirelessMicQuantities[mic.id] || 0;
+                          const totalWireless = Object.values(wirelessMicQuantities).reduce((sum, qty) => sum + qty, 0);
+                          const isSuggested = false; // Les micros sans fil ne sont pas suggérés automatiquement
+                          // Calculer le maxQuantity : limite globale de 3, moins ce qui est déjà sélectionné ailleurs, plus ce qui est déjà sélectionné pour ce micro
+                          const otherQuantities = totalWireless - currentQuantity;
+                          const remainingGlobal = 3 - otherQuantities;
+                          const maxForThisMic = Math.min(mic.quantity || 3, remainingGlobal);
+                          return (
+                            <QuantitySelector
+                              key={mic.id}
+                              productId={mic.id}
+                              productName={mic.name}
+                              price={mic.dailyPrice}
+                              icon="🎤"
+                              quantity={currentQuantity}
+                              onQuantityChange={(productId, quantity) => {
+                                // Vérifier que la quantité totale ne dépasse pas 3
+                                const otherQuantities = Object.entries(wirelessMicQuantities)
+                                  .filter(([id]) => id !== productId)
+                                  .reduce((sum, [, qty]) => sum + qty, 0);
+                                const newTotal = otherQuantities + quantity;
+                                if (newTotal <= 3) {
+                                  setWirelessMicQuantities(prev => ({
+                                    ...prev,
+                                    [productId]: quantity
+                                  }));
+                                  // Si on sélectionne un micro, enlever 'none'
+                                  if (quantity > 0 && answers.micros === 'none') {
+                                    handleAnswerChange(step.id, '');
+                                  }
+                                }
+                              }}
+                              maxQuantity={maxForThisMic}
+                              suggested={isSuggested}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {wiredMics.length === 0 && wirelessMics.length === 0 && !loadingMics && (
+                    <div className="text-center py-4 text-gray-500">
+                      {language === 'fr' 
+                        ? 'Aucun micro disponible pour le moment.'
+                        : 'No microphones available at the moment.'}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Étape morePower : afficher les cartes d'enceintes/caissons avec incrémentation */}
+          {step.id === 'morePower' && (
+            <>
+              {loadingSpeakers && (
+                <div className="text-center py-4 text-gray-500">
+                  {language === 'fr' ? 'Chargement des enceintes et caissons...' : 'Loading speakers and subwoofers...'}
+                </div>
+              )}
+              
+              {!loadingSpeakers && (
+                <div className="space-y-6">
+                  {/* Option "Non" pour passer sans puissance supplémentaire */}
+                  <div className="mb-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSpeakerQuantities({});
+                        setSubwooferQuantities({});
+                        handleAnswerChange(step.id, 'no');
+                      }}
+                      className={`w-full px-6 py-4 rounded-xl border-2 transition-all ${
+                        answers.morePower === 'no'
+                          ? 'border-[#F2431E] bg-[#F2431E]/10 text-[#F2431E]'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-3">
+                        <span className="text-2xl">✅</span>
+                        <span className="font-semibold">
+                          {language === 'fr' ? 'Non, le pack suffit' : 'No, the pack is enough'}
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                  
+                  {(speakers.length > 0 || subwoofers.length > 0) && (
+                    <>
+                      <p className="text-sm text-gray-600 mb-4">
+                        {language === 'fr' 
+                          ? 'Pour éviter toute frustration sur le volume ou les basses, voici ce que nous recommandons :'
+                          : 'To avoid any frustration with volume or bass, here\'s what we recommend:'}
+                      </p>
+                      
+                      {/* Caissons de basse */}
+                  {subwoofers.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        {language === 'fr' ? 'Caissons de basse' : 'Subwoofers'}
+                      </h3>
+                      <div className="space-y-3">
+                        {subwoofers.map((subwoofer) => {
+                          const currentQuantity = subwooferQuantities[subwoofer.id] || 0;
+                          const totalSubs = Object.values(subwooferQuantities).reduce((sum, qty) => sum + qty, 0);
+                          // Suggestion si c'est le premier caisson et qu'il a été pré-sélectionné automatiquement
+                          const isSuggested = currentQuantity === 1 && totalSubs === 1 && 
+                                            Object.keys(subwooferQuantities).length === 1 &&
+                                            Object.keys(speakerQuantities).length === 0;
+                          return (
+                            <QuantitySelector
+                              key={subwoofer.id}
+                              productId={subwoofer.id}
+                              productName={subwoofer.name}
+                              price={subwoofer.dailyPrice}
+                              icon="🔊"
+                              quantity={currentQuantity}
+                              onQuantityChange={(productId, quantity) => {
+                                setSubwooferQuantities(prev => ({
+                                  ...prev,
+                                  [productId]: quantity
+                                }));
+                                // Si on sélectionne un caisson, enlever 'no'
+                                if (quantity > 0 && answers.morePower === 'no') {
+                                  handleAnswerChange('morePower', 'yes');
+                                }
+                              }}
+                              maxQuantity={Math.min(subwoofer.quantity, 2)}
+                              suggested={isSuggested}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Enceintes */}
+                  {speakers.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        {language === 'fr' ? 'Enceintes supplémentaires' : 'Additional speakers'}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        {language === 'fr' 
+                          ? 'Maximum 2 de chaque type d\'enceinte.'
+                          : 'Maximum 2 of each speaker type.'}
+                      </p>
+                      <div className="space-y-3">
+                        {speakers.map((speaker) => {
+                          const currentQuantity = speakerQuantities[speaker.id] || 0;
+                          const totalSpeakers = Object.values(speakerQuantities).reduce((sum, qty) => sum + qty, 0);
+                          // Suggestion si c'est la première enceinte et qu'elle a été pré-sélectionnée automatiquement
+                          const isSuggested = subwoofers.length === 0 && 
+                                            currentQuantity === 1 && totalSpeakers === 1 && 
+                                            Object.keys(speakerQuantities).length === 1 &&
+                                            Object.keys(subwooferQuantities).length === 0;
+                          return (
+                            <QuantitySelector
+                              key={speaker.id}
+                              productId={speaker.id}
+                              productName={speaker.name}
+                              price={speaker.dailyPrice}
+                              icon="🔊"
+                              quantity={currentQuantity}
+                              onQuantityChange={(productId, quantity) => {
+                                setSpeakerQuantities(prev => ({
+                                  ...prev,
+                                  [productId]: quantity
+                                }));
+                                // Si on sélectionne une enceinte, enlever 'no'
+                                if (quantity > 0 && answers.morePower === 'no') {
+                                  handleAnswerChange('morePower', 'yes');
+                                }
+                              }}
+                              maxQuantity={Math.min(speaker.quantity, 2)}
+                              suggested={isSuggested}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                    </>
+                  )}
+                  
+                  {speakers.length === 0 && subwoofers.length === 0 && !loadingSpeakers && (
+                    <div className="text-center py-4 text-gray-500">
+                      {language === 'fr' 
+                        ? 'Aucune enceinte ou caisson disponible pour le moment.'
+                        : 'No speakers or subwoofers available at the moment.'}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {step.type === 'single' && step.options && step.id !== 'micros' && step.id !== 'morePower' && (
             <div className="space-y-3">
-              {step.options.map((option) => (
-                <Radio
-                  key={option.value}
-                  value={option.value}
-                  label={option.label}
-                  icon={option.icon}
-                  price={option.price}
-                  selected={value === option.value}
-                  onClick={(val) => handleAnswerChange(step.id, val)}
-                />
-              ))}
+              {step.options
+                .filter((option) => {
+                  // Si on est à l'étape zone et que livraison/installation est sélectionné, cacher "retrait sur place"
+                  if (step.id === 'zone' && answers.deliveryInstallation === 'yes') {
+                    return option.value !== 'retrait';
+                  }
+                  return true;
+                })
+                .map((option) => (
+                  <Radio
+                    key={option.value}
+                    value={option.value}
+                    label={option.label}
+                    icon={option.icon}
+                    price={option.price}
+                    selected={value === option.value}
+                    onClick={(val) => handleAnswerChange(step.id, val)}
+                  />
+                ))}
             </div>
           )}
 
@@ -629,104 +1271,6 @@ export default function AssistantRefactored({
                       </div>
                     </div>
                   )}
-
-                  {/* Enceintes et caissons pour événements 200+ personnes */}
-                  {(answers.guests === '200+' || (typeof answers.guests === 'string' && parseInt(answers.guests) >= 200)) && (
-                    <>
-                      {loadingSpeakers && (
-                        <div className="text-center py-4 text-gray-500">
-                          {language === 'fr' ? 'Chargement des enceintes et caissons...' : 'Loading speakers and subwoofers...'}
-                        </div>
-                      )}
-                      
-                      {!loadingSpeakers && (speakers.length > 0 || subwoofers.length > 0) && (
-                        <div className="mt-6 pt-6 border-t border-gray-200">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                            {language === 'fr' ? 'Enceintes et caissons supplémentaires' : 'Additional speakers and subwoofers'}
-                          </h3>
-                          <p className="text-sm text-gray-600 mb-4">
-                            {language === 'fr' 
-                              ? 'Pour un événement de 200+ personnes, nous recommandons d\'ajouter des enceintes ou un caisson de basse pour une puissance sonore optimale.'
-                              : 'For events with 200+ people, we recommend adding speakers or a subwoofer for optimal sound power.'}
-                          </p>
-                          
-                          {/* Caissons de basse */}
-                          {subwoofers.length > 0 && (
-                            <div className="mb-6">
-                              <h4 className="text-md font-semibold text-gray-800 mb-3">
-                                {language === 'fr' ? 'Caissons de basse' : 'Subwoofers'}
-                              </h4>
-                              <div className="space-y-3">
-                                {subwoofers.map((subwoofer) => {
-                                  const currentQuantity = subwooferQuantities[subwoofer.id] || 0;
-                                  // Marquer comme suggéré si c'est le premier caisson et qu'il est pré-sélectionné automatiquement
-                                  const isSuggested = subwoofers[0]?.id === subwoofer.id && currentQuantity === 1 &&
-                                                    Object.keys(subwooferQuantities).length === 1 &&
-                                                    Object.keys(speakerQuantities).length === 0;
-                                  return (
-                                    <QuantitySelector
-                                      key={subwoofer.id}
-                                      productId={subwoofer.id}
-                                      productName={subwoofer.name}
-                                      price={subwoofer.dailyPrice}
-                                      icon="🔊"
-                                      quantity={currentQuantity}
-                                      onQuantityChange={(productId, quantity) => {
-                                        setSubwooferQuantities(prev => ({
-                                          ...prev,
-                                          [productId]: quantity
-                                        }));
-                                      }}
-                                      maxQuantity={subwoofer.quantity}
-                                      suggested={isSuggested && currentQuantity === 1}
-                                    />
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Enceintes */}
-                          {speakers.length > 0 && (
-                            <div>
-                              <h4 className="text-md font-semibold text-gray-800 mb-3">
-                                {language === 'fr' ? 'Enceintes' : 'Speakers'}
-                              </h4>
-                              <div className="space-y-3">
-                                {speakers.map((speaker) => {
-                                  const currentQuantity = speakerQuantities[speaker.id] || 0;
-                                  // Marquer comme suggéré si c'est la première enceinte et qu'elle est pré-sélectionnée automatiquement
-                                  const isSuggested = subwoofers.length === 0 && 
-                                                    speakers[0]?.id === speaker.id && 
-                                                    currentQuantity === 1 &&
-                                                    Object.keys(subwooferQuantities).length === 0 &&
-                                                    Object.keys(speakerQuantities).length === 1;
-                                  return (
-                                    <QuantitySelector
-                                      key={speaker.id}
-                                      productId={speaker.id}
-                                      productName={speaker.name}
-                                      price={speaker.dailyPrice}
-                                      icon="🔊"
-                                      quantity={currentQuantity}
-                                      onQuantityChange={(productId, quantity) => {
-                                        setSpeakerQuantities(prev => ({
-                                          ...prev,
-                                          [productId]: quantity
-                                        }));
-                                      }}
-                                      maxQuantity={speaker.quantity}
-                                      suggested={isSuggested && currentQuantity === 1}
-                                    />
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
                 </>
               )}
             </div>
@@ -742,15 +1286,29 @@ export default function AssistantRefactored({
             />
           )}
 
-          {(step.id === 'startTime' || step.id === 'endTime') && (
-            <Input
-              type="text"
-              value={value as string || ''}
-              onChange={(val) => handleAnswerChange(step.id, val)}
-              placeholder={step.id === 'startTime' ? "Ex: 19h00, 20h30..." : "Ex: 23h00, 00h30..."}
-              required={step.required}
-              error={error}
-            />
+          {step.type === 'time' && (
+            <div className="space-y-2">
+              <select
+                value={value as string || ''}
+                onChange={(e) => handleAnswerChange(step.id, e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#F2431E] focus:outline-none transition-colors text-gray-900 bg-white"
+                required={step.required}
+              >
+                <option value="">{language === 'fr' ? 'Sélectionnez une heure' : 'Select a time'}</option>
+                {Array.from({ length: 48 }, (_, i) => {
+                  const hour = Math.floor(i / 2);
+                  const minute = (i % 2) * 30;
+                  const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                  const displayTime = `${hour.toString().padStart(2, '0')}h${minute.toString().padStart(2, '0')}`;
+                  return (
+                    <option key={timeString} value={timeString}>
+                      {displayTime}
+                    </option>
+                  );
+                })}
+              </select>
+              {error && <p className="text-sm text-red-500">{error}</p>}
+            </div>
           )}
 
         </div>
@@ -760,6 +1318,161 @@ export default function AssistantRefactored({
       </div>
     );
   };
+
+  // Calculer le prix d'installation quand les données changent
+  useEffect(() => {
+    const calculateInstallation = async () => {
+      if (answers.deliveryInstallation !== 'yes' && answers.deliveryInstallation !== true) {
+        setInstallationPrice(0);
+        return;
+      }
+
+      const recommendation = recommendPack(answers);
+      if (!recommendation) {
+        setInstallationPrice(0);
+        return;
+      }
+
+      // Construire un panier temporaire pour calculer le prix d'installation
+      const tempCartItems: CartItem[] = [];
+      
+      // Ajouter le pack
+      const packInfo = getPacksInfo();
+      const selectedPack = packInfo.find(p => p.id === recommendation.pack.id);
+      if (selectedPack && selectedPack.basePrice !== null) {
+        tempCartItems.push({
+          productId: `pack-${selectedPack.id}`,
+          productName: selectedPack.name,
+          productSlug: `pack-${selectedPack.id}`,
+          quantity: 1,
+          rentalDays: 1,
+          startDate: answers.startDate || '',
+          endDate: answers.endDate || answers.startDate || '',
+          dailyPrice: recommendation.pack.basePrice,
+          deposit: selectedPack.deposit || 0,
+          addons: [],
+          images: [],
+        });
+      }
+      
+      // Ajouter les micros
+      Object.entries(wiredMicQuantities).forEach(([productId, quantity]) => {
+        if (quantity > 0) {
+          const mic = wiredMics.find(m => m.id === productId);
+          if (mic) {
+            tempCartItems.push({
+              productId: mic.id,
+              productName: mic.name,
+              productSlug: mic.slug || mic.id,
+              quantity: quantity,
+              rentalDays: 1,
+              startDate: answers.startDate || '',
+              endDate: answers.endDate || answers.startDate || '',
+              dailyPrice: mic.dailyPrice,
+              deposit: mic.deposit || 0,
+              addons: [],
+              images: mic.images || [],
+            });
+          }
+        }
+      });
+      
+      Object.entries(wirelessMicQuantities).forEach(([productId, quantity]) => {
+        if (quantity > 0) {
+          const mic = wirelessMics.find(m => m.id === productId);
+          if (mic) {
+            tempCartItems.push({
+              productId: mic.id,
+              productName: mic.name,
+              productSlug: mic.slug || mic.id,
+              quantity: quantity,
+              rentalDays: 1,
+              startDate: answers.startDate || '',
+              endDate: answers.endDate || answers.startDate || '',
+              dailyPrice: mic.dailyPrice,
+              deposit: mic.deposit || 0,
+              addons: [],
+              images: mic.images || [],
+            });
+          }
+        }
+      });
+      
+      // Ajouter les enceintes
+      Object.entries(speakerQuantities).forEach(([productId, quantity]) => {
+        if (quantity > 0) {
+          const speaker = speakers.find(s => s.id === productId);
+          if (speaker) {
+            tempCartItems.push({
+              productId: speaker.id,
+              productName: speaker.name,
+              productSlug: speaker.slug || speaker.id,
+              quantity: quantity,
+              rentalDays: 1,
+              startDate: answers.startDate || '',
+              endDate: answers.endDate || answers.startDate || '',
+              dailyPrice: speaker.dailyPrice,
+              deposit: speaker.deposit || 0,
+              addons: [],
+              images: speaker.images || [],
+            });
+          }
+        }
+      });
+      
+      // Ajouter les caissons
+      Object.entries(subwooferQuantities).forEach(([productId, quantity]) => {
+        if (quantity > 0) {
+          const subwoofer = subwoofers.find(s => s.id === productId);
+          if (subwoofer) {
+            tempCartItems.push({
+              productId: subwoofer.id,
+              productName: subwoofer.name,
+              productSlug: subwoofer.slug || subwoofer.id,
+              quantity: quantity,
+              rentalDays: 1,
+              startDate: answers.startDate || '',
+              endDate: answers.endDate || answers.startDate || '',
+              dailyPrice: subwoofer.dailyPrice,
+              deposit: subwoofer.deposit || 0,
+              addons: [],
+              images: subwoofer.images || [],
+            });
+          }
+        }
+      });
+      
+      // Ajouter les accessoires
+      answers.extras?.forEach((extra) => {
+        if (extra.startsWith('accessory_')) {
+          const accessoryId = extra.replace('accessory_', '');
+          const accessory = accessories.find(a => a.id === accessoryId);
+          if (accessory) {
+            tempCartItems.push({
+              productId: accessory.id,
+              productName: accessory.name,
+              productSlug: accessory.slug || accessory.id,
+              quantity: 1,
+              rentalDays: 1,
+              startDate: answers.startDate || '',
+              endDate: answers.endDate || answers.startDate || '',
+              dailyPrice: accessory.dailyPrice,
+              deposit: accessory.deposit || 0,
+              addons: [],
+              images: accessory.images || [],
+            });
+          }
+        }
+      });
+      
+      const calculatedInstallationPrice = calculateInstallationPrice(tempCartItems);
+      setInstallationPrice(calculatedInstallationPrice || 0);
+    };
+
+    if (showSummary) {
+      calculateInstallation();
+    }
+  }, [showSummary, answers.deliveryInstallation, answers.startDate, answers.endDate, answers.extras, wiredMicQuantities, wirelessMicQuantities, speakerQuantities, subwooferQuantities, wiredMics, wirelessMics, speakers, subwoofers, accessories]);
 
   const renderSummary = () => {
     // Utiliser recommendPack standard (la vérification de stock se fait côté serveur lors de la réservation)
@@ -779,6 +1492,28 @@ export default function AssistantRefactored({
       }
       return total;
     }, 0) || 0;
+    
+    // Calculer le prix des micros filaires sélectionnés
+    const wiredMicsPrice = Object.entries(wiredMicQuantities).reduce((total, [productId, quantity]) => {
+      if (quantity > 0) {
+        const mic = wiredMics.find(m => m.id === productId);
+        if (mic) {
+          return total + (mic.dailyPrice * quantity);
+        }
+      }
+      return total;
+    }, 0);
+    
+    // Calculer le prix des micros sans fil sélectionnés
+    const wirelessMicsPrice = Object.entries(wirelessMicQuantities).reduce((total, [productId, quantity]) => {
+      if (quantity > 0) {
+        const mic = wirelessMics.find(m => m.id === productId);
+        if (mic) {
+          return total + (mic.dailyPrice * quantity);
+        }
+      }
+      return total;
+    }, 0);
     
     // Calculer le prix des enceintes sélectionnées
     const speakersPrice = Object.entries(speakerQuantities).reduce((total, [productId, quantity]) => {
@@ -802,13 +1537,13 @@ export default function AssistantRefactored({
       return total;
     }, 0);
     
-    // Ajuster le breakdown pour inclure les accessoires, enceintes et caissons
+    // Ajuster le breakdown pour inclure les accessoires, micros, enceintes, caissons et installation
     const adjustedBreakdown = {
       ...recommendation.breakdown,
-      extras: recommendation.breakdown.extras + accessoriesPrice + speakersPrice + subwoofersPrice,
+      extras: recommendation.breakdown.extras + accessoriesPrice + wiredMicsPrice + wirelessMicsPrice + speakersPrice + subwoofersPrice + installationPrice,
     };
     
-    const adjustedTotalPrice = recommendation.totalPrice + accessoriesPrice + speakersPrice + subwoofersPrice;
+    const adjustedTotalPrice = recommendation.totalPrice + accessoriesPrice + wiredMicsPrice + wirelessMicsPrice + speakersPrice + subwoofersPrice + installationPrice;
     
     // Track pack recommendation
     trackAssistantEvent.packRecommended(recommendation.pack.name, recommendation.confidence);
@@ -863,7 +1598,19 @@ export default function AssistantRefactored({
                     <span>Options :</span>
                     <span>{adjustedBreakdown.extras} €</span>
                   </div>
-                  {/* Détail des enceintes et caissons */}
+                  {/* Détail des micros, enceintes et caissons */}
+                  {wiredMicsPrice > 0 && (
+                    <div className="flex justify-between text-xs text-gray-600 pl-4">
+                      <span>Micros filaires :</span>
+                      <span>{wiredMicsPrice} €</span>
+                    </div>
+                  )}
+                  {wirelessMicsPrice > 0 && (
+                    <div className="flex justify-between text-xs text-gray-600 pl-4">
+                      <span>Micros sans fil :</span>
+                      <span>{wirelessMicsPrice} €</span>
+                    </div>
+                  )}
                   {speakersPrice > 0 && (
                     <div className="flex justify-between text-xs text-gray-600 pl-4">
                       <span>Enceintes supplémentaires :</span>
@@ -874,6 +1621,12 @@ export default function AssistantRefactored({
                     <div className="flex justify-between text-xs text-gray-600 pl-4">
                       <span>Caissons de basse :</span>
                       <span>{subwoofersPrice} €</span>
+                    </div>
+                  )}
+                  {installationPrice > 0 && (
+                    <div className="flex justify-between text-xs text-gray-600 pl-4">
+                      <span>Installation :</span>
+                      <span>{installationPrice} €</span>
                     </div>
                   )}
                 </>
@@ -902,7 +1655,104 @@ export default function AssistantRefactored({
                 {reason}
               </li>
             ))}
+            
+            {/* Afficher les micros sélectionnés */}
+            {Object.entries(wiredMicQuantities).map(([productId, quantity]) => {
+              if (quantity > 0) {
+                const mic = wiredMics.find(m => m.id === productId);
+                if (mic) {
+                  return (
+                    <li key={`wired-${productId}`} className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-[#e27431] rounded-full" />
+                      <span>
+                        {language === 'fr' 
+                          ? `🎤 ${mic.name} (${quantity}x)`
+                          : `🎤 ${mic.name} (${quantity}x)`}
+                      </span>
+                    </li>
+                  );
+                }
+              }
+              return null;
+            })}
+            
+            {Object.entries(wirelessMicQuantities).map(([productId, quantity]) => {
+              if (quantity > 0) {
+                const mic = wirelessMics.find(m => m.id === productId);
+                if (mic) {
+                  return (
+                    <li key={`wireless-${productId}`} className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-[#e27431] rounded-full" />
+                      <span>
+                        {language === 'fr' 
+                          ? `🎤 ${mic.name} (${quantity}x)`
+                          : `🎤 ${mic.name} (${quantity}x)`}
+                      </span>
+                    </li>
+                  );
+                }
+              }
+              return null;
+            })}
+            
+            {/* Afficher les enceintes sélectionnées */}
+            {Object.entries(speakerQuantities).map(([productId, quantity]) => {
+              if (quantity > 0) {
+                const speaker = speakers.find(s => s.id === productId);
+                if (speaker) {
+                  return (
+                    <li key={`speaker-${productId}`} className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-[#e27431] rounded-full" />
+                      <span>
+                        {language === 'fr' 
+                          ? `🔊 ${speaker.name} (${quantity}x)`
+                          : `🔊 ${speaker.name} (${quantity}x)`}
+                      </span>
+                    </li>
+                  );
+                }
+              }
+              return null;
+            })}
+            
+            {/* Afficher les caissons sélectionnés */}
+            {Object.entries(subwooferQuantities).map(([productId, quantity]) => {
+              if (quantity > 0) {
+                const subwoofer = subwoofers.find(s => s.id === productId);
+                if (subwoofer) {
+                  return (
+                    <li key={`subwoofer-${productId}`} className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-[#e27431] rounded-full" />
+                      <span>
+                        {language === 'fr' 
+                          ? `🔊 ${subwoofer.name} (${quantity}x)`
+                          : `🔊 ${subwoofer.name} (${quantity}x)`}
+                      </span>
+                    </li>
+                  );
+                }
+              }
+              return null;
+            })}
           </ul>
+        </div>
+
+        {/* Message de conclusion (Message 10) */}
+        <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 text-center">
+          <div className="text-4xl mb-3">✅</div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {language === 'fr' ? 'Parfait ✅' : 'Perfect ✅'}
+          </h3>
+          <p className="text-gray-700 mb-4">
+            {language === 'fr' 
+              ? 'Votre configuration est adaptée à votre événement et prête à être réservée.'
+              : 'Your configuration is adapted to your event and ready to be reserved.'}
+          </p>
+          <p className="text-sm text-gray-600 mb-4">
+            {language === 'fr' 
+              ? '👉 Actions possibles :'
+              : '👉 Possible actions :'}
+          </p>
         </div>
 
         {/* Actions améliorées */}
