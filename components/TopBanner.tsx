@@ -45,7 +45,7 @@ export default function TopBanner({ language }: TopBannerProps) {
 
 
   return (
-    <div className="bg-[#F2431E] text-white py-2 px-4 relative z-50">
+    <div className="bg-[#F2431E] text-white py-2 px-4 relative z-40">
       <div className="max-w-7xl mx-auto flex flex-row items-center justify-between">
         {/* Espaceur gauche pour équilibrer */}
         <div className="flex-1"></div>

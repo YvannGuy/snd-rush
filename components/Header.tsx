@@ -182,14 +182,16 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               {/* Auth Icon - Desktop only */}
               <div className="hidden lg:block relative user-dropdown-container">
                 {user ? (
-                  <div className="relative">
+                  <div 
+                    className="relative"
+                    onMouseEnter={() => setIsUserDropdownOpen(true)}
+                    onMouseLeave={() => setIsUserDropdownOpen(false)}
+                  >
                     <button
                       onClick={() => {
                         router.push('/dashboard');
                         setIsUserDropdownOpen(false);
                       }}
-                      onMouseEnter={() => setIsUserDropdownOpen(true)}
-                      onMouseLeave={() => setIsUserDropdownOpen(false)}
                       className="relative p-2 text-white hover:text-[#F2431E] transition-colors cursor-pointer rounded-full"
                       aria-label={texts[language].account}
                     >
@@ -197,9 +199,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                     </button>
                     {isUserDropdownOpen && (
                       <div
-                        className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50"
-                        onMouseEnter={() => setIsUserDropdownOpen(true)}
-                        onMouseLeave={() => setIsUserDropdownOpen(false)}
+                        className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg py-1 z-[100]"
                       >
                         <Link
                           href="/mes-reservations"
@@ -287,7 +287,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                       <UserIconWithName iconSize="sm" className="text-white" />
                     </button>
                     {isUserDropdownOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50">
+                      <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg py-1 z-[100]">
                         <Link
                           href="/mes-reservations"
                           onClick={() => setIsUserDropdownOpen(false)}
