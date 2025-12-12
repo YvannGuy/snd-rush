@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import DashboardSidebar from '@/components/DashboardSidebar';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { useUser } from '@/hooks/useUser';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
@@ -185,8 +187,9 @@ export default function ReservationDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Header language={language} onLanguageChange={setLanguage} />
       <DashboardSidebar language={language} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
-      <main className="flex-1 p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 pt-24">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="mb-6">
@@ -303,12 +306,12 @@ export default function ReservationDetailPage() {
                     <p className="text-sm text-gray-600 mb-1">{currentTexts.total}</p>
                     <p className="text-2xl font-bold text-[#F2431E]">{reservation.total_price || 0}€ TTC</p>
                   </div>
-                  {reservation.deposit && (
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-sm text-gray-600 mb-1">{currentTexts.deposit}</p>
-                      <p className="text-2xl font-bold text-gray-900">{reservation.deposit}€</p>
-                    </div>
-                  )}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 mb-1">{currentTexts.deposit}</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {reservation.deposit_amount || reservation.deposit || 0}€
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -415,6 +418,8 @@ export default function ReservationDetailPage() {
           </div>
         </div>
       </main>
+
+      <Footer language={language} />
 
       <SignModal
         isOpen={isSignModalOpen}

@@ -38,7 +38,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
         {
           id: 1,
           name: 'Pack S Petit',
-          price: '109€',
+          price: '109€ /jour',
           capacity: 'Pour 30 à 70 personnes',
           includes: [
             '1 enceinte Mac Mah AS 115',
@@ -51,7 +51,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
         {
           id: 2,
           name: 'Pack M Confort',
-          price: '129€',
+          price: '129€ /jour',
           capacity: 'Pour 70 à 150 personnes',
           includes: [
             '2 enceintes Mac Mah AS 115',
@@ -64,7 +64,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
         {
           id: 3,
           name: 'Pack L Grand',
-          price: '179€',
+          price: '179€ /jour',
           capacity: 'Pour 150 à 250 personnes',
           includes: [
             '2 enceintes FBT X-Lite 115A',
@@ -120,7 +120,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
         {
           id: 1,
           name: 'Pack S Small',
-          price: '109€',
+          price: '109€ /day',
           capacity: 'For 30 to 70 people',
           includes: [
             '1 Mac Mah AS 115 speaker',
@@ -133,7 +133,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
         {
           id: 2,
           name: 'Pack M Comfort',
-          price: '129€',
+          price: '129€ /day',
           capacity: 'For 70 to 150 people',
           includes: [
             '2 Mac Mah AS 115 speakers',
@@ -146,7 +146,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
         {
           id: 3,
           name: 'Pack L Large',
-          price: '179€',
+          price: '179€ /day',
           capacity: 'For 150 to 250 people',
           includes: [
             '2 FBT X-Lite 115A speakers',

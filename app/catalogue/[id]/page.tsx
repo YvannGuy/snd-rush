@@ -628,8 +628,7 @@ export default function ProductDetailPage() {
               {/* Prix */}
               <div className="mb-6">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-black">{product.daily_price_ttc}€</span>
-                  <span className="text-xl text-gray-500">{currentTexts.pricePerDay}</span>
+                  <span className="text-4xl font-bold text-black">{product.daily_price_ttc}€ /jour</span>
                 </div>
               </div>
 

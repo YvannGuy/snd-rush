@@ -32,6 +32,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const { getCartItemCount } = useCart();
   const [cartCount, setCartCount] = useState(0);
   const { user } = useUser();
@@ -72,6 +73,24 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]); // Inclure pathname pour vérifier la page actuelle
 
+  // Fermer le dropdown utilisateur quand on clique en dehors
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isUserDropdownOpen && !target.closest('.user-dropdown-container')) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+
+    if (isUserDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isUserDropdownOpen]);
+
 
   const getUserInitials = (user: any) => {
     const email = user?.email || '';
@@ -97,6 +116,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       banner: '1er spécialiste de l\'urgence sonore • Paris et Île-de-France • 24h/24 7j/7 • Intervention rapide • Devis gratuit',
       account: 'Mon compte',
       reservations: 'Mes réservations',
+      contracts: 'Mes contrats',
       invoices: 'Mes factures',
       signOut: 'Déconnexion',
     },
@@ -109,6 +129,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       banner: '1st sound emergency specialist • Paris and Île-de-France • 24/7 • Fast intervention • Free quote',
       account: 'My account',
       reservations: 'My reservations',
+      contracts: 'My contracts',
       invoices: 'My invoices',
       signOut: 'Sign out',
     }
@@ -159,15 +180,54 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               </button>
 
               {/* Auth Icon - Desktop only */}
-              <div className="hidden lg:block relative">
+              <div className="hidden lg:block relative user-dropdown-container">
                 {user ? (
-                  <Link
-                    href="/dashboard"
-                    className="relative p-2 text-white hover:text-[#F2431E] transition-colors cursor-pointer rounded-full"
-                    aria-label={texts[language].account}
-                  >
-                    <UserIconWithName iconSize="md" className="text-white" />
-                  </Link>
+                  <div className="relative">
+                    <button
+                      onClick={() => {
+                        router.push('/dashboard');
+                        setIsUserDropdownOpen(false);
+                      }}
+                      onMouseEnter={() => setIsUserDropdownOpen(true)}
+                      onMouseLeave={() => setIsUserDropdownOpen(false)}
+                      className="relative p-2 text-white hover:text-[#F2431E] transition-colors cursor-pointer rounded-full"
+                      aria-label={texts[language].account}
+                    >
+                      <UserIconWithName iconSize="md" className="text-white" />
+                    </button>
+                    {isUserDropdownOpen && (
+                      <div
+                        className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50"
+                        onMouseEnter={() => setIsUserDropdownOpen(true)}
+                        onMouseLeave={() => setIsUserDropdownOpen(false)}
+                      >
+                        <Link
+                          href="/mes-reservations"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {texts[language].reservations}
+                        </Link>
+                        <Link
+                          href="/mes-contrats"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {texts[language].contracts}
+                        </Link>
+                        <hr className="my-1" />
+                        <button
+                          onClick={async () => {
+                            await handleSignOut();
+                            setIsUserDropdownOpen(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {texts[language].signOut}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <button
                     onClick={() => setIsSignModalOpen(true)}
@@ -215,13 +275,46 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               <div className="lg:hidden flex items-center gap-2">
                 {/* Auth Icon - Mobile */}
                 {user ? (
-                  <Link
-                    href="/dashboard"
-                    className="p-2 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative"
-                    aria-label={texts[language].account}
-                  >
-                    <UserIconWithName iconSize="sm" className="text-white" />
-                  </Link>
+                  <div className="relative user-dropdown-container">
+                    <button
+                      onClick={() => {
+                        router.push('/dashboard');
+                        setIsUserDropdownOpen(!isUserDropdownOpen);
+                      }}
+                      className="p-2 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative"
+                      aria-label={texts[language].account}
+                    >
+                      <UserIconWithName iconSize="sm" className="text-white" />
+                    </button>
+                    {isUserDropdownOpen && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50">
+                        <Link
+                          href="/mes-reservations"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {texts[language].reservations}
+                        </Link>
+                        <Link
+                          href="/mes-contrats"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {texts[language].contracts}
+                        </Link>
+                        <hr className="my-1" />
+                        <button
+                          onClick={async () => {
+                            await handleSignOut();
+                            setIsUserDropdownOpen(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {texts[language].signOut}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <button
                     onClick={() => setIsSignModalOpen(true)}

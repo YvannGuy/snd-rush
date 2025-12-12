@@ -66,6 +66,7 @@ export default function AssistantRefactored({
   const [wiredMicQuantities, setWiredMicQuantities] = useState<Record<string, number>>({});
   const [wirelessMicQuantities, setWirelessMicQuantities] = useState<Record<string, number>>({});
   const [installationPrice, setInstallationPrice] = useState<number>(0);
+  const [isUrgentEventCached, setIsUrgentEventCached] = useState<boolean | null>(null);
   const { addToCart } = useCart();
   
   const modalRef = useRef<HTMLDivElement>(null);
@@ -180,15 +181,23 @@ export default function AssistantRefactored({
             const availableSpeakers = sonorisationProducts.filter(
               (p) => {
                 const nameLower = p.name.toLowerCase();
+                
+                // Exclure explicitement "FBT X-Lite 115A" (c'est un caisson, pas une enceinte)
+                const isFBTXlite115A = (nameLower.includes('fbt') && nameLower.includes('xlite') && nameLower.includes('115')) ||
+                                       (nameLower.includes('fbt') && nameLower.includes('xlite') && nameLower.includes('115a'));
+                if (isFBTXlite115A) {
+                  return false;
+                }
+                
                 const isSpeaker = 
                   nameLower.includes('enceinte') || 
                   nameLower.includes('speaker') || 
                   nameLower.includes('haut-parleur') ||
-                  nameLower.includes('fbt') ||
+                  (nameLower.includes('fbt') && !nameLower.includes('115')) ||
+                  (nameLower.includes('xlite') && !nameLower.includes('115')) ||
                   nameLower.includes('mac mah') ||
                   nameLower.includes('as108') ||
-                  nameLower.includes('as115') ||
-                  nameLower.includes('xlite');
+                  (nameLower.includes('as115') && !nameLower.includes('xlite'));
                 
                 const isNotSubwoofer = 
                   !nameLower.includes('caisson') && 
@@ -206,9 +215,17 @@ export default function AssistantRefactored({
             const availableSubwoofers = sonorisationProducts.filter(
               (p) => {
                 const nameLower = p.name.toLowerCase();
+                
+                // Inclure explicitement "FBT X-Lite 115A"
+                const isFBTXlite115A = (nameLower.includes('fbt') && nameLower.includes('xlite') && nameLower.includes('115')) ||
+                                       (nameLower.includes('fbt') && nameLower.includes('xlite') && nameLower.includes('115a'));
+                
                 return p.quantity > 0 && 
                        p.dailyPrice > 0 &&
-                       (nameLower.includes('caisson') || nameLower.includes('sub') || nameLower.includes('basse'));
+                       (isFBTXlite115A ||
+                        nameLower.includes('caisson') || 
+                        nameLower.includes('sub') || 
+                        nameLower.includes('basse'));
               }
             );
             
@@ -420,15 +437,23 @@ export default function AssistantRefactored({
           const availableSpeakers = sonorisationProducts.filter(
             (p) => {
               const nameLower = p.name.toLowerCase();
+              
+              // Exclure explicitement "FBT X-Lite 115A" (c'est un caisson, pas une enceinte)
+              const isFBTXlite115A = (nameLower.includes('fbt') && nameLower.includes('xlite') && nameLower.includes('115')) ||
+                                     (nameLower.includes('fbt') && nameLower.includes('xlite') && nameLower.includes('115a'));
+              if (isFBTXlite115A) {
+                return false;
+              }
+              
               const isSpeaker = 
                 nameLower.includes('enceinte') || 
                 nameLower.includes('speaker') || 
                 nameLower.includes('haut-parleur') ||
-                nameLower.includes('fbt') ||
+                (nameLower.includes('fbt') && !nameLower.includes('115')) ||
+                (nameLower.includes('xlite') && !nameLower.includes('115')) ||
                 nameLower.includes('mac mah') ||
                 nameLower.includes('as108') ||
-                nameLower.includes('as115') ||
-                nameLower.includes('xlite');
+                (nameLower.includes('as115') && !nameLower.includes('xlite'));
               
               const isNotSubwoofer = 
                 !nameLower.includes('caisson') && 
@@ -446,9 +471,17 @@ export default function AssistantRefactored({
           const availableSubwoofers = sonorisationProducts.filter(
             (p) => {
               const nameLower = p.name.toLowerCase();
+              
+              // Inclure explicitement "FBT X-Lite 115A"
+              const isFBTXlite115A = (nameLower.includes('fbt') && nameLower.includes('xlite') && nameLower.includes('115')) ||
+                                     (nameLower.includes('fbt') && nameLower.includes('xlite') && nameLower.includes('115a'));
+              
               return p.quantity > 0 && 
                      p.dailyPrice > 0 &&
-                     (nameLower.includes('caisson') || nameLower.includes('sub') || nameLower.includes('basse'));
+                     (isFBTXlite115A ||
+                      nameLower.includes('caisson') || 
+                      nameLower.includes('sub') || 
+                      nameLower.includes('basse'));
             }
           );
           
@@ -983,22 +1016,115 @@ export default function AssistantRefactored({
       }
     });
 
-    // Calculer le prix avec majoration d'urgence si applicable
-    const isUrgentEvent = isUrgent(answers.startDate || '', answers.startTime);
+    // Utiliser le résultat en cache de isUrgentEvent pour garantir la cohérence avec renderSummary
+    // IMPORTANT: La majoration urgence ne s'applique QUE pour des événements le jour même (1 jour)
+    // Si plusieurs jours sont sélectionnés, la majoration ne s'applique JAMAIS
+    let isUrgentEvent = false;
+    if (isUrgentEventCached !== null) {
+      isUrgentEvent = isUrgentEventCached;
+    } else if (rentalDays === 1) {
+      // Ne calculer que si c'est 1 jour
+      isUrgentEvent = isUrgent(answers.startDate || '', answers.startTime);
+    }
     const baseDailyPrice = recommendation.breakdown.base;
     
-    // La majoration d'urgence est de 20% du total (base + delivery + extras)
-    // On calcule le total pour toute la période avant majoration
+    // Calculer le total de TOUS les items pour la période (pack + micros + enceintes + caissons + accessoires)
+    // pour pouvoir calculer la majoration urgence sur le total complet
     const totalBase = baseDailyPrice * rentalDays;
     const totalDelivery = recommendation.breakdown.delivery || 0;
-    const totalExtras = recommendation.breakdown.extras || 0;
-    const totalBeforeUrgency = totalBase + totalDelivery + totalExtras;
+    
+    // Calculer le total des accessoires pour la période
+    const accessoriesDailyTotal = answers.extras?.reduce((total, extra) => {
+      if (extra.startsWith('accessory_')) {
+        const accessoryId = extra.replace('accessory_', '');
+        const accessory = accessories.find(a => a.id === accessoryId);
+        if (accessory) {
+          return total + accessory.dailyPrice;
+        }
+      }
+      return total;
+    }, 0) || 0;
+    const accessoriesTotal = accessoriesDailyTotal * rentalDays;
+    
+    // Calculer le total des micros pour la période
+    const wiredMicsDailyTotal = Object.entries(wiredMicQuantities).reduce((total, [productId, quantity]) => {
+      if (quantity > 0) {
+        const mic = wiredMics.find(m => m.id === productId);
+        if (mic) {
+          return total + (mic.dailyPrice * quantity);
+        }
+      }
+      return total;
+    }, 0);
+    const wiredMicsTotal = wiredMicsDailyTotal * rentalDays;
+    
+    const wirelessMicsDailyTotal = Object.entries(wirelessMicQuantities).reduce((total, [productId, quantity]) => {
+      if (quantity > 0) {
+        const mic = wirelessMics.find(m => m.id === productId);
+        if (mic) {
+          return total + (mic.dailyPrice * quantity);
+        }
+      }
+      return total;
+    }, 0);
+    const wirelessMicsTotal = wirelessMicsDailyTotal * rentalDays;
+    
+    // Calculer le total des enceintes pour la période
+    const speakersDailyTotal = Object.entries(speakerQuantities).reduce((total, [productId, quantity]) => {
+      if (quantity > 0) {
+        const speaker = speakers.find(s => s.id === productId);
+        if (speaker) {
+          return total + (speaker.dailyPrice * quantity);
+        }
+      }
+      return total;
+    }, 0);
+    const speakersTotal = speakersDailyTotal * rentalDays;
+    
+    // Calculer le total des caissons pour la période
+    const subwoofersDailyTotal = Object.entries(subwooferQuantities).reduce((total, [productId, quantity]) => {
+      if (quantity > 0) {
+        const subwoofer = subwoofers.find(s => s.id === productId);
+        if (subwoofer) {
+          return total + (subwoofer.dailyPrice * quantity);
+        }
+      }
+      return total;
+    }, 0);
+    const subwoofersTotal = subwoofersDailyTotal * rentalDays;
+    
+    // Calculer le prix d'installation (prix fixe, pas par jour)
+    const packId = packIdMapping[recommendation.pack.id]?.id || 1;
+    let installationPrice = 0;
+    switch (packId) {
+      case 1: installationPrice = 60; break;
+      case 2: installationPrice = 80; break;
+      case 3: installationPrice = 120; break;
+      default: installationPrice = 0;
+    }
+    const totalWiredMics = Object.values(wiredMicQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    const totalWirelessMics = Object.values(wirelessMicQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    const totalMics = totalWiredMics + totalWirelessMics;
+    const totalSpeakers = Object.values(speakerQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    const totalSubwoofers = Object.values(subwooferQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    let additionalComplexity = 0;
+    if (totalMics > 0) additionalComplexity += totalMics * 5;
+    if (totalSpeakers > 0) additionalComplexity += totalSpeakers * 10;
+    if (totalSubwoofers > 0) additionalComplexity += totalSubwoofers * 15;
+    installationPrice += additionalComplexity;
+    
+    // Calculer le total AVANT majoration urgence (incluant tous les items)
+    // Livraison et installation sont des prix fixes (pas par jour)
+    const totalBeforeUrgency = totalBase + totalDelivery + accessoriesTotal + wiredMicsTotal + wirelessMicsTotal + speakersTotal + subwoofersTotal + installationPrice;
     
     // Calculer la majoration d'urgence (20% du total)
+    // IMPORTANT: La majoration ne s'applique QUE si l'événement commence dans moins de 2h, est un dimanche, ou un samedi après 15h
+    // Pour une location de plusieurs jours, on vérifie uniquement la date/heure de début
+    // La majoration s'applique UNE SEULE FOIS, pas par jour
     const urgencySurcharge = isUrgentEvent ? Math.round(totalBeforeUrgency * 0.2) : 0;
     
     // Ajouter la majoration comme addon pour qu'elle soit visible et comptabilisée dans le panier
-    // La majoration s'applique au total (pack + livraison + extras), donc on l'ajoute comme addon au pack
+    // La majoration s'applique au total de TOUS les items, donc on l'ajoute comme addon au pack
     if (isUrgentEvent && urgencySurcharge > 0) {
       addons.push({
         id: 'urgence-majoration',
@@ -1053,57 +1179,7 @@ export default function AssistantRefactored({
       grande: 160,
     };
     
-    // Prix d'installation selon le pack + équipements supplémentaires
-    const packId = packIdMapping[recommendation.pack.id]?.id || 1;
-    let installationPrice = 0;
-    
-    // Prix de base selon le pack
-    switch (packId) {
-      case 1: // Pack S Petit
-        installationPrice = 60;
-        break;
-      case 2: // Pack M Confort
-        installationPrice = 80;
-        break;
-      case 3: // Pack L Grand
-        installationPrice = 120;
-        break;
-      default:
-        installationPrice = 0; // Sur devis pour pack XL
-    }
-    
-    // Ajouter un supplément selon les équipements supplémentaires
-    // Compter les micros supplémentaires
-    const totalWiredMics = Object.values(wiredMicQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
-    const totalWirelessMics = Object.values(wirelessMicQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
-    const totalMics = totalWiredMics + totalWirelessMics;
-    
-    // Compter les enceintes supplémentaires
-    const totalSpeakers = Object.values(speakerQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
-    
-    // Compter les caissons supplémentaires
-    const totalSubwoofers = Object.values(subwooferQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
-    
-    // Calculer le supplément selon la complexité
-    let additionalComplexity = 0;
-    
-    // Chaque micro supplémentaire ajoute 5€
-    if (totalMics > 0) {
-      additionalComplexity += totalMics * 5;
-    }
-    
-    // Chaque enceinte supplémentaire ajoute 10€
-    if (totalSpeakers > 0) {
-      additionalComplexity += totalSpeakers * 10;
-    }
-    
-    // Chaque caisson supplémentaire ajoute 15€
-    if (totalSubwoofers > 0) {
-      additionalComplexity += totalSubwoofers * 15;
-    }
-    
-    // Ajouter le supplément à l'installation
-    installationPrice += additionalComplexity;
+    // installationPrice est déjà calculé plus haut pour le calcul de la majoration urgence
     
     // Ajouter la livraison si sélectionnée
     if (deliveryOptions.includes('livraison') && deliveryZone !== 'retrait') {
@@ -1857,15 +1933,59 @@ export default function AssistantRefactored({
     }
   }, [showSummary, answers.deliveryOptions, answers.startDate, answers.endDate, answers.extras, wiredMicQuantities, wirelessMicQuantities, speakerQuantities, subwooferQuantities, wiredMics, wirelessMics, speakers, subwoofers, accessories]);
 
+  // Calculer et mettre en cache isUrgentEvent quand les dates/heures changent
+  // IMPORTANT: La majoration urgence ne s'applique QUE pour des événements le jour même (1 jour)
+  // Si plusieurs jours sont sélectionnés, la majoration ne s'applique JAMAIS
+  useEffect(() => {
+    if (answers.startDate) {
+      // Vérifier si c'est une réservation de plusieurs jours
+      const startDate = answers.startDate;
+      const endDate = answers.endDate || answers.startDate;
+      let rentalDays = 1;
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = end.getTime() - start.getTime();
+        rentalDays = Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1);
+      }
+      
+      // La majoration urgence ne s'applique QUE si c'est 1 jour ET que l'événement est urgent
+      const isUrgentEvent = rentalDays === 1 ? isUrgent(answers.startDate, answers.startTime) : false;
+      setIsUrgentEventCached(isUrgentEvent);
+    } else {
+      setIsUrgentEventCached(null);
+    }
+  }, [answers.startDate, answers.startTime, answers.endDate]);
+
   const renderSummary = () => {
     // Utiliser recommendPack standard (la vérification de stock se fait côté serveur lors de la réservation)
     const recommendation = recommendPack(answers);
     if (!recommendation) return null;
 
-    const isUrgentEvent = isUrgent(answers.startDate || '', answers.startTime);
+    // Calculer les jours de location (comme dans handleAddToCart)
+    const startDate = answers.startDate || new Date().toISOString().split('T')[0];
+    const endDate = answers.endDate || answers.startDate || new Date().toISOString().split('T')[0];
+    let rentalDays = 1;
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffTime = end.getTime() - start.getTime();
+      rentalDays = Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1); // +1 car inclusif
+    }
+
+    // Utiliser le résultat en cache de isUrgentEvent (calculé dans useEffect)
+    // IMPORTANT: La majoration urgence ne s'applique QUE pour des événements le jour même (1 jour)
+    // Si plusieurs jours sont sélectionnés, la majoration ne s'applique JAMAIS
+    let isUrgentEvent = false;
+    if (isUrgentEventCached !== null) {
+      isUrgentEvent = isUrgentEventCached;
+    } else if (rentalDays === 1) {
+      // Ne calculer que si c'est 1 jour
+      isUrgentEvent = isUrgent(answers.startDate || '', answers.startTime);
+    }
     
-    // Calculer le prix des accessoires sélectionnés
-    const accessoriesPrice = answers.extras?.reduce((total, extra) => {
+    // Calculer le prix des accessoires sélectionnés (PRIX JOURNALIER, à multiplier par rentalDays)
+    const accessoriesDailyPrice = answers.extras?.reduce((total, extra) => {
       if (extra.startsWith('accessory_')) {
         const accessoryId = extra.replace('accessory_', '');
         const accessory = accessories.find(a => a.id === accessoryId);
@@ -1875,9 +1995,10 @@ export default function AssistantRefactored({
       }
       return total;
     }, 0) || 0;
+    const accessoriesPrice = accessoriesDailyPrice * rentalDays;
     
-    // Calculer le prix des micros filaires sélectionnés
-    const wiredMicsPrice = Object.entries(wiredMicQuantities).reduce((total, [productId, quantity]) => {
+    // Calculer le prix des micros filaires sélectionnés (PRIX JOURNALIER, à multiplier par rentalDays)
+    const wiredMicsDailyPrice = Object.entries(wiredMicQuantities).reduce((total, [productId, quantity]) => {
       if (quantity > 0) {
         const mic = wiredMics.find(m => m.id === productId);
         if (mic) {
@@ -1886,9 +2007,10 @@ export default function AssistantRefactored({
       }
       return total;
     }, 0);
+    const wiredMicsPrice = wiredMicsDailyPrice * rentalDays;
     
-    // Calculer le prix des micros sans fil sélectionnés
-    const wirelessMicsPrice = Object.entries(wirelessMicQuantities).reduce((total, [productId, quantity]) => {
+    // Calculer le prix des micros sans fil sélectionnés (PRIX JOURNALIER, à multiplier par rentalDays)
+    const wirelessMicsDailyPrice = Object.entries(wirelessMicQuantities).reduce((total, [productId, quantity]) => {
       if (quantity > 0) {
         const mic = wirelessMics.find(m => m.id === productId);
         if (mic) {
@@ -1897,9 +2019,10 @@ export default function AssistantRefactored({
       }
       return total;
     }, 0);
+    const wirelessMicsPrice = wirelessMicsDailyPrice * rentalDays;
     
-    // Calculer le prix des enceintes sélectionnées
-    const speakersPrice = Object.entries(speakerQuantities).reduce((total, [productId, quantity]) => {
+    // Calculer le prix des enceintes sélectionnées (PRIX JOURNALIER, à multiplier par rentalDays)
+    const speakersDailyPrice = Object.entries(speakerQuantities).reduce((total, [productId, quantity]) => {
       if (quantity > 0) {
         const speaker = speakers.find(s => s.id === productId);
         if (speaker) {
@@ -1908,9 +2031,10 @@ export default function AssistantRefactored({
       }
       return total;
     }, 0);
+    const speakersPrice = speakersDailyPrice * rentalDays;
     
-    // Calculer le prix des caissons sélectionnés
-    const subwoofersPrice = Object.entries(subwooferQuantities).reduce((total, [productId, quantity]) => {
+    // Calculer le prix des caissons sélectionnés (PRIX JOURNALIER, à multiplier par rentalDays)
+    const subwoofersDailyPrice = Object.entries(subwooferQuantities).reduce((total, [productId, quantity]) => {
       if (quantity > 0) {
         const subwoofer = subwoofers.find(s => s.id === productId);
         if (subwoofer) {
@@ -1919,14 +2043,93 @@ export default function AssistantRefactored({
       }
       return total;
     }, 0);
+    const subwoofersPrice = subwoofersDailyPrice * rentalDays;
     
-    // Ajuster le breakdown pour inclure les accessoires, micros, enceintes, caissons et installation
+    // Calculer le prix d'installation correctement (comme dans handleAddToCart)
+    // Base selon le pack
+    const packIdMapping: Record<string, { id: number }> = {
+      'pack_petit': { id: 1 },
+      'pack_confort': { id: 2 },
+      'pack_grand': { id: 3 },
+      'pack_maxi': { id: 5 },
+    };
+    const packInfo = packIdMapping[recommendation.pack.id] || { id: 2 };
+    let calculatedInstallationPrice = 0;
+    
+    // Prix de base selon le pack
+    switch (packInfo.id) {
+      case 1: // Pack S
+        calculatedInstallationPrice = 60;
+        break;
+      case 2: // Pack M
+        calculatedInstallationPrice = 80;
+        break;
+      case 3: // Pack L
+        calculatedInstallationPrice = 120;
+        break;
+      case 5: // Pack XL
+        calculatedInstallationPrice = 0; // Sur devis
+        break;
+      default:
+        calculatedInstallationPrice = 80;
+    }
+    
+    // Ajouter les suppléments pour équipements supplémentaires
+    const totalWiredMics = Object.values(wiredMicQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    const totalWirelessMics = Object.values(wirelessMicQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    const totalMics = totalWiredMics + totalWirelessMics;
+    const totalSpeakers = Object.values(speakerQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    const totalSubwoofers = Object.values(subwooferQuantities).reduce((sum, qty) => sum + (qty || 0), 0);
+    
+    let additionalComplexity = 0;
+    if (totalMics > 0) {
+      additionalComplexity += totalMics * 5;
+    }
+    if (totalSpeakers > 0) {
+      additionalComplexity += totalSpeakers * 10;
+    }
+    if (totalSubwoofers > 0) {
+      additionalComplexity += totalSubwoofers * 15;
+    }
+    calculatedInstallationPrice += additionalComplexity;
+    
+    // Utiliser le prix d'installation calculé au lieu de celui du state
+    const finalInstallationPrice = calculatedInstallationPrice;
+    
+    // Calculer le prix de base du pack pour toute la période (PRIX JOURNALIER × rentalDays)
+    const basePriceForPeriod = recommendation.breakdown.base * rentalDays;
+    
+    // La livraison est un prix FIXE (pas par jour), donc on ne multiplie PAS par rentalDays
+    const deliveryPrice = recommendation.breakdown.delivery || 0;
+    
+    // L'installation est un prix FIXE (pas par jour), donc on ne multiplie PAS par rentalDays
+    // finalInstallationPrice est déjà calculé plus haut
+    
+    // Calculer le total AVANT majoration urgence
+    // Inclure : pack (× rentalDays), livraison (fixe), accessoires (× rentalDays), micros (× rentalDays), 
+    // enceintes (× rentalDays), caissons (× rentalDays), installation (fixe)
+    const totalBeforeUrgency = basePriceForPeriod + deliveryPrice + accessoriesPrice + wiredMicsPrice + wirelessMicsPrice + speakersPrice + subwoofersPrice + finalInstallationPrice;
+    
+    // Recalculer la majoration urgence sur le nouveau total (incluant tous les extras)
+    // IMPORTANT: La majoration urgence s'applique UNIQUEMENT si l'événement commence le jour même
+    // (dans moins de 2h, dimanche, ou samedi après 15h). Elle s'applique UNE SEULE FOIS, pas par jour.
+    // isUrgentEvent est déjà calculé plus haut dans la fonction
+    const urgencySurcharge = isUrgentEvent ? Math.round(totalBeforeUrgency * 0.2) : 0;
+    
+    // Calculer uniquement les extras qui sont des accessoires du catalogue
+    // Exclure les micros, technicien, etc. qui sont gérés séparément
+    // accessoriesPrice est déjà calculé plus haut (prix total pour toute la période)
     const adjustedBreakdown = {
       ...recommendation.breakdown,
-      extras: recommendation.breakdown.extras + accessoriesPrice + wiredMicsPrice + wirelessMicsPrice + speakersPrice + subwoofersPrice + installationPrice,
+      base: basePriceForPeriod, // Pack pour toute la période
+      delivery: deliveryPrice, // Livraison (prix fixe)
+      extras: accessoriesPrice, // Accessoires pour toute la période
+      urgency: urgencySurcharge, // Majoration urgence (une seule fois)
     };
     
-    const adjustedTotalPrice = recommendation.totalPrice + accessoriesPrice + wiredMicsPrice + wirelessMicsPrice + speakersPrice + subwoofersPrice + installationPrice;
+    // Le total doit inclure la majoration urgence si applicable
+    // Tous les prix journaliers sont déjà multipliés par rentalDays
+    const adjustedTotalPrice = basePriceForPeriod + deliveryPrice + accessoriesPrice + wiredMicsPrice + wirelessMicsPrice + speakersPrice + subwoofersPrice + finalInstallationPrice + urgencySurcharge;
     
     // Track pack recommendation
     trackAssistantEvent.packRecommended(recommendation.pack.name, recommendation.confidence);
@@ -1968,48 +2171,51 @@ export default function AssistantRefactored({
             {/* Détail des coûts */}
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span>Pack de base :</span>
+                <span>Pack de base {rentalDays > 1 ? `(${rentalDays} jours)` : ''} :</span>
                 <span>{adjustedBreakdown.base} €</span>
               </div>
               <div className="flex justify-between">
                 <span>Livraison A/R :</span>
                 <span>{adjustedBreakdown.delivery} €</span>
               </div>
+              {/* Afficher les options (accessoires uniquement) */}
               {adjustedBreakdown.extras > 0 && (
+                <div className="flex justify-between">
+                  <span>Options {rentalDays > 1 ? `(${rentalDays} jours)` : ''} :</span>
+                  <span>{adjustedBreakdown.extras} €</span>
+                </div>
+              )}
+              {/* Détail des micros, enceintes et caissons - affichés séparément */}
+              {(wiredMicsPrice > 0 || wirelessMicsPrice > 0 || speakersPrice > 0 || subwoofersPrice > 0 || finalInstallationPrice > 0) && (
                 <>
-                  <div className="flex justify-between">
-                    <span>Options :</span>
-                    <span>{adjustedBreakdown.extras} €</span>
-                  </div>
-                  {/* Détail des micros, enceintes et caissons */}
                   {wiredMicsPrice > 0 && (
                     <div className="flex justify-between text-xs text-gray-600 pl-4">
-                      <span>Micros filaires :</span>
+                      <span>Micros filaires {rentalDays > 1 ? `(${rentalDays} jours)` : ''} :</span>
                       <span>{wiredMicsPrice} €</span>
                     </div>
                   )}
                   {wirelessMicsPrice > 0 && (
                     <div className="flex justify-between text-xs text-gray-600 pl-4">
-                      <span>Micros sans fil :</span>
+                      <span>Micros sans fil {rentalDays > 1 ? `(${rentalDays} jours)` : ''} :</span>
                       <span>{wirelessMicsPrice} €</span>
                     </div>
                   )}
                   {speakersPrice > 0 && (
                     <div className="flex justify-between text-xs text-gray-600 pl-4">
-                      <span>Enceintes supplémentaires :</span>
+                      <span>Enceintes supplémentaires {rentalDays > 1 ? `(${rentalDays} jours)` : ''} :</span>
                       <span>{speakersPrice} €</span>
                     </div>
                   )}
                   {subwoofersPrice > 0 && (
                     <div className="flex justify-between text-xs text-gray-600 pl-4">
-                      <span>Caissons de basse :</span>
+                      <span>Caissons de basse {rentalDays > 1 ? `(${rentalDays} jours)` : ''} :</span>
                       <span>{subwoofersPrice} €</span>
                     </div>
                   )}
-                  {installationPrice > 0 && (
+                  {finalInstallationPrice > 0 && (
                     <div className="flex justify-between text-xs text-gray-600 pl-4">
                       <span>Installation :</span>
-                      <span>{installationPrice} €</span>
+                      <span>{finalInstallationPrice} €</span>
                     </div>
                   )}
                 </>
@@ -2022,7 +2228,7 @@ export default function AssistantRefactored({
               )}
               <div className="border-t pt-2 flex justify-between font-bold text-lg">
                 <span>Total TTC :</span>
-                <span className="text-[#e27431]">{adjustedTotalPrice} €</span>
+                <span className="text-[#e27431]">{Math.round(adjustedTotalPrice)} €</span>
               </div>
             </div>
           </div>
