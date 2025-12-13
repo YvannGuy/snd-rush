@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/hooks/useUser';
 import { PACKS } from '@/lib/packs';
+import * as exifr from 'exifr';
 // Shadcn UI components
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -45,6 +46,7 @@ interface PhotoMetadata {
   uploadedBy: string;
   damageType?: DamageType;
   note?: string;
+  isExifDate?: boolean; // Indique si la date provient des métadonnées EXIF
 }
 
 interface ZoneData {
@@ -257,7 +259,8 @@ export default function EtatDesLieuxModal({
               zone: 'overview' as Zone,
               phase: 'before' as Phase,
               createdAt: new Date().toISOString(),
-              uploadedBy: user?.id || ''
+              uploadedBy: user?.id || '',
+              isExifDate: false // Anciennes photos sans métadonnées EXIF
             }));
           }
           
@@ -267,7 +270,8 @@ export default function EtatDesLieuxModal({
               zone: 'overview' as Zone,
               phase: 'after' as Phase,
               createdAt: new Date().toISOString(),
-              uploadedBy: user?.id || ''
+              uploadedBy: user?.id || '',
+              isExifDate: false // Anciennes photos sans métadonnées EXIF
             }));
           }
 
@@ -359,6 +363,39 @@ export default function EtatDesLieuxModal({
     return normalized + extension;
   };
 
+  // Fonction pour extraire la date EXIF d'une photo
+  const extractPhotoDate = async (file: File): Promise<{ date: string; isExif: boolean }> => {
+    try {
+      // Lire les métadonnées EXIF
+      const exifData = await exifr.parse(file, {
+        pick: ['DateTimeOriginal', 'DateTimeDigitized', 'CreateDate', 'ModifyDate']
+      });
+
+      // Essayer d'obtenir la date de prise de photo dans l'ordre de priorité
+      let photoDate: Date | null = null;
+      
+      if (exifData?.DateTimeOriginal) {
+        photoDate = new Date(exifData.DateTimeOriginal);
+      } else if (exifData?.DateTimeDigitized) {
+        photoDate = new Date(exifData.DateTimeDigitized);
+      } else if (exifData?.CreateDate) {
+        photoDate = new Date(exifData.CreateDate);
+      } else if (exifData?.ModifyDate) {
+        photoDate = new Date(exifData.ModifyDate);
+      }
+
+      // Si on a une date valide, l'utiliser
+      if (photoDate && !isNaN(photoDate.getTime())) {
+        return { date: photoDate.toISOString(), isExif: true };
+      }
+    } catch (error) {
+      console.log('Impossible d\'extraire les métadonnées EXIF:', error);
+    }
+
+    // Fallback : utiliser la date actuelle (upload)
+    return { date: new Date().toISOString(), isExif: false };
+  };
+
   // Fonction pour uploader une photo
   const handlePhotoUpload = async (files: FileList, zone: Zone, phase: Phase) => {
     if (!files || files.length === 0 || !supabase || !reservation || !user) return;
@@ -372,7 +409,9 @@ export default function EtatDesLieuxModal({
       const setZones = phase === 'before' ? setBeforeZones : setAfterZones;
 
       for (const file of Array.from(files)) {
-        const timestamp = new Date().toISOString();
+        // Extraire la date de prise de photo depuis les métadonnées EXIF
+        const { date: timestamp, isExif } = await extractPhotoDate(file);
+        
         // Normaliser le nom de fichier avant de l'utiliser
         const normalizedFileName = normalizeFileName(file.name);
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${normalizedFileName}`;
@@ -405,8 +444,9 @@ export default function EtatDesLieuxModal({
             url: urlData.publicUrl,
             zone,
             phase,
-            createdAt: timestamp,
-            uploadedBy: user.id
+            createdAt: timestamp, // Date de prise de photo (EXIF) ou date d'upload
+            uploadedBy: user.id,
+            isExifDate: isExif // Indique si la date provient des métadonnées EXIF
           });
         }
       }
@@ -619,7 +659,8 @@ export default function EtatDesLieuxModal({
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 
@@ -879,10 +920,19 @@ export default function EtatDesLieuxModal({
                                 <X className="w-4 h-4" />
                               </Button>
                             </div>
-                            <div className="absolute bottom-1 left-1 right-1 bg-black bg-opacity-70 text-white text-xs p-1 rounded">
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {formatDateTime(photo.createdAt)}
+                            <div className="absolute bottom-1 left-1 right-1 bg-black bg-opacity-80 text-white p-2 rounded">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                  <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                                  <span className="text-xs font-medium truncate">
+                                    {formatDateTime(photo.createdAt)}
+                                  </span>
+                                </div>
+                                {photo.isExifDate && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 h-5 bg-green-600/80 text-white border-0 flex-shrink-0">
+                                    EXIF
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1077,10 +1127,19 @@ export default function EtatDesLieuxModal({
                                 <X className="w-4 h-4" />
                               </Button>
                             </div>
-                            <div className="absolute bottom-1 left-1 right-1 bg-black bg-opacity-70 text-white text-xs p-1 rounded">
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {formatDateTime(photo.createdAt)}
+                            <div className="absolute bottom-1 left-1 right-1 bg-black bg-opacity-80 text-white p-2 rounded">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                  <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                                  <span className="text-xs font-medium truncate">
+                                    {formatDateTime(photo.createdAt)}
+                                  </span>
+                                </div>
+                                {photo.isExifDate && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 h-5 bg-green-600/80 text-white border-0 flex-shrink-0">
+                                    EXIF
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                           </div>
