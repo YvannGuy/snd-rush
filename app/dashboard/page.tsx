@@ -290,11 +290,60 @@ export default function DashboardPage() {
 
   const currentTexts = texts[language];
 
-  // Obtenir le prénom de l'utilisateur depuis l'email
+  // État pour stocker le prénom
+  const [userFirstName, setUserFirstName] = useState<string>('');
+
+  // Récupérer le prénom de l'utilisateur depuis user_profiles ou user_metadata
+  useEffect(() => {
+    const fetchUserFirstName = async () => {
+      if (!user?.id || !supabase) {
+        setUserFirstName('');
+        return;
+      }
+
+      try {
+        // Essayer de récupérer depuis user_profiles
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('first_name')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile?.first_name) {
+          // Capitaliser la première lettre
+          const firstName = profile.first_name.charAt(0).toUpperCase() + profile.first_name.slice(1).toLowerCase();
+          setUserFirstName(firstName);
+        } else if (user.user_metadata?.first_name) {
+          const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
+          setUserFirstName(firstName);
+        } else if (user.email) {
+          // Fallback: utiliser la partie avant @ de l'email
+          const emailPart = user.email.split('@')[0];
+          setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
+        }
+      } catch (error) {
+        console.error('Erreur récupération prénom:', error);
+        // Fallback vers user_metadata ou email
+        if (user.user_metadata?.first_name) {
+          const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
+          setUserFirstName(firstName);
+        } else if (user.email) {
+          const emailPart = user.email.split('@')[0];
+          setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
+        }
+      }
+    };
+
+    if (user) {
+      fetchUserFirstName();
+    } else {
+      setUserFirstName('');
+    }
+  }, [user]);
+
+  // Obtenir le prénom de l'utilisateur (utilise l'état)
   const getUserFirstName = () => {
-    if (!user?.email) return '';
-    const emailParts = user.email.split('@')[0];
-    return emailParts.split('.')[0].charAt(0).toUpperCase() + emailParts.split('.')[0].slice(1);
+    return userFirstName || '';
   };
 
   // Obtenir la prochaine réservation

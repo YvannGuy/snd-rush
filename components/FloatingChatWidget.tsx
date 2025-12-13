@@ -99,6 +99,8 @@ export default function FloatingChatWidget() {
 
   // Flag pour éviter double envoi
   const isSendingRef = useRef(false);
+  // Flag pour éviter double traitement du draft message
+  const draftProcessedRef = useRef<string>('');
 
   /**
    * Fonction unique pour envoyer un message
@@ -109,15 +111,25 @@ export default function FloatingChatWidget() {
       return;
     }
 
+    // Guard anti-doublon pour le draft message
+    const trimmedContent = userContent.trim();
+    if (draftProcessedRef.current === trimmedContent) {
+      console.log('[CHAT] Draft message déjà traité, ignoré:', trimmedContent);
+      return;
+    }
+
     isSendingRef.current = true;
     
     // Ajouter le message user (avec guard anti-doublon dans addUserMessage)
-    const added = addUserMessage(userContent);
+    const added = addUserMessage(trimmedContent);
     if (!added) {
       // Message dupliqué, ne pas envoyer
       isSendingRef.current = false;
       return;
     }
+
+    // Marquer le draft comme traité
+    draftProcessedRef.current = trimmedContent;
 
     setIsLoading(true);
 
@@ -281,8 +293,16 @@ export default function FloatingChatWidget() {
     const handleChatDraftMessage = async (event: CustomEvent) => {
       const message = event.detail?.message;
       if (message && message.trim() && isOpen && !isSendingRef.current) {
-        console.log('[CHAT] Traitement draft message:', message);
-        await sendMessage(message.trim());
+        const trimmedMessage = message.trim();
+        
+        // Vérifier que ce message n'a pas déjà été traité
+        if (draftProcessedRef.current === trimmedMessage) {
+          console.log('[CHAT] Draft message déjà traité, ignoré');
+          return;
+        }
+        
+        console.log('[CHAT] Traitement draft message:', trimmedMessage);
+        await sendMessage(trimmedMessage);
       }
     };
 

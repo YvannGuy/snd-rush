@@ -24,7 +24,8 @@ import {
   Building,
   Save,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Menu
 } from 'lucide-react';
 
 export default function MesInformationsPage() {
@@ -257,20 +258,20 @@ export default function MesInformationsPage() {
         <main className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSidebarOpen(true)}
+            className="lg:hidden"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
               <span className="text-white text-xl">♪</span>
             </div>
             <span className="text-xl font-bold text-gray-900">SoundRush</span>
           </Link>
-          <button 
-            onClick={() => setIsSidebarOpen(true)} 
-            className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
         </div>
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">

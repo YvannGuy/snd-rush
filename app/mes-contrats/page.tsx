@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 // Icônes lucide-react
 import { 
   Search, 
@@ -26,7 +27,7 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
-  DollarSign
+  Menu
 } from 'lucide-react';
 
 export default function MesContratsPage() {
@@ -191,17 +192,20 @@ export default function MesContratsPage() {
         <main className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="lg:hidden"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
               <span className="text-white text-xl">♪</span>
             </div>
             <span className="text-xl font-bold text-gray-900">SoundRush</span>
           </Link>
-          <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-full">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -269,160 +273,120 @@ export default function MesContratsPage() {
             </Card>
           ) : (
             <>
-              <div className="space-y-6 mb-6">
-                {(() => {
-                  const totalPages = Math.ceil(filteredContracts.length / itemsPerPage);
-                  const startIndex = (currentPage - 1) * itemsPerPage;
-                  const endIndex = startIndex + itemsPerPage;
-                  const paginatedContracts = filteredContracts.slice(startIndex, endIndex);
-                  
-                  return paginatedContracts.map((contract) => {
-                    const reservationNumber = contract.id.slice(0, 8).toUpperCase();
-                    
-                    return (
-                      <Card key={contract.id} className="hover:shadow-lg transition-all">
-                        {/* Header avec statut */}
-                        <CardHeader className="bg-green-50 border-b border-green-200">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div className="flex items-center gap-3 sm:gap-4">
-                              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-                                <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <CardTitle className="text-base sm:text-lg truncate">
-                                  {currentTexts.reservationNumber} #{reservationNumber}
-                                </CardTitle>
-                                <div className="mt-2">
-                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                                    {language === 'fr' ? 'Contrat signé' : 'Contract signed'}
-                                  </Badge>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-2">
-                              <Button
-                                asChild
-                                variant="default"
-                                className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
-                              >
-                                <a
-                                  href={`/api/contract/download?reservationId=${contract.id}`}
-                                  download={`contrat-${reservationNumber}.pdf`}
-                                >
-                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                                  <span className="hidden sm:inline">{currentTexts.downloadContract}</span>
-                                  <span className="sm:hidden">PDF</span>
-                                </a>
-                              </Button>
-                              <Button
-                                asChild
-                                variant="outline"
-                                size="sm"
-                              >
-                                <Link href={`/mes-reservations/${contract.id}`}>
-                                  {language === 'fr' ? 'Voir la réservation' : 'View reservation'}
-                                </Link>
-                              </Button>
-                            </div>
-                          </div>
-                        </CardHeader>
-
-                        {/* Contenu */}
-                        <CardContent className="p-4 sm:p-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                            {/* Informations principales */}
-                            <div className="space-y-4">
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.dates}</h4>
-                                <div className="flex items-center gap-2 text-gray-900">
-                                  <Calendar className="w-5 h-5 text-[#F2431E]" />
-                                  <span className="font-medium">{formatDate(contract.start_date)}</span>
-                                  <span className="text-gray-400">→</span>
-                                  <span className="font-medium">{formatDate(contract.end_date)}</span>
-                                </div>
-                              </div>
-
-                              {contract.client_signed_at && (
-                                <div>
-                                  <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.signedOn}</h4>
-                                  <div className="flex items-center gap-2 text-gray-900">
-                                    <Calendar className="w-5 h-5 text-[#F2431E]" />
-                                    <span className="font-medium">{formatDateTime(contract.client_signed_at)}</span>
-                                  </div>
-                                </div>
-                              )}
-
-                              {contract.address && (
-                                <div>
-                                  <h4 className="text-sm font-semibold text-gray-500 mb-2">{language === 'fr' ? 'Adresse' : 'Address'}</h4>
-                                  <div className="flex items-start gap-2 text-gray-900">
-                                    <MapPin className="w-5 h-5 text-[#F2431E] flex-shrink-0 mt-0.5" />
-                                    <p className="text-gray-900">{contract.address}</p>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Informations financières */}
-                            <div className="space-y-4">
-                              <Card className="bg-gray-50 border-gray-200">
-                                <CardHeader className="pb-3">
-                                  <CardTitle className="text-sm font-semibold text-gray-500">
-                                    {language === 'fr' ? 'Informations financières' : 'Financial information'}
-                                  </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-2 pt-0">
-                                  {contract.total_price && (
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600">{currentTexts.total}</span>
-                                      <span className="text-lg font-bold text-gray-900">{parseFloat(contract.total_price).toFixed(2)}€</span>
-                                    </div>
-                                  )}
-                                  {contract.deposit_amount && (
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600">{currentTexts.deposit}</span>
-                                      <span className="font-semibold text-gray-900">{parseFloat(contract.deposit_amount).toFixed(2)}€</span>
-                                    </div>
-                                  )}
-                                </CardContent>
-                              </Card>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  });
-                })()}
-              </div>
-
-              {/* Pagination */}
+              {/* Calculer la pagination */}
               {(() => {
                 const totalPages = Math.ceil(filteredContracts.length / itemsPerPage);
-                return totalPages > 1 ? (
-                  <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
-                    <div className="text-sm text-gray-600">
-                      {currentTexts.page} {currentPage} {currentTexts.of} {totalPages}
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedContracts = filteredContracts.slice(startIndex, endIndex);
+                
+                return (
+                  <>
+                    <div className="mb-6">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{currentTexts.reservationNumber}</TableHead>
+                            <TableHead>{currentTexts.signedOn}</TableHead>
+                            <TableHead>{currentTexts.dates}</TableHead>
+                            <TableHead>{language === 'fr' ? 'Adresse' : 'Address'}</TableHead>
+                            <TableHead>{currentTexts.total}</TableHead>
+                            <TableHead>{language === 'fr' ? 'Statut' : 'Status'}</TableHead>
+                            <TableHead className="text-right">{language === 'fr' ? 'Action' : 'Action'}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedContracts.map((contract) => {
+                            const reservationNumber = contract.id.slice(0, 8).toUpperCase();
+                            
+                            return (
+                              <TableRow key={contract.id}>
+                                <TableCell className="font-semibold">
+                                  #{reservationNumber}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    {contract.client_signed_at ? formatDateTime(contract.client_signed_at) : '—'}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2 text-gray-600">
+                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    <span className="text-sm">
+                                      {formatDate(contract.start_date)} → {formatDate(contract.end_date)}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-gray-600">
+                                  {contract.address ? (
+                                    <div className="flex items-center gap-2">
+                                      <MapPin className="w-4 h-4 text-gray-400" />
+                                      <span className="text-sm max-w-xs truncate">{contract.address}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="font-semibold">
+                                  <span className="text-gray-900">{contract.total_price ? parseFloat(contract.total_price).toFixed(2) : '0.00'}€</span>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                                    {language === 'fr' ? 'Contrat signé' : 'Contract signed'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    asChild
+                                  >
+                                    <a
+                                      href={`/api/contract/download?reservationId=${contract.id}`}
+                                      download={`contrat-${reservationNumber}.pdf`}
+                                      title={currentTexts.downloadContract}
+                                    >
+                                      <Download className="w-4 h-4" />
+                                    </a>
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                      >
-                        <ChevronLeft className="w-4 h-4 mr-2" />
-                        {currentTexts.previous}
-                      </Button>
-                      <Button
-                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
-                        className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
-                      >
-                        {currentTexts.next}
-                        <ChevronRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : null;
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+                        <div className="text-sm text-gray-600">
+                          {currentTexts.page} {currentPage} {currentTexts.of} {totalPages}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                          >
+                            <ChevronLeft className="w-4 h-4 mr-2" />
+                            {currentTexts.previous}
+                          </Button>
+                          <Button
+                            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage === totalPages}
+                            className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                          >
+                            {currentTexts.next}
+                            <ChevronRight className="w-4 h-4 ml-2" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
               })()}
             </>
           )}

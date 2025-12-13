@@ -94,26 +94,11 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
         {/* Contenu de la sidebar */}
         <div className="flex-1 bg-white border-r border-gray-200 overflow-y-auto flex flex-col">
           {/* Logo et Toggle */}
-          <div className={`p-4 lg:p-6 border-b border-gray-200 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-          {!isCollapsed && (
-            <Link href="/" className="flex items-center gap-2" onClick={onClose}>
-              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
-                <span className="text-white text-xl">♪</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">SoundRush</span>
-            </Link>
-          )}
-          {isCollapsed && (
-            <Link href="/" className="flex items-center justify-center" onClick={onClose}>
-              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
-                <span className="text-white text-xl">♪</span>
-              </div>
-            </Link>
-          )}
-          {/* Bouton toggle desktop */}
+          <div className={`p-4 lg:p-6 border-b border-gray-200 flex items-center gap-3 ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
+          {/* Bouton toggle desktop - Toujours à gauche */}
           <button
             onClick={onToggleCollapse}
-            className="hidden lg:flex p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="hidden lg:flex p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
             aria-label={isCollapsed ? 'Ouvrir la sidebar' : 'Fermer la sidebar'}
           >
             {isCollapsed ? (
@@ -126,6 +111,21 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
               </svg>
             )}
           </button>
+          {!isCollapsed && (
+            <Link href="/" className="flex items-center gap-2 flex-1 min-w-0" onClick={onClose}>
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900 truncate">SoundRush</span>
+            </Link>
+          )}
+          {isCollapsed && (
+            <Link href="/" className="flex items-center justify-center" onClick={onClose}>
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+            </Link>
+          )}
           {/* Bouton fermer mobile */}
           <button
             onClick={onClose}

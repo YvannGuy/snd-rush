@@ -14,16 +14,17 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 // Icônes lucide-react
 import { 
   Calendar, 
   MapPin, 
   Package,
-  Eye,
   Phone,
   ChevronLeft,
   ChevronRight,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Menu
 } from 'lucide-react';
 
 export default function MesLivraisonsPage() {
@@ -203,17 +204,20 @@ export default function MesLivraisonsPage() {
       <main className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="lg:hidden"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
               <span className="text-white text-xl">♪</span>
             </div>
             <span className="text-xl font-bold text-gray-900">SoundRush</span>
           </Link>
-          <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-full">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -234,111 +238,92 @@ export default function MesLivraisonsPage() {
             </Card>
           ) : (
             <>
-              <div className="space-y-6 mb-6">
-                {paginatedReservations.map((reservation) => {
-                  const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
-                  const { startTime, endTime } = getTimesFromNotes(reservation.notes);
-                  
-                  return (
-                    <Card key={reservation.id} className="hover:shadow-lg transition-all">
-                      {/* Header */}
-                      <CardHeader className="bg-blue-50 border-b border-blue-200">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                          <div className="flex items-center gap-3 sm:gap-4">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                              <ArrowRightLeft className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+              <div className="mb-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{currentTexts.reservationNumber}</TableHead>
+                      <TableHead>{currentTexts.deliveryDate}</TableHead>
+                      <TableHead>{currentTexts.returnDate}</TableHead>
+                      <TableHead>{currentTexts.address}</TableHead>
+                      <TableHead>{language === 'fr' ? 'Type' : 'Type'}</TableHead>
+                      <TableHead>{currentTexts.status}</TableHead>
+                      <TableHead className="text-right">{language === 'fr' ? 'Action' : 'Action'}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedReservations.map((reservation) => {
+                      const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
+                      const { startTime, endTime } = getTimesFromNotes(reservation.notes);
+                      const isDelivery = !!reservation.address;
+                      const deliveryStatus = reservation.delivery_status || 'en_attente';
+                      
+                      return (
+                        <TableRow key={reservation.id}>
+                          <TableCell className="font-semibold">
+                            #{reservationNumber}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm">{formatDate(reservation.start_date, startTime)}</span>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <CardTitle className="text-base sm:text-lg truncate">
-                                {currentTexts.reservationNumber} #{reservationNumber}
-                              </CardTitle>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm">{reservation.end_date ? formatDate(reservation.end_date, endTime) : '—'}</span>
                             </div>
-                          </div>
-                          <Button
-                            asChild
-                            variant="outline"
-                            size="sm"
-                          >
-                            <a href="tel:+33651084994">
-                              <Phone className="w-4 h-4 mr-2" />
-                              {language === 'fr' ? 'Contacter SoundRush' : 'Contact SoundRush'}
-                            </a>
-                          </Button>
-                        </div>
-                      </CardHeader>
-
-                      {/* Contenu */}
-                      <CardContent className="p-4 sm:p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                          {/* Informations de livraison */}
-                          <div className="space-y-4">
-                            <div>
-                              <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.deliveryDate}</h4>
-                              <div className="flex items-center gap-2 text-gray-900">
-                                <Calendar className="w-5 h-5 text-[#F2431E]" />
-                                <span className="font-medium">{formatDate(reservation.start_date, startTime)}</span>
+                          </TableCell>
+                          <TableCell className="text-gray-600">
+                            {reservation.address ? (
+                              <div className="flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-gray-400" />
+                                <span className="text-sm max-w-xs truncate">{reservation.address}</span>
                               </div>
-                            </div>
-
-                            {reservation.end_date && (
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.returnDate}</h4>
-                                <div className="flex items-center gap-2 text-gray-900">
-                                  <Calendar className="w-5 h-5 text-[#F2431E]" />
-                                  <span className="font-medium">{formatDate(reservation.end_date, endTime)}</span>
-                                </div>
-                              </div>
+                            ) : (
+                              <span className="text-gray-400">—</span>
                             )}
-
-                            {reservation.address && (
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.address}</h4>
-                                <div className="flex items-start gap-2 text-gray-900">
-                                  <MapPin className="w-5 h-5 text-[#F2431E] flex-shrink-0 mt-0.5" />
-                                  <p className="text-gray-900">{reservation.address}</p>
-                                </div>
-                              </div>
-                            )}
-                            
-                            <div>
-                              <h4 className="text-sm font-semibold text-gray-500 mb-2">{language === 'fr' ? 'Type' : 'Type'}</h4>
-                              <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
-                                {reservation.address ? (language === 'fr' ? 'Livraison' : 'Delivery') : (language === 'fr' ? 'Retrait' : 'Pickup')}
-                              </Badge>
-                            </div>
-                          </div>
-
-                          {/* Statut de livraison/récupération */}
-                          <div className="space-y-4">
-                            <div>
-                              <h4 className="text-sm font-semibold text-gray-500 mb-3">{currentTexts.status}</h4>
-                              <Card className="bg-gray-50 border-gray-200">
-                                <CardContent className="p-4">
-                                  <Badge 
-                                    variant={reservation.delivery_status === 'termine' ? 'default' : reservation.delivery_status === 'en_cours' ? 'secondary' : 'outline'}
-                                    className={
-                                      reservation.delivery_status === 'termine'
-                                        ? 'bg-green-100 text-green-800 hover:bg-green-100'
-                                        : reservation.delivery_status === 'en_cours'
-                                        ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
-                                        : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
-                                    }
-                                  >
-                                    {reservation.delivery_status === 'termine'
-                                      ? (language === 'fr' ? 'Terminé' : 'Completed')
-                                      : reservation.delivery_status === 'en_cours'
-                                      ? (language === 'fr' ? 'En cours' : 'In progress')
-                                      : (language === 'fr' ? 'En attente' : 'Pending')}
-                                  </Badge>
-                                </CardContent>
-                              </Card>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
+                              {isDelivery ? (language === 'fr' ? 'Livraison' : 'Delivery') : (language === 'fr' ? 'Retrait' : 'Pickup')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={deliveryStatus === 'termine' ? 'default' : deliveryStatus === 'en_cours' ? 'secondary' : 'outline'}
+                              className={
+                                deliveryStatus === 'termine'
+                                  ? 'bg-green-100 text-green-800 hover:bg-green-100'
+                                  : deliveryStatus === 'en_cours'
+                                  ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
+                                  : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+                              }
+                            >
+                              {deliveryStatus === 'termine'
+                                ? (language === 'fr' ? 'Terminé' : 'Completed')
+                                : deliveryStatus === 'en_cours'
+                                ? (language === 'fr' ? 'En cours' : 'In progress')
+                                : (language === 'fr' ? 'En attente' : 'Pending')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              asChild
+                            >
+                              <a href="tel:+33651084994" title={language === 'fr' ? 'Contacter SoundRush' : 'Contact SoundRush'}>
+                                <Phone className="w-4 h-4" />
+                              </a>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
 
               {/* Pagination */}

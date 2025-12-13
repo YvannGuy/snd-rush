@@ -42,19 +42,36 @@ export function useChat() {
   const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const idleShownRef = useRef(false);
   const lastUserInteractionRef = useRef<number>(Date.now());
+  
+  // Ref pour stocker les messages actuels (évite dépendance circulaire)
+  const messagesRef = useRef<ChatMessage[]>([]);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   /**
    * Fonction unique pour injecter le message de bienvenue si nécessaire
-   * Interdiction : aucun autre endroit du code ne doit injecter le welcome
+   * Règles strictes :
+   * - Uniquement si messages.length === 0
+   * - Uniquement si welcomeAddedRef.current === false
+   * - Ne jamais injecter si un message draft arrive (le Hero envoie déjà un message user)
    */
-  const injectWelcomeMessageIfNeeded = useCallback(() => {
-    if (!welcomeAddedRef.current) {
-      const welcome = createWelcomeMessage();
-      setMessages([welcome]);
-      welcomeAddedRef.current = true;
-      // Sauvegarder immédiatement
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([welcome]));
+  const injectWelcomeMessageIfNeeded = useCallback((skipIfDraft = false) => {
+    // Si skipIfDraft est true, ne pas injecter (un message draft arrive)
+    if (skipIfDraft) {
+      return;
     }
+    
+    // Vérifier que le chat est vraiment vide
+    setMessages(prev => {
+      if (prev.length === 0 && !welcomeAddedRef.current) {
+        const welcome = createWelcomeMessage();
+        welcomeAddedRef.current = true;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([welcome]));
+        return [welcome];
+      }
+      return prev;
+    });
   }, []);
 
   // Charger les messages depuis localStorage au mount (une seule fois)
@@ -106,8 +123,10 @@ export function useChat() {
    * Réinitialiser le timer d'inactivité
    * Règles strictes :
    * - Ne démarre que si chat ouvert ET pas de loading
+   * - Ne démarre QUE après une vraie interaction utilisateur (message envoyé)
    * - Reset sur chaque interaction utilisateur
    * - Timer de 45 secondes minimum
+   * - Un seul idle maximum par session
    */
   const resetIdleTimer = useCallback(() => {
     // Nettoyer le timer existant
@@ -123,6 +142,19 @@ export function useChat() {
     
     if (isLoading) {
       return; // Assistant en train d'écrire → pas de timer
+    }
+
+    // Vérifier qu'il y a eu au moins un message utilisateur réel
+    // (pas juste le welcome)
+    const hasUserMessage = messagesRef.current.some(m => m.role === 'user' && m.kind === 'normal');
+    if (!hasUserMessage) {
+      // Pas encore de message utilisateur → ne pas démarrer le timer
+      return;
+    }
+
+    // Si idle déjà affiché, ne pas redémarrer le timer
+    if (idleShownRef.current) {
+      return;
     }
 
     // Mettre à jour la dernière interaction
@@ -179,6 +211,7 @@ export function useChat() {
     }
 
     // Vérifier aussi dans les messages existants (dernier message user)
+    let shouldAdd = true;
     setMessages(prev => {
       const lastUserMessage = [...prev].reverse().find(m => m.role === 'user' && m.kind === 'normal');
       if (
@@ -187,10 +220,15 @@ export function useChat() {
         now - lastUserMessage.createdAt < 1000
       ) {
         console.log('[CHAT] Message déjà présent, ignoré');
+        shouldAdd = false;
         return prev;
       }
       return prev;
     });
+
+    if (!shouldAdd) {
+      return null;
+    }
 
     lastSubmittedTextRef.current = trimmedContent;
     lastSubmittedTimeRef.current = now;
@@ -205,8 +243,10 @@ export function useChat() {
 
     setMessages(prev => [...prev, userMessage]);
     
-    // Reset timer après action utilisateur
+    // Reset timer APRÈS action utilisateur réelle
+    // C'est ici que le timer démarre vraiment (première interaction)
     lastUserInteractionRef.current = Date.now();
+    idleShownRef.current = false; // Reset le flag idle quand l'utilisateur envoie un message
     resetIdleTimer();
     
     return userMessage;
@@ -240,22 +280,28 @@ export function useChat() {
    */
   const openChatWithDraft = useCallback((draftText?: string) => {
     setIsOpen(true);
-    injectWelcomeMessageIfNeeded();
     
-    // Reset état idle à l'ouverture
-    idleShownRef.current = false;
-    lastUserInteractionRef.current = Date.now();
-    
-    // Ne PAS démarrer le timer immédiatement
-    // Il démarrera seulement après une interaction utilisateur
-
-    // Si un message draft est fourni, le stocker pour envoi automatique
-    // Mais NE PAS l'ajouter ici - le chat le fera UNE SEULE FOIS
+    // Si un message draft arrive, NE PAS injecter le welcome
+    // Le message user sera ajouté et l'assistant répondra directement
     if (draftText && draftText.trim()) {
+      // Ne pas injecter le welcome - le message draft remplace le welcome
+      injectWelcomeMessageIfNeeded(true);
+      
+      // Ne PAS reset le timer idle ici
+      // Le timer démarrera APRÈS l'envoi du message (dans sendMessage)
+      
       // Dispatcher un événement pour que le chat gère l'ajout + envoi
+      // Délai pour s'assurer que le chat est ouvert
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('chatDraftMessage', { detail: { message: draftText.trim() } }));
       }, 300);
+    } else {
+      // Pas de message draft → injecter le welcome normalement
+      injectWelcomeMessageIfNeeded(false);
+      
+      // Reset état idle à l'ouverture (mais ne pas démarrer le timer)
+      idleShownRef.current = false;
+      lastUserInteractionRef.current = Date.now();
     }
   }, [injectWelcomeMessageIfNeeded]);
 

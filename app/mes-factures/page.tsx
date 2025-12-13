@@ -25,7 +25,8 @@ import {
   Calendar,
   DollarSign,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Menu
 } from 'lucide-react';
 
 export default function MesFacturesPage() {
@@ -35,6 +36,8 @@ export default function MesFacturesPage() {
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
+  const [reservationsMap, setReservationsMap] = useState<Record<string, any>>({});
+  const [orderToReservationMap, setOrderToReservationMap] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -59,6 +62,7 @@ export default function MesFacturesPage() {
       if (!supabaseClient) return;
       
       try {
+        // Charger les orders
         const { data, error } = await supabaseClient
           .from('orders')
           .select('*')
@@ -68,6 +72,122 @@ export default function MesFacturesPage() {
         if (error) throw error;
         setOrders(data || []);
         setFilteredOrders(data || []);
+
+        // Extraire les IDs de réservation depuis les orders
+        const reservationIds: string[] = [];
+        const orderToReservationMap: Record<string, string> = {};
+        const stripeSessionIds = data?.map((o: any) => o.stripe_session_id).filter(Boolean) || [];
+        
+        // Charger les réservations qui ont un sessionId correspondant
+        let reservationsBySessionId: Record<string, any> = {};
+        if (stripeSessionIds.length > 0) {
+          const { data: reservationsWithSession } = await supabaseClient
+            .from('reservations')
+            .select('id, notes, created_at')
+            .eq('user_id', user.id);
+          
+          if (reservationsWithSession) {
+            reservationsWithSession.forEach((r: any) => {
+              try {
+                const notes = typeof r.notes === 'string' ? JSON.parse(r.notes) : r.notes;
+                if (notes && notes.sessionId && stripeSessionIds.includes(notes.sessionId)) {
+                  reservationsBySessionId[notes.sessionId] = r.id;
+                }
+              } catch (e) {
+                // Ignorer
+              }
+            });
+          }
+        }
+        
+        if (data && data.length > 0) {
+          data.forEach((order: any) => {
+            let foundReservationId: string | null = null;
+            
+            // 1. Vérifier si reservation_id existe directement
+            if (order.reservation_id) {
+              foundReservationId = order.reservation_id;
+            }
+            // 2. Chercher via stripe_session_id dans les réservations
+            else if (order.stripe_session_id && reservationsBySessionId[order.stripe_session_id]) {
+              foundReservationId = reservationsBySessionId[order.stripe_session_id];
+            }
+            // 3. Vérifier dans metadata
+            else if (order.metadata) {
+              try {
+                const metadata = typeof order.metadata === 'string' 
+                  ? JSON.parse(order.metadata) 
+                  : order.metadata;
+                
+                // Chercher directement dans metadata
+                if (metadata.reservationId) {
+                  foundReservationId = metadata.reservationId;
+                }
+                // Chercher dans sessionMetadata (métadonnées de la session Stripe)
+                else if (metadata.sessionMetadata) {
+                  let sessionMeta = metadata.sessionMetadata;
+                  
+                  // Si sessionMetadata est une string, la parser
+                  if (typeof sessionMeta === 'string') {
+                    try {
+                      sessionMeta = JSON.parse(sessionMeta);
+                    } catch (e) {
+                      // Ignorer si ce n'est pas du JSON
+                    }
+                  }
+                  
+                  // Chercher reservationId dans sessionMetadata
+                  if (sessionMeta) {
+                    // Vérifier directement
+                    if (sessionMeta.reservationId) {
+                      foundReservationId = sessionMeta.reservationId;
+                    }
+                    
+                    // Debug: log pour voir le contenu de sessionMetadata
+                    if (process.env.NODE_ENV === 'development') {
+                      console.log('sessionMetadata content:', {
+                        orderId: order.id,
+                        sessionMetaKeys: Object.keys(sessionMeta),
+                        hasReservationId: !!sessionMeta.reservationId,
+                        fullSessionMeta: JSON.stringify(sessionMeta, null, 2)
+                      });
+                    }
+                  }
+                }
+              } catch (e) {
+                // Metadata n'est pas du JSON valide, ignorer
+                console.error('Erreur parsing metadata order:', order.id, e);
+              }
+            }
+            
+            if (foundReservationId) {
+              if (!reservationIds.includes(foundReservationId)) {
+                reservationIds.push(foundReservationId);
+              }
+              orderToReservationMap[order.id] = foundReservationId;
+            }
+          });
+        }
+
+        // Stocker le mapping order -> reservation
+        setOrderToReservationMap(orderToReservationMap);
+
+        // Charger les réservations trouvées
+        if (reservationIds.length > 0) {
+          const { data: reservationsData } = await supabaseClient
+            .from('reservations')
+            .select('id, start_date, end_date, created_at')
+            .in('id', reservationIds)
+            .eq('user_id', user.id);
+
+          if (reservationsData) {
+            const map: Record<string, any> = {};
+            reservationsData.forEach((r: any) => {
+              map[r.id] = r;
+            });
+            setReservationsMap(map);
+          }
+        }
       } catch (error) {
         console.error('Erreur chargement factures:', error);
       }
@@ -236,17 +356,20 @@ export default function MesFacturesPage() {
       <main className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="lg:hidden"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
               <span className="text-white text-xl">♪</span>
             </div>
             <span className="text-xl font-bold text-gray-900">SoundRush</span>
           </Link>
-          <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-full">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -349,23 +472,31 @@ export default function MesFacturesPage() {
                                     {formatDate(order.created_at)}
                                   </div>
                                 </TableCell>
-                                <TableCell className="text-gray-600">
-                                  {order.reservation_id ? (
-                                    <Link 
-                                      href={`/mes-reservations/${order.reservation_id}`}
-                                      className="text-[#F2431E] hover:underline"
-                                    >
-                                      {language === 'fr' ? 'Voir réservation' : 'View reservation'}
-                                    </Link>
-                                  ) : (
-                                    <span className="text-gray-400">—</span>
-                                  )}
+                                <TableCell>
+                                  {(() => {
+                                    // Utiliser le mapping pré-calculé
+                                    const reservationId = orderToReservationMap[order.id] || order.reservation_id;
+
+                                    // Vérifier si la réservation existe dans notre map
+                                    if (reservationId && reservationsMap[reservationId]) {
+                                      return (
+                                        <Button
+                                          asChild
+                                          variant="link"
+                                          className="text-[#F2431E] hover:text-[#E63A1A] p-0 h-auto font-medium"
+                                        >
+                                          <Link href={`/mes-reservations/${reservationId}`}>
+                                            {language === 'fr' ? 'Voir réservation' : 'View reservation'}
+                                          </Link>
+                                        </Button>
+                                      );
+                                    }
+                                    
+                                    return <span className="text-gray-400">—</span>;
+                                  })()}
                                 </TableCell>
                                 <TableCell className="font-semibold">
-                                  <div className="flex items-center gap-1">
-                                    <DollarSign className="w-4 h-4 text-gray-400" />
-                                    {parseFloat(order.total || 0).toFixed(2)}€
-                                  </div>
+                                  <span className="text-gray-900">{parseFloat(order.total || 0).toFixed(2)}€</span>
                                 </TableCell>
                                 <TableCell>
                                   <Badge 

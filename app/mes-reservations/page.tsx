@@ -31,9 +31,12 @@ import {
   ChevronRight,
   Music,
   Eye,
-  Clock
+  Clock,
+  Menu
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { PACKS } from '@/lib/packs';
+import { getCatalogItemById } from '@/lib/catalog';
 
 export default function MesReservationsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -289,17 +292,20 @@ export default function MesReservationsPage() {
         <main className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="lg:hidden"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
               <span className="text-white text-xl">♪</span>
             </div>
             <span className="text-xl font-bold text-gray-900">SoundRush</span>
           </Link>
-          <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-full">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -435,49 +441,51 @@ export default function MesReservationsPage() {
                             </div>
                           </div>
                         </div>
-                        {isConfirmed && (
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            {!isSigned ? (
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          {isConfirmed && (
+                            <>
+                              {!isSigned ? (
+                                <Button
+                                  asChild
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                  <Link href={`/sign-contract?reservationId=${reservation.id}`}>
+                                    <FilePenLine className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                                    <span className="hidden sm:inline">{currentTexts.signContract}</span>
+                                    <span className="sm:hidden">Signer</span>
+                                  </Link>
+                                </Button>
+                              ) : (
+                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100 px-3 sm:px-4 py-2 h-auto">
+                                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                                  <span className="hidden sm:inline">{currentTexts.contractSigned}</span>
+                                  <span className="sm:hidden">Signé</span>
+                                </Badge>
+                              )}
                               <Button
                                 asChild
-                                className="bg-green-600 hover:bg-green-700 text-white"
+                                variant="default"
+                                className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
                               >
-                                <Link href={`/sign-contract?reservationId=${reservation.id}`}>
-                                  <FilePenLine className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                                  <span className="hidden sm:inline">{currentTexts.signContract}</span>
-                                  <span className="sm:hidden">Signer</span>
-                                </Link>
+                                <a
+                                  href={`/api/contract/download?reservationId=${reservation.id}`}
+                                  download={`contrat-${reservationNumber}.pdf`}
+                                >
+                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                                  <span className="hidden sm:inline">{currentTexts.downloadContract}</span>
+                                  <span className="sm:hidden">PDF</span>
+                                </a>
                               </Button>
-                            ) : (
-                              <Badge className="bg-green-100 text-green-800 hover:bg-green-100 px-3 sm:px-4 py-2 h-auto">
-                                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                                <span className="hidden sm:inline">{currentTexts.contractSigned}</span>
-                                <span className="sm:hidden">Signé</span>
-                              </Badge>
-                            )}
-                            <Button
-                              asChild
-                              variant="default"
-                              className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
-                            >
-                              <a
-                                href={`/api/contract/download?reservationId=${reservation.id}`}
-                                download={`contrat-${reservationNumber}.pdf`}
-                              >
-                                <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                                <span className="hidden sm:inline">{currentTexts.downloadContract}</span>
-                                <span className="sm:hidden">PDF</span>
-                              </a>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => openDetailsModal(reservation)}
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              {currentTexts.viewDetails}
-                            </Button>
-                          </div>
-                        )}
+                            </>
+                          )}
+                          <Button
+                            variant="outline"
+                            onClick={() => openDetailsModal(reservation)}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            {currentTexts.viewDetails}
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
 
@@ -728,12 +736,10 @@ export default function MesReservationsPage() {
                           <Calendar className="w-5 h-5 text-[#F2431E]" />
                           <span className="font-medium">{formatDate(reservation.start_date)}</span>
                         </div>
-                        {startTime && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <Clock className="w-5 h-5 text-[#F2431E]" />
-                            <span className="font-medium">{startTime}</span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Clock className="w-5 h-5 text-[#F2431E]" />
+                          <span className="font-medium">{startTime || (language === 'fr' ? 'Non spécifiée' : 'Not specified')}</span>
+                        </div>
                       </CardContent>
                     </Card>
                     <Card>
@@ -747,12 +753,10 @@ export default function MesReservationsPage() {
                           <Calendar className="w-5 h-5 text-[#F2431E]" />
                           <span className="font-medium">{formatDate(reservation.end_date)}</span>
                         </div>
-                        {endTime && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <Clock className="w-5 h-5 text-[#F2431E]" />
-                            <span className="font-medium">{endTime}</span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Clock className="w-5 h-5 text-[#F2431E]" />
+                          <span className="font-medium">{endTime || (language === 'fr' ? 'Non spécifiée' : 'Not specified')}</span>
+                        </div>
                       </CardContent>
                     </Card>
                   </div>
@@ -790,17 +794,63 @@ export default function MesReservationsPage() {
                             const rentalDays = parseInt(item.rentalDays || 1);
                             const itemTotal = dailyPrice * quantity * rentalDays;
                             
+                            // Vérifier si c'est un pack
+                            const isPack = item.productId?.startsWith('pack-') || item.productId?.startsWith('pack_');
+                            let packEquipment: Array<{ name: string; qty: number }> = [];
+                            
+                            if (isPack) {
+                              // Extraire le packId (pack_petit, pack_confort, etc.)
+                              const packId = item.productId?.replace('pack-', '').replace('pack_', '');
+                              const packKey = packId === 'petit' ? 'petit' : 
+                                            packId === 'confort' ? 'confort' :
+                                            packId === 'grand' ? 'grand' :
+                                            packId === 'maxi' ? 'maxi' : null;
+                              
+                              if (packKey && PACKS[packKey]) {
+                                // Utiliser la composition du pack
+                                packEquipment = PACKS[packKey].composition.map(comp => ({ name: comp, qty: 1 }));
+                              } else if (item.metadata?.breakdown) {
+                                // Utiliser le breakdown depuis metadata si disponible
+                                packEquipment = item.metadata.breakdown.map((b: any) => ({
+                                  name: b.name || b.productName || b,
+                                  qty: b.quantity || b.qty || 1
+                                }));
+                              }
+                            }
+                            
                             return (
                               <Card key={index} className="bg-gray-50 border-gray-200">
                                 <CardContent className="p-4">
                                   <div className="flex justify-between items-start mb-2">
                                     <div className="flex-1">
                                       <p className="font-semibold text-gray-900">{item.productName || 'Produit'}</p>
+                                      
+                                      {/* Détails des équipements du pack */}
+                                      {isPack && packEquipment.length > 0 && (
+                                        <div className="mt-3 space-y-1.5 border-t border-gray-200 pt-2">
+                                          <p className="text-xs font-semibold text-gray-500 mb-1.5">
+                                            {language === 'fr' ? 'Équipements inclus :' : 'Included equipment:'}
+                                          </p>
+                                          {packEquipment.map((equip, equipIndex) => (
+                                            <p key={equipIndex} className="text-sm text-gray-700 flex items-center gap-2">
+                                              <span className="text-[#F2431E]">•</span>
+                                              <span>{equip.name}</span>
+                                              {equip.qty > 1 && <span className="text-gray-500">(x{equip.qty})</span>}
+                                            </p>
+                                          ))}
+                                        </div>
+                                      )}
+                                      
+                                      {/* Addons */}
                                       {item.addons && item.addons.length > 0 && (
                                         <div className="mt-2 space-y-1">
+                                          <p className="text-xs font-semibold text-gray-500 mb-1">
+                                            {language === 'fr' ? 'Options :' : 'Options:'}
+                                          </p>
                                           {item.addons.map((addon: any, addonIndex: number) => (
-                                            <p key={addonIndex} className="text-sm text-gray-600">
-                                              + {addon.name} (+{addon.price}€)
+                                            <p key={addonIndex} className="text-sm text-gray-600 flex items-center gap-2">
+                                              <span className="text-[#F2431E]">+</span>
+                                              <span>{addon.name} (+{addon.price}€)</span>
                                             </p>
                                           ))}
                                         </div>
