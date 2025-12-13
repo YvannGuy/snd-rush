@@ -10,6 +10,23 @@ import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import SignModal from '@/components/auth/SignModal';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+// Shadcn UI components
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+// Icônes lucide-react
+import { 
+  Search, 
+  X, 
+  FileText, 
+  Download,
+  Calendar,
+  DollarSign,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 
 export default function MesFacturesPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -239,25 +256,23 @@ export default function MesFacturesPage() {
           {orders.length > 0 && (
             <div className="mb-6">
               <div className="relative">
-                <input
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
                   type="text"
                   placeholder={language === 'fr' ? 'Rechercher par date, prix, numéro, statut, client...' : 'Search by date, price, number, status, customer...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-3 pl-12 pr-4 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                  className="w-full pl-12 pr-10 h-11"
                 />
-                <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
                 {searchQuery && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                    <X className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
               {searchQuery && (
@@ -271,23 +286,27 @@ export default function MesFacturesPage() {
           )}
 
           {filteredOrders.length === 0 && orders.length > 0 ? (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-6">🔍</div>
-              <p className="text-xl text-gray-600 mb-2">{language === 'fr' ? 'Aucun résultat trouvé' : 'No results found'}</p>
-              <p className="text-gray-500 mb-8">{language === 'fr' ? 'Essayez avec d\'autres mots-clés' : 'Try with different keywords'}</p>
-              <button
-                onClick={() => setSearchQuery('')}
-                className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
-              >
-                {language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
-              </button>
-            </div>
+            <Card>
+              <CardContent className="text-center py-16">
+                <Search className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                <CardTitle className="text-xl mb-2">{language === 'fr' ? 'Aucun résultat trouvé' : 'No results found'}</CardTitle>
+                <CardDescription className="mb-8">{language === 'fr' ? 'Essayez avec d\'autres mots-clés' : 'Try with different keywords'}</CardDescription>
+                <Button
+                  onClick={() => setSearchQuery('')}
+                  className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                >
+                  {language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
+                </Button>
+              </CardContent>
+            </Card>
           ) : filteredOrders.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-6">📄</div>
-              <p className="text-xl text-gray-600 mb-2">{currentTexts.empty}</p>
-              <p className="text-gray-500">{currentTexts.emptyDescription}</p>
-            </div>
+            <Card>
+              <CardContent className="text-center py-16">
+                <FileText className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                <CardTitle className="text-xl mb-2">{currentTexts.empty}</CardTitle>
+                <CardDescription>{currentTexts.emptyDescription}</CardDescription>
+              </CardContent>
+            </Card>
           ) : (
             <>
               {/* Calculer la pagination */}
@@ -299,180 +318,109 @@ export default function MesFacturesPage() {
                 
                 return (
                   <>
-                    <div className="space-y-6 mb-6">
-                      {paginatedOrders.map((order) => {
-                  const orderNumber = order.id.slice(0, 8).toUpperCase();
-                  const isPaid = order.status === 'PAID';
-                  const isPending = order.status === 'PENDING';
-                  const isCancelled = order.status === 'CANCELLED';
-                  const isRefunded = order.status === 'REFUNDED';
-                  
-                  return (
-                    <div
-                      key={order.id}
-                      className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-all overflow-hidden"
-                    >
-                      {/* Header avec statut */}
-                      <div className={`px-4 sm:px-6 py-4 ${
-                        isPaid ? 'bg-green-50 border-b border-green-200' :
-                        isPending ? 'bg-yellow-50 border-b border-yellow-200' :
-                        isCancelled ? 'bg-gray-50 border-b border-gray-200' :
-                        isRefunded ? 'bg-blue-50 border-b border-blue-200' :
-                        'bg-gray-50 border-b border-gray-200'
-                      }`}>
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                          <div className="flex items-center gap-3 sm:gap-4">
-                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                              isPaid ? 'bg-green-100' :
-                              isPending ? 'bg-yellow-100' :
-                              isCancelled ? 'bg-gray-100' :
-                              isRefunded ? 'bg-blue-100' :
-                              'bg-gray-100'
-                            }`}>
-                              <svg className={`w-5 h-5 sm:w-6 sm:h-6 ${
-                                isPaid ? 'text-green-600' :
-                                isPending ? 'text-yellow-600' :
-                                isCancelled ? 'text-gray-600' :
-                                isRefunded ? 'text-blue-600' :
-                                'text-gray-600'
-                              }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">
-                                {currentTexts.invoice} #{orderNumber}
-                              </h3>
-                              <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold mt-1 ${
-                                isPaid
-                                  ? 'bg-green-100 text-green-800'
-                                  : isPending
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : isCancelled
-                                  ? 'bg-gray-100 text-gray-800'
-                                  : isRefunded
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {getStatusText(order.status)}
-                              </span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={async () => {
-                              try {
-                                const response = await fetch(`/api/invoice/download?orderId=${order.id}`);
-                                if (response.ok) {
-                                  const blob = await response.blob();
-                                  const url = window.URL.createObjectURL(blob);
-                                  const a = document.createElement('a');
-                                  a.href = url;
-                                  a.download = `facture-${order.id.slice(0, 8)}.pdf`;
-                                  document.body.appendChild(a);
-                                  a.click();
-                                  window.URL.revokeObjectURL(url);
-                                  document.body.removeChild(a);
-                                } else {
-                                  const error = await response.json();
-                                  alert(language === 'fr' ? `Erreur: ${error.error || 'Impossible de télécharger la facture'}` : `Error: ${error.error || 'Unable to download invoice'}`);
-                                }
-                              } catch (error) {
-                                console.error('Erreur téléchargement:', error);
-                                alert(language === 'fr' ? 'Erreur lors du téléchargement de la facture' : 'Error downloading invoice');
-                              }
-                            }}
-                            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm sm:text-base whitespace-nowrap"
-                            title={language === 'fr' ? 'Télécharger la facture' : 'Download invoice'}
-                          >
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            <span className="hidden sm:inline">{language === 'fr' ? 'Télécharger' : 'Download'}</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Contenu */}
-                      <div className="p-4 sm:p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                          {/* Informations principales */}
-                          <div className="space-y-4">
-                            <div>
-                              <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.date}</h4>
-                              <div className="flex items-center gap-2 text-gray-900">
-                                <svg className="w-5 h-5 text-[#F2431E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span className="font-medium">{formatDate(order.created_at)}</span>
-                              </div>
-                            </div>
-
-                            {order.customer_name && (
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-500 mb-2">{language === 'fr' ? 'Client' : 'Customer'}</h4>
-                                <p className="text-gray-900">{order.customer_name}</p>
-                              </div>
-                            )}
-
-                            {order.customer_email && (
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-500 mb-2">Email</h4>
-                                <p className="text-gray-900">{order.customer_email}</p>
-                              </div>
-                            )}
-
-                            {order.delivery_address && (
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-500 mb-2">{language === 'fr' ? 'Adresse de livraison' : 'Delivery address'}</h4>
-                                <p className="text-gray-900">{order.delivery_address}</p>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Informations financières */}
-                          <div className="space-y-4">
-                            <div className="bg-gray-50 rounded-xl p-4">
-                              <h4 className="text-sm font-semibold text-gray-500 mb-3">{language === 'fr' ? 'Informations financières' : 'Financial information'}</h4>
-                              <div className="space-y-2">
-                                {order.subtotal && (
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">{language === 'fr' ? 'Sous-total' : 'Subtotal'}</span>
-                                    <span className="font-semibold text-gray-900">{parseFloat(order.subtotal).toFixed(2)}€</span>
+                    <div className="mb-6">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{currentTexts.invoice}</TableHead>
+                            <TableHead>{currentTexts.date}</TableHead>
+                            <TableHead>{language === 'fr' ? 'Réservation liée' : 'Linked reservation'}</TableHead>
+                            <TableHead>{currentTexts.amount}</TableHead>
+                            <TableHead>{currentTexts.status}</TableHead>
+                            <TableHead className="text-right">{language === 'fr' ? 'Action' : 'Action'}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedOrders.map((order) => {
+                            const orderNumber = order.id.slice(0, 8).toUpperCase();
+                            const isPaid = order.status === 'PAID';
+                            const isPending = order.status === 'PENDING';
+                            const isCancelled = order.status === 'CANCELLED';
+                            const isRefunded = order.status === 'REFUNDED';
+                            
+                            return (
+                              <TableRow key={order.id}>
+                                <TableCell className="font-semibold">
+                                  #{orderNumber}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    {formatDate(order.created_at)}
                                   </div>
-                                )}
-                                {order.delivery_fee > 0 && (
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">{language === 'fr' ? 'Frais de livraison' : 'Delivery fee'}</span>
-                                    <span className="font-semibold text-gray-900">{parseFloat(order.delivery_fee).toFixed(2)}€</span>
+                                </TableCell>
+                                <TableCell className="text-gray-600">
+                                  {order.reservation_id ? (
+                                    <Link 
+                                      href={`/mes-reservations/${order.reservation_id}`}
+                                      className="text-[#F2431E] hover:underline"
+                                    >
+                                      {language === 'fr' ? 'Voir réservation' : 'View reservation'}
+                                    </Link>
+                                  ) : (
+                                    <span className="text-gray-400">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="font-semibold">
+                                  <div className="flex items-center gap-1">
+                                    <DollarSign className="w-4 h-4 text-gray-400" />
+                                    {parseFloat(order.total || 0).toFixed(2)}€
                                   </div>
-                                )}
-                                {order.total && (
-                                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                                    <span className="text-gray-900 font-semibold">{currentTexts.amount}</span>
-                                    <span className="text-lg font-bold text-gray-900">{parseFloat(order.total).toFixed(2)}€</span>
-                                  </div>
-                                )}
-                                {order.deposit_total > 0 && (
-                                  <div className="flex justify-between items-center pt-2">
-                                    <span className="text-gray-600">{language === 'fr' ? 'Dépôt de garantie' : 'Deposit'}</span>
-                                    <span className="font-semibold text-gray-900">{parseFloat(order.deposit_total).toFixed(2)}€</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {order.stripe_payment_intent_id && (
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-500 mb-2">{language === 'fr' ? 'Référence paiement' : 'Payment reference'}</h4>
-                                <p className="text-gray-700 text-sm font-mono">{order.stripe_payment_intent_id.slice(0, 20)}...</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge 
+                                    variant={isPaid ? 'default' : isPending ? 'secondary' : 'outline'}
+                                    className={
+                                      isPaid
+                                        ? 'bg-green-100 text-green-800 hover:bg-green-100'
+                                        : isPending
+                                        ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
+                                        : isCancelled
+                                        ? 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+                                        : isRefunded
+                                        ? 'bg-blue-100 text-blue-800 hover:bg-blue-100'
+                                        : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+                                    }
+                                  >
+                                    {getStatusText(order.status)}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={async () => {
+                                      try {
+                                        const response = await fetch(`/api/invoice/download?orderId=${order.id}`);
+                                        if (response.ok) {
+                                          const blob = await response.blob();
+                                          const url = window.URL.createObjectURL(blob);
+                                          const a = document.createElement('a');
+                                          a.href = url;
+                                          a.download = `facture-${order.id.slice(0, 8)}.pdf`;
+                                          document.body.appendChild(a);
+                                          a.click();
+                                          window.URL.revokeObjectURL(url);
+                                          document.body.removeChild(a);
+                                        } else {
+                                          const error = await response.json();
+                                          alert(language === 'fr' ? `Erreur: ${error.error || 'Impossible de télécharger la facture'}` : `Error: ${error.error || 'Unable to download invoice'}`);
+                                        }
+                                      } catch (error) {
+                                        console.error('Erreur téléchargement:', error);
+                                        alert(language === 'fr' ? 'Erreur lors du téléchargement de la facture' : 'Error downloading invoice');
+                                      }
+                                    }}
+                                    title={language === 'fr' ? 'Télécharger la facture' : 'Download invoice'}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
                     </div>
 
                     {/* Pagination */}
@@ -482,23 +430,25 @@ export default function MesFacturesPage() {
                           {currentTexts.page} {currentPage} {currentTexts.of} {totalPages}
                         </div>
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="outline"
                       onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
+                      <ChevronLeft className="w-4 h-4 mr-2" />
                       {currentTexts.previous}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
                     >
                       {currentTexts.next}
-                        </button>
-                      </div>
-                    </div>
-                    )}
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              )}
                   </>
                 );
               })()}

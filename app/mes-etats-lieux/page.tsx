@@ -10,6 +10,26 @@ import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+// Shadcn UI components
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+// Icônes lucide-react
+import { 
+  FileText, 
+  Download,
+  Eye,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  Image as ImageIcon,
+  X,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 
 export default function MesEtatsLieuxPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -223,11 +243,13 @@ export default function MesEtatsLieuxPage() {
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">{currentTexts.title}</h1>
 
           {etatsLieux.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-6">📄</div>
-              <p className="text-xl text-gray-600 mb-2">{currentTexts.empty}</p>
-              <p className="text-gray-500 mb-8">{currentTexts.emptyDescription}</p>
-            </div>
+            <Card>
+              <CardContent className="text-center py-16">
+                <FileText className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                <CardTitle className="text-xl mb-2">{currentTexts.empty}</CardTitle>
+                <CardDescription className="mb-8">{currentTexts.emptyDescription}</CardDescription>
+              </CardContent>
+            </Card>
           ) : (
             <>
               <div className="space-y-6 mb-6">
@@ -235,90 +257,194 @@ export default function MesEtatsLieuxPage() {
                   const reservation = reservations[etatLieux.reservation_id];
                   const reservationNumber = reservation?.id ? reservation.id.slice(0, 8).toUpperCase() : 'N/A';
                   
+                  // Parser les items JSONB
+                  let items: any[] = [];
+                  try {
+                    if (etatLieux.items && typeof etatLieux.items === 'string') {
+                      items = JSON.parse(etatLieux.items);
+                    } else if (Array.isArray(etatLieux.items)) {
+                      items = etatLieux.items;
+                    }
+                  } catch (e) {
+                    console.error('Erreur parsing items:', e);
+                  }
+
+                  // Détecter les anomalies (matériel endommagé)
+                  const hasAnomalies = items.some((item: any) => 
+                    item.etatApres?.etat === 'endommage' || 
+                    item.etatApres?.etat === 'casse' ||
+                    item.commentaires?.toLowerCase().includes('dommage') ||
+                    item.commentaires?.toLowerCase().includes('casse')
+                  );
+
                   return (
-                    <div
-                      key={etatLieux.id}
-                      className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-all overflow-hidden"
-                    >
+                    <Card key={etatLieux.id} className="hover:shadow-lg transition-all">
                       {/* Header */}
-                      <div className="px-4 sm:px-6 py-4 bg-purple-50 border-b border-purple-200">
+                      <CardHeader className="bg-purple-50 border-b border-purple-200">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           <div className="flex items-center gap-3 sm:gap-4">
                             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
+                              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">
+                              <CardTitle className="text-base sm:text-lg truncate">
                                 {currentTexts.reservationNumber} #{reservationNumber}
-                              </h3>
+                              </CardTitle>
                             </div>
                           </div>
                           {reservation && (
-                            <Link
-                              href={`/mes-reservations/${reservation.id}`}
-                              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm sm:text-base whitespace-nowrap"
+                            <Button
+                              asChild
+                              variant="default"
+                              className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
                             >
-                              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                              {currentTexts.viewDetails}
-                            </Link>
+                              <Link href={`/mes-reservations/${reservation.id}`}>
+                                <Eye className="w-4 h-4 mr-2" />
+                                {currentTexts.viewDetails}
+                              </Link>
+                            </Button>
                           )}
                         </div>
-                      </div>
+                      </CardHeader>
 
                       {/* Contenu */}
-                      <div className="p-4 sm:p-6">
+                      <CardContent className="p-4 sm:p-6">
+                        {/* Alert si anomalies */}
+                        {hasAnomalies && (
+                          <Alert variant="destructive" className="mb-4">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>{language === 'fr' ? 'Anomalie détectée' : 'Anomaly detected'}</AlertTitle>
+                            <AlertDescription>
+                              {language === 'fr' 
+                                ? 'Du matériel présente des dommages. Cela peut impacter le dépôt de garantie.'
+                                : 'Some equipment shows damage. This may impact the deposit.'}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                           {/* Informations */}
                           <div className="space-y-4">
                             <div>
                               <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.status}</h4>
-                              <div className="flex items-center gap-2 text-gray-900">
-                                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                              <Badge 
+                                variant={etatLieux.status === 'reprise_complete' ? 'default' : 'secondary'}
+                                className={
                                   etatLieux.status === 'reprise_complete'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-blue-100 text-blue-800'
-                                }`}>
-                                  {getStatusText(etatLieux.status)}
-                                </span>
-                              </div>
+                                    ? 'bg-green-100 text-green-800 hover:bg-green-100'
+                                    : 'bg-blue-100 text-blue-800 hover:bg-blue-100'
+                                }
+                              >
+                                {etatLieux.status === 'reprise_complete' ? (
+                                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                                ) : (
+                                  <Clock className="w-3 h-3 mr-1" />
+                                )}
+                                {getStatusText(etatLieux.status)}
+                              </Badge>
                             </div>
 
                             <div>
                               <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.createdAt}</h4>
                               <div className="flex items-center gap-2 text-gray-900">
-                                <svg className="w-5 h-5 text-[#F2431E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
+                                <Calendar className="w-5 h-5 text-[#F2431E]" />
                                 <span className="font-medium">{formatDate(etatLieux.created_at)}</span>
                               </div>
                             </div>
+
+                            {/* Matériel avec photos */}
+                            {items.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-500 mb-3">{language === 'fr' ? 'Matériel vérifié' : 'Verified equipment'}</h4>
+                                <div className="space-y-2">
+                                  {items.slice(0, 3).map((item: any, idx: number) => (
+                                    <Card key={idx} className="p-3 bg-gray-50 border-gray-200">
+                                      <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                          <p className="font-semibold text-sm text-gray-900">{item.nom || item.id}</p>
+                                          {item.etatAvant && (
+                                            <p className="text-xs text-gray-600 mt-1">
+                                              {language === 'fr' ? 'État avant:' : 'State before:'} {item.etatAvant.etat || 'N/A'}
+                                            </p>
+                                          )}
+                                          {item.etatApres && (
+                                            <p className="text-xs text-gray-600">
+                                              {language === 'fr' ? 'État après:' : 'State after:'} {item.etatApres.etat || 'N/A'}
+                                            </p>
+                                          )}
+                                        </div>
+                                        {(item.photosAvant?.length > 0 || item.photosApres?.length > 0) && (
+                                          <Dialog>
+                                            <DialogTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <ImageIcon className="w-4 h-4" />
+                                              </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                              <DialogHeader>
+                                                <DialogTitle>{item.nom || item.id}</DialogTitle>
+                                              </DialogHeader>
+                                              <div className="grid grid-cols-2 gap-4 mt-4">
+                                                {item.photosAvant?.length > 0 && (
+                                                  <div>
+                                                    <h5 className="font-semibold mb-2">{language === 'fr' ? 'Photos avant' : 'Photos before'}</h5>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                      {item.photosAvant.map((photo: any, pIdx: number) => (
+                                                        <img key={pIdx} src={photo.url} alt={photo.label || 'Photo avant'} className="rounded-lg w-full" />
+                                                      ))}
+                                                    </div>
+                                                  </div>
+                                                )}
+                                                {item.photosApres?.length > 0 && (
+                                                  <div>
+                                                    <h5 className="font-semibold mb-2">{language === 'fr' ? 'Photos après' : 'Photos after'}</h5>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                      {item.photosApres.map((photo: any, pIdx: number) => (
+                                                        <img key={pIdx} src={photo.url} alt={photo.label || 'Photo après'} className="rounded-lg w-full" />
+                                                      ))}
+                                                    </div>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </DialogContent>
+                                          </Dialog>
+                                        )}
+                                      </div>
+                                    </Card>
+                                  ))}
+                                  {items.length > 3 && (
+                                    <p className="text-xs text-gray-500 text-center">
+                                      {language === 'fr' ? `+ ${items.length - 3} autre(s) matériel(s)` : `+ ${items.length - 3} other item(s)`}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {/* Téléchargement PDF */}
                           <div className="space-y-4">
                             <div>
                               <h4 className="text-sm font-semibold text-gray-500 mb-3">{currentTexts.downloadPDF}</h4>
-                              <a
-                                href={`/api/etat-lieux/download?reservationId=${etatLieux.reservation_id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-2 px-4 py-3 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
+                              <Button
+                                asChild
+                                variant="default"
+                                className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white"
                               >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
-                                {currentTexts.downloadPDF}
-                              </a>
+                                <a
+                                  href={`/api/etat-lieux/download?reservationId=${etatLieux.reservation_id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <Download className="w-4 h-4 mr-2" />
+                                  {currentTexts.downloadPDF}
+                                </a>
+                              </Button>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   );
                 })}
               </div>
@@ -330,20 +456,22 @@ export default function MesEtatsLieuxPage() {
                     {currentTexts.page} {currentPage} {currentTexts.of} {totalPages}
                   </div>
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="outline"
                       onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
+                      <ChevronLeft className="w-4 h-4 mr-2" />
                       {currentTexts.previous}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
                     >
                       {currentTexts.next}
-                    </button>
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
                   </div>
                 </div>
               )}

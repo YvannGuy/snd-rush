@@ -10,6 +10,22 @@ import Footer from '@/components/Footer';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+// Shadcn UI components
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+// Icônes lucide-react
+import { 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Building,
+  Save,
+  Trash2,
+  AlertTriangle
+} from 'lucide-react';
 
 export default function MesInformationsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -260,134 +276,151 @@ export default function MesInformationsPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">{currentTexts.title}</h1>
 
-          <div className="bg-white rounded-2xl p-8 shadow-sm">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {currentTexts.email}
-                </label>
-                <input
-                  type="email"
-                  value={user.email || ''}
-                  disabled
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-500"
-                />
-                <p className="mt-1 text-xs text-gray-500">L'email ne peut pas être modifié</p>
+          <Card>
+            <CardHeader>
+              <CardTitle>{language === 'fr' ? 'Informations personnelles' : 'Personal information'}</CardTitle>
+              <CardDescription>{language === 'fr' ? 'Gérez vos informations de contact' : 'Manage your contact information'}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email">{currentTexts.email}</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={user.email || ''}
+                    disabled
+                    className="pl-10 bg-gray-50 text-gray-500"
+                  />
+                </div>
+                <p className="text-xs text-gray-500">{language === 'fr' ? 'L\'email ne peut pas être modifié' : 'Email cannot be modified'}</p>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {currentTexts.phone}
-                </label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#F2431E] focus:outline-none"
-                  placeholder="+33 6 12 34 56 78"
-                />
+              <div className="space-y-2">
+                <Label htmlFor="phone">{currentTexts.phone}</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="pl-10"
+                    placeholder="+33 6 12 34 56 78"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {currentTexts.address}
-                </label>
-                <textarea
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#F2431E] focus:outline-none"
-                  placeholder="Votre adresse complète"
-                />
+              <div className="space-y-2">
+                <Label htmlFor="address">{currentTexts.address}</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <textarea
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 pl-10 border-2 border-gray-200 rounded-xl focus:border-[#F2431E] focus:outline-none resize-none"
+                    placeholder={language === 'fr' ? 'Votre adresse complète' : 'Your complete address'}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {currentTexts.company}
-                </label>
-                <input
-                  type="text"
-                  value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#F2431E] focus:outline-none"
-                  placeholder="Nom de votre entreprise (optionnel)"
-                />
+              <div className="space-y-2">
+                <Label htmlFor="company">{currentTexts.company}</Label>
+                <div className="relative">
+                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="company"
+                    type="text"
+                    value={formData.company}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    className="pl-10"
+                    placeholder={language === 'fr' ? 'Nom de votre entreprise (optionnel)' : 'Your company name (optional)'}
+                  />
+                </div>
               </div>
 
-              <button
+              <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="w-full bg-[#F2431E] text-white py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white"
               >
+                <Save className="w-4 h-4 mr-2" />
                 {isSaving ? currentTexts.saving : currentTexts.save}
-              </button>
-            </div>
-          </div>
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* Section suppression de compte */}
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-              <h3 className="text-lg font-bold text-red-900 mb-2">{currentTexts.deleteAccountWarning}</h3>
-              <p className="text-sm text-red-700 mb-4">{currentTexts.deleteAccountDescription}</p>
-              <button
+          <Card className="mt-8 border-red-200 bg-red-50">
+            <CardHeader>
+              <CardTitle className="text-red-900 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                {currentTexts.deleteAccountWarning}
+              </CardTitle>
+              <CardDescription className="text-red-700">
+                {currentTexts.deleteAccountDescription}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="destructive"
                 onClick={() => {
                   setShowDeleteConfirm(true);
                   setConfirmDeleteChecked(false);
                 }}
                 disabled={isDeleting}
-                className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
+                <Trash2 className="w-4 h-4 mr-2" />
                 {currentTexts.deleteAccount}
-              </button>
-            </div>
-          </div>
+              </Button>
+            </CardContent>
+          </Card>
 
-          {/* Modal de confirmation */}
-          {showDeleteConfirm && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{currentTexts.deleteAccountWarning}</h3>
-                  <p className="text-gray-600 mb-4">{currentTexts.deleteAccountDescription}</p>
-                </div>
-                <div className="space-y-4">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={confirmDeleteChecked}
-                      onChange={(e) => setConfirmDeleteChecked(e.target.checked)}
-                      className="mt-1 w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
-                    />
-                    <span className="text-sm text-gray-700">{currentTexts.deleteAccountConfirmText}</span>
-                  </label>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => {
-                        setShowDeleteConfirm(false);
-                        setConfirmDeleteChecked(false);
-                      }}
-                      disabled={isDeleting}
-                      className="flex-1 bg-gray-200 text-gray-900 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-colors disabled:opacity-50"
-                    >
-                      {currentTexts.deleteAccountCancel}
-                    </button>
-                    <button
-                      onClick={handleDeleteAccount}
-                      disabled={isDeleting || !confirmDeleteChecked}
-                      className="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isDeleting ? (language === 'fr' ? 'Suppression...' : 'Deleting...') : currentTexts.deleteAccountConfirm}
-                    </button>
-                  </div>
-                </div>
+          {/* Dialog de confirmation */}
+          <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-red-600">
+                  <AlertTriangle className="w-5 h-5" />
+                  {currentTexts.deleteAccountWarning}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">{currentTexts.deleteAccountDescription}</p>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={confirmDeleteChecked}
+                    onChange={(e) => setConfirmDeleteChecked(e.target.checked)}
+                    className="mt-1 w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                  />
+                  <span className="text-sm text-gray-700">{currentTexts.deleteAccountConfirmText}</span>
+                </label>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setConfirmDeleteChecked(false);
+                    }}
+                    disabled={isDeleting}
+                  >
+                    {currentTexts.deleteAccountCancel}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteAccount}
+                    disabled={isDeleting || !confirmDeleteChecked}
+                  >
+                    {isDeleting ? (language === 'fr' ? 'Suppression...' : 'Deleting...') : currentTexts.deleteAccountConfirm}
+                  </Button>
+                </DialogFooter>
               </div>
-            </div>
-          )}
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
 

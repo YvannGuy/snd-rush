@@ -10,6 +10,21 @@ import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+// Shadcn UI components
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+// Icônes lucide-react
+import { 
+  Calendar, 
+  MapPin, 
+  Package,
+  Eye,
+  Phone,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRightLeft
+} from 'lucide-react';
 
 export default function MesLivraisonsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -59,16 +74,35 @@ export default function MesLivraisonsPage() {
     loadData();
   }, [user]);
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string, timeString?: string | null) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', { 
+    const dateFormatted = date.toLocaleDateString('fr-FR', { 
       day: 'numeric', 
       month: 'long', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      year: 'numeric'
     });
+    
+    // Si une heure est fournie, l'utiliser, sinon utiliser l'heure de la date
+    if (timeString) {
+      return `${dateFormatted} à ${timeString}`;
+    }
+    
+    return dateFormatted;
+  };
+
+  // Extraire les heures depuis les notes JSON
+  const getTimesFromNotes = (notes: string | null) => {
+    if (!notes) return { startTime: null, endTime: null };
+    try {
+      const parsed = JSON.parse(notes);
+      return {
+        startTime: parsed.startTime || null,
+        endTime: parsed.endTime || null,
+      };
+    } catch (e) {
+      return { startTime: null, endTime: null };
+    }
   };
 
 
@@ -186,68 +220,63 @@ export default function MesLivraisonsPage() {
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">{currentTexts.title}</h1>
 
           {reservations.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-6">📦</div>
-              <p className="text-xl text-gray-600 mb-2">{currentTexts.empty}</p>
-              <p className="text-gray-500 mb-8">{currentTexts.emptyDescription}</p>
-              <Link
-                href="/mes-reservations"
-                className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
-              >
-                {language === 'fr' ? 'Voir mes réservations' : 'View my reservations'}
-              </Link>
-            </div>
+            <Card>
+              <CardContent className="text-center py-16">
+                <Package className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                <CardTitle className="text-xl mb-2">{currentTexts.empty}</CardTitle>
+                <CardDescription className="mb-8">{currentTexts.emptyDescription}</CardDescription>
+                <Button asChild className="bg-[#F2431E] hover:bg-[#E63A1A] text-white">
+                  <Link href="/mes-reservations">
+                    {language === 'fr' ? 'Voir mes réservations' : 'View my reservations'}
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
             <>
               <div className="space-y-6 mb-6">
                 {paginatedReservations.map((reservation) => {
                   const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
+                  const { startTime, endTime } = getTimesFromNotes(reservation.notes);
                   
                   return (
-                    <div
-                      key={reservation.id}
-                      className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-all overflow-hidden"
-                    >
+                    <Card key={reservation.id} className="hover:shadow-lg transition-all">
                       {/* Header */}
-                      <div className="px-4 sm:px-6 py-4 bg-blue-50 border-b border-blue-200">
+                      <CardHeader className="bg-blue-50 border-b border-blue-200">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           <div className="flex items-center gap-3 sm:gap-4">
                             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                              </svg>
+                              <ArrowRightLeft className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">
+                              <CardTitle className="text-base sm:text-lg truncate">
                                 {currentTexts.reservationNumber} #{reservationNumber}
-                              </h3>
+                              </CardTitle>
                             </div>
                           </div>
-                          <Link
-                            href={`/mes-reservations/${reservation.id}`}
-                            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm sm:text-base whitespace-nowrap"
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
                           >
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            {currentTexts.viewDetails}
-                          </Link>
+                            <a href="tel:+33651084994">
+                              <Phone className="w-4 h-4 mr-2" />
+                              {language === 'fr' ? 'Contacter SoundRush' : 'Contact SoundRush'}
+                            </a>
+                          </Button>
                         </div>
-                      </div>
+                      </CardHeader>
 
                       {/* Contenu */}
-                      <div className="p-4 sm:p-6">
+                      <CardContent className="p-4 sm:p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                           {/* Informations de livraison */}
                           <div className="space-y-4">
                             <div>
                               <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.deliveryDate}</h4>
                               <div className="flex items-center gap-2 text-gray-900">
-                                <svg className="w-5 h-5 text-[#F2431E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span className="font-medium">{formatDate(reservation.start_date)}</span>
+                                <Calendar className="w-5 h-5 text-[#F2431E]" />
+                                <span className="font-medium">{formatDate(reservation.start_date, startTime)}</span>
                               </div>
                             </div>
 
@@ -255,10 +284,8 @@ export default function MesLivraisonsPage() {
                               <div>
                                 <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.returnDate}</h4>
                                 <div className="flex items-center gap-2 text-gray-900">
-                                  <svg className="w-5 h-5 text-[#F2431E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  </svg>
-                                  <span className="font-medium">{formatDate(reservation.end_date)}</span>
+                                  <Calendar className="w-5 h-5 text-[#F2431E]" />
+                                  <span className="font-medium">{formatDate(reservation.end_date, endTime)}</span>
                                 </div>
                               </div>
                             )}
@@ -266,39 +293,50 @@ export default function MesLivraisonsPage() {
                             {reservation.address && (
                               <div>
                                 <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.address}</h4>
-                                <p className="text-gray-900">{reservation.address}</p>
+                                <div className="flex items-start gap-2 text-gray-900">
+                                  <MapPin className="w-5 h-5 text-[#F2431E] flex-shrink-0 mt-0.5" />
+                                  <p className="text-gray-900">{reservation.address}</p>
+                                </div>
                               </div>
                             )}
+                            
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-500 mb-2">{language === 'fr' ? 'Type' : 'Type'}</h4>
+                              <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
+                                {reservation.address ? (language === 'fr' ? 'Livraison' : 'Delivery') : (language === 'fr' ? 'Retrait' : 'Pickup')}
+                              </Badge>
+                            </div>
                           </div>
 
                           {/* Statut de livraison/récupération */}
                           <div className="space-y-4">
                             <div>
                               <h4 className="text-sm font-semibold text-gray-500 mb-3">{currentTexts.status}</h4>
-                              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className={`font-semibold ${
+                              <Card className="bg-gray-50 border-gray-200">
+                                <CardContent className="p-4">
+                                  <Badge 
+                                    variant={reservation.delivery_status === 'termine' ? 'default' : reservation.delivery_status === 'en_cours' ? 'secondary' : 'outline'}
+                                    className={
                                       reservation.delivery_status === 'termine'
-                                        ? 'text-green-800'
+                                        ? 'bg-green-100 text-green-800 hover:bg-green-100'
                                         : reservation.delivery_status === 'en_cours'
-                                        ? 'text-yellow-800'
-                                        : 'text-gray-600'
-                                    }`}>
-                                      {reservation.delivery_status === 'termine'
-                                        ? (language === 'fr' ? '✅ Terminé' : '✅ Completed')
-                                        : reservation.delivery_status === 'en_cours'
-                                        ? (language === 'fr' ? '🔄 En cours' : '🔄 In progress')
-                                        : (language === 'fr' ? '⏳ En attente' : '⏳ Pending')}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
+                                        ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
+                                        : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+                                    }
+                                  >
+                                    {reservation.delivery_status === 'termine'
+                                      ? (language === 'fr' ? 'Terminé' : 'Completed')
+                                      : reservation.delivery_status === 'en_cours'
+                                      ? (language === 'fr' ? 'En cours' : 'In progress')
+                                      : (language === 'fr' ? 'En attente' : 'Pending')}
+                                  </Badge>
+                                </CardContent>
+                              </Card>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   );
                 })}
               </div>
@@ -310,20 +348,22 @@ export default function MesLivraisonsPage() {
                     {currentTexts.page} {currentPage} {currentTexts.of} {totalPages}
                   </div>
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="outline"
                       onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
+                      <ChevronLeft className="w-4 h-4 mr-2" />
                       {currentTexts.previous}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
                     >
                       {currentTexts.next}
-                    </button>
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
                   </div>
                 </div>
               )}

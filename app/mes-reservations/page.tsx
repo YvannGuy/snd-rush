@@ -10,6 +10,30 @@ import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+// Shadcn UI components
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+// Icônes lucide-react
+import { 
+  Search, 
+  X, 
+  Calendar, 
+  MapPin, 
+  ClipboardList, 
+  Download, 
+  FilePenLine,
+  CheckCircle2,
+  Package,
+  DollarSign,
+  ChevronLeft,
+  ChevronRight,
+  Music,
+  Eye,
+  Clock
+} from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function MesReservationsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -23,6 +47,8 @@ export default function MesReservationsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 2;
   const { isCollapsed: isSidebarCollapsed, toggleSidebar: handleToggleSidebar } = useSidebarCollapse();
+  const [selectedReservation, setSelectedReservation] = useState<any | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   // Rediriger vers l'accueil si l'utilisateur n'est pas connecté
   useEffect(() => {
@@ -116,6 +142,26 @@ export default function MesReservationsPage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  // Extraire les heures depuis les notes JSON
+  const getTimesFromNotes = (notes: string | null) => {
+    if (!notes) return { startTime: null, endTime: null };
+    try {
+      const parsed = JSON.parse(notes);
+      return {
+        startTime: parsed.startTime || null,
+        endTime: parsed.endTime || null,
+      };
+    } catch (e) {
+      return { startTime: null, endTime: null };
+    }
+  };
+
+  // Ouvrir le modal de détails
+  const openDetailsModal = (reservation: any) => {
+    setSelectedReservation(reservation);
+    setIsDetailsModalOpen(true);
   };
 
   // Obtenir le statut traduit
@@ -263,25 +309,23 @@ export default function MesReservationsPage() {
           {reservations.length > 0 && (
             <div className="mb-6">
               <div className="relative">
-                <input
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
                   type="text"
                   placeholder={language === 'fr' ? 'Rechercher par date, prix, numéro, statut, adresse...' : 'Search by date, price, number, status, address...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-3 pl-12 pr-4 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                  className="w-full pl-12 pr-10 h-11"
                 />
-                <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
                 {searchQuery && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                    <X className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
               {searchQuery && (
@@ -295,29 +339,32 @@ export default function MesReservationsPage() {
           )}
 
           {filteredReservations.length === 0 && reservations.length > 0 ? (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-6">🔍</div>
-              <p className="text-xl text-gray-600 mb-2">{language === 'fr' ? 'Aucun résultat trouvé' : 'No results found'}</p>
-              <p className="text-gray-500 mb-8">{language === 'fr' ? 'Essayez avec d\'autres mots-clés' : 'Try with different keywords'}</p>
-              <button
-                onClick={() => setSearchQuery('')}
-                className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
-              >
-                {language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
-              </button>
-            </div>
+            <Card>
+              <CardContent className="text-center py-16">
+                <Search className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                <CardTitle className="text-xl mb-2">{language === 'fr' ? 'Aucun résultat trouvé' : 'No results found'}</CardTitle>
+                <CardDescription className="mb-8">{language === 'fr' ? 'Essayez avec d\'autres mots-clés' : 'Try with different keywords'}</CardDescription>
+                <Button
+                  onClick={() => setSearchQuery('')}
+                  className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                >
+                  {language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
+                </Button>
+              </CardContent>
+            </Card>
           ) : filteredReservations.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-6">📅</div>
-              <p className="text-xl text-gray-600 mb-2">{currentTexts.empty}</p>
-              <p className="text-gray-500 mb-8">{currentTexts.emptyDescription}</p>
-              <Link
-                href="/packs"
-                className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
-              >
-                {currentTexts.explorePacks}
-              </Link>
-            </div>
+            <Card>
+              <CardContent className="text-center py-16">
+                <Calendar className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                <CardTitle className="text-xl mb-2">{currentTexts.empty}</CardTitle>
+                <CardDescription className="mb-8">{currentTexts.emptyDescription}</CardDescription>
+                <Button asChild className="bg-[#F2431E] hover:bg-[#E63A1A] text-white">
+                  <Link href="/packs">
+                    {currentTexts.explorePacks}
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
             <>
               {(() => {
@@ -336,12 +383,9 @@ export default function MesReservationsPage() {
                 const isSigned = !!reservation.client_signature;
                 
                 return (
-                  <div
-                    key={reservation.id}
-                    className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-all overflow-hidden"
-                  >
+                  <Card key={reservation.id} className="hover:shadow-lg transition-all">
                     {/* Header avec statut */}
-                    <div className={`px-4 sm:px-6 py-4 ${
+                    <CardHeader className={`${
                       isConfirmed ? 'bg-green-50 border-b border-green-200' :
                       isPending ? 'bg-yellow-50 border-b border-yellow-200' :
                       'bg-gray-50 border-b border-gray-200'
@@ -353,78 +397,99 @@ export default function MesReservationsPage() {
                             isPending ? 'bg-yellow-100' :
                             'bg-gray-100'
                           }`}>
-                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 ${
+                            <ClipboardList className={`w-5 h-5 sm:w-6 sm:h-6 ${
                               isConfirmed ? 'text-green-600' :
                               isPending ? 'text-yellow-600' :
                               'text-gray-600'
-                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
+                            }`} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">
+                            <CardTitle className="text-base sm:text-lg truncate">
                               {currentTexts.reservationNumber} #{reservationNumber}
-                            </h3>
-                            <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold mt-1 ${
-                              isConfirmed
-                                ? 'bg-green-100 text-green-800'
-                                : isPending
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {getStatusText(reservation.status.toLowerCase(), language)}
-                            </span>
+                            </CardTitle>
+                            <div className="mt-2 flex items-center gap-2">
+                              <Badge 
+                                variant={isConfirmed ? 'default' : isPending ? 'secondary' : 'outline'}
+                                className={
+                                  isConfirmed
+                                    ? 'bg-green-100 text-green-800 hover:bg-green-100'
+                                    : isPending
+                                    ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
+                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+                                }
+                              >
+                                {getStatusText(reservation.status.toLowerCase(), language)}
+                              </Badge>
+                              {!isSigned && isConfirmed && (
+                                <CardDescription className="text-xs text-gray-600 mt-0">
+                                  {language === 'fr' ? 'Signature requise pour finaliser la réservation.' : 'Signature required to finalize the reservation.'}
+                                </CardDescription>
+                              )}
+                              {isSigned && reservation.client_signed_at && (
+                                <CardDescription className="text-xs text-gray-600 mt-0">
+                                  {language === 'fr' 
+                                    ? `Contrat signé le ${new Date(reservation.client_signed_at).toLocaleDateString('fr-FR')}.`
+                                    : `Contract signed on ${new Date(reservation.client_signed_at).toLocaleDateString('en-US')}.`}
+                                </CardDescription>
+                              )}
+                            </div>
                           </div>
                         </div>
                         {isConfirmed && (
                           <div className="flex flex-col sm:flex-row gap-2">
                             {!isSigned ? (
-                              <Link
-                                href={`/sign-contract?reservationId=${reservation.id}`}
-                                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm sm:text-base whitespace-nowrap"
+                              <Button
+                                asChild
+                                className="bg-green-600 hover:bg-green-700 text-white"
                               >
-                                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                </svg>
-                                <span className="hidden sm:inline">{currentTexts.signContract}</span>
-                                <span className="sm:hidden">Signer</span>
-                              </Link>
+                                <Link href={`/sign-contract?reservationId=${reservation.id}`}>
+                                  <FilePenLine className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                                  <span className="hidden sm:inline">{currentTexts.signContract}</span>
+                                  <span className="sm:hidden">Signer</span>
+                                </Link>
+                              </Button>
                             ) : (
-                              <span className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-green-100 text-green-800 rounded-lg font-semibold text-sm sm:text-base whitespace-nowrap">
-                                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-100 px-3 sm:px-4 py-2 h-auto">
+                                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                                 <span className="hidden sm:inline">{currentTexts.contractSigned}</span>
                                 <span className="sm:hidden">Signé</span>
-                              </span>
+                              </Badge>
                             )}
-                            <a
-                              href={`/api/contract/download?reservationId=${reservation.id}`}
-                              download={`contrat-${reservationNumber}.pdf`}
-                              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm sm:text-base whitespace-nowrap"
+                            <Button
+                              asChild
+                              variant="default"
+                              className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
                             >
-                              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                              </svg>
-                              <span className="hidden sm:inline">{currentTexts.downloadContract}</span>
-                              <span className="sm:hidden">PDF</span>
-                            </a>
+                              <a
+                                href={`/api/contract/download?reservationId=${reservation.id}`}
+                                download={`contrat-${reservationNumber}.pdf`}
+                              >
+                                <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                                <span className="hidden sm:inline">{currentTexts.downloadContract}</span>
+                                <span className="sm:hidden">PDF</span>
+                              </a>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => openDetailsModal(reservation)}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              {currentTexts.viewDetails}
+                            </Button>
                           </div>
                         )}
                       </div>
-                    </div>
+                    </CardHeader>
 
                     {/* Contenu */}
-                    <div className="p-4 sm:p-6">
+                    <CardContent className="p-4 sm:p-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         {/* Informations principales */}
                         <div className="space-y-4">
                           <div>
                             <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.dates}</h4>
                             <div className="flex items-center gap-2 text-gray-900">
-                              <svg className="w-5 h-5 text-[#F2431E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
+                              <Calendar className="w-5 h-5 text-[#F2431E]" />
                               <span className="font-medium">{formatDate(reservation.start_date)}</span>
                               <span className="text-gray-400">→</span>
                               <span className="font-medium">{formatDate(reservation.end_date)}</span>
@@ -434,7 +499,10 @@ export default function MesReservationsPage() {
                           {reservation.address && (
                             <div>
                               <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.address}</h4>
-                              <p className="text-gray-900">{reservation.address}</p>
+                              <div className="flex items-start gap-2 text-gray-900">
+                                <MapPin className="w-5 h-5 text-[#F2431E] flex-shrink-0 mt-0.5" />
+                                <p className="text-gray-900">{reservation.address}</p>
+                              </div>
                             </div>
                           )}
 
@@ -466,28 +534,30 @@ export default function MesReservationsPage() {
                                       const itemTotal = dailyPrice * quantity * rentalDays;
                                       
                                       return (
-                                        <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                                          <div className="flex justify-between items-start mb-2">
-                                            <div className="flex-1">
-                                              <p className="font-semibold text-gray-900 text-sm">{item.productName || 'Produit'}</p>
-                                              {item.addons && item.addons.length > 0 && (
-                                                <div className="mt-1 space-y-1">
-                                                  {item.addons.map((addon: any, addonIndex: number) => (
-                                                    <p key={addonIndex} className="text-xs text-gray-600">
-                                                      + {addon.name} (+{addon.price}€)
-                                                    </p>
-                                                  ))}
-                                                </div>
-                                              )}
+                                        <Card key={index} className="bg-gray-50 border-gray-200">
+                                          <CardContent className="p-3">
+                                            <div className="flex justify-between items-start mb-2">
+                                              <div className="flex-1">
+                                                <p className="font-semibold text-gray-900 text-sm">{item.productName || 'Produit'}</p>
+                                                {item.addons && item.addons.length > 0 && (
+                                                  <div className="mt-1 space-y-1">
+                                                    {item.addons.map((addon: any, addonIndex: number) => (
+                                                      <p key={addonIndex} className="text-xs text-gray-600">
+                                                        + {addon.name} (+{addon.price}€)
+                                                      </p>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                              </div>
+                                              <p className="font-bold text-[#F2431E] text-sm ml-2">{itemTotal.toFixed(2)}€</p>
                                             </div>
-                                            <p className="font-bold text-[#F2431E] text-sm ml-2">{itemTotal.toFixed(2)}€</p>
-                                          </div>
-                                          <div className="flex gap-4 text-xs text-gray-600">
-                                            <span>Qté: {quantity}</span>
-                                            <span>Prix/jour: {dailyPrice.toFixed(2)}€</span>
-                                            <span>Durée: {rentalDays} jour{rentalDays > 1 ? 's' : ''}</span>
-                                          </div>
-                                        </div>
+                                            <div className="flex gap-4 text-xs text-gray-600">
+                                              <span>Qté: {quantity}</span>
+                                              <span>Prix/jour: {dailyPrice.toFixed(2)}€</span>
+                                              <span>Durée: {rentalDays} jour{rentalDays > 1 ? 's' : ''}</span>
+                                            </div>
+                                          </CardContent>
+                                        </Card>
                                       );
                                     })}
                                   </div>
@@ -534,9 +604,13 @@ export default function MesReservationsPage() {
 
                         {/* Informations financières */}
                         <div className="space-y-4">
-                          <div className="bg-gray-50 rounded-xl p-4">
-                            <h4 className="text-sm font-semibold text-gray-500 mb-3">Informations financières</h4>
-                            <div className="space-y-2">
+                          <Card className="bg-gray-50 border-gray-200">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-sm font-semibold text-gray-500">
+                                {language === 'fr' ? 'Informations financières' : 'Financial information'}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2 pt-0">
                               {reservation.total_price && (
                                 <div className="flex justify-between items-center">
                                   <span className="text-gray-600">{currentTexts.total}</span>
@@ -549,15 +623,15 @@ export default function MesReservationsPage() {
                                   <span className="font-semibold text-gray-900">{parseFloat(reservation.deposit_amount).toFixed(2)}€</span>
                                 </div>
                               )}
-                            </div>
-                          </div>
+                            </CardContent>
+                          </Card>
 
                           {reservation.pack_id && (
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-500 mb-2">Pack réservé</h4>
+                              <h4 className="text-sm font-semibold text-gray-500 mb-2">{language === 'fr' ? 'Pack réservé' : 'Reserved pack'}</h4>
                               <div className="flex items-center gap-2">
                                 <div className="w-10 h-10 bg-[#F2431E] rounded-lg flex items-center justify-center">
-                                  <span className="text-white font-bold">♪</span>
+                                  <Music className="w-6 h-6 text-white" />
                                 </div>
                                 <span className="font-semibold text-gray-900">
                                   Pack {getPackName(reservation.pack_id, language)}
@@ -567,8 +641,8 @@ export default function MesReservationsPage() {
                           )}
                         </div>
                       </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 );
               })}
                     </div>
@@ -582,20 +656,22 @@ export default function MesReservationsPage() {
                             {currentTexts.page} {currentPage} {currentTexts.of} {totalPages}
                           </div>
                         <div className="flex gap-2">
-                          <button
+                          <Button
+                            variant="outline"
                             onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                             disabled={currentPage === 1}
-                            className="px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
+                            <ChevronLeft className="w-4 h-4 mr-2" />
                             {currentTexts.previous}
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                             disabled={currentPage === totalPages}
-                            className="px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
                           >
                             {currentTexts.next}
-                          </button>
+                            <ChevronRight className="w-4 h-4 ml-2" />
+                          </Button>
                         </div>
                       </div>
                       ) : null;
@@ -609,6 +685,171 @@ export default function MesReservationsPage() {
       </main>
       </div>
       <Footer language={language} />
+
+      {/* Modal de détails de la réservation */}
+      <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedReservation && (() => {
+            const reservation = selectedReservation;
+            const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
+            const { startTime, endTime } = getTimesFromNotes(reservation.notes);
+            
+            // Extraire les cartItems depuis les notes
+            let cartItems: any[] = [];
+            if (reservation.notes) {
+              try {
+                const parsedNotes = JSON.parse(reservation.notes);
+                if (parsedNotes && parsedNotes.cartItems && Array.isArray(parsedNotes.cartItems)) {
+                  cartItems = parsedNotes.cartItems;
+                }
+              } catch (e) {
+                // Ce n'est pas du JSON ou pas de cartItems
+              }
+            }
+
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>
+                    {currentTexts.reservationNumber} #{reservationNumber}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6 mt-4">
+                  {/* Dates et heures */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold text-gray-500">
+                          {language === 'fr' ? 'Date et heure de début' : 'Start date and time'}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-5 h-5 text-[#F2431E]" />
+                          <span className="font-medium">{formatDate(reservation.start_date)}</span>
+                        </div>
+                        {startTime && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <Clock className="w-5 h-5 text-[#F2431E]" />
+                            <span className="font-medium">{startTime}</span>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold text-gray-500">
+                          {language === 'fr' ? 'Date et heure de fin' : 'End date and time'}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-5 h-5 text-[#F2431E]" />
+                          <span className="font-medium">{formatDate(reservation.end_date)}</span>
+                        </div>
+                        {endTime && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <Clock className="w-5 h-5 text-[#F2431E]" />
+                            <span className="font-medium">{endTime}</span>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Adresse */}
+                  {reservation.address && (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold text-gray-500">
+                          {currentTexts.address}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-5 h-5 text-[#F2431E] flex-shrink-0 mt-0.5" />
+                          <p className="text-gray-900">{reservation.address}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Produits réservés */}
+                  {cartItems.length > 0 && (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold text-gray-500">
+                          {language === 'fr' ? 'Produits réservés' : 'Reserved products'}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {cartItems.map((item: any, index: number) => {
+                            const dailyPrice = parseFloat(item.dailyPrice || 0);
+                            const quantity = parseInt(item.quantity || 1);
+                            const rentalDays = parseInt(item.rentalDays || 1);
+                            const itemTotal = dailyPrice * quantity * rentalDays;
+                            
+                            return (
+                              <Card key={index} className="bg-gray-50 border-gray-200">
+                                <CardContent className="p-4">
+                                  <div className="flex justify-between items-start mb-2">
+                                    <div className="flex-1">
+                                      <p className="font-semibold text-gray-900">{item.productName || 'Produit'}</p>
+                                      {item.addons && item.addons.length > 0 && (
+                                        <div className="mt-2 space-y-1">
+                                          {item.addons.map((addon: any, addonIndex: number) => (
+                                            <p key={addonIndex} className="text-sm text-gray-600">
+                                              + {addon.name} (+{addon.price}€)
+                                            </p>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <p className="font-bold text-[#F2431E] ml-2">{itemTotal.toFixed(2)}€</p>
+                                  </div>
+                                  <div className="flex gap-4 text-sm text-gray-600 mt-2">
+                                    <span>Qté: {quantity}</span>
+                                    <span>Prix/jour: {dailyPrice.toFixed(2)}€</span>
+                                    <span>Durée: {rentalDays} jour{rentalDays > 1 ? 's' : ''}</span>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Informations financières */}
+                  <Card className="bg-gray-50 border-gray-200">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-semibold text-gray-500">
+                        {language === 'fr' ? 'Informations financières' : 'Financial information'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {reservation.total_price && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">{currentTexts.total}</span>
+                          <span className="text-lg font-bold text-gray-900">{parseFloat(reservation.total_price).toFixed(2)}€</span>
+                        </div>
+                      )}
+                      {reservation.deposit_amount && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">{currentTexts.deposit}</span>
+                          <span className="font-semibold text-gray-900">{parseFloat(reservation.deposit_amount).toFixed(2)}€</span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

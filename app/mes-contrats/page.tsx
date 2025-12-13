@@ -10,6 +10,24 @@ import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+// Shadcn UI components
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+// Icônes lucide-react
+import { 
+  Search, 
+  X, 
+  Calendar, 
+  MapPin, 
+  CheckCircle2, 
+  Download,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  DollarSign
+} from 'lucide-react';
 
 export default function MesContratsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -193,25 +211,23 @@ export default function MesContratsPage() {
           {contracts.length > 0 && (
             <div className="mb-6">
               <div className="relative">
-                <input
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
                   type="text"
                   placeholder={language === 'fr' ? 'Rechercher par date, prix, numéro, adresse...' : 'Search by date, price, number, address...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-3 pl-12 pr-4 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                  className="w-full pl-12 pr-10 h-11"
                 />
-                <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
                 {searchQuery && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                    <X className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
               {searchQuery && (
@@ -225,29 +241,32 @@ export default function MesContratsPage() {
           )}
 
           {filteredContracts.length === 0 && contracts.length > 0 ? (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-6">🔍</div>
-              <p className="text-xl text-gray-600 mb-2">{language === 'fr' ? 'Aucun résultat trouvé' : 'No results found'}</p>
-              <p className="text-gray-500 mb-8">{language === 'fr' ? 'Essayez avec d\'autres mots-clés' : 'Try with different keywords'}</p>
-              <button
-                onClick={() => setSearchQuery('')}
-                className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
-              >
-                {language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
-              </button>
-            </div>
+            <Card>
+              <CardContent className="text-center py-16">
+                <Search className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                <CardTitle className="text-xl mb-2">{language === 'fr' ? 'Aucun résultat trouvé' : 'No results found'}</CardTitle>
+                <CardDescription className="mb-8">{language === 'fr' ? 'Essayez avec d\'autres mots-clés' : 'Try with different keywords'}</CardDescription>
+                <Button
+                  onClick={() => setSearchQuery('')}
+                  className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                >
+                  {language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
+                </Button>
+              </CardContent>
+            </Card>
           ) : filteredContracts.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-6">📄</div>
-              <p className="text-xl text-gray-600 mb-2">{currentTexts.empty}</p>
-              <p className="text-gray-500 mb-8">{currentTexts.emptyDescription}</p>
-              <Link
-                href="/packs"
-                className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
-              >
-                {currentTexts.explorePacks}
-              </Link>
-            </div>
+            <Card>
+              <CardContent className="text-center py-16">
+                <FileText className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                <CardTitle className="text-xl mb-2">{currentTexts.empty}</CardTitle>
+                <CardDescription className="mb-8">{currentTexts.emptyDescription}</CardDescription>
+                <Button asChild className="bg-[#F2431E] hover:bg-[#E63A1A] text-white">
+                  <Link href="/packs">
+                    {currentTexts.explorePacks}
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
             <>
               <div className="space-y-6 mb-6">
@@ -261,53 +280,62 @@ export default function MesContratsPage() {
                     const reservationNumber = contract.id.slice(0, 8).toUpperCase();
                     
                     return (
-                      <div
-                        key={contract.id}
-                        className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-all overflow-hidden"
-                      >
+                      <Card key={contract.id} className="hover:shadow-lg transition-all">
                         {/* Header avec statut */}
-                        <div className="bg-green-50 border-b border-green-200 px-4 sm:px-6 py-4">
+                        <CardHeader className="bg-green-50 border-b border-green-200">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div className="flex items-center gap-3 sm:gap-4">
                               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-                                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                                <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">
+                                <CardTitle className="text-base sm:text-lg truncate">
                                   {currentTexts.reservationNumber} #{reservationNumber}
-                                </h3>
-                                <span className="inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold mt-1 bg-green-100 text-green-800">
-                                  {language === 'fr' ? 'Contrat signé' : 'Contract signed'}
-                                </span>
+                                </CardTitle>
+                                <div className="mt-2">
+                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                    {language === 'fr' ? 'Contrat signé' : 'Contract signed'}
+                                  </Badge>
+                                </div>
                               </div>
                             </div>
-                            <a
-                              href={`/api/contract/download?reservationId=${contract.id}`}
-                              download={`contrat-${reservationNumber}.pdf`}
-                              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm sm:text-base whitespace-nowrap"
-                            >
-                              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                              </svg>
-                              <span className="hidden sm:inline">{currentTexts.downloadContract}</span>
-                              <span className="sm:hidden">PDF</span>
-                            </a>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Button
+                                asChild
+                                variant="default"
+                                className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                              >
+                                <a
+                                  href={`/api/contract/download?reservationId=${contract.id}`}
+                                  download={`contrat-${reservationNumber}.pdf`}
+                                >
+                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                                  <span className="hidden sm:inline">{currentTexts.downloadContract}</span>
+                                  <span className="sm:hidden">PDF</span>
+                                </a>
+                              </Button>
+                              <Button
+                                asChild
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Link href={`/mes-reservations/${contract.id}`}>
+                                  {language === 'fr' ? 'Voir la réservation' : 'View reservation'}
+                                </Link>
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        </CardHeader>
 
                         {/* Contenu */}
-                        <div className="p-4 sm:p-6">
+                        <CardContent className="p-4 sm:p-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                             {/* Informations principales */}
                             <div className="space-y-4">
                               <div>
                                 <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.dates}</h4>
                                 <div className="flex items-center gap-2 text-gray-900">
-                                  <svg className="w-5 h-5 text-[#F2431E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  </svg>
+                                  <Calendar className="w-5 h-5 text-[#F2431E]" />
                                   <span className="font-medium">{formatDate(contract.start_date)}</span>
                                   <span className="text-gray-400">→</span>
                                   <span className="font-medium">{formatDate(contract.end_date)}</span>
@@ -318,9 +346,7 @@ export default function MesContratsPage() {
                                 <div>
                                   <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.signedOn}</h4>
                                   <div className="flex items-center gap-2 text-gray-900">
-                                    <svg className="w-5 h-5 text-[#F2431E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
+                                    <Calendar className="w-5 h-5 text-[#F2431E]" />
                                     <span className="font-medium">{formatDateTime(contract.client_signed_at)}</span>
                                   </div>
                                 </div>
@@ -329,16 +355,23 @@ export default function MesContratsPage() {
                               {contract.address && (
                                 <div>
                                   <h4 className="text-sm font-semibold text-gray-500 mb-2">{language === 'fr' ? 'Adresse' : 'Address'}</h4>
-                                  <p className="text-gray-900">{contract.address}</p>
+                                  <div className="flex items-start gap-2 text-gray-900">
+                                    <MapPin className="w-5 h-5 text-[#F2431E] flex-shrink-0 mt-0.5" />
+                                    <p className="text-gray-900">{contract.address}</p>
+                                  </div>
                                 </div>
                               )}
                             </div>
 
                             {/* Informations financières */}
                             <div className="space-y-4">
-                              <div className="bg-gray-50 rounded-xl p-4">
-                                <h4 className="text-sm font-semibold text-gray-500 mb-3">{language === 'fr' ? 'Informations financières' : 'Financial information'}</h4>
-                                <div className="space-y-2">
+                              <Card className="bg-gray-50 border-gray-200">
+                                <CardHeader className="pb-3">
+                                  <CardTitle className="text-sm font-semibold text-gray-500">
+                                    {language === 'fr' ? 'Informations financières' : 'Financial information'}
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-2 pt-0">
                                   {contract.total_price && (
                                     <div className="flex justify-between items-center">
                                       <span className="text-gray-600">{currentTexts.total}</span>
@@ -351,12 +384,12 @@ export default function MesContratsPage() {
                                       <span className="font-semibold text-gray-900">{parseFloat(contract.deposit_amount).toFixed(2)}€</span>
                                     </div>
                                   )}
-                                </div>
-                              </div>
+                                </CardContent>
+                              </Card>
                             </div>
                           </div>
-                        </div>
-                      </div>
+                        </CardContent>
+                      </Card>
                     );
                   });
                 })()}
@@ -371,20 +404,22 @@ export default function MesContratsPage() {
                       {currentTexts.page} {currentPage} {currentTexts.of} {totalPages}
                     </div>
                     <div className="flex gap-2">
-                      <button
+                      <Button
+                        variant="outline"
                         onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                         disabled={currentPage === 1}
-                        className="px-4 py-2 bg-white border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
+                        <ChevronLeft className="w-4 h-4 mr-2" />
                         {currentTexts.previous}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                         disabled={currentPage === totalPages}
-                        className="px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
                       >
                         {currentTexts.next}
-                      </button>
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </Button>
                     </div>
                   </div>
                 ) : null;
