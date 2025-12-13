@@ -21,9 +21,7 @@ import WhatsAppButton from '@/components/WhatsAppButton';
 import ReservationModal from '@/components/ReservationModal';
 import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
-import AssistantModal from '@/components/AssistantModalRefactored';
 import CookieBanner from '@/components/CookieBanner';
-import FloatingChatWidget from '@/components/FloatingChatWidget';
 
 export default function Home() {
   const router = useRouter();
@@ -31,7 +29,6 @@ export default function Home() {
   const [reservationModal, setReservationModal] = useState(false);
   const [legalNoticeModal, setLegalNoticeModal] = useState(false);
   const [rentalConditionsModal, setRentalConditionsModal] = useState(false);
-  const [assistantModal, setAssistantModal] = useState(false);
   const [selectedPackId, setSelectedPackId] = useState<number | undefined>(undefined);
 
   const handleReservePack = (packId: number) => {
@@ -127,16 +124,15 @@ export default function Home() {
 
     window.addEventListener('openReservationModal', handleOpenReservationModal as EventListener);
     
-    // Écouteur pour ouvrir le modal assistant
-    const handleOpenAssistantModal = () => {
-      setAssistantModal(true);
+    // Rediriger openAssistantModal vers la chatbox flottante
+    const handleOpenAssistantToChat = () => {
+      window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
     };
-    
-    window.addEventListener('openAssistantModal', handleOpenAssistantModal as EventListener);
+    window.addEventListener('openAssistantModal', handleOpenAssistantToChat as EventListener);
     
     return () => {
       window.removeEventListener('openReservationModal', handleOpenReservationModal as EventListener);
-      window.removeEventListener('openAssistantModal', handleOpenAssistantModal as EventListener);
+      window.removeEventListener('openAssistantModal', handleOpenAssistantToChat as EventListener);
     };
   }, []);
 
@@ -192,7 +188,9 @@ export default function Home() {
 
         {/* Section Questions Fréquentes */}
         <SectionAnimation delay={0.6}>
-          <FaqInteractive onOpenAssistant={() => setAssistantModal(true)} />
+          <FaqInteractive onOpenAssistant={() => {
+          window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
+        }} />
         </SectionAnimation>
       </main>
 
@@ -204,7 +202,6 @@ export default function Home() {
 
       <ScrollToTopButton />
       <WhatsAppButton language={language} />
-      <FloatingChatWidget />
 
       {/* Modals */}
       <ReservationModal 
@@ -226,13 +223,6 @@ export default function Home() {
         language={language}
       />
 
-      <AssistantModal 
-        isOpen={assistantModal} 
-        onClose={() => setAssistantModal(false)}
-        language={language}
-        onPackSelected={handleReservePack}
-        onRentalConditionsClick={() => setRentalConditionsModal(true)}
-      />
 
     </div>
   );

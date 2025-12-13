@@ -182,7 +182,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
   };
 
   const handleRequestQuote = () => {
-    window.dispatchEvent(new CustomEvent('openAssistantModal'));
+    window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
   };
 
   return (
@@ -286,7 +286,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
             </p>
             <button
               onClick={() => {
-                window.dispatchEvent(new CustomEvent('openAssistantModal'));
+                window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
               }}
               className="inline-flex items-center gap-3 bg-white text-[#F2431E] px-10 py-5 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg"
             >

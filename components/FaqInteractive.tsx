@@ -131,8 +131,8 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
             {onOpenAssistant && (
               <button
                 onClick={() => {
-                  window.dispatchEvent(new CustomEvent('openAssistantModal'));
-                  onOpenAssistant();
+                  window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
+                  if (onOpenAssistant) onOpenAssistant();
                 }}
                 className="inline-flex items-center justify-center px-6 py-3 bg-white border-2 border-[#F2431E] text-[#F2431E] font-semibold rounded-lg hover:bg-[#F2431E] hover:text-white transition-colors"
               >

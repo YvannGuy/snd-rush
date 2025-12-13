@@ -4,16 +4,13 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CatalogueContent from '@/components/CatalogueContent';
-import AssistantModal from '@/components/AssistantModalRefactored';
 
 export default function CataloguePage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
-  const [assistantModal, setAssistantModal] = useState(false);
-
-  // Écouter l'événement pour ouvrir l'assistant
+  // Rediriger openAssistantModal vers la chatbox flottante
   useEffect(() => {
     const handleOpenAssistantModal = () => {
-      setAssistantModal(true);
+      window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
     };
     
     window.addEventListener('openAssistantModal', handleOpenAssistantModal as EventListener);
@@ -44,13 +41,6 @@ export default function CataloguePage() {
         onRentalConditionsClick={() => {}}
       />
 
-      {/* Assistant Modal */}
-      <AssistantModal 
-        isOpen={assistantModal} 
-        onClose={() => setAssistantModal(false)}
-        language={language}
-        onPackSelected={handleReservePack}
-      />
     </div>
   );
 }

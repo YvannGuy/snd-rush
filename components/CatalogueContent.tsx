@@ -377,15 +377,13 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
   }, [searchQuery, selectedCategory, selectedUsageType, selectedCapacity, selectedPriceRange]);
 
   const handleAddToQuote = (productId: number) => {
-    // Ouvrir l'assistant SoundRush Paris
-    window.dispatchEvent(new CustomEvent('openAssistantModal'));
+    // Ouvrir la chatbox
+    window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
   };
 
   const scrollToHelp = () => {
-    const element = document.getElementById('help-section');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    // Ouvrir la chatbox au lieu de scroller
+    window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
   };
 
   return (
@@ -533,7 +531,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                     {product.category === 'packs' && (product.price.includes('devis') || product.price.includes('quote')) ? (
                       <button
                         onClick={() => {
-                          window.dispatchEvent(new CustomEvent('openAssistantModal'));
+                          window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
                         }}
                         className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors text-center min-h-[44px] flex items-center justify-center"
                       >
