@@ -12,12 +12,19 @@ import SignModal from '@/components/auth/SignModal';
 import TopBanner from '@/components/TopBanner';
 import SearchBar from '@/components/SearchBar';
 import UserIconWithName from '@/components/UserIconWithName';
-// Icônes inline pour éviter la dépendance lucide-react
-const UserIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-);
+import { supabase } from '@/lib/supabase';
+// Shadcn UI components
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+// Icônes lucide-react
+import { User, ShoppingCart, Menu, X, Globe, ChevronDown } from 'lucide-react';
 
 
 interface HeaderProps {
@@ -32,11 +39,11 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const { getCartItemCount } = useCart();
   const [cartCount, setCartCount] = useState(0);
   const { user } = useUser();
   const { signOut } = useAuth();
+  const [userFirstName, setUserFirstName] = useState<string>('');
 
   useEffect(() => {
     // Initialiser le compteur au montage
@@ -73,23 +80,54 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]); // Inclure pathname pour vérifier la page actuelle
 
-  // Fermer le dropdown utilisateur quand on clique en dehors
+  // Récupérer le prénom de l'utilisateur
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (isUserDropdownOpen && !target.closest('.user-dropdown-container')) {
-        setIsUserDropdownOpen(false);
+    const fetchUserFirstName = async () => {
+      if (!user?.id || !supabase) {
+        setUserFirstName('');
+        return;
+      }
+
+      try {
+        // Essayer de récupérer depuis user_profiles
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('first_name')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile?.first_name) {
+          // Capitaliser la première lettre
+          const firstName = profile.first_name.charAt(0).toUpperCase() + profile.first_name.slice(1).toLowerCase();
+          setUserFirstName(firstName);
+        } else if (user.user_metadata?.first_name) {
+          const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
+          setUserFirstName(firstName);
+        } else if (user.email) {
+          // Fallback: utiliser la partie avant @ de l'email
+          const emailPart = user.email.split('@')[0];
+          setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
+        }
+      } catch (error) {
+        console.error('Erreur récupération prénom:', error);
+        // Fallback vers user_metadata ou email
+        if (user.user_metadata?.first_name) {
+          const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
+          setUserFirstName(firstName);
+        } else if (user.email) {
+          const emailPart = user.email.split('@')[0];
+          setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
+        }
       }
     };
 
-    if (isUserDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+    if (user) {
+      fetchUserFirstName();
+    } else {
+      setUserFirstName('');
     }
+  }, [user]);
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isUserDropdownOpen]);
 
 
   const getUserInitials = (user: any) => {
@@ -157,193 +195,241 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
             {/* CTA Buttons */}
             <div className="flex items-center gap-3 sm:gap-4">
               {/* CTA Principal - Réserver */}
-              <Link
-                href="/catalogue"
-                className="hidden lg:flex items-center justify-center px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm"
+              <Button
+                asChild
+                variant="default"
+                size="default"
+                className="hidden lg:flex bg-[#F2431E] hover:bg-[#E63A1A] text-white"
               >
-                {language === 'fr' ? 'Réserver' : 'Book'}
-              </Link>
+                <Link href="/catalogue">
+                  {language === 'fr' ? 'Réserver' : 'Book'}
+                </Link>
+              </Button>
 
-              {/* Language switcher - Desktop only */}
-              <button
-                onClick={toggleLanguage}
-                className="hidden lg:flex items-center space-x-1 text-sm font-medium text-white hover:text-[#F2431E] transition-colors cursor-pointer"
-              >
-                <div className="w-6 h-6 flex items-center justify-center">
-                  {language === 'fr' ? (
-                    <span className="text-lg">🇬🇧</span>
-                  ) : (
-                    <span className="text-lg">🇫🇷</span>
-                  )}
-                </div>
-                <span className="uppercase">{language === 'fr' ? 'EN' : 'FR'}</span>
-              </button>
+              {/* Séparateur vertical */}
+              <div className="hidden lg:block w-px h-6 bg-white/20" />
 
-              {/* Auth Icon - Desktop only */}
-              <div className="hidden lg:block relative user-dropdown-container">
+              {/* Login - Desktop only */}
+              <div className="hidden lg:block">
                 {user ? (
-                  <div 
-                    className="relative"
-                    onMouseEnter={() => setIsUserDropdownOpen(true)}
-                    onMouseLeave={() => setIsUserDropdownOpen(false)}
-                  >
-                    <button
-                      onClick={() => {
-                        router.push('/dashboard');
-                        setIsUserDropdownOpen(false);
-                      }}
-                      className="relative p-2 text-white hover:text-[#F2431E] transition-colors cursor-pointer rounded-full"
-                      aria-label={texts[language].account}
-                    >
-                      <UserIconWithName iconSize="md" className="text-white" />
-                    </button>
-                    {isUserDropdownOpen && (
-                      <div
-                        className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg py-1 z-[100]"
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-3"
+                        aria-label={texts[language].account}
                       >
+                        <User className="h-5 w-5" />
+                        <span className="font-semibold text-sm">{userFirstName || 'Login'}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/dashboard"
+                          className="cursor-pointer"
+                        >
+                          {texts[language].account}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
                         <Link
                           href="/mes-reservations"
-                          onClick={() => setIsUserDropdownOpen(false)}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="cursor-pointer"
                         >
                           {texts[language].reservations}
                         </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
                         <Link
                           href="/mes-contrats"
-                          onClick={() => setIsUserDropdownOpen(false)}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="cursor-pointer"
                         >
                           {texts[language].contracts}
                         </Link>
-                        <hr className="my-1" />
-                        <button
-                          onClick={async () => {
-                            await handleSignOut();
-                            setIsUserDropdownOpen(false);
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          {texts[language].signOut}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          await handleSignOut();
+                        }}
+                        className="cursor-pointer text-red-600 focus:text-red-600"
+                      >
+                        {texts[language].signOut}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setIsSignModalOpen(true)}
-                    className="relative p-2 text-white hover:text-[#F2431E] transition-colors cursor-pointer rounded-full"
+                    className="flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-3"
                     aria-label="Se connecter"
                   >
-                    <UserIcon className="w-6 h-6" />
-                  </button>
+                    <User className="h-5 w-5" />
+                    <span className="font-semibold text-sm">{language === 'fr' ? 'Login' : 'Login'}</span>
+                  </Button>
                 )}
               </div>
+              
+              {/* Séparateur vertical */}
+              <div className="hidden lg:block w-px h-6 bg-white/20" />
+              
+              {/* Language switcher - Desktop only */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hidden lg:flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-3"
+                  >
+                    <Globe className="h-5 w-5" />
+                    <span className="font-semibold text-sm uppercase">{language === 'fr' ? 'Fra' : 'Eng'}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-32">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      if (language !== 'fr') toggleLanguage();
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <span className="font-semibold">Français</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      if (language !== 'en') toggleLanguage();
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <span className="font-semibold">English</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {/* Séparateur vertical */}
+              <div className="hidden lg:block w-px h-6 bg-white/20" />
 
               {/* Panier - Desktop only */}
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setIsMiniCartOpen(true)}
-                className="hidden lg:flex relative p-2 text-white hover:text-[#F2431E] transition-colors cursor-pointer"
+                className="hidden lg:flex relative text-white hover:text-[#F2431E] hover:bg-white/10"
                 aria-label="Panier"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
+                <ShoppingCart className="h-6 w-6" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                  <Badge 
+                    variant="default" 
+                    className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center p-0 animate-pulse"
+                  >
                     {cartCount > 9 ? '9+' : cartCount}
-                  </span>
+                  </Badge>
                 )}
-              </button>
+              </Button>
 
               {/* Panier Mobile */}
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setIsMiniCartOpen(true)}
-                className="lg:hidden relative p-2 text-white"
+                className="lg:hidden relative text-white"
                 aria-label="Panier"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
+                <ShoppingCart className="h-6 w-6" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  <Badge 
+                    variant="default" 
+                    className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center p-0"
+                  >
                     {cartCount > 9 ? '9+' : cartCount}
-                  </span>
+                  </Badge>
                 )}
-              </button>
+              </Button>
 
               {/* Mobile buttons - Toggle et Auth côte à côte */}
               <div className="lg:hidden flex items-center gap-2">
                 {/* Auth Icon - Mobile */}
                 {user ? (
-                  <div className="relative user-dropdown-container">
-                    <button
-                      onClick={() => {
-                        router.push('/dashboard');
-                        setIsUserDropdownOpen(!isUserDropdownOpen);
-                      }}
-                      className="p-2 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative"
-                      aria-label={texts[language].account}
-                    >
-                      <UserIconWithName iconSize="sm" className="text-white" />
-                    </button>
-                    {isUserDropdownOpen && (
-                      <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg py-1 z-[100]">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2 text-white hover:bg-white/10 rounded-lg px-3"
+                        aria-label={texts[language].account}
+                      >
+                        <User className="h-5 w-5" />
+                        <span className="font-semibold text-sm">{userFirstName || 'Login'}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/dashboard"
+                          className="cursor-pointer"
+                        >
+                          {texts[language].account}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
                         <Link
                           href="/mes-reservations"
-                          onClick={() => setIsUserDropdownOpen(false)}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="cursor-pointer"
                         >
                           {texts[language].reservations}
                         </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
                         <Link
                           href="/mes-contrats"
-                          onClick={() => setIsUserDropdownOpen(false)}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="cursor-pointer"
                         >
                           {texts[language].contracts}
                         </Link>
-                        <hr className="my-1" />
-                        <button
-                          onClick={async () => {
-                            await handleSignOut();
-                            setIsUserDropdownOpen(false);
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          {texts[language].signOut}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          await handleSignOut();
+                        }}
+                        className="cursor-pointer text-red-600 focus:text-red-600"
+                      >
+                        {texts[language].signOut}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setIsSignModalOpen(true)}
-                    className="p-2 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative"
+                    className="text-white hover:bg-white/10 rounded-lg"
                     aria-label="Se connecter"
                   >
-                    <UserIcon className="w-6 h-6" />
-                  </button>
+                    <User className="h-6 w-6" />
+                  </Button>
                 )}
 
                 {/* Mobile menu button */}
-                <button 
-                  className="p-3 cursor-pointer text-white hover:bg-gray-800 rounded-lg transition-colors relative z-50"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/10 rounded-lg relative z-50"
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
                   aria-expanded={isMobileMenuOpen}
                 >
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    {isMobileMenuOpen ? (
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    ) : (
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
-                    )}
-                  </div>
-                </button>
+                  {isMobileMenuOpen ? (
+                    <X className="h-6 w-6" />
+                  ) : (
+                    <Menu className="h-6 w-6" />
+                  )}
+                </Button>
               </div>
             </div>
           </div>
@@ -360,28 +446,49 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 </div>
             
             {/* CTA Réserver - Mobile */}
-            <Link
-              href="/catalogue"
+            <Button
+              asChild
+              variant="default"
+              size="default"
+              className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white mt-2"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block w-full px-2 py-2.5 text-sm font-semibold bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-md cursor-pointer transition-colors text-center mt-2"
             >
-              {language === 'fr' ? 'Réserver' : 'Book'}
-            </Link>
+              <Link href="/catalogue">
+                {language === 'fr' ? 'Réserver' : 'Book'}
+              </Link>
+            </Button>
 
             {/* Language switcher for mobile */}
-            <button
-              onClick={toggleLanguage}
-              className="flex items-center space-x-2 w-full text-left px-2 py-2.5 text-sm font-medium text-white hover:text-[#F2431E] hover:bg-white/10 rounded-md cursor-pointer transition-colors"
-            >
-              <div className="w-5 h-5 flex items-center justify-center">
-                {language === 'fr' ? (
-                  <span className="text-base">🇬🇧</span>
-                ) : (
-                  <span className="text-base">🇫🇷</span>
-                )}
-              </div>
-              <span className="uppercase text-xs">{language === 'fr' ? 'EN' : 'FR'}</span>
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 w-full justify-start text-white hover:text-[#F2431E] hover:bg-white/10"
+                >
+                  <Globe className="h-5 w-5" />
+                  <span className="font-semibold text-sm uppercase">{language === 'fr' ? 'Fra' : 'Eng'}</span>
+                  <ChevronDown className="h-4 w-4 ml-auto" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-32">
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (language !== 'fr') toggleLanguage();
+                  }}
+                  className="cursor-pointer"
+                >
+                  <span className="font-semibold">Français</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (language !== 'en') toggleLanguage();
+                  }}
+                  className="cursor-pointer"
+                >
+                  <span className="font-semibold">English</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
               </div>
             </div>
           )}
