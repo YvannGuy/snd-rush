@@ -181,7 +181,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
           <div className="flex items-center justify-between h-16">
             {/* Logo SoundRush */}
             <Link href="/" className="flex items-center">
-              <span className="text-2xl font-bold">
+              <span className="text-xl sm:text-2xl font-bold whitespace-nowrap">
                 <span className="text-[#F2431E]">SoundRush</span>
                 <span className="text-white"> Paris</span>
               </span>
@@ -269,7 +269,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                     aria-label="Se connecter"
                   >
                     <User className="h-5 w-5" />
-                    <span className="font-semibold text-sm">{language === 'fr' ? 'Login' : 'Login'}</span>
+                    <span className="font-semibold text-sm">{language === 'fr' ? 'Connexion' : 'Login'}</span>
                   </Button>
                 )}
               </div>
@@ -332,27 +332,26 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 )}
               </Button>
 
-              {/* Panier Mobile */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMiniCartOpen(true)}
-                className="lg:hidden relative text-white"
-                aria-label="Panier"
-              >
-                <ShoppingCart className="h-6 w-6" />
-                {cartCount > 0 && (
-                  <Badge 
-                    variant="default" 
-                    className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center p-0"
-                  >
-                    {cartCount > 9 ? '9+' : cartCount}
-                  </Badge>
-                )}
-              </Button>
-
-              {/* Mobile buttons - Toggle et Auth côte à côte */}
-              <div className="lg:hidden flex items-center gap-2">
+              {/* Mobile buttons - Panier, Auth et Toggle regroupés */}
+              <div className="lg:hidden flex items-center gap-0">
+                {/* Panier Mobile */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsMiniCartOpen(true)}
+                  className="relative text-white"
+                  aria-label="Panier"
+                >
+                  <ShoppingCart className="h-6 w-6" />
+                  {cartCount > 0 && (
+                    <Badge 
+                      variant="default" 
+                      className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center p-0"
+                    >
+                      {cartCount > 9 ? '9+' : cartCount}
+                    </Badge>
+                  )}
+                </Button>
                 {/* Auth Icon - Mobile */}
                 {user ? (
                   <DropdownMenu>
@@ -360,7 +359,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="flex items-center gap-2 text-white hover:bg-white/10 rounded-lg px-3"
+                        className="flex items-center gap-2 text-white hover:bg-white/10 rounded-lg px-3 ml-1"
                         aria-label={texts[language].account}
                       >
                         <User className="h-5 w-5" />
@@ -406,12 +405,13 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 ) : (
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => setIsSignModalOpen(true)}
-                    className="text-white hover:bg-white/10 rounded-lg"
+                    className="flex items-center gap-2 text-white hover:bg-white/10 rounded-lg px-3 ml-1"
                     aria-label="Se connecter"
                   >
-                    <User className="h-6 w-6" />
+                    <User className="h-5 w-5" />
+                    <span className="font-semibold text-sm">{language === 'fr' ? 'Connexion' : 'Login'}</span>
                   </Button>
                 )}
 
@@ -419,7 +419,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-white hover:bg-white/10 rounded-lg relative z-50"
+                  className="text-white hover:bg-white/10 rounded-lg relative z-50 ml-1"
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
                   aria-expanded={isMobileMenuOpen}
