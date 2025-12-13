@@ -5,6 +5,15 @@ import { useChat } from '@/hooks/useChat';
 import { ChatMessage, DraftFinalConfig, ChatIntent } from '@/types/chat';
 import { useCart } from '@/contexts/CartContext';
 import { applyFinalConfigToCart } from '@/lib/cart-utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function FloatingChatWidget() {
   const {
@@ -117,8 +126,10 @@ export default function FloatingChatWidget() {
       await new Promise(resolve => setTimeout(resolve, 50));
       
       const currentMessages = messagesRef.current;
+      // Envoyer tous les messages SAUF les idle (pour le contexte)
+      // Les messages welcome sont inclus pour donner le contexte à l'assistant
       const apiMessages = currentMessages
-        .filter(m => m.kind === 'normal')
+        .filter(m => m.kind !== 'idle') // Exclure uniquement les idle
         .map(m => ({
           role: m.role,
           content: m.content,
@@ -197,6 +208,8 @@ export default function FloatingChatWidget() {
   const handleAddToCart = async () => {
     if (!draftConfig) return;
 
+    resetIdleTimers(); // Action utilisateur → reset timer
+
     console.log('[CHAT] Tentative ajout au panier', draftConfig);
 
     try {
@@ -224,7 +237,7 @@ export default function FloatingChatWidget() {
     }
   };
 
-  // Rendu d'un message - Style Apple brandé orange
+  // Rendu d'un message - Style shadcn Card
   const renderMessage = (message: ChatMessage) => {
     const isUser = message.role === 'user';
     const isWelcome = message.kind === 'welcome';
@@ -236,17 +249,17 @@ export default function FloatingChatWidget() {
         className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}
         style={{ animation: 'fadeInUp 0.3s ease-out' }}
       >
-        <div
-          className={`max-w-[80%] rounded-[18px] px-4 py-2.5 ${
+        <Card
+          className={`max-w-[80%] rounded-[18px] px-4 py-2.5 border-0 shadow-sm ${
             isUser
-              ? 'bg-[#F2431E] text-white shadow-sm'
+              ? 'bg-[#F2431E] text-white'
               : isWelcome || isIdle
               ? 'bg-[#F2431E]/10 backdrop-blur-sm text-[#F2431E] border border-[#F2431E]/20'
-              : 'bg-white/90 backdrop-blur-sm text-gray-900 border border-gray-200/60 shadow-sm'
+              : 'bg-white/90 backdrop-blur-sm text-gray-900 border border-gray-200/60'
           }`}
         >
           <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
-        </div>
+        </Card>
       </div>
     );
   };
@@ -285,9 +298,10 @@ export default function FloatingChatWidget() {
   // Bouton flottant (fermé) - Style Apple
   if (!isOpen) {
     return (
-      <button
+      <Button
         onClick={() => openChat()}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#F2431E] text-white rounded-full shadow-lg hover:bg-[#E63A1A] transition-all duration-200 hover:scale-105 flex items-center justify-center"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 p-0 bg-[#F2431E] text-white rounded-full shadow-lg hover:bg-[#E63A1A] transition-all duration-200 hover:scale-105 [&>svg]:w-6 [&>svg]:h-6"
+        size="icon"
         aria-label="Ouvrir l'assistant chat"
       >
         <svg
@@ -303,7 +317,7 @@ export default function FloatingChatWidget() {
             d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
           />
         </svg>
-      </button>
+      </Button>
     );
   }
 
@@ -322,54 +336,96 @@ export default function FloatingChatWidget() {
           }
         }
       `}</style>
-      <div className="fixed bottom-6 right-6 z-50 w-[calc(100vw-24px)] h-[70vh] bg-white/95 backdrop-blur-2xl rounded-[22px] border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.12)] flex flex-col md:w-[420px] md:h-[680px]">
-        {/* Header - Style Apple minimal avec glass */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100/50 bg-white/80 backdrop-blur-sm">
-          <h3 className="font-semibold text-base text-[#F2431E] tracking-tight" style={{ textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 0 4px rgba(242,67,30,0.3)' }}>Assistant Sndrush</h3>
-          <div className="flex gap-1">
-            <button
-              onClick={resetChat}
-              className="p-2 hover:bg-gray-100/80 rounded-full transition-colors"
-              aria-label="Réinitialiser"
-              title="Réinitialiser"
+      <div 
+        className="fixed bottom-6 right-6 z-50 w-[calc(100vw-24px)] h-[70vh] bg-white/95 backdrop-blur-2xl rounded-[22px] border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.12)] flex flex-col md:w-[420px] md:h-[680px]"
+        onClick={resetIdleTimers}
+      >
+        {/* Header - Bandeau orange avec titre blanc et menu 3 points */}
+        <div className="flex items-center justify-between px-6 py-4 bg-[#F2431E] rounded-t-[22px]">
+          <h3 className="font-semibold text-base text-white tracking-tight">Assistant Soundrush</h3>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-white hover:bg-white/20 hover:text-white"
+              onClick={() => {
+                resetIdleTimers();
+                closeChat();
+              }}
+              aria-label="Masquer la chatbox"
+              title="Masquer"
             >
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
               </svg>
-            </button>
-            <button
-              onClick={closeChat}
-              className="p-2 hover:bg-gray-100/80 rounded-full transition-colors"
-              aria-label="Fermer"
-              title="Fermer"
-            >
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-white hover:bg-white/20 hover:text-white"
+                  onClick={resetIdleTimers}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                  </svg>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem
+                  onClick={() => {
+                    resetIdleTimers();
+                    resetChat();
+                  }}
+                  className="cursor-pointer"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Réinitialiser
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    resetIdleTimers();
+                    closeChat();
+                  }}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Terminer conversation
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        {/* Messages - Style Apple avec spacing généreux et glass */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 bg-white/40 backdrop-blur-sm">
-          {messages.map(renderMessage)}
-          
-          {isLoading && (
-            <div className="flex justify-start mb-3">
-              <div className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-[18px] px-4 py-2.5 shadow-sm">
-                <p className="text-sm text-gray-600">
-                  Assistant écrit
-                  <span className="inline-block ml-1">
-                    <span className="animate-pulse">.</span>
-                    <span className="animate-pulse delay-75">.</span>
-                    <span className="animate-pulse delay-150">.</span>
-                  </span>
-                </p>
-              </div>
+        {/* Messages - Style shadcn avec ScrollArea */}
+        <div className="flex-1 bg-white/40 backdrop-blur-sm overflow-hidden">
+          <ScrollArea className="h-full px-6 py-5">
+            <div className="space-y-3">
+              {messages.map(renderMessage)}
+              
+              {isLoading && (
+                <div className="flex justify-start">
+                  <Card className="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-[18px] px-4 py-2.5 shadow-sm">
+                    <p className="text-sm text-gray-600">
+                      Assistant écrit
+                      <span className="inline-block ml-1">
+                        <span className="animate-pulse">.</span>
+                        <span className="animate-pulse delay-75">.</span>
+                        <span className="animate-pulse delay-150">.</span>
+                      </span>
+                    </p>
+                  </Card>
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} />
             </div>
-          )}
-          
-          <div ref={messagesEndRef} />
+          </ScrollArea>
         </div>
 
         {/* Récap et bouton Ajouter au panier - Style Apple avec glass */}
@@ -406,12 +462,12 @@ export default function FloatingChatWidget() {
                 )}
               </ul>
             </div>
-            <button
+            <Button
               onClick={handleAddToCart}
-              className="w-full bg-[#F2431E] text-white py-3 px-4 rounded-[14px] font-semibold hover:bg-[#E63A1A] transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
+              className="w-full bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-[14px] font-semibold shadow-sm hover:shadow-md active:scale-[0.98]"
             >
               Ajouter au panier
-            </button>
+            </Button>
           </div>
         )}
 
@@ -427,22 +483,25 @@ export default function FloatingChatWidget() {
               }}
               onKeyDown={handleKeyDown}
               onFocus={resetIdleTimers}
-              onBlur={resetIdleTimers}
               placeholder="Tape ton message..."
               className="flex-1 resize-none border border-gray-200/80 rounded-[14px] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#F2431E]/30 focus:border-[#F2431E] bg-white/90 backdrop-blur-sm transition-all placeholder:text-gray-400 shadow-sm"
               rows={1}
               disabled={isLoading}
             />
-            <button
-              onClick={handleSend}
+            <Button
+              onClick={() => {
+                resetIdleTimers();
+                handleSend();
+              }}
               disabled={!inputValue.trim() || isLoading}
-              className="bg-[#F2431E] text-white px-4 py-3 rounded-[14px] font-semibold hover:bg-[#E63A1A] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm hover:shadow-md active:scale-[0.96]"
+              className="bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-[14px] font-semibold shadow-sm hover:shadow-md active:scale-[0.96] disabled:opacity-40"
+              size="icon"
               aria-label="Envoyer"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
-            </button>
+            </Button>
           </div>
         </div>
       </div>

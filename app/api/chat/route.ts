@@ -16,7 +16,17 @@ Tu écris en texte brut : pas de markdown, pas de titres, pas de "###", pas de "
 
 Tu évites les phrases répétitives du type "Merci pour ces informations".
 
-Objectif : recommander le bon pack S/M/L/XL et aider à ajouter au panier.
+RÈGLES CRITIQUES (OBLIGATOIRES) :
+
+* Tu ne recommandes RIEN tant que le client n'a pas décrit son besoin (événement + personnes ou intérieur/extérieur).
+
+* Tu ne donnes JAMAIS "un exemple" si le client ne le demande pas explicitement.
+
+* Si le client répond seulement "oui / ok" sans contexte, tu réponds : "Oui 🙂 Dis-moi ce que tu organises : type d'événement, combien de personnes, intérieur ou extérieur."
+
+* Ne propose jamais de pack ou de configuration sans avoir reçu un besoin concret de l'utilisateur.
+
+Objectif : recommander le bon pack S/M/L/XL et aider à ajouter au panier, UNIQUEMENT après avoir reçu un besoin utilisateur clair.
 
 Règles packs :
 
@@ -46,7 +56,9 @@ Si plusieurs micros/instruments => proposer console 16 voies (option).
 
 Au-delà de 250 personnes => basculer sur sur-mesure (Pack XL).
 
-Si l'utilisateur répond "oui", considère que ça confirme la dernière demande (ne répète pas les mêmes questions).
+Si l'utilisateur répond "oui" APRÈS une question précise (ex: "Tu veux un micro ?"), alors c'est une confirmation.
+
+Si l'utilisateur répond "oui" SANS contexte, réponds : "Oui 🙂 Dis-moi ce que tu organises : type d'événement, combien de personnes, intérieur ou extérieur."
 
 Si la date et les heures sont déjà données, ne les redemande pas.
 
@@ -97,6 +109,47 @@ Quand tu as toutes les infos nécessaires (type événement, nombre personnes, i
 
 Utilise les catalogId des produits depuis le catalogue. Pour les packs, utilise "pack_petit", "pack_confort", "pack_grand", "pack_maxi".`;
 
+/**
+ * Détecte si un message est un simple acquiescement sans contexte
+ */
+function isAckOnly(text: string): boolean {
+  const trimmed = text.trim().toLowerCase();
+  const ackPatterns = [
+    /^oui$/,
+    /^ok$/,
+    /^d'accord$/,
+    /^dac$/,
+    /^yes$/,
+    /^yep$/,
+    /^parfait$/,
+    /^ça marche$/,
+    /^vas-y$/,
+    /^go$/,
+    /^c'est bon$/,
+    /^okay$/,
+  ];
+  return ackPatterns.some(pattern => pattern.test(trimmed));
+}
+
+/**
+ * Vérifie si l'historique contient un message utilisateur normal (hors welcome/idle)
+ */
+function hasNormalUserMessage(messages: ChatMessage[]): boolean {
+  return messages.some(
+    msg => msg.role === 'user' && msg.kind === 'normal'
+  );
+}
+
+/**
+ * Récupère le dernier message utilisateur normal
+ */
+function getLastNormalUserMessage(messages: ChatMessage[]): ChatMessage | null {
+  const userMessages = messages.filter(
+    msg => msg.role === 'user' && msg.kind === 'normal'
+  );
+  return userMessages.length > 0 ? userMessages[userMessages.length - 1] : null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Vérifier la présence de la clé OpenAI
@@ -123,13 +176,42 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Convertir les messages au format OpenAI
+    // FILTRER les messages idle (ne jamais les envoyer à OpenAI)
+    const filteredMessages = messages.filter(
+      (msg: ChatMessage) => msg.kind !== 'idle'
+    );
+
+    // Vérifier qu'il y a au moins un message utilisateur normal
+    if (!hasNormalUserMessage(filteredMessages)) {
+      console.log('[API/CHAT] Aucun message utilisateur normal, retour relance');
+      return NextResponse.json({
+        reply: 'Bonjour ! Dis-moi ce que tu organises : type d\'événement, nombre de personnes, intérieur ou extérieur.',
+        intent: 'NEEDS_INFO',
+        draftFinalConfig: undefined,
+      });
+    }
+
+    // Vérifier le dernier message utilisateur
+    const lastUserMsg = getLastNormalUserMessage(filteredMessages);
+    if (lastUserMsg && isAckOnly(lastUserMsg.content)) {
+      // Si c'est juste "oui/ok" sans contexte, retourner une relance
+      console.log('[API/CHAT] Message utilisateur est un simple acquiescement, retour relance');
+      return NextResponse.json({
+        reply: 'Oui 🙂 Dis-moi ce que tu organises : type d\'événement, combien de personnes, intérieur ou extérieur.',
+        intent: 'NEEDS_INFO',
+        draftFinalConfig: undefined,
+      });
+    }
+
+    // Convertir les messages au format OpenAI (sans les messages idle)
     const openaiMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: 'system', content: SYSTEM_PROMPT },
-      ...messages.map((msg: ChatMessage) => ({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content,
-      })),
+      ...filteredMessages
+        .filter((msg: ChatMessage) => msg.kind === 'normal' || msg.kind === 'welcome')
+        .map((msg: ChatMessage) => ({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content,
+        })),
     ];
 
     // Appel OpenAI

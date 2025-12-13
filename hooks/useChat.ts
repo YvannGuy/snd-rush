@@ -4,14 +4,13 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChatMessage, DraftFinalConfig } from '@/types/chat';
 
 const STORAGE_KEY = 'sndrush_chat_messages';
-const IDLE_TIMEOUT_MS = 30000; // 30 secondes
-const IDLE_CLOSE_TIMEOUT_MS = 30000; // 30 secondes après le message idle
+const IDLE_TIMEOUT_MS = 45000; // 45 secondes d'inactivité réelle
 
 const WELCOME_MESSAGE: ChatMessage = {
   id: 'welcome-' + Date.now(),
   role: 'assistant',
   kind: 'welcome',
-  content: 'Bonjour ! Je suis l\'assistant Sndrush. Je peux t\'aider à trouver le matériel de sonorisation adapté à ton événement. Dis-moi ce que tu organises !',
+  content: 'Bonjour ! Je suis l\'assistant Soundrush. Je peux t\'aider à trouver le matériel de sonorisation adapté à ton événement. Dis-moi ce que tu organises !',
   createdAt: Date.now(),
 };
 
@@ -24,7 +23,7 @@ function createWelcomeMessage(): ChatMessage {
     id: 'welcome-' + Date.now(),
     role: 'assistant',
     kind: 'welcome',
-    content: 'Bonjour ! Je suis l\'assistant Sndrush. Je peux t\'aider à trouver le matériel de sonorisation adapté à ton événement. Dis-moi ce que tu organises !',
+    content: 'Bonjour ! Je suis l\'assistant Soundrush. Je peux t\'aider à trouver le matériel de sonorisation adapté à ton événement. Dis-moi ce que tu organises !',
     createdAt: Date.now(),
   };
 }
@@ -37,10 +36,12 @@ export function useChat() {
 
   // Refs pour éviter les doublons
   const welcomeAddedRef = useRef(false);
-  const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const idleCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const idlePromptShownRef = useRef(false);
   const hasLoadedRef = useRef(false);
+  
+  // Refs pour la gestion de l'inactivité (logique stricte)
+  const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const idleShownRef = useRef(false);
+  const lastUserInteractionRef = useRef<number>(Date.now());
 
   /**
    * Fonction unique pour injecter le message de bienvenue si nécessaire
@@ -101,53 +102,61 @@ export function useChat() {
     }
   }, [messages]);
 
-  // Réinitialiser les timers d'inactivité
-  const resetIdleTimers = useCallback(() => {
-    // Nettoyer les timers existants
+  /**
+   * Réinitialiser le timer d'inactivité
+   * Règles strictes :
+   * - Ne démarre que si chat ouvert ET pas de loading
+   * - Reset sur chaque interaction utilisateur
+   * - Timer de 45 secondes minimum
+   */
+  const resetIdleTimer = useCallback(() => {
+    // Nettoyer le timer existant
     if (idleTimeoutRef.current) {
       clearTimeout(idleTimeoutRef.current);
       idleTimeoutRef.current = null;
     }
-    if (idleCloseTimeoutRef.current) {
-      clearTimeout(idleCloseTimeoutRef.current);
-      idleCloseTimeoutRef.current = null;
+
+    // Interdictions absolues
+    if (!isOpen) {
+      return; // Chat fermé → pas de timer
+    }
+    
+    if (isLoading) {
+      return; // Assistant en train d'écrire → pas de timer
     }
 
-    // Réinitialiser le flag idle
-    idlePromptShownRef.current = false;
+    // Mettre à jour la dernière interaction
+    lastUserInteractionRef.current = Date.now();
 
-    // Si le chat est ouvert, lancer un nouveau timer
-    if (isOpen) {
-      idleTimeoutRef.current = setTimeout(() => {
-        // Si le prompt idle n'a pas encore été montré
-        if (!idlePromptShownRef.current) {
-          const idleMessage: ChatMessage = {
-            id: 'idle-' + Date.now(),
-            role: 'assistant',
-            kind: 'idle',
-            content: 'Je suis toujours là si tu as besoin d\'aide 🙂',
-            createdAt: Date.now(),
-          };
-          
-          setMessages(prev => [...prev, idleMessage]);
-          idlePromptShownRef.current = true;
+    // Lancer un nouveau timer de 45 secondes
+    idleTimeoutRef.current = setTimeout(() => {
+      const now = Date.now();
+      const timeSinceLastInteraction = now - lastUserInteractionRef.current;
 
-          // Lancer le timer de fermeture
-          idleCloseTimeoutRef.current = setTimeout(() => {
-            closeChat();
-            resetChat();
-          }, IDLE_CLOSE_TIMEOUT_MS);
-        }
-      }, IDLE_TIMEOUT_MS);
-    }
-  }, [isOpen]);
+      // Vérifications strictes avant d'afficher le message idle
+      if (
+        timeSinceLastInteraction >= IDLE_TIMEOUT_MS && // Au moins 45s d'inactivité
+        !idleShownRef.current && // Pas déjà affiché
+        !isLoading && // Assistant pas en train d'écrire
+        isOpen // Chat ouvert
+      ) {
+        // Afficher UNE SEULE FOIS le message idle
+        const idleMessage: ChatMessage = {
+          id: 'idle-' + now,
+          role: 'assistant',
+          kind: 'idle',
+          content: 'Je suis toujours là si tu as besoin d\'aide 🙂',
+          createdAt: now,
+        };
+        
+        setMessages(prev => [...prev, idleMessage]);
+        idleShownRef.current = true;
+      }
+    }, IDLE_TIMEOUT_MS);
+  }, [isOpen, isLoading]);
 
-  // Réinitialiser les timers sur activité utilisateur
-  useEffect(() => {
-    if (isOpen) {
-      resetIdleTimers();
-    }
-  }, [isOpen, resetIdleTimers]);
+  // Alias pour compatibilité (utilisé dans d'autres composants)
+  const resetIdleTimers = resetIdleTimer;
 
   // Guard anti-doublon
   const lastSubmittedTextRef = useRef<string>('');
@@ -195,9 +204,13 @@ export function useChat() {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    resetIdleTimers();
+    
+    // Reset timer après action utilisateur
+    lastUserInteractionRef.current = Date.now();
+    resetIdleTimer();
+    
     return userMessage;
-  }, [resetIdleTimers]);
+  }, [resetIdleTimer]);
 
   // Ajouter un message assistant
   const addAssistantMessage = useCallback((content: string, config?: DraftFinalConfig) => {
@@ -215,9 +228,11 @@ export function useChat() {
       setDraftConfig(config);
     }
     
-    resetIdleTimers();
+    // Ne pas reset le timer après un message assistant
+    // Le timer continue à partir de la dernière interaction utilisateur
+    
     return assistantMessage;
-  }, [resetIdleTimers]);
+  }, []);
 
   /**
    * Ouvrir le chat avec un message draft (depuis Hero)
@@ -226,7 +241,13 @@ export function useChat() {
   const openChatWithDraft = useCallback((draftText?: string) => {
     setIsOpen(true);
     injectWelcomeMessageIfNeeded();
-    resetIdleTimers();
+    
+    // Reset état idle à l'ouverture
+    idleShownRef.current = false;
+    lastUserInteractionRef.current = Date.now();
+    
+    // Ne PAS démarrer le timer immédiatement
+    // Il démarrera seulement après une interaction utilisateur
 
     // Si un message draft est fourni, le stocker pour envoi automatique
     // Mais NE PAS l'ajouter ici - le chat le fera UNE SEULE FOIS
@@ -236,28 +257,34 @@ export function useChat() {
         window.dispatchEvent(new CustomEvent('chatDraftMessage', { detail: { message: draftText.trim() } }));
       }, 300);
     }
-  }, [injectWelcomeMessageIfNeeded, resetIdleTimers]);
+  }, [injectWelcomeMessageIfNeeded]);
 
   // Ouvrir le chat (sans message)
   const openChat = useCallback(() => {
     setIsOpen(true);
     injectWelcomeMessageIfNeeded();
-    resetIdleTimers();
-  }, [injectWelcomeMessageIfNeeded, resetIdleTimers]);
+    
+    // Reset état idle à l'ouverture
+    idleShownRef.current = false;
+    lastUserInteractionRef.current = Date.now();
+    
+    // Ne PAS démarrer le timer immédiatement
+    // Il démarrera seulement après une interaction utilisateur
+  }, [injectWelcomeMessageIfNeeded]);
 
   // Fermer le chat
   const closeChat = useCallback(() => {
     setIsOpen(false);
     
-    // Nettoyer les timers
+    // Nettoyer le timer
     if (idleTimeoutRef.current) {
       clearTimeout(idleTimeoutRef.current);
       idleTimeoutRef.current = null;
     }
-    if (idleCloseTimeoutRef.current) {
-      clearTimeout(idleCloseTimeoutRef.current);
-      idleCloseTimeoutRef.current = null;
-    }
+    
+    // Reset état idle
+    idleShownRef.current = false;
+    lastUserInteractionRef.current = Date.now();
   }, []);
 
   /**
@@ -266,19 +293,16 @@ export function useChat() {
    * RÉSULTAT : toujours 1 message visible après reset (jamais de chatbox blanche)
    */
   const resetChat = useCallback(() => {
-    // 1. Nettoyer les timers
+    // 1. Nettoyer le timer
     if (idleTimeoutRef.current) {
       clearTimeout(idleTimeoutRef.current);
       idleTimeoutRef.current = null;
     }
-    if (idleCloseTimeoutRef.current) {
-      clearTimeout(idleCloseTimeoutRef.current);
-      idleCloseTimeoutRef.current = null;
-    }
     
     // 2. Réinitialiser TOUS les flags
     welcomeAddedRef.current = false;
-    idlePromptShownRef.current = false;
+    idleShownRef.current = false;
+    lastUserInteractionRef.current = Date.now();
     
     // 3. Vider le state
     setDraftConfig(null);
@@ -301,11 +325,21 @@ export function useChat() {
       if (idleTimeoutRef.current) {
         clearTimeout(idleTimeoutRef.current);
       }
-      if (idleCloseTimeoutRef.current) {
-        clearTimeout(idleCloseTimeoutRef.current);
-      }
     };
   }, []);
+
+  // Nettoyer le timer si chat fermé ou loading
+  useEffect(() => {
+    if (!isOpen || isLoading) {
+      // Chat fermé ou loading → nettoyer le timer
+      if (idleTimeoutRef.current) {
+        clearTimeout(idleTimeoutRef.current);
+        idleTimeoutRef.current = null;
+      }
+    }
+    // Ne PAS démarrer le timer automatiquement ici
+    // Le timer démarrera seulement après une interaction utilisateur (via resetIdleTimer)
+  }, [isOpen, isLoading]);
 
   return {
     messages,

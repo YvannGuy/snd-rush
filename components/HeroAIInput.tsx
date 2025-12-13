@@ -60,10 +60,8 @@ export default function HeroAIInput({ onSend, language = 'fr' }: HeroAIInputProp
       if (inputValue.trim()) {
         onSend(inputValue.trim());
         setInputValue('');
-      } else {
-        // Si vide, ouvrir quand même le chat
-        onSend('');
       }
+      // Si vide, ne rien faire
     }
   };
 
@@ -95,9 +93,8 @@ export default function HeroAIInput({ onSend, language = 'fr' }: HeroAIInputProp
             if (inputValue.trim()) {
               onSend(inputValue.trim());
               setInputValue('');
-            } else {
-              onSend('');
             }
+            // Si vide, ne rien faire (juste ouvrir le chat si nécessaire)
           }}
           className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-[#F2431E] text-white rounded-full hover:bg-[#E63A1A] transition-colors flex items-center justify-center"
           aria-label="Envoyer"
