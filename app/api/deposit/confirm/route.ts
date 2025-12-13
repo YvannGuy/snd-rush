@@ -121,6 +121,38 @@ export async function POST(req: NextRequest) {
       depositSessionId: sessionId,
     });
 
+    // Créer automatiquement un état des lieux pour cette réservation
+    try {
+      const { data: existingEtatLieux } = await supabaseAdmin
+        .from('etat_lieux')
+        .select('id')
+        .eq('reservation_id', reservationId)
+        .maybeSingle();
+
+      if (!existingEtatLieux) {
+        const { error: etatLieuxError } = await supabaseAdmin
+          .from('etat_lieux')
+          .insert({
+            reservation_id: reservationId,
+            status: 'draft',
+            items: JSON.stringify({
+              photos_avant: [],
+              commentaire_avant: '',
+              photos_apres: [],
+              commentaire_apres: ''
+            })
+          });
+
+        if (etatLieuxError) {
+          console.error('⚠️ Erreur création état des lieux:', etatLieuxError);
+        } else {
+          console.log('✅ État des lieux créé automatiquement pour la réservation:', reservationId);
+        }
+      }
+    } catch (e) {
+      console.error('⚠️ Erreur création automatique état des lieux:', e);
+    }
+
     return NextResponse.json({
       success: true,
       reservation: updatedReservation,

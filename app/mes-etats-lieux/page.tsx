@@ -7,8 +7,8 @@ import Footer from '@/components/Footer';
 import { useUser } from '@/hooks/useUser';
 import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import SignModal from '@/components/auth/SignModal';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 // Shadcn UI components
 import { Button } from '@/components/ui/button';
@@ -20,16 +20,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { 
   FileText, 
   Download,
-  Eye,
   Calendar,
   CheckCircle2,
   Clock,
-  AlertTriangle,
   Image as ImageIcon,
-  X,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 
 export default function MesEtatsLieuxPage() {
@@ -43,6 +42,13 @@ export default function MesEtatsLieuxPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 2;
   const { isCollapsed: isSidebarCollapsed, toggleSidebar: handleToggleSidebar } = useSidebarCollapse();
+  
+  // États pour le carrousel de photos
+  const [carouselState, setCarouselState] = useState<{
+    phase: 'before' | 'after' | null;
+    index: number;
+    photos: string[];
+  }>({ phase: null, index: 0, photos: [] });
 
   // Rediriger vers l'accueil si l'utilisateur n'est pas connecté
   useEffect(() => {
@@ -213,6 +219,29 @@ export default function MesEtatsLieuxPage() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedEtatsLieux = etatsLieux.slice(startIndex, endIndex);
 
+  // Fonctions pour le carrousel de photos
+  const openCarousel = (phase: 'before' | 'after', photos: string[]) => {
+    setCarouselState({ phase, index: 0, photos });
+  };
+
+  const closeCarousel = () => {
+    setCarouselState({ phase: null, index: 0, photos: [] });
+  };
+
+  const nextPhoto = () => {
+    setCarouselState(prev => ({
+      ...prev,
+      index: prev.index < prev.photos.length - 1 ? prev.index + 1 : 0
+    }));
+  };
+
+  const prevPhoto = () => {
+    setCarouselState(prev => ({
+      ...prev,
+      index: prev.index > 0 ? prev.index - 1 : prev.photos.length - 1
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header language={language} onLanguageChange={setLanguage} />
@@ -261,25 +290,57 @@ export default function MesEtatsLieuxPage() {
                   const reservation = reservations[etatLieux.reservation_id];
                   const reservationNumber = reservation?.id ? reservation.id.slice(0, 8).toUpperCase() : 'N/A';
                   
-                  // Parser les items JSONB
-                  let items: any[] = [];
+                  // Parser les items JSONB (nouvelle structure avec zones)
+                  let itemsData: any = {};
                   try {
                     if (etatLieux.items && typeof etatLieux.items === 'string') {
-                      items = JSON.parse(etatLieux.items);
-                    } else if (Array.isArray(etatLieux.items)) {
-                      items = etatLieux.items;
+                      itemsData = JSON.parse(etatLieux.items);
+                    } else if (etatLieux.items) {
+                      itemsData = etatLieux.items;
                     }
                   } catch (e) {
                     console.error('Erreur parsing items:', e);
                   }
 
-                  // Détecter les anomalies (matériel endommagé)
-                  const hasAnomalies = items.some((item: any) => 
-                    item.etatApres?.etat === 'endommage' || 
-                    item.etatApres?.etat === 'casse' ||
-                    item.commentaires?.toLowerCase().includes('dommage') ||
-                    item.commentaires?.toLowerCase().includes('casse')
-                  );
+                  // Extraire les photos de toutes les zones (nouvelle structure)
+                  const extractPhotosFromZones = (zones: any) => {
+                    if (!zones || typeof zones !== 'object') return [];
+                    const allPhotos: string[] = [];
+                    Object.values(zones).forEach((zone: any) => {
+                      if (zone && Array.isArray(zone.photos)) {
+                        zone.photos.forEach((photo: any) => {
+                          if (typeof photo === 'string') {
+                            allPhotos.push(photo);
+                          } else if (photo && photo.url) {
+                            allPhotos.push(photo.url);
+                          }
+                        });
+                      }
+                    });
+                    return allPhotos;
+                  };
+
+                  // Compatibilité avec ancienne structure
+                  let photosAvant: string[] = [];
+                  let photosApres: string[] = [];
+                  let commentaireAvant = '';
+                  let commentaireApres = '';
+                  let detectedDamages: Array<{ phase: 'before' | 'after'; type: string; note?: string }> = [];
+
+                  if (itemsData.before && itemsData.after) {
+                    // Nouvelle structure avec zones
+                    photosAvant = extractPhotosFromZones(itemsData.before);
+                    photosApres = extractPhotosFromZones(itemsData.after);
+                    commentaireAvant = itemsData.globalCommentBefore || '';
+                    commentaireApres = itemsData.globalCommentAfter || '';
+                    detectedDamages = itemsData.detectedDamages || [];
+                  } else if (itemsData.photos_avant || itemsData.photos_apres) {
+                    // Ancienne structure
+                    photosAvant = Array.isArray(itemsData.photos_avant) ? itemsData.photos_avant : [];
+                    photosApres = Array.isArray(itemsData.photos_apres) ? itemsData.photos_apres : [];
+                    commentaireAvant = itemsData.commentaire_avant || '';
+                    commentaireApres = itemsData.commentaire_apres || '';
+                  }
 
                   return (
                     <Card key={etatLieux.id} className="hover:shadow-lg transition-all">
@@ -296,156 +357,169 @@ export default function MesEtatsLieuxPage() {
                               </CardTitle>
                             </div>
                           </div>
-                          {reservation && (
-                            <Button
-                              asChild
-                              variant="default"
-                              className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
-                            >
-                              <Link href={`/mes-reservations/${reservation.id}`}>
-                                <Eye className="w-4 h-4 mr-2" />
-                                {currentTexts.viewDetails}
-                              </Link>
-                            </Button>
-                          )}
                         </div>
                       </CardHeader>
 
                       {/* Contenu */}
                       <CardContent className="p-4 sm:p-6">
-                        {/* Alert si anomalies */}
-                        {hasAnomalies && (
-                          <Alert variant="destructive" className="mb-4">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertTitle>{language === 'fr' ? 'Anomalie détectée' : 'Anomaly detected'}</AlertTitle>
-                            <AlertDescription>
-                              {language === 'fr' 
-                                ? 'Du matériel présente des dommages. Cela peut impacter le dépôt de garantie.'
-                                : 'Some equipment shows damage. This may impact the deposit.'}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                          {/* Section Avant */}
+                          <Card className="bg-blue-50 border-blue-200">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                                {language === 'fr' ? 'Avant' : 'Before'}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              <div>
+                                <p className="text-sm font-medium text-gray-700 mb-1">
+                                  {language === 'fr' ? 'Photos' : 'Photos'}:
+                                </p>
+                                {photosAvant.length > 0 ? (
+                                  <div className="flex items-center gap-2">
+                                    <ImageIcon className="w-4 h-4 text-[#F2431E]" />
+                                    <span className="text-sm text-gray-900">
+                                      {photosAvant.length} {language === 'fr' ? 'photos accessibles' : 'photos available'}
+                                    </span>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 text-xs"
+                                      onClick={() => openCarousel('before', photosAvant)}
+                                    >
+                                      {language === 'fr' ? 'Voir' : 'View'}
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <span className="text-sm text-gray-500">{language === 'fr' ? 'Aucune photo' : 'No photos'}</span>
+                                )}
+                              </div>
+                              {commentaireAvant && (
+                                <div>
+                                  <p className="text-sm font-medium text-gray-700 mb-1">
+                                    {language === 'fr' ? 'Commentaire' : 'Comment'}:
+                                  </p>
+                                  <p className="text-sm text-gray-600">{commentaireAvant}</p>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+
+                          {/* Section Après */}
+                          <Card className="bg-green-50 border-green-200">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                {language === 'fr' ? 'Après' : 'After'}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              <div>
+                                <p className="text-sm font-medium text-gray-700 mb-1">
+                                  {language === 'fr' ? 'Photos' : 'Photos'}:
+                                </p>
+                                {photosApres.length > 0 ? (
+                                  <div className="flex items-center gap-2">
+                                    <ImageIcon className="w-4 h-4 text-[#F2431E]" />
+                                    <span className="text-sm text-gray-900">
+                                      {photosApres.length} {language === 'fr' ? 'photos accessibles' : 'photos available'}
+                                    </span>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 text-xs"
+                                      onClick={() => openCarousel('after', photosApres)}
+                                    >
+                                      {language === 'fr' ? 'Voir' : 'View'}
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <span className="text-sm text-gray-500">{language === 'fr' ? 'Aucune photo' : 'No photos'}</span>
+                                )}
+                              </div>
+                              {commentaireApres && (
+                                <div>
+                                  <p className="text-sm font-medium text-gray-700 mb-1">
+                                    {language === 'fr' ? 'Commentaire' : 'Comment'}:
+                                  </p>
+                                  <p className="text-sm text-gray-600">{commentaireApres}</p>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        {/* Message dommages si constatés */}
+                        {detectedDamages.length > 0 && (
+                          <Alert className="mt-6 bg-amber-50 border-amber-200">
+                            <AlertTriangle className="h-4 w-4 text-amber-600" />
+                            <AlertTitle className="text-amber-900">
+                              {language === 'fr' ? 'Anomalies constatées' : 'Anomalies detected'}
+                            </AlertTitle>
+                            <AlertDescription className="text-amber-800 mt-2">
+                              <div className="space-y-2">
+                                <p className="font-medium">
+                                  {detectedDamages.map((d, idx) => {
+                                    const damageTypes: Record<string, string> = {
+                                      rayure: language === 'fr' ? 'Rayure(s)' : 'Scratch(es)',
+                                      choc: language === 'fr' ? 'Choc / Impact' : 'Impact',
+                                      casse: language === 'fr' ? 'Casse' : 'Broken',
+                                      manque: language === 'fr' ? 'Pièce manquante' : 'Missing part',
+                                      autre: language === 'fr' ? 'Autre' : 'Other'
+                                    };
+                                    return (
+                                      <span key={idx}>
+                                        {idx > 0 && ', '}
+                                        {damageTypes[d.type] || d.type}
+                                      </span>
+                                    );
+                                  })}
+                                </p>
+                                <p className="text-sm">
+                                  {language === 'fr' 
+                                    ? 'Des anomalies ont été constatées lors de l\'état des lieux. Vous recevrez un email dans les prochains jours pour vous informer des suites à donner selon nos conditions générales de location.'
+                                    : 'Anomalies were detected during the condition report. You will receive an email in the coming days to inform you of the next steps according to our rental terms and conditions.'}
+                                </p>
+                              </div>
                             </AlertDescription>
                           </Alert>
                         )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                          {/* Informations */}
-                          <div className="space-y-4">
-                            <div>
-                              <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.status}</h4>
-                              <Badge 
-                                variant={etatLieux.status === 'reprise_complete' ? 'default' : 'secondary'}
-                                className={
-                                  etatLieux.status === 'reprise_complete'
-                                    ? 'bg-green-100 text-green-800 hover:bg-green-100'
-                                    : 'bg-blue-100 text-blue-800 hover:bg-blue-100'
-                                }
-                              >
-                                {etatLieux.status === 'reprise_complete' ? (
-                                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                                ) : (
-                                  <Clock className="w-3 h-3 mr-1" />
-                                )}
-                                {getStatusText(etatLieux.status)}
-                              </Badge>
-                            </div>
-
-                            <div>
-                              <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.createdAt}</h4>
-                              <div className="flex items-center gap-2 text-gray-900">
-                                <Calendar className="w-5 h-5 text-[#F2431E]" />
-                                <span className="font-medium">{formatDate(etatLieux.created_at)}</span>
-                              </div>
-                            </div>
-
-                            {/* Matériel avec photos */}
-                            {items.length > 0 && (
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-500 mb-3">{language === 'fr' ? 'Matériel vérifié' : 'Verified equipment'}</h4>
-                                <div className="space-y-2">
-                                  {items.slice(0, 3).map((item: any, idx: number) => (
-                                    <Card key={idx} className="p-3 bg-gray-50 border-gray-200">
-                                      <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                          <p className="font-semibold text-sm text-gray-900">{item.nom || item.id}</p>
-                                          {item.etatAvant && (
-                                            <p className="text-xs text-gray-600 mt-1">
-                                              {language === 'fr' ? 'État avant:' : 'State before:'} {item.etatAvant.etat || 'N/A'}
-                                            </p>
-                                          )}
-                                          {item.etatApres && (
-                                            <p className="text-xs text-gray-600">
-                                              {language === 'fr' ? 'État après:' : 'State after:'} {item.etatApres.etat || 'N/A'}
-                                            </p>
-                                          )}
-                                        </div>
-                                        {(item.photosAvant?.length > 0 || item.photosApres?.length > 0) && (
-                                          <Dialog>
-                                            <DialogTrigger asChild>
-                                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <ImageIcon className="w-4 h-4" />
-                                              </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                                              <DialogHeader>
-                                                <DialogTitle>{item.nom || item.id}</DialogTitle>
-                                              </DialogHeader>
-                                              <div className="grid grid-cols-2 gap-4 mt-4">
-                                                {item.photosAvant?.length > 0 && (
-                                                  <div>
-                                                    <h5 className="font-semibold mb-2">{language === 'fr' ? 'Photos avant' : 'Photos before'}</h5>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                      {item.photosAvant.map((photo: any, pIdx: number) => (
-                                                        <img key={pIdx} src={photo.url} alt={photo.label || 'Photo avant'} className="rounded-lg w-full" />
-                                                      ))}
-                                                    </div>
-                                                  </div>
-                                                )}
-                                                {item.photosApres?.length > 0 && (
-                                                  <div>
-                                                    <h5 className="font-semibold mb-2">{language === 'fr' ? 'Photos après' : 'Photos after'}</h5>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                      {item.photosApres.map((photo: any, pIdx: number) => (
-                                                        <img key={pIdx} src={photo.url} alt={photo.label || 'Photo après'} className="rounded-lg w-full" />
-                                                      ))}
-                                                    </div>
-                                                  </div>
-                                                )}
-                                              </div>
-                                            </DialogContent>
-                                          </Dialog>
-                                        )}
-                                      </div>
-                                    </Card>
-                                  ))}
-                                  {items.length > 3 && (
-                                    <p className="text-xs text-gray-500 text-center">
-                                      {language === 'fr' ? `+ ${items.length - 3} autre(s) matériel(s)` : `+ ${items.length - 3} other item(s)`}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            )}
+                        {/* Statut et téléchargement */}
+                        <div className="mt-6 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.status}</h4>
+                            <Badge 
+                              variant={etatLieux.status === 'reprise_complete' ? 'default' : 'secondary'}
+                              className={
+                                etatLieux.status === 'reprise_complete'
+                                  ? 'bg-green-100 text-green-800 hover:bg-green-100'
+                                  : 'bg-blue-100 text-blue-800 hover:bg-blue-100'
+                              }
+                            >
+                              {etatLieux.status === 'reprise_complete' ? (
+                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                              ) : (
+                                <Clock className="w-3 h-3 mr-1" />
+                              )}
+                              {getStatusText(etatLieux.status)}
+                            </Badge>
                           </div>
-
-                          {/* Téléchargement PDF */}
-                          <div className="space-y-4">
-                            <div>
-                              <h4 className="text-sm font-semibold text-gray-500 mb-3">{currentTexts.downloadPDF}</h4>
-                              <Button
-                                asChild
-                                variant="default"
-                                className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white"
-                              >
-                                <a
-                                  href={`/api/etat-lieux/download?reservationId=${etatLieux.reservation_id}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  <Download className="w-4 h-4 mr-2" />
-                                  {currentTexts.downloadPDF}
-                                </a>
-                              </Button>
-                            </div>
-                          </div>
+                          <Button
+                            asChild
+                            variant="default"
+                            className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                          >
+                            <a
+                              href={`/api/etat-lieux/download?reservationId=${etatLieux.reservation_id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              {currentTexts.downloadPDF}
+                            </a>
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -485,6 +559,85 @@ export default function MesEtatsLieuxPage() {
       </main>
       </div>
       <Footer language={language} />
+
+      {/* Carrousel de photos */}
+      {carouselState.phase && carouselState.photos.length > 0 && (
+        <Dialog open={true} onOpenChange={closeCarousel}>
+          <DialogContent className="max-w-5xl max-h-[95vh] p-0">
+            <DialogHeader className="px-6 pt-6 pb-4">
+              <div className="flex items-center justify-between">
+                <DialogTitle>
+                  {carouselState.phase === 'before' 
+                    ? (language === 'fr' ? 'Photos avant' : 'Photos before')
+                    : (language === 'fr' ? 'Photos après' : 'Photos after')}
+                </DialogTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={closeCarousel}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                {carouselState.index + 1} / {carouselState.photos.length}
+              </p>
+            </DialogHeader>
+            <div className="relative px-6 pb-6">
+              <div className="relative w-full h-[70vh] flex items-center justify-center bg-black rounded-lg overflow-hidden">
+                <img
+                  src={carouselState.photos[carouselState.index]}
+                  alt={`Photo ${carouselState.index + 1}`}
+                  className="max-w-full max-h-full object-contain"
+                />
+                
+                {/* Bouton précédent */}
+                {carouselState.photos.length > 1 && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={prevPhoto}
+                      className="absolute left-4 h-12 w-12 bg-black/50 hover:bg-black/70 text-white border-0"
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                    </Button>
+                    
+                    {/* Bouton suivant */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={nextPhoto}
+                      className="absolute right-4 h-12 w-12 bg-black/50 hover:bg-black/70 text-white border-0"
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </Button>
+                  </>
+                )}
+              </div>
+              
+              {/* Indicateurs de navigation */}
+              {carouselState.photos.length > 1 && (
+                <div className="flex justify-center gap-2 mt-4">
+                  {carouselState.photos.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCarouselState(prev => ({ ...prev, index: idx }))}
+                      className={`h-2 rounded-full transition-all ${
+                        idx === carouselState.index
+                          ? 'w-8 bg-[#F2431E]'
+                          : 'w-2 bg-gray-300 hover:bg-gray-400'
+                      }`}
+                      aria-label={`Photo ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

@@ -395,6 +395,40 @@ export async function POST(req: NextRequest) {
               .in('id', pendingReservations.map(r => r.id));
 
             console.log(`✅ ${pendingReservations.length} réservations en attente mises à jour`);
+
+            // Créer automatiquement des états des lieux pour ces réservations
+            for (const pendingReservation of pendingReservations) {
+              try {
+                const { data: existingEtatLieux } = await supabaseClient
+                  .from('etat_lieux')
+                  .select('id')
+                  .eq('reservation_id', pendingReservation.id)
+                  .maybeSingle();
+
+                if (!existingEtatLieux) {
+                  const { error: etatLieuxError } = await supabaseClient
+                    .from('etat_lieux')
+                    .insert({
+                      reservation_id: pendingReservation.id,
+                      status: 'draft',
+                      items: JSON.stringify({
+                        photos_avant: [],
+                        commentaire_avant: '',
+                        photos_apres: [],
+                        commentaire_apres: ''
+                      })
+                    });
+
+                  if (etatLieuxError) {
+                    console.error(`⚠️ Erreur création état des lieux pour ${pendingReservation.id}:`, etatLieuxError);
+                  } else {
+                    console.log(`✅ État des lieux créé automatiquement pour la réservation: ${pendingReservation.id}`);
+                  }
+                }
+              } catch (e) {
+                console.error(`⚠️ Erreur création automatique état des lieux pour ${pendingReservation.id}:`, e);
+              }
+            }
           }
 
           // Vider le panier de l'utilisateur après paiement réussi

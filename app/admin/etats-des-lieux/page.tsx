@@ -1,0 +1,400 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { useUser } from '@/hooks/useUser';
+import AdminSidebar from '@/components/AdminSidebar';
+import AdminHeader from '@/components/AdminHeader';
+import Link from 'next/link';
+// Shadcn UI components
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import EtatDesLieuxModal from '@/components/EtatDesLieuxModal';
+// Icônes lucide-react
+import { 
+  Search, 
+  X, 
+  Calendar, 
+  FileText,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  Clock
+} from 'lucide-react';
+
+export default function AdminEtatsDesLieuxPage() {
+  const [language, setLanguage] = useState<'fr' | 'en'>('fr');
+  const { user, loading } = useUser();
+  const router = useRouter();
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [filteredReservations, setFilteredReservations] = useState<any[]>([]);
+  const [etatsLieuxMap, setEtatsLieuxMap] = useState<Record<string, any>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // État pour le modal
+  const [selectedReservation, setSelectedReservation] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.push('/');
+      return;
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!user || !supabase) return;
+
+    const loadData = async () => {
+      try {
+        // Charger les réservations confirmées
+        const { data: reservationsData, error: reservationsError } = await supabase
+          .from('reservations')
+          .select('*')
+          .in('status', ['confirmed', 'CONFIRMED', 'completed', 'COMPLETED'])
+          .order('start_date', { ascending: false });
+
+        if (reservationsError) throw reservationsError;
+        setReservations(reservationsData || []);
+        setFilteredReservations(reservationsData || []);
+
+        // Charger les états des lieux existants
+        if (reservationsData && reservationsData.length > 0) {
+          const reservationIds = reservationsData.map(r => r.id);
+          const { data: etatsLieuxData } = await supabase
+            .from('etat_lieux')
+            .select('*')
+            .in('reservation_id', reservationIds);
+
+          if (etatsLieuxData) {
+            const map: Record<string, any> = {};
+            etatsLieuxData.forEach((etat) => {
+              map[etat.reservation_id] = etat;
+            });
+            setEtatsLieuxMap(map);
+          }
+        }
+      } catch (error) {
+        console.error('Erreur chargement données:', error);
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  // Filtrer les réservations
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredReservations(reservations);
+      setCurrentPage(1);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = reservations.filter((reservation) => {
+      const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
+      const startDate = new Date(reservation.start_date).toLocaleDateString('fr-FR');
+      const endDate = new Date(reservation.end_date).toLocaleDateString('fr-FR');
+      const address = (reservation.address || '').toLowerCase();
+
+      return (
+        reservationNumber.toLowerCase().includes(query) ||
+        startDate.includes(query) ||
+        endDate.includes(query) ||
+        address.includes(query)
+      );
+    });
+
+    setFilteredReservations(filtered);
+    setCurrentPage(1);
+  }, [searchQuery, reservations]);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  const getStatusBadge = (reservationId: string) => {
+    const etatLieux = etatsLieuxMap[reservationId];
+    if (!etatLieux) {
+      return (
+        <Badge variant="outline" className="bg-gray-100 text-gray-800">
+          <Clock className="w-3 h-3 mr-1" />
+          {language === 'fr' ? 'À compléter' : 'To complete'}
+        </Badge>
+      );
+    }
+    
+    if (etatLieux.status === 'reprise_complete') {
+      return (
+        <Badge className="bg-green-100 text-green-800">
+          <CheckCircle2 className="w-3 h-3 mr-1" />
+          {language === 'fr' ? 'Complet' : 'Complete'}
+        </Badge>
+      );
+    }
+    
+    return (
+      <Badge className="bg-yellow-100 text-yellow-800">
+        <Clock className="w-3 h-3 mr-1" />
+        {language === 'fr' ? 'En cours' : 'In progress'}
+      </Badge>
+    );
+  };
+
+  const openModal = (reservation: any) => {
+    setSelectedReservation(reservation);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedReservation(null);
+  };
+
+  const handleModalSave = async () => {
+    // Recharger les données de la liste
+    if (!user || !supabase) return;
+
+    try {
+      const { data: reservationsData } = await supabase
+        .from('reservations')
+        .select('*')
+        .in('status', ['confirmed', 'CONFIRMED', 'completed', 'COMPLETED'])
+        .order('start_date', { ascending: false });
+
+      if (reservationsData && reservationsData.length > 0) {
+        const reservationIds = reservationsData.map(r => r.id);
+        const { data: etatsLieuxData } = await supabase
+          .from('etat_lieux')
+          .select('*')
+          .in('reservation_id', reservationIds);
+
+        if (etatsLieuxData) {
+          const map: Record<string, any> = {};
+          etatsLieuxData.forEach((etat) => {
+            map[etat.reservation_id] = etat;
+          });
+          setEtatsLieuxMap(map);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur rechargement données:', error);
+    }
+  };
+
+  const texts = {
+    fr: {
+      title: 'États des lieux',
+      searchPlaceholder: 'Rechercher par réservation, date, adresse...',
+      reservation: 'Réservation',
+      dates: 'Dates',
+      address: 'Adresse',
+      status: 'Statut',
+      action: 'Action',
+      view: 'Voir/Gérer',
+      empty: 'Aucune réservation',
+      emptyDescription: 'Aucune réservation confirmée trouvée.',
+      page: 'Page',
+      of: 'sur',
+      previous: 'Précédent',
+      next: 'Suivant',
+    },
+    en: {
+      title: 'Condition reports',
+      searchPlaceholder: 'Search by reservation, date, address...',
+      reservation: 'Reservation',
+      dates: 'Dates',
+      address: 'Address',
+      status: 'Status',
+      action: 'Action',
+      view: 'View/Manage',
+      empty: 'No reservations',
+      emptyDescription: 'No confirmed reservations found.',
+      page: 'Page',
+      of: 'of',
+      previous: 'Previous',
+      next: 'Next',
+    },
+  };
+
+  const currentTexts = texts[language];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E] mx-auto"></div>
+          <p className="mt-4 text-gray-600">{language === 'fr' ? 'Chargement...' : 'Loading...'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedReservations = filteredReservations.slice(startIndex, endIndex);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <AdminHeader language={language} />
+      <div className="flex">
+        <AdminSidebar language={language} />
+        <main className="flex-1 ml-64 p-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">{currentTexts.title}</h1>
+
+          {/* Barre de recherche */}
+          {reservations.length > 0 && (
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder={currentTexts.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-10 h-11"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {filteredReservations.length === 0 && reservations.length > 0 ? (
+            <Card>
+              <CardContent className="text-center py-16">
+                <Search className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                <CardTitle className="text-xl mb-2">{language === 'fr' ? 'Aucun résultat trouvé' : 'No results found'}</CardTitle>
+                <CardDescription className="mb-8">{language === 'fr' ? 'Essayez avec d\'autres mots-clés' : 'Try with different keywords'}</CardDescription>
+                <Button
+                  onClick={() => setSearchQuery('')}
+                  className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                >
+                  {language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : filteredReservations.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-16">
+                <FileText className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                <CardTitle className="text-xl mb-2">{currentTexts.empty}</CardTitle>
+                <CardDescription>{currentTexts.emptyDescription}</CardDescription>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <div className="mb-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{currentTexts.reservation}</TableHead>
+                      <TableHead>{currentTexts.dates}</TableHead>
+                      <TableHead>{currentTexts.address}</TableHead>
+                      <TableHead>{currentTexts.status}</TableHead>
+                      <TableHead className="text-right">{currentTexts.action}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedReservations.map((reservation) => {
+                      const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
+                      
+                      return (
+                        <TableRow key={reservation.id}>
+                          <TableCell className="font-semibold">
+                            #{reservationNumber}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm">
+                                {formatDate(reservation.start_date)} → {formatDate(reservation.end_date)}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-600">
+                            {reservation.address || <span className="text-gray-400">—</span>}
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(reservation.id)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => openModal(reservation)}
+                              className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              {currentTexts.view}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+                  <div className="text-sm text-gray-600">
+                    {currentTexts.page} {currentPage} {currentTexts.of} {totalPages}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-2" />
+                      {currentTexts.previous}
+                    </Button>
+                    <Button
+                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                    >
+                      {currentTexts.next}
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </main>
+      </div>
+
+      {/* Modal pour gérer l'état des lieux */}
+      {selectedReservation && (
+        <EtatDesLieuxModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          reservation={selectedReservation}
+          language={language}
+          onSave={handleModalSave}
+        />
+      )}
+    </div>
+  );
+}

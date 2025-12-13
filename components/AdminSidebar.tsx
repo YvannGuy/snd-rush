@@ -36,6 +36,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
       invoices: 'Factures',
       contracts: 'Contrats',
       deliveries: 'Livraisons',
+      etatsDesLieux: 'États des lieux',
       settings: 'Paramètres',
       administrator: 'Administrateur',
       logout: 'Déconnexion',
@@ -51,6 +52,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
       invoices: 'Invoices',
       contracts: 'Contracts',
       deliveries: 'Deliveries',
+      etatsDesLieux: 'Condition reports',
       settings: 'Settings',
       administrator: 'Administrator',
       logout: 'Logout',
@@ -326,6 +328,21 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
           {!isCollapsed && <span>{currentTexts.deliveries}</span>}
+        </Link>
+        <Link
+          href="/admin/etats-des-lieux"
+          onClick={onClose}
+          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors ${
+            isActive('/admin/etats-des-lieux')
+              ? 'bg-[#F2431E] text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+          title={isCollapsed ? currentTexts.etatsDesLieux : undefined}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          {!isCollapsed && <span>{currentTexts.etatsDesLieux}</span>}
         </Link>
         <Link
           href="/admin/parametres"
