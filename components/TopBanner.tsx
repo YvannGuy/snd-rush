@@ -45,7 +45,7 @@ export default function TopBanner({ language }: TopBannerProps) {
 
 
   return (
-    <div className="bg-[#F2431E] text-white py-2 px-4 relative z-40">
+    <div className="bg-[#F2431E] text-white py-2 px-4 relative z-40" data-no-border style={{ border: 'none', boxShadow: 'none', margin: 0, outline: 'none' }}>
       <div className="max-w-7xl mx-auto flex flex-row items-center justify-between">
         {/* Espaceur gauche pour équilibrer */}
         <div className="flex-1"></div>
@@ -99,17 +99,6 @@ export default function TopBanner({ language }: TopBannerProps) {
           >
             <span>📞</span>
             <span className="hidden sm:inline">{currentTexts.contact.phone}</span>
-          </a>
-
-          {/* Bouton WhatsApp */}
-          <a
-            href="https://wa.me/33651084994"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 px-3 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg hover:bg-white/30 transition-colors text-sm font-medium min-w-[44px] h-[38px]"
-          >
-            <span>💬</span>
-            <span className="hidden sm:inline">{currentTexts.contact.whatsapp}</span>
           </a>
         </div>
       </div>

@@ -138,7 +138,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       {/* Header principal avec fond sombre */}
-      <div className="bg-black shadow-md relative">
+      <div className="bg-black relative" data-no-border style={{ border: 'none', boxShadow: 'none', margin: 0, outline: 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="flex items-center justify-between h-16">
             {/* Logo SoundRush */}
@@ -158,7 +158,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
             <div className="flex items-center gap-3 sm:gap-4">
               {/* CTA Principal - Réserver */}
               <Link
-                href="/packs"
+                href="/catalogue"
                 className="hidden lg:flex items-center justify-center px-4 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors text-sm"
               >
                 {language === 'fr' ? 'Réserver' : 'Book'}
@@ -361,7 +361,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
             
             {/* CTA Réserver - Mobile */}
             <Link
-              href="/packs"
+              href="/catalogue"
               onClick={() => setIsMobileMenuOpen(false)}
               className="block w-full px-2 py-2.5 text-sm font-semibold bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-md cursor-pointer transition-colors text-center mt-2"
             >
@@ -388,7 +388,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
         </div>
       </div>
 
-      {/* Bandeau orange en bas */}
+      {/* Bandeau orange en bas - collé directement au Header */}
       <TopBanner language={language} />
 
       {/* Mini Cart */}

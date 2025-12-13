@@ -144,6 +144,11 @@
   * {
     @apply border-border;
   }
+  /* Exclure TopBanner et Header de la bordure globale */
+  header *,
+  [data-no-border] {
+    border: none !important;
+  }
   body {
     @apply bg-background text-foreground;
   }

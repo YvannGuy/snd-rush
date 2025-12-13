@@ -337,7 +337,7 @@ export default function FloatingChatWidget() {
         }
       `}</style>
       <div 
-        className="fixed bottom-6 right-6 z-50 w-[calc(100vw-24px)] h-[70vh] bg-white/95 backdrop-blur-2xl rounded-[22px] border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.12)] flex flex-col md:w-[420px] md:h-[680px]"
+        className="fixed bottom-6 right-6 z-50 w-[calc(100vw-24px)] h-[60vh] bg-white/95 backdrop-blur-2xl rounded-[22px] border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.12)] flex flex-col md:w-[380px] md:h-[520px]"
         onClick={resetIdleTimers}
       >
         {/* Header - Bandeau orange avec titre blanc et menu 3 points */}
