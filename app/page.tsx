@@ -23,6 +23,7 @@ import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
 import AssistantModal from '@/components/AssistantModalRefactored';
 import CookieBanner from '@/components/CookieBanner';
+import FloatingChatWidget from '@/components/FloatingChatWidget';
 
 export default function Home() {
   const router = useRouter();
@@ -203,6 +204,7 @@ export default function Home() {
 
       <ScrollToTopButton />
       <WhatsAppButton language={language} />
+      <FloatingChatWidget />
 
       {/* Modals */}
       <ReservationModal 

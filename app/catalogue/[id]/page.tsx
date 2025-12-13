@@ -729,17 +729,6 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Message si heures requises */}
-              {needsTime && (
-                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    {language === 'fr' 
-                      ? '⚠️ Pour une location sur la même journée, veuillez spécifier les heures de début et de fin pour éviter les conflits.'
-                      : '⚠️ For same-day rental, please specify start and end times to avoid conflicts.'}
-                  </p>
-                </div>
-              )}
-              
               {/* Bouton Ajouter au panier */}
               <button
                 onClick={handleAddToCart}

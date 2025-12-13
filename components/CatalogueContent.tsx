@@ -18,6 +18,7 @@ interface Product {
   image: string;
   capacity?: string;
   usageType?: string;
+  slug?: string;
 }
 
 export default function CatalogueContent({ language }: CatalogueContentProps) {
@@ -216,6 +217,16 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
             // Pour les accessoires, on définit usage_type par défaut à 'event' si non défini
             const usageType = specs.usage_type || (product.category === 'accessoires' ? 'event' : 'event');
             
+            // Générer un slug si absent
+            const generateSlug = (name: string): string => {
+              return name
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Supprimer les accents
+                .replace(/[^a-z0-9]+/g, '-') // Remplacer les caractères spéciaux par des tirets
+                .replace(/^-+|-+$/g, ''); // Supprimer les tirets en début/fin
+            };
+
             return {
               id: product.id,
               name: product.name || 'Produit sans nom',
@@ -225,6 +236,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
               image: product.images && product.images.length > 0 ? product.images[0] : '/placeholder.jpg',
               capacity: capacity,
               usageType: usageType,
+              slug: product.slug || generateSlug(product.name || 'produit'),
             };
           });
           
@@ -544,14 +556,17 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                         {currentTexts.addToCart}
                       </button>
                     )}
-                    <Link
-                      href={product.category === 'packs' 
-                        ? `/packs/${product.id.toString().replace('pack-', '')}` 
-                        : `/catalogue/${product.id}`}
-                      className="w-full border-2 border-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center min-h-[44px] flex items-center justify-center"
-                    >
-                      {currentTexts.viewProduct}
-                    </Link>
+                    {/* Ne pas afficher "Voir le produit" pour le pack XL sur mesure */}
+                    {!(product.id === 'pack-5' || product.name.toLowerCase().includes('pack xl') || product.name.toLowerCase().includes('sur mesure')) && (
+                      <Link
+                        href={product.category === 'packs' 
+                          ? `/packs/${product.id.toString().replace('pack-', '')}` 
+                          : `/catalogue/${product.slug || product.id}`}
+                        className="w-full border-2 border-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center min-h-[44px] flex items-center justify-center"
+                      >
+                        {currentTexts.viewProduct}
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>

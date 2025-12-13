@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import HeroAIInput from './HeroAIInput';
 
 interface HeroSectionProps {
   language: 'fr' | 'en';
@@ -83,21 +84,15 @@ export default function HeroSection({ language }: HeroSectionProps) {
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
-                  <Link
-                    href="/packs"
-                    className="bg-[#F2431E] text-white px-8 sm:px-12 py-4 sm:py-6 rounded-lg font-semibold text-base sm:text-xl hover:bg-[#E63A1A] transition-colors text-center cursor-pointer inline-block"
-                  >
-                    {texts[language].cta}
-                  </Link>
-                  <button
-                    onClick={() => {
-                      window.dispatchEvent(new CustomEvent('openAssistantModal'));
+                {/* Input AI Hero */}
+                <div className="mt-8 sm:mt-12">
+                  <HeroAIInput
+                    language={language}
+                    onSend={(message) => {
+                      // Ouvrir le chat avec le message draft (une seule source)
+                      window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: message || undefined } }));
                     }}
-                    className="bg-transparent border-2 border-white text-white px-8 sm:px-12 py-4 sm:py-6 rounded-lg font-semibold text-base sm:text-xl hover:bg-white/10 transition-colors text-center cursor-pointer"
-                  >
-                    {texts[language].ctaSecondary}
-                  </button>
+                  />
                 </div>
               </div>
             </div>
