@@ -48,15 +48,6 @@ export default function AdminHeader({ language = 'fr' }: AdminHeaderProps) {
             </p>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">{currentTexts.subtitle}</p>
           </div>
-          <div className="flex items-center gap-4">
-            {/* Nouvelle réservation */}
-            <Link
-              href="/admin/reservations/nouvelle"
-              className="bg-[#F2431E] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors whitespace-nowrap text-sm sm:text-base"
-            >
-              {currentTexts.newReservation}
-            </Link>
-          </div>
         </div>
       </div>
     </header>

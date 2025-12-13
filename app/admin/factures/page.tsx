@@ -24,6 +24,22 @@ export default function AdminFacturesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    reservation_id: '',
+    customer_email: '',
+    customer_name: '',
+    customer_phone: '',
+    delivery_address: '',
+    subtotal: '',
+    delivery_fee: '0',
+    deposit_total: '0',
+    total: '',
+    status: 'PAID',
+  });
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -43,7 +59,23 @@ export default function AdminFacturesPage() {
       }
     };
 
+    const loadReservations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('reservations')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+        setReservations(data || []);
+      } catch (error) {
+        console.error('Erreur chargement réservations:', error);
+      }
+    };
+
     loadOrders();
+    loadReservations();
   }, [user]);
 
   useEffect(() => {
@@ -207,12 +239,12 @@ export default function AdminFacturesPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
               <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{currentTexts.title}</h1>
-                <Link
-                  href="/admin/factures/nouvelle"
+                <button
+                  onClick={() => setIsInvoiceModalOpen(true)}
                   className="bg-[#F2431E] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors text-sm sm:text-base whitespace-nowrap"
                 >
                   {currentTexts.addInvoice}
-                </Link>
+                </button>
               </div>
 
               <div className="mb-4">
@@ -305,6 +337,304 @@ export default function AdminFacturesPage() {
         </main>
       </div>
       <Footer language={language} />
+
+      {/* Modal générer facture */}
+      {isInvoiceModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">
+                {language === 'fr' ? 'Générer une facture' : 'Generate an invoice'}
+              </h3>
+              <button
+                onClick={() => {
+                  setIsInvoiceModalOpen(false);
+                  setFormData({
+                    reservation_id: '',
+                    customer_email: '',
+                    customer_name: '',
+                    customer_phone: '',
+                    delivery_address: '',
+                    subtotal: '',
+                    delivery_fee: '0',
+                    deposit_total: '0',
+                    total: '',
+                    status: 'PAID',
+                  });
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!user || !supabase) return;
+
+                setIsSubmitting(true);
+                try {
+                  const { error } = await supabase
+                    .from('orders')
+                    .insert({
+                      customer_email: formData.customer_email,
+                      customer_name: formData.customer_name,
+                      customer_phone: formData.customer_phone || null,
+                      delivery_address: formData.delivery_address || null,
+                      subtotal: parseFloat(formData.subtotal),
+                      delivery_fee: parseFloat(formData.delivery_fee) || 0,
+                      deposit_total: parseFloat(formData.deposit_total) || 0,
+                      total: parseFloat(formData.total),
+                      status: formData.status,
+                      metadata: {
+                        reservation_id: formData.reservation_id || null,
+                        manual_creation: true,
+                      },
+                    });
+
+                  if (error) throw error;
+                  
+                  // Recharger les factures
+                  const { data: newOrders } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                  if (newOrders) {
+                    setOrders(newOrders);
+                    setFilteredOrders(newOrders);
+                  }
+
+                  setIsInvoiceModalOpen(false);
+                  setFormData({
+                    reservation_id: '',
+                    customer_email: '',
+                    customer_name: '',
+                    customer_phone: '',
+                    delivery_address: '',
+                    subtotal: '',
+                    delivery_fee: '0',
+                    deposit_total: '0',
+                    total: '',
+                    status: 'PAID',
+                  });
+                } catch (error: any) {
+                  console.error('Erreur création facture:', error);
+                  alert(error.message || 'Erreur lors de la création de la facture');
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              className="p-6 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {language === 'fr' ? 'Réservation associée (optionnel)' : 'Associated reservation (optional)'}
+                </label>
+                <select
+                  value={formData.reservation_id}
+                  onChange={(e) => {
+                    const reservationId = e.target.value;
+                    const reservation = reservations.find(r => r.id === reservationId);
+                    if (reservation) {
+                      let customerName = '';
+                      let customerEmail = '';
+                      if (reservation.notes) {
+                        try {
+                          const notesData = JSON.parse(reservation.notes);
+                          customerName = notesData.customer_name || '';
+                          customerEmail = notesData.customer_email || '';
+                        } catch (e) {
+                          // Ignorer les erreurs de parsing
+                        }
+                      }
+
+                      setFormData({
+                        ...formData,
+                        reservation_id: reservationId,
+                        total: reservation.total_price ? reservation.total_price.toString() : '',
+                        subtotal: reservation.total_price ? reservation.total_price.toString() : '',
+                        customer_name: customerName,
+                        customer_email: customerEmail,
+                        delivery_address: reservation.address || '',
+                      });
+                    } else {
+                      setFormData({ ...formData, reservation_id: reservationId });
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                >
+                  <option value="">{language === 'fr' ? 'Aucune réservation' : 'No reservation'}</option>
+                  {reservations.map((reservation) => (
+                    <option key={reservation.id} value={reservation.id}>
+                      {reservation.id.slice(0, 8)} - {new Date(reservation.start_date).toLocaleDateString('fr-FR')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'fr' ? 'Email du client' : 'Client email'}
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.customer_email}
+                    onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'fr' ? 'Nom du client' : 'Client name'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {language === 'fr' ? 'Téléphone' : 'Phone'}
+                </label>
+                <input
+                  type="tel"
+                  value={formData.customer_phone}
+                  onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {language === 'fr' ? 'Adresse de livraison' : 'Delivery address'}
+                </label>
+                <textarea
+                  value={formData.delivery_address}
+                  onChange={(e) => setFormData({ ...formData, delivery_address: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'fr' ? 'Sous-total (€)' : 'Subtotal (€)'}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={formData.subtotal}
+                    onChange={(e) => setFormData({ ...formData, subtotal: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'fr' ? 'Frais de livraison (€)' : 'Delivery fee (€)'}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.delivery_fee}
+                    onChange={(e) => setFormData({ ...formData, delivery_fee: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'fr' ? 'Total caution (€)' : 'Total deposit (€)'}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.deposit_total}
+                    onChange={(e) => setFormData({ ...formData, deposit_total: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'fr' ? 'Total (€)' : 'Total (€)'}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={formData.total}
+                    onChange={(e) => setFormData({ ...formData, total: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {language === 'fr' ? 'Statut' : 'Status'}
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                >
+                  <option value="PENDING">PENDING</option>
+                  <option value="PAID">PAID</option>
+                  <option value="CANCELLED">CANCELLED</option>
+                  <option value="REFUNDED">REFUNDED</option>
+                </select>
+              </div>
+
+              <div className="flex gap-4 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsInvoiceModalOpen(false);
+                    setFormData({
+                      reservation_id: '',
+                      customer_email: '',
+                      customer_name: '',
+                      customer_phone: '',
+                      delivery_address: '',
+                      subtotal: '',
+                      delivery_fee: '0',
+                      deposit_total: '0',
+                      total: '',
+                      status: 'PAID',
+                    });
+                  }}
+                  className="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  {language === 'fr' ? 'Annuler' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 px-6 py-3 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting 
+                    ? (language === 'fr' ? 'Création...' : 'Creating...')
+                    : (language === 'fr' ? 'Créer la facture' : 'Create invoice')
+                  }
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

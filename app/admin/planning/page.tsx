@@ -27,6 +27,8 @@ export default function AdminPlanningPage() {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedReservations, setSelectedReservations] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedReservationDetail, setSelectedReservationDetail] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -538,15 +540,18 @@ export default function AdminPlanningPage() {
                         }`}>
                           {reservation.status}
                         </span>
-                        <Link
-                          href={`/admin/reservations/${reservation.id}`}
+                        <button
+                          onClick={() => {
+                            setSelectedReservationDetail(reservation);
+                            setIsDetailModalOpen(true);
+                          }}
                           className="text-[#F2431E] hover:text-[#E63A1A] text-sm font-semibold flex items-center gap-1"
                         >
                           {currentTexts.viewDetails}
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -560,6 +565,173 @@ export default function AdminPlanningPage() {
               >
                 {currentTexts.close}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de détails de réservation */}
+      {isDetailModalOpen && selectedReservationDetail && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">
+                Détails de la réservation #{selectedReservationDetail.id.slice(0, 8).toUpperCase()}
+              </h3>
+              <button
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  setSelectedReservationDetail(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              {/* Informations client */}
+              <div className="border-b border-gray-200 pb-4">
+                <h4 className="font-bold text-gray-900 mb-3">Informations client</h4>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <strong className="text-gray-700">Nom :</strong>{' '}
+                    <span className="text-gray-600">{selectedReservationDetail.customerName || 'Client'}</span>
+                  </div>
+                  {selectedReservationDetail.customerEmail && (
+                    <div>
+                      <strong className="text-gray-700">Email :</strong>{' '}
+                      <span className="text-gray-600">{selectedReservationDetail.customerEmail}</span>
+                    </div>
+                  )}
+                  {selectedReservationDetail.order?.customer_phone && (
+                    <div>
+                      <strong className="text-gray-700">Téléphone :</strong>{' '}
+                      <span className="text-gray-600">{selectedReservationDetail.order.customer_phone}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="border-b border-gray-200 pb-4">
+                <h4 className="font-bold text-gray-900 mb-3">Dates</h4>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <strong className="text-gray-700">Début :</strong>{' '}
+                    <span className="text-gray-600">
+                      {new Date(selectedReservationDetail.start_date).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                  <div>
+                    <strong className="text-gray-700">Fin :</strong>{' '}
+                    <span className="text-gray-600">
+                      {new Date(selectedReservationDetail.end_date).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Adresse */}
+              {selectedReservationDetail.address && (
+                <div className="border-b border-gray-200 pb-4">
+                  <h4 className="font-bold text-gray-900 mb-3">Adresse de livraison</h4>
+                  <p className="text-sm text-gray-600">{selectedReservationDetail.address}</p>
+                </div>
+              )}
+
+              {/* Statut */}
+              <div className="border-b border-gray-200 pb-4">
+                <h4 className="font-bold text-gray-900 mb-3">Statut</h4>
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                  selectedReservationDetail.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
+                  selectedReservationDetail.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {selectedReservationDetail.status}
+                </span>
+              </div>
+
+              {/* Informations de paiement */}
+              {selectedReservationDetail.order && (
+                <div className="border-b border-gray-200 pb-4">
+                  <h4 className="font-bold text-gray-900 mb-3">Informations de paiement</h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <strong className="text-gray-700">Total :</strong>{' '}
+                      <span className="text-gray-600">{selectedReservationDetail.order.total}€</span>
+                    </div>
+                    {selectedReservationDetail.order.deposit_total && (
+                      <div>
+                        <strong className="text-gray-700">Caution :</strong>{' '}
+                        <span className="text-gray-600">{selectedReservationDetail.order.deposit_total}€</span>
+                      </div>
+                    )}
+                    <div>
+                      <strong className="text-gray-700">Statut paiement :</strong>{' '}
+                      <span className="text-gray-600">{selectedReservationDetail.order.status}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Matériel réservé */}
+              {selectedReservationDetail.notes && (() => {
+                try {
+                  const notesData = JSON.parse(selectedReservationDetail.notes);
+                  if (notesData.cartItems && notesData.cartItems.length > 0) {
+                    return (
+                      <div className="border-b border-gray-200 pb-4">
+                        <h4 className="font-bold text-gray-900 mb-3">Matériel réservé</h4>
+                        <div className="space-y-2">
+                          {notesData.cartItems.map((item: any, index: number) => (
+                            <div key={index} className="text-sm text-gray-600">
+                              • {item.name || item.productName} (x{item.quantity || 1})
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                } catch (e) {
+                  // Ignorer les erreurs de parsing
+                }
+                return null;
+              })()}
+
+              {/* Prix */}
+              {selectedReservationDetail.total_price && (
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-3">Prix total</h4>
+                  <p className="text-lg font-semibold text-[#F2431E]">{selectedReservationDetail.total_price}€</p>
+                </div>
+              )}
+            </div>
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  setSelectedReservationDetail(null);
+                }}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              >
+                {currentTexts.close}
+              </button>
+              <Link
+                href={`/admin/reservations/${selectedReservationDetail.id}`}
+                className="px-6 py-2 bg-[#F2431E] text-white rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
+              >
+                Voir la page complète
+              </Link>
             </div>
           </div>
         </div>

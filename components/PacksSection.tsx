@@ -1,9 +1,10 @@
 
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 interface Pack {
   id: number;
@@ -25,6 +26,34 @@ interface PacksSectionProps {
 }
 
 export default function PacksSection({ language }: PacksSectionProps) {
+  const [packsFromSupabase, setPacksFromSupabase] = useState<any[]>([]);
+  const [loadingPacks, setLoadingPacks] = useState(true);
+
+  // Charger les packs depuis Supabase
+  useEffect(() => {
+    const loadPacks = async () => {
+      if (!supabase) {
+        setLoadingPacks(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('packs')
+          .select('*')
+          .order('prix_base_ttc', { ascending: true });
+
+        if (error) throw error;
+        setPacksFromSupabase(data || []);
+      } catch (error) {
+        console.error('Erreur chargement packs:', error);
+      } finally {
+        setLoadingPacks(false);
+      }
+    };
+
+    loadPacks();
+  }, []);
 
   const texts = {
     fr: {
@@ -284,7 +313,41 @@ export default function PacksSection({ language }: PacksSectionProps) {
         </div>
 
           <div ref={listRef} className="flex gap-6 sm:gap-8 lg:gap-12 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 scrollbar-hide" style={{ scrollBehavior: 'smooth', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {currentPacks.map((pack) => (
+            {(() => {
+              // Si on charge depuis Supabase et qu'on a des données, les utiliser
+              if (!loadingPacks && packsFromSupabase.length > 0) {
+                return packsFromSupabase.map((pack: any) => {
+                  // Parser la composition si c'est une string JSON
+                  let features: string[] = [];
+                  if (pack.composition) {
+                    try {
+                      features = typeof pack.composition === 'string' 
+                        ? JSON.parse(pack.composition) 
+                        : pack.composition;
+                    } catch (e) {
+                      features = [];
+                    }
+                  }
+
+                  return {
+                    id: pack.id,
+                    name: pack.nom_pack || 'Pack',
+                    tagline: pack.description_courte || pack.nom_pack || '',
+                    description: pack.description || pack.description_courte || '',
+                    priceParis: pack.prix_base_ttc ? `${pack.prix_base_ttc} € TTC` : 'Sur devis',
+                    priceHorsParis: pack.prix_base_ttc ? `${pack.prix_base_ttc} € TTC` : 'Sur devis',
+                    featured: pack.featured || false,
+                    image: pack.image_url || pack.image || '/conference.jpg',
+                    features: features.length > 0 ? features : [pack.description_courte || ''],
+                    highlight: pack.caution ? `Caution : ${pack.caution} €` : '',
+                    ideal: pack.capacite || pack.ideal || '',
+                    note: pack.note || ''
+                  };
+                });
+              }
+              // Sinon utiliser les packs par défaut
+              return currentPacks;
+            })().map((pack) => (
                     <Link
                       key={pack.id}
                       href={`/packs/${pack.id}`}

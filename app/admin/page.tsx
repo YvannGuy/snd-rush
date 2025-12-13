@@ -25,7 +25,7 @@ export default function AdminDashboardPage() {
   // Stats
   const [stats, setStats] = useState({
     reservationsToday: 0,
-    revenueThisWeek: 0,
+    revenueThisMonth: 0,
     equipmentOut: 0,
     totalEquipment: 45,
     lateReturns: 0,
@@ -62,19 +62,16 @@ export default function AdminDashboardPage() {
         today.setHours(0, 0, 0, 0);
         const todayStr = today.toISOString().split('T')[0];
 
-        // Calculer le début de la semaine (lundi)
-        const startOfWeek = new Date(today);
-        const day = startOfWeek.getDay();
-        const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Ajuster pour lundi
-        startOfWeek.setDate(diff);
-        startOfWeek.setHours(0, 0, 0, 0);
-        const startOfWeekStr = startOfWeek.toISOString().split('T')[0];
+        // Calculer le début du mois (1er du mois)
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        const startOfMonthStr = startOfMonth.toISOString().split('T')[0];
 
-        // 1. Réservations du jour
+        // 1. Réservations du mois
         const { data: reservationsData, error: reservationsError } = await supabaseClient
           .from('reservations')
           .select('*')
-          .eq('start_date', todayStr)
+          .gte('created_at', startOfMonthStr)
           .order('created_at', { ascending: false });
 
         // Récupérer tous les orders pour enrichir les réservations
@@ -116,35 +113,37 @@ export default function AdminDashboardPage() {
           setTodayReservations(reservationsWithOrders || []);
         }
 
-        // 2. Statistiques - Réservations aujourd'hui
-        const { count: reservationsTodayCount } = await supabaseClient
+        // 2. Statistiques - Réservations du mois
+        const { count: reservationsThisMonthCount } = await supabaseClient
           .from('reservations')
           .select('*', { count: 'exact', head: true })
-          .eq('start_date', todayStr);
+          .gte('created_at', startOfMonthStr);
 
-        // 3. Statistiques - CA cette semaine (depuis lundi)
-        const { data: ordersThisWeek, error: ordersError } = await supabaseClient
-          .from('orders')
-          .select('total, status')
-          .gte('created_at', startOfWeekStr)
-          .eq('status', 'PAID');
+        // 3. Statistiques - CA ce mois (depuis le 1er du mois)
+        // CA basé sur toutes les réservations du mois (tous statuts confondus)
+        const { data: reservationsThisMonth, error: reservationsMonthError } = await supabaseClient
+          .from('reservations')
+          .select('id, total_price, created_at')
+          .gte('created_at', startOfMonthStr);
 
-        let revenueThisWeek = 0;
-        if (ordersThisWeek) {
-          revenueThisWeek = ordersThisWeek.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0);
+        let revenueThisMonth = 0;
+        if (reservationsThisMonth) {
+          revenueThisMonth = reservationsThisMonth.reduce((sum, reservation) => {
+            const total = parseFloat(reservation.total_price) || 0;
+            return sum + total;
+          }, 0);
         }
 
-        // 4. Statistiques - Matériel sorti (réservations actives)
-        const { data: activeReservations, error: activeError } = await supabaseClient
+        // 4. Statistiques - Matériel sorti ce mois (réservations qui ont commencé ce mois)
+        const { data: reservationsStartedThisMonth, error: activeError } = await supabaseClient
           .from('reservations')
-          .select('quantity')
-          .lte('start_date', todayStr)
-          .gte('end_date', todayStr)
-          .eq('status', 'CONFIRMED');
+          .select('quantity, start_date')
+          .gte('start_date', startOfMonthStr)
+          .in('status', ['CONFIRMED', 'confirmed', 'completed', 'COMPLETED']);
 
         let equipmentOut = 0;
-        if (activeReservations) {
-          equipmentOut = activeReservations.reduce((sum, r) => sum + (r.quantity || 1), 0);
+        if (reservationsStartedThisMonth) {
+          equipmentOut = reservationsStartedThisMonth.reduce((sum, r) => sum + (r.quantity || 1), 0);
         }
 
         // 5. Retours en retard (réservations où end_date < aujourd'hui et status = CONFIRMED)
@@ -233,7 +232,7 @@ export default function AdminDashboardPage() {
         }
 
         // 8. Planning - Réservations pour le mois
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        // Réutiliser startOfMonth déjà défini plus haut
         const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
         
         const { data: calendarReservations, error: calendarError } = await supabaseClient
@@ -243,8 +242,8 @@ export default function AdminDashboardPage() {
           .lte('start_date', endOfMonth.toISOString().split('T')[0]);
 
         setStats({
-          reservationsToday: reservationsTodayCount || 0,
-          revenueThisWeek: revenueThisWeek,
+          reservationsToday: reservationsThisMonthCount || 0,
+          revenueThisMonth: revenueThisMonth,
           equipmentOut: equipmentOut,
           totalEquipment: 45, // Valeur fixe pour l'instant
           lateReturns: lateReturns?.length || 0,
@@ -264,11 +263,11 @@ export default function AdminDashboardPage() {
 
   const texts = {
     fr: {
-      reservationsToday: 'Réservations aujourd\'hui',
-      revenueThisWeek: 'CA cette semaine',
+      reservationsToday: 'Réservations du mois',
+      revenueThisMonth: 'CA ce mois',
       equipmentOut: 'Matériel sorti',
       lateReturns: 'Retours en retard',
-      reservationsOfDay: 'Réservations du jour',
+      reservationsOfDay: 'Réservations du mois',
       viewAll: 'Voir toutes',
       delivery: 'Livraison',
       installation: 'Installation',
@@ -298,11 +297,11 @@ export default function AdminDashboardPage() {
       signIn: 'Se connecter',
     },
     en: {
-      reservationsToday: 'Reservations today',
-      revenueThisWeek: 'Revenue this week',
+      reservationsToday: 'Reservations this month',
+      revenueThisMonth: 'Revenue this month',
       equipmentOut: 'Equipment out',
       lateReturns: 'Late returns',
-      reservationsOfDay: 'Reservations of the day',
+      reservationsOfDay: 'Reservations of the month',
       viewAll: 'View all',
       delivery: 'Delivery',
       installation: 'Installation',
@@ -520,6 +519,15 @@ export default function AdminDashboardPage() {
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+              {/* Bouton Nouvelle réservation - Uniquement sur le tableau de bord */}
+              <div className="mb-6 flex justify-end">
+                <Link
+                  href="/admin/reservations/nouvelle"
+                  className="bg-[#F2431E] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors whitespace-nowrap"
+                >
+                  + Nouvelle réservation
+                </Link>
+              </div>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
@@ -537,8 +545,8 @@ export default function AdminDashboardPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats.revenueThisWeek.toLocaleString('fr-FR')}€</div>
-                  <div className="text-sm sm:text-base text-gray-600">{currentTexts.revenueThisWeek}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats.revenueThisMonth.toLocaleString('fr-FR')}€</div>
+                  <div className="text-sm sm:text-base text-gray-600">{currentTexts.revenueThisMonth}</div>
                 </div>
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center mb-3 sm:mb-4">
@@ -636,38 +644,6 @@ export default function AdminDashboardPage() {
                           </svg>
                         </div>
                         <span className="font-semibold text-gray-900">{currentTexts.createPack}</span>
-                      </div>
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                    <Link
-                      href="/admin/reservations/nouvelle"
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <span className="font-semibold text-gray-900">{currentTexts.manualReservation}</span>
-                      </div>
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                    <Link
-                      href="/admin/factures/nouvelle"
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
-                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                        </div>
-                        <span className="font-semibold text-gray-900">{currentTexts.generateInvoice}</span>
                       </div>
                       <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

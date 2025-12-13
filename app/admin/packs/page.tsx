@@ -26,24 +26,61 @@ export default function AdminPacksPage() {
   const itemsPerPage = 3;
 
   useEffect(() => {
-    if (!user || !supabase) return;
+    if (!user) return;
 
-    const loadPacks = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('packs')
-          .select('*')
-          .order('prix_base_ttc', { ascending: true });
+    // Utiliser les packs de la homepage (même source que PacksSection)
+    // Ces packs correspondent à ceux affichés sur la homepage
+    const homepagePacks = [
+      { id: 1, nom_pack: 'Pack S Petit', prix_base_ttc: 109, description_courte: 'Solution basique pour petits événements' },
+      { id: 2, nom_pack: 'Pack M Confort', prix_base_ttc: 129, description_courte: 'Solution complète pour événements moyens' },
+      { id: 3, nom_pack: 'Pack L Grand', prix_base_ttc: 179, description_courte: 'Solution professionnelle pour grands événements' },
+      { id: 5, nom_pack: 'Pack XL Maxi / Sur mesure', prix_base_ttc: null, description_courte: 'Solution sur mesure pour très grands événements' }
+    ];
 
-        if (error) throw error;
-        setPacks(data || []);
-        setFilteredPacks(data || []);
-      } catch (error) {
-        console.error('Erreur chargement packs:', error);
-      }
-    };
+    // Optionnellement, enrichir avec les données de Supabase si disponibles
+    if (supabase) {
+      const loadPacksFromSupabase = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('packs')
+            .select('*')
+            .order('prix_base_ttc', { ascending: true });
 
-    loadPacks();
+          if (!error && data && data.length > 0) {
+            // Fusionner les packs de Supabase avec ceux de la homepage
+            // En gardant les packs de la homepage comme base et en mettant à jour avec Supabase si l'ID correspond
+            const mergedPacks = homepagePacks.map(homePack => {
+              const supabasePack = data.find((sp: any) => sp.id === homePack.id);
+              if (supabasePack) {
+                return {
+                  ...homePack,
+                  nom_pack: supabasePack.nom_pack || homePack.nom_pack,
+                  prix_base_ttc: supabasePack.prix_base_ttc !== null && supabasePack.prix_base_ttc !== undefined 
+                    ? supabasePack.prix_base_ttc 
+                    : homePack.prix_base_ttc,
+                  description_courte: supabasePack.description_courte || homePack.description_courte
+                };
+              }
+              return homePack;
+            });
+            setPacks(mergedPacks);
+            setFilteredPacks(mergedPacks);
+          } else {
+            setPacks(homepagePacks);
+            setFilteredPacks(homepagePacks);
+          }
+        } catch (error) {
+          console.error('Erreur chargement packs Supabase:', error);
+          setPacks(homepagePacks);
+          setFilteredPacks(homepagePacks);
+        }
+      };
+
+      loadPacksFromSupabase();
+    } else {
+      setPacks(homepagePacks);
+      setFilteredPacks(homepagePacks);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -219,9 +256,14 @@ export default function AdminPacksPage() {
                     {paginatedPacks.map((pack) => (
                     <div key={pack.id} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
                       <h3 className="text-xl font-bold text-gray-900 mb-4">{pack.nom_pack}</h3>
+                      {pack.description_courte && (
+                        <p className="text-sm text-gray-600 mb-4">{pack.description_courte}</p>
+                      )}
                       <div className="mb-4">
                         <div className="text-sm text-gray-500">{currentTexts.price}</div>
-                        <div className="text-2xl font-bold text-[#F2431E]">{pack.prix_base_ttc}€</div>
+                        <div className="text-2xl font-bold text-[#F2431E]">
+                          {pack.prix_base_ttc ? `${pack.prix_base_ttc}€` : 'Sur devis'}
+                        </div>
                       </div>
                       <Link
                         href={`/admin/packs/${pack.id}`}
