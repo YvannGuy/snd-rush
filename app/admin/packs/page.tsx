@@ -18,6 +18,7 @@ export default function AdminPacksPage() {
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [packs, setPacks] = useState<any[]>([]);
   const [filteredPacks, setFilteredPacks] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,6 +98,19 @@ export default function AdminPacksPage() {
 
   const currentTexts = texts[language];
 
+  // Charger l'état de la sidebar depuis localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('adminSidebarCollapsed');
+    if (savedState !== null) {
+      setIsSidebarCollapsed(savedState === 'true');
+    }
+  }, []);
+
+  // Sauvegarder l'état de la sidebar dans localStorage
+  useEffect(() => {
+    localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
+  }, [isSidebarCollapsed]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -136,8 +150,17 @@ export default function AdminPacksPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="flex flex-1 lg:flex-row">
-        <AdminSidebar language={language} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Header language={language} onLanguageChange={setLanguage} />
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
+        {/* Sidebar - Fixed, ne prend pas d'espace dans le flux */}
+        <div className="hidden lg:block w-64 flex-shrink-0"></div>
+        <AdminSidebar 
+          language={language} 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
         <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
           {/* Mobile Header */}
           <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">

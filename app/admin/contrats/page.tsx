@@ -18,6 +18,7 @@ export default function AdminContratsPage() {
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [contracts, setContracts] = useState<any[]>([]);
   const [filteredContracts, setFilteredContracts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,6 +107,19 @@ export default function AdminContratsPage() {
     setCurrentPage(1);
   }, [searchQuery, contracts]);
 
+  // Charger l'état de la sidebar depuis localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('adminSidebarCollapsed');
+    if (savedState !== null) {
+      setIsSidebarCollapsed(savedState === 'true');
+    }
+  }, []);
+
+  // Sauvegarder l'état de la sidebar dans localStorage
+  useEffect(() => {
+    localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
+  }, [isSidebarCollapsed]);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -189,7 +203,13 @@ export default function AdminContratsPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header language={language} onLanguageChange={setLanguage} />
       <div className="flex flex-1 pt-[112px] lg:flex-row">
-        <AdminSidebar language={language} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <AdminSidebar 
+          language={language} 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
         <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
           {/* Mobile Header */}
           <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">

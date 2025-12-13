@@ -618,19 +618,45 @@ function PageEtatMaterielContent() {
           };
 
           if (existing) {
-            await supabase
+            const { error: updateError } = await supabase
               .from('etat_lieux')
               .update(dataToSaveSupabase)
               .eq('id', existing.id);
-            console.log('✅ État des lieux mis à jour automatiquement dans Supabase');
+            
+            if (updateError) {
+              console.error('⚠️ Erreur sauvegarde automatique Supabase (update):', {
+                message: updateError.message,
+                details: updateError.details,
+                hint: updateError.hint,
+                code: updateError.code,
+                fullError: updateError
+              });
+            } else {
+              console.log('✅ État des lieux mis à jour automatiquement dans Supabase');
+            }
           } else {
-            await supabase
+            const { error: insertError } = await supabase
               .from('etat_lieux')
               .insert(dataToSaveSupabase);
-            console.log('✅ État des lieux créé automatiquement dans Supabase');
+            
+            if (insertError) {
+              console.error('⚠️ Erreur sauvegarde automatique Supabase (insert):', {
+                message: insertError.message,
+                details: insertError.details,
+                hint: insertError.hint,
+                code: insertError.code,
+                fullError: insertError
+              });
+            } else {
+              console.log('✅ État des lieux créé automatiquement dans Supabase');
+            }
           }
-        } catch (err) {
-          console.warn('⚠️ Erreur sauvegarde automatique Supabase:', err);
+        } catch (err: any) {
+          console.error('⚠️ Erreur sauvegarde automatique Supabase (exception):', {
+            message: err?.message || 'Erreur inconnue',
+            stack: err?.stack,
+            fullError: err
+          });
         }
       }
     };
@@ -1237,36 +1263,63 @@ function PageEtatMaterielContent() {
           }
         }
 
-        const dataToSave = {
-          ...(etatLieuxId ? { id: etatLieuxId } : {}),
-          ...(reservationId ? { reservation_id: reservationId } : {}),
-          client: dossier.client,
-          contact: dossier.contact,
-          adresse: dossier.adresse,
-          code_postal: dossier.codePostal,
-          heure_depot: heureDepot,
-          heure_recuperation: heureRecup,
-          notes_internes: dossier.notes,
-          items: dossier.items,
-          signature_avant: signatureAvant,
-          signature_apres: null, // Pas encore de signature après
-          status: 'livraison_complete',
-        };
+        // Vérifier que reservation_id est présent (colonne NOT NULL)
+        if (!reservationId) {
+          console.error('❌ reservationId manquant - impossible de sauvegarder dans Supabase');
+          alert('⚠️ ID de réservation manquant. Le PDF sera quand même généré, mais la sauvegarde dans la base de données est impossible.');
+        } else {
+          const dataToSave = {
+            ...(etatLieuxId ? { id: etatLieuxId } : {}),
+            reservation_id: reservationId, // Toujours requis (NOT NULL)
+            client: dossier.client || null,
+            contact: dossier.contact || null,
+            adresse: dossier.adresse || null,
+            code_postal: dossier.codePostal || null,
+            heure_depot: heureDepot || null,
+            heure_recuperation: heureRecup || null,
+            notes_internes: dossier.notes || null,
+            items: dossier.items || [],
+            signature_avant: signatureAvant || null,
+            signature_apres: null, // Pas encore de signature après
+            status: 'livraison_complete',
+          };
 
-        const { data: savedData, error: dbError } = etatLieuxId
-          ? await supabase
-              .from('etat_lieux')
-              .update(dataToSave)
-              .eq('id', etatLieuxId)
-              .select()
-          : await supabase
-              .from('etat_lieux')
-              .insert(dataToSave)
-              .select();
+          const { data: savedData, error: dbError } = etatLieuxId
+            ? await supabase
+                .from('etat_lieux')
+                .update(dataToSave)
+                .eq('id', etatLieuxId)
+                .select()
+            : await supabase
+                .from('etat_lieux')
+                .insert(dataToSave)
+                .select();
+
+          if (dbError) {
+            const errorDetails = {
+              message: dbError.message || 'Pas de message',
+              details: dbError.details || 'Pas de détails',
+              hint: dbError.hint || 'Pas d\'indice',
+              code: dbError.code || 'Pas de code',
+              fullError: dbError
+            };
+            console.error('Erreur sauvegarde Supabase:', errorDetails);
+            console.error('Erreur brute (JSON):', JSON.stringify(dbError, null, 2));
+            alert(`⚠️ Erreur lors de la sauvegarde dans la base de données: ${dbError.message || 'Erreur inconnue'}. Le PDF sera quand même généré.`);
+          } else {
+            console.log('✅ Rapport de livraison sauvegardé dans Supabase:', savedData);
+          }
+        }
 
         if (dbError) {
-          console.error('Erreur sauvegarde Supabase:', dbError);
-          alert('⚠️ Erreur lors de la sauvegarde dans la base de données. Le PDF sera quand même généré.');
+          console.error('Erreur sauvegarde Supabase:', {
+            message: dbError.message,
+            details: dbError.details,
+            hint: dbError.hint,
+            code: dbError.code,
+            fullError: dbError
+          });
+          alert(`⚠️ Erreur lors de la sauvegarde dans la base de données: ${dbError.message || 'Erreur inconnue'}. Le PDF sera quand même généré.`);
         } else {
           console.log('✅ Rapport de livraison sauvegardé dans Supabase:', savedData);
         }
@@ -1361,38 +1414,52 @@ function PageEtatMaterielContent() {
           }
         }
 
-        const dataToSave = {
-          ...(etatLieuxId ? { id: etatLieuxId } : {}),
-          ...(reservationId ? { reservation_id: reservationId } : {}),
-          client: dossier.client,
-          contact: dossier.contact,
-          adresse: dossier.adresse,
-          code_postal: dossier.codePostal,
-          heure_depot: heureDepot,
-          heure_recuperation: heureRecup,
-          notes_internes: dossier.notes,
-          items: dossier.items,
-          signature_avant: signatureAvant,
-          signature_apres: signatureApres,
-          status: 'reprise_complete',
-        };
-
-        const { data: savedData, error: dbError } = etatLieuxId
-          ? await supabase
-              .from('etat_lieux')
-              .update(dataToSave)
-              .eq('id', etatLieuxId)
-              .select()
-          : await supabase
-              .from('etat_lieux')
-              .insert(dataToSave)
-              .select();
-
-        if (dbError) {
-          console.error('Erreur sauvegarde Supabase:', dbError);
-          alert('⚠️ Erreur lors de la sauvegarde dans la base de données. Le PDF sera quand même généré.');
+        // Vérifier que reservation_id est présent (colonne NOT NULL)
+        if (!reservationId) {
+          console.error('❌ reservationId manquant - impossible de sauvegarder dans Supabase');
+          alert('⚠️ ID de réservation manquant. Le PDF sera quand même généré, mais la sauvegarde dans la base de données est impossible.');
         } else {
-          console.log('✅ Rapport final sauvegardé dans Supabase:', savedData);
+          const dataToSave = {
+            ...(etatLieuxId ? { id: etatLieuxId } : {}),
+            reservation_id: reservationId, // Toujours requis (NOT NULL)
+            client: dossier.client || null,
+            contact: dossier.contact || null,
+            adresse: dossier.adresse || null,
+            code_postal: dossier.codePostal || null,
+            heure_depot: heureDepot || null,
+            heure_recuperation: heureRecup || null,
+            notes_internes: dossier.notes || null,
+            items: dossier.items || [],
+            signature_avant: signatureAvant || null,
+            signature_apres: signatureApres || null,
+            status: 'reprise_complete',
+          };
+
+          const { data: savedData, error: dbError } = etatLieuxId
+            ? await supabase
+                .from('etat_lieux')
+                .update(dataToSave)
+                .eq('id', etatLieuxId)
+                .select()
+            : await supabase
+                .from('etat_lieux')
+                .insert(dataToSave)
+                .select();
+
+          if (dbError) {
+            const errorDetails = {
+              message: dbError.message || 'Pas de message',
+              details: dbError.details || 'Pas de détails',
+              hint: dbError.hint || 'Pas d\'indice',
+              code: dbError.code || 'Pas de code',
+              fullError: dbError
+            };
+            console.error('Erreur sauvegarde Supabase:', errorDetails);
+            console.error('Erreur brute (JSON):', JSON.stringify(dbError, null, 2));
+            alert(`⚠️ Erreur lors de la sauvegarde dans la base de données: ${dbError.message || 'Erreur inconnue'}. Le PDF sera quand même généré.`);
+          } else {
+            console.log('✅ Rapport final sauvegardé dans Supabase:', savedData);
+          }
         }
       } else {
         console.log('ℹ️ Supabase non configuré, sauvegarde seulement en PDF');

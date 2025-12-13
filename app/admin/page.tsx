@@ -20,6 +20,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   // Stats
   const [stats, setStats] = useState({
@@ -35,6 +36,19 @@ export default function AdminDashboardPage() {
   const [equipmentStatus, setEquipmentStatus] = useState<any[]>([]);
   const [recentClients, setRecentClients] = useState<any[]>([]);
   const [calendarData, setCalendarData] = useState<any[]>([]);
+
+  // Charger l'état de la sidebar depuis localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('adminSidebarCollapsed');
+    if (savedState !== null) {
+      setIsSidebarCollapsed(savedState === 'true');
+    }
+  }, []);
+
+  // Sauvegarder l'état de la sidebar dans localStorage
+  useEffect(() => {
+    localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
+  }, [isSidebarCollapsed]);
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -66,7 +80,7 @@ export default function AdminDashboardPage() {
         // Récupérer tous les orders pour enrichir les réservations
         const { data: allOrdersForReservations } = await supabaseClient
           .from('orders')
-          .select('customer_email, customer_name, total, status, created_at, stripe_session_id, metadata')
+          .select('customer_email, customer_name, customer_phone, total, status, created_at, stripe_session_id, metadata')
           .order('created_at', { ascending: false });
 
         // Associer les orders aux réservations via sessionId dans notes
@@ -186,11 +200,31 @@ export default function AdminDashboardPage() {
           .limit(5);
 
         // Enrichir avec les données des orders récents
+        // Récupérer les orders pour associer aux réservations d'équipement
+        const { data: ordersForEquipment } = await supabaseClient
+          .from('orders')
+          .select('customer_email, customer_name, customer_phone, total, status, created_at, stripe_session_id, metadata')
+          .order('created_at', { ascending: false });
+
         let equipmentWithOrders = [];
         if (equipmentData) {
           equipmentWithOrders = equipmentData.map((item) => {
-            // Utiliser le premier order récent comme approximation
-            const matchingOrder = recentOrdersForReservations?.[0] || null;
+            let matchingOrder = null;
+            
+            // Chercher l'order via sessionId dans notes
+            if (item.notes && ordersForEquipment) {
+              try {
+                const notesData = JSON.parse(item.notes);
+                if (notesData.sessionId) {
+                  matchingOrder = ordersForEquipment.find(
+                    (o: any) => o.stripe_session_id === notesData.sessionId
+                  );
+                }
+              } catch (e) {
+                // Ignorer les erreurs de parsing
+              }
+            }
+
             return {
               ...item,
               order: matchingOrder,
@@ -247,7 +281,7 @@ export default function AdminDashboardPage() {
       createPack: 'Créer un pack',
       manualReservation: 'Réservation manuelle',
       generateInvoice: 'Générer facture',
-      equipmentStatus: 'État du matériel',
+      equipmentStatus: 'Retour matériel',
       viewPlanning: 'Voir planning',
       contact: 'Contacter',
       lateReturn: 'Retour en retard',
@@ -448,8 +482,15 @@ export default function AdminDashboardPage() {
       <Header language={language} onLanguageChange={setLanguage} />
 
       <div className="flex flex-1 pt-[112px] lg:flex-row">
-        {/* Sidebar */}
-        <AdminSidebar language={language} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        {/* Sidebar - Fixed, ne prend pas d'espace dans le flux */}
+        <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+        <AdminSidebar 
+          language={language} 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
@@ -683,9 +724,12 @@ export default function AdminDashboardPage() {
                               </span>
                             </div>
                             {isLate && (
-                              <button className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors">
+                              <a 
+                                href={`tel:${order.customer_phone || ''}`}
+                                className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors inline-block"
+                              >
                                 {currentTexts.contact}
-                              </button>
+                              </a>
                             )}
                           </div>
                         );
