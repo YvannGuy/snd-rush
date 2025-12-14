@@ -32,7 +32,11 @@ import {
   Music,
   Eye,
   Clock,
-  Menu
+  Menu,
+  XCircle,
+  Edit,
+  Truck,
+  Headphones
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PACKS } from '@/lib/packs';
@@ -40,7 +44,6 @@ import { getCatalogItemById } from '@/lib/catalog';
 import CancelRequestModal from '@/components/reservations/CancelRequestModal';
 import ChangeRequestModal from '@/components/reservations/ChangeRequestModal';
 import { getReservationStatusUI, shouldShowActionButtons } from '@/lib/reservationStatus';
-import { XCircle, Edit } from 'lucide-react';
 
 export default function MesReservationsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -146,6 +149,59 @@ export default function MesReservationsPage() {
       'pack-4': { fr: 'Événement', en: 'Event' },
     };
     return packNames[packId]?.[lang] || `Pack ${packId}`;
+  };
+
+  // Fonction pour obtenir le nom principal de la réservation (pack ou équipement)
+  const getReservationTitle = (reservation: any, lang: 'fr' | 'en' = 'fr'): string => {
+    // Essayer d'abord depuis pack_id
+    if (reservation.pack_id) {
+      const packName = getPackName(String(reservation.pack_id), lang);
+      if (packName) {
+        return `Pack ${packName}`;
+      }
+    }
+
+    // Essayer depuis les notes (cartItems)
+    if (reservation.notes) {
+      try {
+        const parsedNotes = JSON.parse(reservation.notes);
+        if (parsedNotes?.cartItems && Array.isArray(parsedNotes.cartItems) && parsedNotes.cartItems.length > 0) {
+          const firstItem = parsedNotes.cartItems[0];
+          // Si c'est un pack
+          if (firstItem.productId?.startsWith('pack-') || firstItem.productId?.startsWith('pack_')) {
+            const packId = firstItem.productId.replace('pack-', '').replace('pack_', '');
+            const packName = getPackName(packId, lang);
+            if (packName) {
+              return `Pack ${packName}`;
+            }
+          }
+          // Sinon utiliser le nom du produit
+          if (firstItem.productName) {
+            return firstItem.productName;
+          }
+        }
+      } catch (e) {
+        // Ignorer les erreurs de parsing
+      }
+    }
+
+    // Fallback
+    return lang === 'fr' ? 'Réservation' : 'Reservation';
+  };
+
+  // Fonction pour formater la date au format court (15-16 Juin 2024)
+  const formatDateShort = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const startDay = start.getDate();
+    const endDay = end.getDate();
+    const startMonth = start.toLocaleDateString('fr-FR', { month: 'short' });
+    const year = start.getFullYear();
+    
+    if (startDay === endDay) {
+      return `${startDay} ${startMonth} ${year}`;
+    }
+    return `${startDay}-${endDay} ${startMonth} ${year}`;
   };
 
   // Formater une date
@@ -414,318 +470,78 @@ export default function MesReservationsPage() {
                 
                 return (
                   <>
-                    <div className="space-y-6 mb-6">
+                    <div className="space-y-4 mb-6">
                       {paginatedReservations.map((reservation) => {
                 const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
-                const isConfirmed = reservation.status === 'confirmed' || reservation.status === 'CONFIRMED';
-                const isPending = reservation.status === 'pending' || reservation.status === 'PENDING';
-                const isSigned = !!reservation.client_signature;
                 const statusUI = getReservationStatusUI(reservation.status, language);
-                const showActionButtons = shouldShowActionButtons(reservation);
-                const isCancelRequested = reservation.status === 'CANCEL_REQUESTED' || reservation.status === 'cancel_requested';
-                const isChangeRequested = reservation.status === 'CHANGE_REQUESTED' || reservation.status === 'change_requested';
+                const reservationTitle = getReservationTitle(reservation, language);
+                const dateRange = formatDateShort(reservation.start_date, reservation.end_date);
+                
+                // Couleurs du badge selon le statut
+                const getStatusBadgeColor = (status: string) => {
+                  const upperStatus = status.toUpperCase();
+                  if (upperStatus === 'CONFIRMED' || upperStatus === 'CONTRACT_SIGNED') {
+                    return { bg: 'bg-green-100', dot: 'bg-green-500', text: 'text-green-800' };
+                  } else if (upperStatus === 'PENDING' || upperStatus === 'CONTRACT_PENDING') {
+                    return { bg: 'bg-orange-100', dot: 'bg-orange-500', text: 'text-orange-800' };
+                  } else if (upperStatus === 'IN_PROGRESS' || upperStatus === 'COMPLETED') {
+                    return { bg: 'bg-blue-100', dot: 'bg-blue-500', text: 'text-blue-800' };
+                  } else if (upperStatus === 'CANCELLED' || upperStatus === 'CANCELED') {
+                    return { bg: 'bg-red-100', dot: 'bg-red-500', text: 'text-red-800' };
+                  }
+                  return { bg: 'bg-gray-100', dot: 'bg-gray-500', text: 'text-gray-800' };
+                };
+                
+                const badgeColors = getStatusBadgeColor(reservation.status);
                 
                 return (
-                  <Card key={reservation.id} className="hover:shadow-lg transition-all">
-                    {/* Header avec statut */}
-                    <CardHeader className={`${
-                      isConfirmed ? 'bg-green-50 border-b border-green-200' :
-                      isPending ? 'bg-yellow-50 border-b border-yellow-200' :
-                      'bg-gray-50 border-b border-gray-200'
-                    }`}>
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="flex items-center gap-3 sm:gap-4">
-                          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                            isConfirmed ? 'bg-green-100' :
-                            isPending ? 'bg-yellow-100' :
-                            'bg-gray-100'
-                          }`}>
-                            <ClipboardList className={`w-5 h-5 sm:w-6 sm:h-6 ${
-                              isConfirmed ? 'text-green-600' :
-                              isPending ? 'text-yellow-600' :
-                              'text-gray-600'
-                            }`} />
+                  <Card 
+                    key={reservation.id} 
+                    className="hover:shadow-md transition-all cursor-pointer"
+                    onClick={() => openDetailsModal(reservation)}
+                  >
+                    <CardContent className="p-4 sm:p-5">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          {/* Badge de statut avec point coloré */}
+                          <div className="flex items-center gap-2 mb-3">
+                            <Badge className={`${badgeColors.bg} ${badgeColors.text} border-0 px-3 py-1`}>
+                              <span className={`w-2 h-2 rounded-full ${badgeColors.dot} mr-2 inline-block`}></span>
+                              {statusUI.label}
+                            </Badge>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <CardTitle className="text-base sm:text-lg truncate">
-                              {currentTexts.reservationNumber} #{reservationNumber}
-                            </CardTitle>
-                            <div className="mt-2 flex items-center gap-2 flex-wrap">
-                              <Badge 
-                                variant={statusUI.badgeVariant || undefined}
-                                className={statusUI.badgeClass}
-                              >
-                                {statusUI.label}
-                              </Badge>
-                              {statusUI.message && !isCancelRequested && !isChangeRequested && (
-                                <CardDescription className="text-xs text-gray-600 mt-0">
-                                  {statusUI.message}
-                                </CardDescription>
-                              )}
-                              {!isSigned && isConfirmed && !isCancelRequested && !isChangeRequested && (
-                                <CardDescription className="text-xs text-gray-600 mt-0">
-                                  {language === 'fr' ? 'Signature requise pour finaliser la réservation.' : 'Signature required to finalize the reservation.'}
-                                </CardDescription>
-                              )}
-                              {isSigned && reservation.client_signed_at && (
-                                <CardDescription className="text-xs text-gray-600 mt-0">
-                                  {language === 'fr' 
-                                    ? `Contrat signé le ${new Date(reservation.client_signed_at).toLocaleDateString('fr-FR')}.`
-                                    : `Contract signed on ${new Date(reservation.client_signed_at).toLocaleDateString('en-US')}.`}
-                                </CardDescription>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-2 w-full sm:w-auto">
-                          {/* Boutons d'action (annulation/modification) - affichés conditionnellement */}
-                          {showActionButtons && !isCancelRequested && !isChangeRequested && (
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                variant="outline"
-                                onClick={() => openCancelModal(reservation)}
-                                className="border-red-300 text-red-700 hover:bg-red-50 flex-1 sm:flex-initial min-w-0 px-3 py-2.5 sm:px-4 sm:py-2"
-                                title={language === 'fr' ? 'Demander annulation' : 'Request cancellation'}
-                                aria-label={language === 'fr' ? 'Demander annulation' : 'Request cancellation'}
-                              >
-                                <XCircle className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
-                                <span className="hidden sm:inline truncate text-xs sm:text-sm">{language === 'fr' ? 'Demander annulation' : 'Request cancellation'}</span>
-                              </Button>
-                              <Button
-                                variant="outline"
-                                onClick={() => openChangeModal(reservation)}
-                                className="border-blue-300 text-blue-700 hover:bg-blue-50 flex-1 sm:flex-initial min-w-0 px-3 py-2.5 sm:px-4 sm:py-2"
-                                title={language === 'fr' ? 'Demander modification' : 'Request change'}
-                                aria-label={language === 'fr' ? 'Demander modification' : 'Request change'}
-                              >
-                                <Edit className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
-                                <span className="hidden sm:inline truncate text-xs sm:text-sm">{language === 'fr' ? 'Demander modification' : 'Request change'}</span>
-                              </Button>
-                            </div>
-                          )}
                           
-                          {/* Message si demande déjà envoyée */}
-                          {(isCancelRequested || isChangeRequested) && (
-                            <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
-                              {language === 'fr' 
-                                ? 'Demande reçue. Nous revenons vers vous rapidement.'
-                                : 'Request received. We will get back to you shortly.'}
-                            </div>
-                          )}
-
-                          {/* Boutons existants (signature, téléchargement) - optimisés mobile */}
-                          <div className="flex flex-wrap gap-2">
-                            {isConfirmed && (
-                              <>
-                                {!isSigned ? (
-                                  <Button
-                                    asChild
-                                    className="bg-green-600 hover:bg-green-700 text-white flex-1 sm:flex-initial min-w-0 px-3 py-2.5 sm:px-4 sm:py-2"
-                                    title={currentTexts.signContract}
-                                    aria-label={currentTexts.signContract}
-                                  >
-                                    <Link href={`/sign-contract?reservationId=${reservation.id}`}>
-                                      <FilePenLine className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
-                                      <span className="hidden sm:inline truncate text-xs sm:text-sm">{currentTexts.signContract}</span>
-                                    </Link>
-                                  </Button>
-                                ) : (
-                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100 px-3 py-2.5 sm:px-3 sm:py-2 h-auto flex-1 sm:flex-initial justify-center">
-                                    <CheckCircle2 className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
-                                    <span className="hidden sm:inline truncate text-xs sm:text-sm">{currentTexts.contractSigned}</span>
-                                  </Badge>
-                                )}
-                                <Button
-                                  asChild
-                                  variant="default"
-                                  className="bg-[#F2431E] hover:bg-[#E63A1A] text-white flex-1 sm:flex-initial min-w-0 px-3 py-2.5 sm:px-4 sm:py-2"
-                                  title={currentTexts.downloadContract}
-                                  aria-label={currentTexts.downloadContract}
-                                >
-                                  <a
-                                    href={`/api/contract/download?reservationId=${reservation.id}`}
-                                    download={`contrat-${reservationNumber}.pdf`}
-                                  >
-                                    <Download className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
-                                    <span className="hidden sm:inline truncate text-xs sm:text-sm">{currentTexts.downloadContract}</span>
-                                  </a>
-                                </Button>
-                              </>
-                            )}
-                            <Button
-                              variant="outline"
-                              onClick={() => openDetailsModal(reservation)}
-                              className="flex-1 sm:flex-initial min-w-0 px-3 py-2.5 sm:px-4 sm:py-2"
-                              title={currentTexts.viewDetails}
-                              aria-label={currentTexts.viewDetails}
-                            >
-                              <Eye className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
-                              <span className="hidden sm:inline truncate text-xs sm:text-sm">{currentTexts.viewDetails}</span>
-                            </Button>
+                          {/* Titre de la réservation */}
+                          <h3 className="font-bold text-gray-900 text-lg mb-3">
+                            {reservationTitle}
+                          </h3>
+                          
+                          {/* Date avec icône calendrier */}
+                          <div className="flex items-center gap-2 text-gray-600 mb-2">
+                            <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span className="text-sm">{dateRange}</span>
                           </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-
-                    {/* Contenu */}
-                    <CardContent className="p-4 sm:p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                        {/* Informations principales */}
-                        <div className="space-y-4">
-                          <div>
-                            <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.dates}</h4>
-                            <div className="flex items-center gap-2 text-gray-900">
-                              <Calendar className="w-5 h-5 text-[#F2431E]" />
-                              <span className="font-medium">{formatDate(reservation.start_date)}</span>
-                              <span className="text-gray-400">→</span>
-                              <span className="font-medium">{formatDate(reservation.end_date)}</span>
-                            </div>
-                          </div>
-
+                          
+                          {/* Lieu avec icône map pin */}
                           {reservation.address && (
-                            <div>
-                              <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.address}</h4>
-                              <div className="flex items-start gap-2 text-gray-900">
-                                <MapPin className="w-5 h-5 text-[#F2431E] flex-shrink-0 mt-0.5" />
-                                <p className="text-gray-900">{reservation.address}</p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Produits réservés */}
-                          {(() => {
-                            // Extraire les cartItems depuis les notes
-                            let cartItems: any[] = [];
-                            
-                            if (reservation.notes) {
-                              try {
-                                const parsedNotes = JSON.parse(reservation.notes);
-                                if (parsedNotes && parsedNotes.cartItems && Array.isArray(parsedNotes.cartItems)) {
-                                  cartItems = parsedNotes.cartItems;
-                                }
-                              } catch (e) {
-                                // Ce n'est pas du JSON ou pas de cartItems
-                              }
-                            }
-                            
-                            if (cartItems.length > 0) {
-                              return (
-                                <div>
-                                  <h4 className="text-sm font-semibold text-gray-500 mb-3">{language === 'fr' ? 'Produits réservés' : 'Reserved products'}</h4>
-                                  <div className="space-y-2">
-                                    {cartItems.map((item: any, index: number) => {
-                                      const dailyPrice = parseFloat(item.dailyPrice || 0);
-                                      const quantity = parseInt(item.quantity || 1);
-                                      const rentalDays = parseInt(item.rentalDays || 1);
-                                      const itemTotal = dailyPrice * quantity * rentalDays;
-                                      
-                                      return (
-                                        <Card key={index} className="bg-gray-50 border-gray-200">
-                                          <CardContent className="p-3">
-                                            <div className="flex justify-between items-start mb-2">
-                                              <div className="flex-1">
-                                                <p className="font-semibold text-gray-900 text-sm">{item.productName || 'Produit'}</p>
-                                                {item.addons && item.addons.length > 0 && (
-                                                  <div className="mt-1 space-y-1">
-                                                    {item.addons.map((addon: any, addonIndex: number) => (
-                                                      <p key={addonIndex} className="text-xs text-gray-600">
-                                                        + {addon.name} (+{addon.price}€)
-                                                      </p>
-                                                    ))}
-                                                  </div>
-                                                )}
-                                              </div>
-                                              <p className="font-bold text-[#F2431E] text-sm ml-2">{itemTotal.toFixed(2)}€</p>
-                                            </div>
-                                            <div className="flex gap-4 text-xs text-gray-600">
-                                              <span>Qté: {quantity}</span>
-                                              <span>Prix/jour: {dailyPrice.toFixed(2)}€</span>
-                                              <span>Durée: {rentalDays} jour{rentalDays > 1 ? 's' : ''}</span>
-                                            </div>
-                                          </CardContent>
-                                        </Card>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              );
-                            }
-                            
-                            // Si pas de cartItems, afficher les notes normales si elles existent
-                            let notesContent = reservation.notes;
-                            if (notesContent) {
-                              try {
-                                const parsedNotes = JSON.parse(notesContent);
-                                // Ne pas afficher si ce sont uniquement des métadonnées techniques
-                                if (parsedNotes && typeof parsedNotes === 'object') {
-                                  if (parsedNotes.cartItems || parsedNotes.sessionId) {
-                                    // Si c'est juste des métadonnées (pas de message/notes), ne rien afficher
-                                    if (!parsedNotes.message && !parsedNotes.notes) {
-                                      notesContent = null;
-                                    } else {
-                                      // Afficher seulement message ou notes, pas les métadonnées
-                                      notesContent = parsedNotes.message || parsedNotes.notes || null;
-                                    }
-                                  } else {
-                                    // Pas de métadonnées techniques, afficher les autres champs
-                                    notesContent = Object.entries(parsedNotes)
-                                      .filter(([key]) => key !== 'sessionId')
-                                      .map(([key, value]) => `${key}: ${value}`)
-                                      .join(', ') || null;
-                                  }
-                                }
-                              } catch (e) {
-                                // Ce n'est pas du JSON, afficher tel quel
-                              }
-                            }
-                            
-                            return notesContent ? (
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.notes}</h4>
-                                <p className="text-gray-700 text-sm">{notesContent}</p>
-                              </div>
-                            ) : null;
-                          })()}
-                        </div>
-
-                        {/* Informations financières */}
-                        <div className="space-y-4">
-                          <Card className="bg-gray-50 border-gray-200">
-                            <CardHeader className="pb-3">
-                              <CardTitle className="text-sm font-semibold text-gray-500">
-                                {language === 'fr' ? 'Informations financières' : 'Financial information'}
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-2 pt-0">
-                              {reservation.total_price && (
-                                <div className="flex justify-between items-center">
-                                  <span className="text-gray-600">{currentTexts.total}</span>
-                                  <span className="text-lg font-bold text-gray-900">{parseFloat(reservation.total_price).toFixed(2)}€</span>
-                                </div>
-                              )}
-                              {reservation.deposit_amount && (
-                                <div className="flex justify-between items-center">
-                                  <span className="text-gray-600">{currentTexts.deposit}</span>
-                                  <span className="font-semibold text-gray-900">{parseFloat(reservation.deposit_amount).toFixed(2)}€</span>
-                                </div>
-                              )}
-                            </CardContent>
-                          </Card>
-
-                          {reservation.pack_id && (
-                            <div>
-                              <h4 className="text-sm font-semibold text-gray-500 mb-2">{language === 'fr' ? 'Pack réservé' : 'Reserved pack'}</h4>
-                              <div className="flex items-center gap-2">
-                                <div className="w-10 h-10 bg-[#F2431E] rounded-lg flex items-center justify-center">
-                                  <Music className="w-6 h-6 text-white" />
-                                </div>
-                                <span className="font-semibold text-gray-900">
-                                  Pack {getPackName(reservation.pack_id, language)}
-                                </span>
-                              </div>
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <span className="text-sm truncate">{reservation.address}</span>
                             </div>
                           )}
                         </div>
+                        
+                        {/* Bouton circulaire orange avec chevron */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDetailsModal(reservation);
+                          }}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F2431E] hover:bg-[#E63A1A] text-white flex items-center justify-center flex-shrink-0 transition-colors"
+                          aria-label={currentTexts.viewDetails}
+                        >
+                          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </button>
                       </div>
                     </CardContent>
                   </Card>
@@ -800,202 +616,307 @@ export default function MesReservationsPage() {
 
       {/* Modal de détails de la réservation */}
       <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
           {selectedReservation && (() => {
             const reservation = selectedReservation;
             const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
             const { startTime, endTime } = getTimesFromNotes(reservation.notes);
+            const dateRange = formatDateShort(reservation.start_date, reservation.end_date);
+            const isConfirmed = reservation.status === 'confirmed' || reservation.status === 'CONFIRMED';
+            const isSigned = !!reservation.client_signature;
+            const statusUI = getReservationStatusUI(reservation.status, language);
+            const showActionButtons = shouldShowActionButtons(reservation);
+            const isCancelRequested = reservation.status === 'CANCEL_REQUESTED' || reservation.status === 'cancel_requested';
+            const isChangeRequested = reservation.status === 'CHANGE_REQUESTED' || reservation.status === 'change_requested';
             
             // Extraire les cartItems depuis les notes
             let cartItems: any[] = [];
+            let deliveryInfo: any = null;
             if (reservation.notes) {
               try {
                 const parsedNotes = JSON.parse(reservation.notes);
                 if (parsedNotes && parsedNotes.cartItems && Array.isArray(parsedNotes.cartItems)) {
                   cartItems = parsedNotes.cartItems;
                 }
+                // Extraire les infos de livraison
+                if (parsedNotes.deliveryOptions || parsedNotes.installationDate) {
+                  deliveryInfo = {
+                    deliveryIncluded: parsedNotes.deliveryOptions?.includes('livraison') || false,
+                    installationDate: parsedNotes.installationDate || null,
+                    installationTime: parsedNotes.installationTime || null,
+                  };
+                }
               } catch (e) {
                 // Ce n'est pas du JSON ou pas de cartItems
               }
             }
 
+            // Calculer le breakdown financier
+            let financialBreakdown: Array<{ label: string; amount: number }> = [];
+            let totalAmount = 0;
+            if (cartItems.length > 0) {
+              cartItems.forEach((item: any) => {
+                const dailyPrice = parseFloat(item.dailyPrice || 0);
+                const quantity = parseInt(item.quantity || 1);
+                const rentalDays = parseInt(item.rentalDays || 1);
+                const itemTotal = dailyPrice * quantity * rentalDays;
+                totalAmount += itemTotal;
+                
+                financialBreakdown.push({
+                  label: `${item.productName || 'Produit'} (${rentalDays} jour${rentalDays > 1 ? 's' : ''})`,
+                  amount: itemTotal,
+                });
+                
+                // Ajouter les addons
+                if (item.addons && item.addons.length > 0) {
+                  item.addons.forEach((addon: any) => {
+                    financialBreakdown.push({
+                      label: addon.name,
+                      amount: parseFloat(addon.price || 0),
+                    });
+                    totalAmount += parseFloat(addon.price || 0);
+                  });
+                }
+              });
+              
+              // Ajouter la livraison si incluse
+              if (deliveryInfo?.deliveryIncluded) {
+                financialBreakdown.push({
+                  label: language === 'fr' ? 'Livraison' : 'Delivery',
+                  amount: 80, // Prix par défaut, à ajuster selon la zone
+                });
+                totalAmount += 80;
+              }
+            }
+
             return (
               <>
-                <DialogHeader>
-                  <DialogTitle>
-                    {currentTexts.reservationNumber} #{reservationNumber}
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-6 mt-4">
-                  {/* Dates et heures */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold text-gray-500">
-                          {language === 'fr' ? 'Date et heure de début' : 'Start date and time'}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-5 h-5 text-[#F2431E]" />
-                          <span className="font-medium">{formatDate(reservation.start_date)}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Clock className="w-5 h-5 text-[#F2431E]" />
-                          <span className="font-medium">{startTime || (language === 'fr' ? 'Non spécifiée' : 'Not specified')}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold text-gray-500">
-                          {language === 'fr' ? 'Date et heure de fin' : 'End date and time'}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-5 h-5 text-[#F2431E]" />
-                          <span className="font-medium">{formatDate(reservation.end_date)}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Clock className="w-5 h-5 text-[#F2431E]" />
-                          <span className="font-medium">{endTime || (language === 'fr' ? 'Non spécifiée' : 'Not specified')}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
+                {/* Header mobile-style */}
+                <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setIsDetailsModalOpen(false)}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-gray-600" />
+                    </button>
+                    <DialogTitle className="text-lg font-bold">
+                      {language === 'fr' ? 'Réservation' : 'Reservation'}
+                    </DialogTitle>
                   </div>
+                </div>
 
-                  {/* Adresse */}
-                  {reservation.address && (
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold text-gray-500">
-                          {currentTexts.address}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-start gap-2">
-                          <MapPin className="w-5 h-5 text-[#F2431E] flex-shrink-0 mt-0.5" />
-                          <p className="text-gray-900">{reservation.address}</p>
+                <div className="px-6 py-6 space-y-4">
+                  {/* Section 1: Contrat */}
+                  <Card className="border border-gray-200">
+                    <CardContent className="p-4">
+                      <p className="text-xs text-gray-500 mb-3">
+                        {language === 'fr' ? `Référence #SR-${reservationNumber}` : `Reference #SR-${reservationNumber}`}
+                      </p>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Badge className={`${statusUI.badgeClass} border-0`}>
+                          {statusUI.label}
+                        </Badge>
+                      </div>
+                      {!isSigned && isConfirmed && (
+                        <>
+                          <p className="text-sm text-gray-600 mb-4">
+                            {language === 'fr' ? 'Votre contrat est prêt à être signé' : 'Your contract is ready to be signed'}
+                          </p>
+                          <Button
+                            asChild
+                            className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                          >
+                            <Link href={`/sign-contract?reservationId=${reservation.id}`}>
+                              <FilePenLine className="w-4 h-4 mr-2" />
+                              {language === 'fr' ? 'Signer le contrat' : 'Sign the contract'}
+                            </Link>
+                          </Button>
+                        </>
+                      )}
+                      {isSigned && (
+                        <p className="text-sm text-gray-600">
+                          {language === 'fr' 
+                            ? `Contrat signé le ${new Date(reservation.client_signed_at).toLocaleDateString('fr-FR')}`
+                            : `Contract signed on ${new Date(reservation.client_signed_at).toLocaleDateString('en-US')}`}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Section 2: Détails de la réservation */}
+                  <Card className="border border-gray-200">
+                    <CardContent className="p-4">
+                      <h3 className="font-bold text-gray-900 mb-4">
+                        {getReservationTitle(reservation, language)}
+                      </h3>
+                      
+                      {/* Date */}
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span className="font-semibold text-gray-900">{dateRange}</span>
                         </div>
-                      </CardContent>
-                    </Card>
-                  )}
+                        {(startTime || endTime) && (
+                          <p className="text-sm text-gray-600 ml-6">
+                            {startTime && endTime 
+                              ? `${startTime} - ${endTime}`
+                              : startTime || endTime || ''}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Lieu */}
+                      {reservation.address && (
+                        <div className="mb-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <MapPin className="w-4 h-4 text-gray-400" />
+                            <span className="font-semibold text-gray-900">
+                              {reservation.address.split(',')[0]}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 ml-6">
+                            {reservation.address.split(',').slice(1).join(',').trim()}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {/* Livraison */}
+                      {deliveryInfo?.deliveryIncluded && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Truck className="w-4 h-4 text-gray-400" />
+                            <span className="font-semibold text-gray-900">
+                              {language === 'fr' ? 'Livraison incluse' : 'Delivery included'}
+                            </span>
+                          </div>
+                          {deliveryInfo.installationDate && (
+                            <p className="text-sm text-gray-600 ml-6">
+                              {language === 'fr' 
+                                ? `Installation le ${new Date(deliveryInfo.installationDate).toLocaleDateString('fr-FR')}${deliveryInfo.installationTime ? ` à ${deliveryInfo.installationTime}` : ''}`
+                                : `Installation on ${new Date(deliveryInfo.installationDate).toLocaleDateString('en-US')}${deliveryInfo.installationTime ? ` at ${deliveryInfo.installationTime}` : ''}`}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
 
-                  {/* Produits réservés */}
+                  {/* Section 3: Matériel réservé */}
                   {cartItems.length > 0 && (
-                    <Card>
+                    <Card className="border border-gray-200">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-semibold text-gray-500">
-                          {language === 'fr' ? 'Produits réservés' : 'Reserved products'}
+                        <CardTitle className="text-base font-bold text-gray-900">
+                          {language === 'fr' ? 'Matériel réservé' : 'Reserved material'}
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {cartItems.map((item: any, index: number) => {
-                            const dailyPrice = parseFloat(item.dailyPrice || 0);
-                            const quantity = parseInt(item.quantity || 1);
-                            const rentalDays = parseInt(item.rentalDays || 1);
-                            const itemTotal = dailyPrice * quantity * rentalDays;
-                            
-                            // Vérifier si c'est un pack
-                            const isPack = item.productId?.startsWith('pack-') || item.productId?.startsWith('pack_');
-                            let packEquipment: Array<{ name: string; qty: number }> = [];
-                            
-                            if (isPack) {
-                              // Extraire le packId (pack_petit, pack_confort, etc.)
-                              const packId = item.productId?.replace('pack-', '').replace('pack_', '');
-                              const packKey = packId === 'petit' ? 'petit' : 
-                                            packId === 'confort' ? 'confort' :
-                                            packId === 'grand' ? 'grand' :
-                                            packId === 'maxi' ? 'maxi' : null;
-                              
-                              if (packKey && PACKS[packKey]) {
-                                // Utiliser la composition du pack
-                                packEquipment = PACKS[packKey].composition.map(comp => ({ name: comp, qty: 1 }));
-                              } else if (item.metadata?.breakdown && Array.isArray(item.metadata.breakdown)) {
-                                // Utiliser le breakdown depuis metadata si disponible
-                                packEquipment = item.metadata.breakdown.map((b: any) => ({
-                                  name: b.name || b.productName || b,
-                                  qty: b.quantity || b.qty || 1
-                                }));
-                              }
-                            }
-                            
-                            return (
-                              <Card key={index} className="bg-gray-50 border-gray-200">
-                                <CardContent className="p-4">
-                                  <div className="flex justify-between items-start mb-2">
-                                    <div className="flex-1">
-                                      <p className="font-semibold text-gray-900">{item.productName || 'Produit'}</p>
-                                      
-                                      {/* Détails des équipements du pack */}
-                                      {isPack && packEquipment.length > 0 && (
-                                        <div className="mt-3 space-y-1.5 border-t border-gray-200 pt-2">
-                                          <p className="text-xs font-semibold text-gray-500 mb-1.5">
-                                            {language === 'fr' ? 'Équipements inclus :' : 'Included equipment:'}
-                                          </p>
-                                          {packEquipment.map((equip, equipIndex) => (
-                                            <p key={equipIndex} className="text-sm text-gray-700 flex items-center gap-2">
-                                              <span className="text-[#F2431E]">•</span>
-                                              <span>{equip.name}</span>
-                                              {equip.qty > 1 && <span className="text-gray-500">(x{equip.qty})</span>}
-                                            </p>
-                                          ))}
-                                        </div>
-                                      )}
-                                      
-                                      {/* Addons */}
-                                      {item.addons && item.addons.length > 0 && (
-                                        <div className="mt-2 space-y-1">
-                                          <p className="text-xs font-semibold text-gray-500 mb-1">
-                                            {language === 'fr' ? 'Options :' : 'Options:'}
-                                          </p>
-                                          {item.addons.map((addon: any, addonIndex: number) => (
-                                            <p key={addonIndex} className="text-sm text-gray-600 flex items-center gap-2">
-                                              <span className="text-[#F2431E]">+</span>
-                                              <span>{addon.name} (+{addon.price}€)</span>
-                                            </p>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                    <p className="font-bold text-[#F2431E] ml-2">{itemTotal.toFixed(2)}€</p>
-                                  </div>
-                                  <div className="flex gap-4 text-sm text-gray-600 mt-2">
-                                    <span>Qté: {quantity}</span>
-                                    <span>Prix/jour: {dailyPrice.toFixed(2)}€</span>
-                                    <span>Durée: {rentalDays} jour{rentalDays > 1 ? 's' : ''}</span>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            );
-                          })}
-                        </div>
+                      <CardContent className="space-y-2">
+                        {cartItems.map((item: any, index: number) => {
+                          const quantity = parseInt(item.quantity || 1);
+                          return (
+                            <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                              <span className="text-sm text-gray-700">{item.productName || 'Produit'}</span>
+                              <span className="text-sm text-gray-600">{quantity}x</span>
+                            </div>
+                          );
+                        })}
                       </CardContent>
                     </Card>
                   )}
 
-                  {/* Informations financières */}
-                  <Card className="bg-gray-50 border-gray-200">
+                  {/* Section 4: Informations financières */}
+                  <Card className="border border-gray-200">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-semibold text-gray-500">
+                      <CardTitle className="text-base font-bold text-gray-900">
                         {language === 'fr' ? 'Informations financières' : 'Financial information'}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {reservation.total_price && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">{currentTexts.total}</span>
-                          <span className="text-lg font-bold text-gray-900">{parseFloat(reservation.total_price).toFixed(2)}€</span>
+                      {financialBreakdown.map((item, index) => (
+                        <div key={index} className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">{item.label}</span>
+                          <span className="text-sm text-gray-900">{item.amount.toFixed(2)}€</span>
                         </div>
-                      )}
+                      ))}
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-200 mt-2">
+                        <span className="font-bold text-gray-900">{language === 'fr' ? 'Total' : 'Total'}</span>
+                        <span className="text-lg font-bold text-gray-900">
+                          {reservation.total_price 
+                            ? parseFloat(reservation.total_price).toFixed(2)
+                            : totalAmount.toFixed(2)}€
+                        </span>
+                      </div>
                       {reservation.deposit_amount && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">{currentTexts.deposit}</span>
-                          <span className="font-semibold text-gray-900">{parseFloat(reservation.deposit_amount).toFixed(2)}€</span>
+                        <div className="flex justify-between items-center pt-2">
+                          <span className="text-sm text-gray-600">
+                            {language === 'fr' ? 'Dépôt de garantie' : 'Security deposit'}
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            {parseFloat(reservation.deposit_amount).toFixed(2)}€
+                          </span>
                         </div>
                       )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Section 5: Actions */}
+                  <Card className="border border-gray-200">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base font-bold text-gray-900">
+                        {language === 'fr' ? 'Actions' : 'Actions'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-0">
+                      {showActionButtons && !isCancelRequested && !isChangeRequested && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsDetailsModalOpen(false);
+                              openChangeModal(reservation);
+                            }}
+                            className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Edit className="w-5 h-5 text-gray-600" />
+                              <span className="text-sm text-gray-900">
+                                {language === 'fr' ? 'Demander une modification' : 'Request a modification'}
+                              </span>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsDetailsModalOpen(false);
+                              openCancelModal(reservation);
+                            }}
+                            className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                          >
+                            <div className="flex items-center gap-3">
+                              <XCircle className="w-5 h-5 text-gray-600" />
+                              <span className="text-sm text-gray-900">
+                                {language === 'fr' ? 'Demander une annulation' : 'Request a cancellation'}
+                              </span>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                          </button>
+                        </>
+                      )}
+                      <a
+                        href="https://wa.me/33651084994"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Headphones className="w-5 h-5 text-gray-600" />
+                          <span className="text-sm text-gray-900">
+                            {language === 'fr' ? 'Contacter SoundRush' : 'Contact SoundRush'}
+                          </span>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                      </a>
                     </CardContent>
                   </Card>
                 </div>

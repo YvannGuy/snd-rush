@@ -116,7 +116,7 @@ export default function ChangeRequestModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto w-[95vw] sm:w-full mx-2 sm:mx-0 p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{currentTexts.title}</DialogTitle>
         </DialogHeader>

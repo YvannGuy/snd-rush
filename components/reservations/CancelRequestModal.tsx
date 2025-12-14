@@ -164,13 +164,13 @@ export default function CancelRequestModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto w-[95vw] sm:w-full mx-2 sm:mx-0 p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{currentTexts.title}</DialogTitle>
-          <DialogDescription>{currentTexts.subtitle}</DialogDescription>
+          <DialogTitle className="text-left">{currentTexts.title}</DialogTitle>
+          <DialogDescription className="text-left">{currentTexts.subtitle}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="space-y-4 sm:space-y-6 mt-4">
           {/* Récapitulatif */}
           <div className="bg-gray-50 rounded-lg p-4 space-y-3">
             <div className="grid grid-cols-2 gap-3 text-sm">
@@ -192,7 +192,7 @@ export default function CancelRequestModal({
                 <span className="text-gray-600">{currentTexts.recap.location}:</span>
                 <span className="font-semibold ml-2">{reservation.address || '—'}</span>
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <span className="text-gray-600">{currentTexts.recap.amountPaid}:</span>
                 <span className="font-semibold ml-2">{totalPaid.toFixed(2)} €</span>
               </div>
@@ -259,14 +259,19 @@ export default function CancelRequestModal({
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 justify-end">
-            <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2">
+            <Button 
+              variant="outline" 
+              onClick={onClose} 
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
               {currentTexts.cancel}
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={!accepted || isSubmitting}
-              className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+              className="bg-[#F2431E] hover:bg-[#E63A1A] text-white w-full sm:w-auto"
             >
               {isSubmitting ? (
                 <>
