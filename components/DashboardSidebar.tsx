@@ -305,7 +305,7 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
           {!isCollapsed && (
             <span className="flex-1">{currentTexts.myReservations}</span>
           )}
-          {pendingActions.reservationsWithContractsToSign && pendingActions.reservationsWithContractsToSign > 0 && (
+          {(pendingActions.reservationsWithContractsToSign ?? 0) > 0 && (
             <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
               {pendingActions.reservationsWithContractsToSign}
             </span>
