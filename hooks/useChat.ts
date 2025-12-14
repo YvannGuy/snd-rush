@@ -54,6 +54,7 @@ export function useChat() {
    * Règles strictes :
    * - Uniquement si messages.length === 0
    * - Uniquement si welcomeAddedRef.current === false
+   * - Ne jamais injecter si un message user existe déjà
    * - Ne jamais injecter si un message draft arrive (le Hero envoie déjà un message user)
    */
   const injectWelcomeMessageIfNeeded = useCallback((skipIfDraft = false) => {
@@ -62,8 +63,15 @@ export function useChat() {
       return;
     }
     
-    // Vérifier que le chat est vraiment vide
+    // Vérifier que le chat est vraiment vide ET qu'il n'y a pas de message user
     setMessages(prev => {
+      // Ne jamais injecter si un message user existe déjà
+      const hasUserMessage = prev.some(m => m.role === 'user');
+      if (hasUserMessage) {
+        return prev;
+      }
+      
+      // Injecter uniquement si le chat est vide et que le welcome n'a pas déjà été ajouté
       if (prev.length === 0 && !welcomeAddedRef.current) {
         const welcome = createWelcomeMessage();
         welcomeAddedRef.current = true;
@@ -88,6 +96,18 @@ export function useChat() {
           setMessages(parsed);
           // Vérifier si welcome existe déjà
           welcomeAddedRef.current = parsed.some(m => m.kind === 'welcome');
+          
+          // Si un message user existe, ne pas réinjecter le welcome
+          const hasUserMessage = parsed.some(m => m.role === 'user');
+          if (hasUserMessage) {
+            // Supprimer le welcome s'il existe car un message user existe
+            const withoutWelcome = parsed.filter(m => m.kind !== 'welcome');
+            if (withoutWelcome.length !== parsed.length) {
+              setMessages(withoutWelcome);
+              welcomeAddedRef.current = false;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(withoutWelcome));
+            }
+          }
         } else {
           // Si le tableau est vide, injecter le welcome
           const welcome = createWelcomeMessage();
@@ -281,20 +301,28 @@ export function useChat() {
   const openChatWithDraft = useCallback((draftText?: string) => {
     setIsOpen(true);
     
-    // Si un message draft arrive, NE PAS injecter le welcome
+    // Si un message draft arrive, SUPPRIMER le welcome s'il existe
     // Le message user sera ajouté et l'assistant répondra directement
     if (draftText && draftText.trim()) {
-      // Ne pas injecter le welcome - le message draft remplace le welcome
-      injectWelcomeMessageIfNeeded(true);
+      // Supprimer le message d'accueil s'il existe
+      setMessages(prev => {
+        // Si le dernier message est un welcome, le supprimer
+        const filtered = prev.filter(m => m.kind !== 'welcome');
+        // Marquer que le welcome a été supprimé pour éviter sa réinjection
+        if (prev.some(m => m.kind === 'welcome')) {
+          welcomeAddedRef.current = true; // Empêcher la réinjection
+        }
+        return filtered;
+      });
       
       // Ne PAS reset le timer idle ici
       // Le timer démarrera APRÈS l'envoi du message (dans sendMessage)
       
       // Dispatcher un événement pour que le chat gère l'ajout + envoi
-      // Délai pour s'assurer que le chat est ouvert
+      // Délai pour s'assurer que le chat est ouvert et que le welcome est supprimé
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('chatDraftMessage', { detail: { message: draftText.trim() } }));
-      }, 300);
+      }, 100); // Réduire le délai car on n'a plus besoin d'attendre l'injection du welcome
     } else {
       // Pas de message draft → injecter le welcome normalement
       injectWelcomeMessageIfNeeded(false);

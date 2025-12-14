@@ -93,6 +93,35 @@ export async function fetchProductById(idOrSlug: string): Promise<AssistantProdu
       }
     }
 
+    // Essayer par ID string (UUID ou autre format)
+    // Détecter un UUID : format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (36 caractères avec tirets)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+    
+    if (isUUID) {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', idOrSlug)
+        .single();
+
+      if (!error && data) {
+        console.log(`[ASSISTANT-PRODUCTS] Produit trouvé par UUID: ${idOrSlug} -> ${data.name}`);
+        return {
+          id: data.id.toString(),
+          name: data.name,
+          slug: data.slug,
+          category: data.category,
+          dailyPrice: data.daily_price_ttc,
+          deposit: data.deposit,
+          quantity: data.quantity || 0,
+          description: data.description,
+          images: data.images || [],
+        };
+      } else if (error) {
+        console.warn(`[ASSISTANT-PRODUCTS] Erreur recherche par UUID ${idOrSlug}:`, error);
+      }
+    }
+
     // Sinon, essayer par slug
     const { data, error } = await supabase
       .from('products')

@@ -20,6 +20,8 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
   const { addToCart } = useCart();
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
+  const [startTime, setStartTime] = useState<string>('19:00');
+  const [endTime, setEndTime] = useState<string>('23:00');
   const [quantity, setQuantity] = useState(1);
   const [rentalDays, setRentalDays] = useState(1);
 
@@ -48,13 +50,59 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
   const dailyPrice = parseFloat(product.price.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
   const total = dailyPrice * quantity * rentalDays;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!startDate || !endDate) {
       return;
     }
 
+    // Mapper les IDs de packs du catalogue vers les IDs utilisés dans le système
+    let productId = product.id.toString();
+    const isPack = productId.startsWith('pack-');
+    
+    if (isPack) {
+      const packMapping: Record<string, string> = {
+        'pack-1': 'pack_petit',
+        'pack-2': 'pack_confort',
+        'pack-3': 'pack_grand',
+        'pack-5': 'pack_maxi',
+      };
+      productId = packMapping[productId] || productId;
+      
+      // Pour les packs, les ajouter directement comme packs (PAS de décomposition)
+      if (productId !== 'pack_maxi') {
+        // Mapping des images des packs
+        const packImages: Record<string, string> = {
+          'pack_petit': '/pack2c.jpg',
+          'pack_confort': '/pack2cc.jpg',
+          'pack_grand': '/pack4cc.jpg',
+        };
+        
+        const cartItem: CartItem = {
+          productId,
+          productName: product.name,
+          productSlug: productId,
+          quantity,
+          rentalDays,
+          startDate,
+          endDate,
+          dailyPrice,
+          deposit: 0, // La caution sera calculée sur les produits du pack
+          addons: [],
+          images: packImages[productId] ? [packImages[productId]] : [product.image],
+          eventType: 'event',
+          startTime,
+          endTime,
+        };
+        
+        addToCart(cartItem);
+        onClose();
+        return;
+      }
+    }
+
+    // Pour les produits individuels, ajouter directement
     const cartItem: CartItem = {
-      productId: product.id.toString(),
+      productId,
       productName: product.name,
       productSlug: product.name.toLowerCase().replace(/\s+/g, '-'),
       quantity,
@@ -65,6 +113,9 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
       deposit: 500,
       addons: [],
       images: [product.image],
+      eventType: 'event',
+      startTime,
+      endTime,
     };
 
     addToCart(cartItem);
@@ -152,6 +203,17 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {language === 'fr' ? 'Heure de début' : 'Start time'}
+              </label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 {currentTexts.endDate}
               </label>
               <input
@@ -159,6 +221,17 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
                 value={endDate || ''}
                 onChange={(e) => setEndDate(e.target.value)}
                 min={startDate || new Date().toISOString().split('T')[0]}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {language === 'fr' ? 'Heure de fin' : 'End time'}
+              </label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
               />
             </div>

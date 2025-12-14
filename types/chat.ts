@@ -25,4 +25,5 @@ export interface DraftFinalConfig {
     department?: string;
   };
   needsConfirmation: boolean;
+  withInstallation?: boolean; // true si le client demande explicitement l'installation
 }

@@ -1,7 +1,7 @@
 // Utilitaire catalogue unique - source de vérité pour les prix
 // Utilisable côté serveur et client
 
-import { fetchProductById, fetchProductsByCategory, AssistantProduct } from './assistant-products';
+import { fetchProductById, fetchProductsByCategory, AssistantProduct, getPacksInfo } from './assistant-products';
 
 export type BillingUnit = 'event' | 'day';
 
@@ -18,10 +18,30 @@ export interface CatalogItem {
 
 /**
  * Récupère un item du catalogue par ID
- * Utilise Supabase comme source principale
+ * Utilise Supabase comme source principale, avec fallback vers les packs définis dans le code
  */
 export async function getCatalogItemById(id: string): Promise<CatalogItem | null> {
   try {
+    // Si c'est un pack (commence par pack_), chercher dans getPacksInfo() d'abord
+    if (id.startsWith('pack_')) {
+      const packs = getPacksInfo();
+      const pack = packs.find(p => p.id === id);
+      
+      if (pack) {
+        return {
+          id: pack.id,
+          name: pack.name,
+          unitPriceEur: pack.basePrice || 0,
+          billingUnit: 'event',
+          category: 'packs',
+          description: `Pack pour ${pack.capacity.min}-${pack.capacity.max} personnes. Composition: ${pack.composition.join(', ')}`,
+          deposit: 0, // Les packs n'ont pas de caution individuelle, elle est calculée sur les produits
+          slug: pack.id,
+        };
+      }
+    }
+    
+    // Sinon, chercher dans Supabase
     const product = await fetchProductById(id);
     if (!product) return null;
 

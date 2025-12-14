@@ -120,40 +120,69 @@ export default function FloatingChatWidget() {
 
     isSendingRef.current = true;
     
-    // Ajouter le message user (avec guard anti-doublon dans addUserMessage)
+    // CORRECTION BUG STATE ASYNC : Construire le tableau de messages AVANT de mettre à jour le state
+    const currentMessages = messagesRef.current;
+    
+    // Vérifier anti-doublon avant de construire
+    const lastUserMessage = [...currentMessages].reverse().find(m => m.role === 'user' && m.kind === 'normal');
+    if (lastUserMessage && lastUserMessage.content === trimmedContent && Date.now() - lastUserMessage.createdAt < 1000) {
+      console.log('[CHAT] Message déjà présent, ignoré');
+      isSendingRef.current = false;
+      return;
+    }
+    
+    const userMessage: ChatMessage = {
+      id: 'user-' + Date.now() + '-' + Math.random(),
+      role: 'user',
+      kind: 'normal',
+      content: trimmedContent,
+      createdAt: Date.now(),
+    };
+    
+    // Construire le tableau nextMessages avec le nouveau message user
+    const nextMessages = [...currentMessages, userMessage];
+    
+    // Filtrer pour l'API (exclure idle et welcome) et inclure 'kind'
+    const apiMessages = nextMessages
+      .filter(m => m.kind !== 'idle' && m.kind !== 'welcome')
+      .map(m => ({
+        role: m.role,
+        kind: m.kind, // IMPORTANT : inclure kind pour que l'API puisse détecter les messages user normaux
+        content: m.content,
+      }));
+
+    // LOGS DIAGNOSTIQUES
+    console.log('[CHAT] ===== DIAGNOSTIC AVANT APPEL API =====');
+    console.log('[CHAT] Longueur messages:', apiMessages.length);
+    console.log('[CHAT] Dernier message user:', apiMessages.filter(m => m.role === 'user').slice(-1)[0]);
+    console.log('[CHAT] Tous les messages:', apiMessages.map(m => `${m.role}: ${m.kind || 'normal'}: ${m.content.substring(0, 50)}...`));
+    console.log('[CHAT] ======================================');
+    
+    // Mettre à jour le state via addUserMessage (qui gère aussi le timer idle)
+    // On utilise addUserMessage pour l'UI, mais on envoie nextMessages à l'API (construit localement)
     const added = addUserMessage(trimmedContent);
     if (!added) {
       // Message dupliqué, ne pas envoyer
       isSendingRef.current = false;
       return;
     }
-
+    
+    // Mettre à jour messagesRef pour que les prochains appels utilisent le bon state
+    messagesRef.current = nextMessages;
+    
     // Marquer le draft comme traité
     draftProcessedRef.current = trimmedContent;
 
     setIsLoading(true);
 
     try {
-      // Attendre un peu pour que le state soit mis à jour
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
-      const currentMessages = messagesRef.current;
-      // Envoyer tous les messages SAUF les idle (pour le contexte)
-      // Les messages welcome sont inclus pour donner le contexte à l'assistant
-      const apiMessages = currentMessages
-        .filter(m => m.kind !== 'idle') // Exclure uniquement les idle
-        .map(m => ({
-          role: m.role,
-          content: m.content,
-        }));
 
-      console.log('[CHAT] Appel /api/chat avec', apiMessages.length, 'messages');
-
+      // Appel API avec le tableau nextMessages construit AVANT
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: apiMessages,
+          messages: apiMessages, // Utiliser le tableau construit AVANT setMessages
         }),
       });
 
@@ -187,12 +216,13 @@ export default function FloatingChatWidget() {
       addAssistantMessage(cleanContent, data.draftFinalConfig);
     } catch (error) {
       console.error('[CHAT] Erreur envoi message:', error);
-      addAssistantMessage('Je rencontre un souci technique. Peux-tu réessayer dans quelques secondes ?');
+      // UI fallback : ne pas afficher le welcome, afficher un message d'erreur clair
+      addAssistantMessage('Je n\'ai pas pu répondre. Réessaie ou contacte le support.');
     } finally {
       setIsLoading(false);
       isSendingRef.current = false;
     }
-  }, [isLoading, addUserMessage, addAssistantMessage, setIsLoading]);
+  }, [isLoading, addAssistantMessage, setIsLoading]);
 
   /**
    * Envoyer un message depuis l'input
@@ -228,12 +258,33 @@ export default function FloatingChatWidget() {
       const result = await applyFinalConfigToCart(draftConfig);
       
       if (result.ok && result.cart && result.cart.items && result.cart.items.length > 0) {
-        // Ajouter chaque item au panier via le contexte
-        for (const item of result.cart.items) {
-          addToCart(item);
-        }
+        // Vérifier que tous les items ont une image avant d'ajouter
+        const itemsWithImages = result.cart.items.map(item => {
+          // Garantir qu'il y a toujours au moins une image
+          if (!item.images || item.images.length === 0) {
+            console.warn(`[CHAT] Item ${item.productName} sans image, ajout image par défaut`);
+            return {
+              ...item,
+              images: ['/logo.svg'], // Image par défaut
+            };
+          }
+          return item;
+        });
         
-        console.log('[CHAT] Items ajoutés au panier avec succès');
+        // Ajouter tous les items au panier en une seule fois (batch)
+        // Cela évite d'ouvrir le mini cart plusieurs fois
+        itemsWithImages.forEach(item => {
+          addToCart(item);
+        });
+        
+        console.log(`[CHAT] ${itemsWithImages.length} items ajoutés au panier avec succès`);
+        
+        // Attendre un court délai pour que le panier soit mis à jour avant d'ouvrir le mini cart
+        // Le mini cart s'ouvrira automatiquement via l'événement productAddedToCart
+        setTimeout(() => {
+          // Forcer l'ouverture du mini cart si ce n'est pas déjà fait
+          window.dispatchEvent(new CustomEvent('productAddedToCart'));
+        }, 100);
         
         // Seulement maintenant on confirme
         addAssistantMessage('C\'est dans ton panier. Tu peux passer commande depuis l\'icône panier en haut.');
@@ -302,6 +353,10 @@ export default function FloatingChatWidget() {
         }
         
         console.log('[CHAT] Traitement draft message:', trimmedMessage);
+        
+        // Attendre un peu pour s'assurer que le welcome est supprimé et le state est à jour
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
         await sendMessage(trimmedMessage);
       }
     };

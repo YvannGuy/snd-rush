@@ -540,13 +540,8 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                     ) : (
                       <button
                         onClick={() => {
-                          if (product.category === 'packs') {
-                            // Pour les packs, rediriger vers la page pack
-                            const packId = product.id.toString().replace('pack-', '');
-                            window.location.href = `/packs/${packId}`;
-                          } else {
-                            setQuickAddModal({ isOpen: true, product });
-                          }
+                          // Pour tous les produits (y compris les packs), ouvrir le modal
+                          setQuickAddModal({ isOpen: true, product });
                         }}
                         className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors flex items-center justify-center gap-2 min-h-[44px]"
                       >

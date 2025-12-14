@@ -159,16 +159,20 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
                     key={`${item.productId}-${item.startDate}-${item.endDate}-${index}`}
                     className="flex gap-3 pb-3 border-b border-gray-100 last:border-0"
                   >
-                    {item.images && item.images.length > 0 && (
-                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                      {item.images && item.images.length > 0 ? (
                         <Image
                           src={item.images[0]}
                           alt={item.productName}
                           fill
                           className="object-cover"
                         />
-                      </div>
-                    )}
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                          <span className="text-gray-400 text-xs">♪</span>
+                        </div>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-gray-900 text-xs mb-1 truncate">
                         {item.productName}
