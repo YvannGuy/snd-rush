@@ -6,6 +6,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import CookieBanner from "@/components/CookieBanner";
 import FloatingChatWidget from "@/components/FloatingChatWidget";
+import GlobalButtons from "@/components/GlobalButtons";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -224,6 +225,9 @@ export default function RootLayout({
           
           {/* Chatbox flottante - Apparaît sur toutes les pages essentielles */}
           <FloatingChatWidget />
+          
+          {/* Boutons globaux - WhatsApp et Retour en haut - Apparaissent sur toutes les pages */}
+          <GlobalButtons />
         </CartProvider>
 
         {/* Cookie Banner - Apparaît sur toutes les pages */}

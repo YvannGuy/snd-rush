@@ -18,8 +18,6 @@ import TutosSection from '@/components/TutosSection';
 import NewsletterBanner from '@/components/NewsletterBanner';
 import Footer from '@/components/Footer';
 import SectionAnimation from '@/components/SectionAnimation';
-import ScrollToTopButton from '@/components/ScrollToTopButton';
-import WhatsAppButton from '@/components/WhatsAppButton';
 import ReservationModal from '@/components/ReservationModal';
 import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
@@ -209,9 +207,6 @@ export default function Home() {
         onLegalNoticeClick={() => setLegalNoticeModal(true)}
         onRentalConditionsClick={() => setRentalConditionsModal(true)}
       />
-
-      <ScrollToTopButton />
-      <WhatsAppButton language={language} />
 
       {/* Modals */}
       <ReservationModal 

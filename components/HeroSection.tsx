@@ -21,8 +21,9 @@ export default function HeroSection({ language }: HeroSectionProps) {
 
   const texts = {
     fr: {
-      title1: 'Location de sonorisation, lumière & DJ gear',
-      title2: 'en 2 minutes',
+      title1: 'La location ',
+      title2: 'sono express',
+      title3: ' à paris',
       subtitle: 'Leader de la location de sonorisation express à paris, SoundRush accompagne vos évènements urgents comme planifiés. Matériel professionnel, réactivité immédiate et équipes disponibles 24h/24 - 7j/7 sur paris et région parisienne',
       cta: 'Voir les packs & tarifs',
       ctaSecondary: 'Trouver mon pack',
@@ -32,6 +33,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
     en: {
       title1: 'Sound system, lighting & DJ gear rental',
       title2: 'in 2 minutes',
+      title3: '',
       subtitle: 'Leader in express sound system rental in Paris, SoundRush supports your urgent and planned events. Professional equipment, immediate responsiveness and teams available 24/7 in Paris and the Paris region',
       cta: 'View packs & prices',
       ctaSecondary: 'Find my pack',
@@ -75,8 +77,13 @@ export default function HeroSection({ language }: HeroSectionProps) {
                 <div className="space-y-6 sm:space-y-8">
                   <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-tight">
                     {texts[language].title1}
-                    <br />
                     <span className="text-[#F2431E]">{texts[language].title2}</span>
+                    {texts[language].title3 && (
+                      <>
+                        <br />
+                        <span className="text-white">{texts[language].title3}</span>
+                      </>
+                    )}
                   </h1>
 
                   <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white/90 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0">

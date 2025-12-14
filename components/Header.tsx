@@ -201,7 +201,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-1 lg:gap-1">
               {/* CTA Principal - Réserver */}
               <Button
                 asChild
@@ -225,7 +225,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-3"
+                        className="flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-2"
                         aria-label={texts[language].account}
                       >
                         <User className="h-5 w-5" />
@@ -273,7 +273,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsSignModalOpen(true)}
-                    className="flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-3"
+                    className="flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-2"
                     aria-label="Se connecter"
                   >
                     <User className="h-5 w-5" />
@@ -313,7 +313,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="hidden lg:flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-3"
+                    className="hidden lg:flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-2"
                   >
                     <Globe className="h-5 w-5" />
                     <span className="font-semibold text-sm uppercase">{language === 'fr' ? 'Fra' : 'Eng'}</span>

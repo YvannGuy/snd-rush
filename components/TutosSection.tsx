@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface TutosSectionProps {
@@ -15,31 +16,35 @@ export default function TutosSection({ language }: TutosSectionProps) {
       tutorials: [
         {
           id: 1,
-          title: 'Guide complet : Installation et configuration d\'une console de mixage',
-          description: 'Découvrez comment installer et configurer votre console de mixage pour obtenir le meilleur son lors de vos événements.',
-          image: '/platinedj.jpg',
-          category: 'Console'
+          slug: 'installation-pack-s',
+          title: 'Guide complet : Installation d\'un Pack S pour petit événement',
+          description: 'Découvrez comment installer et configurer un Pack S SoundRush pour vos événements de 30 à 70 personnes. Guide étape par étape avec nos experts.',
+          image: '/pack2c.jpg',
+          category: 'Installation'
         },
         {
           id: 2,
-          title: 'Comment protéger ses oreilles pendant un concert ou un festival ?',
-          description: 'Acouphènes, oreilles qui sifflent ou baisse d\'audition passagère : découvrez les meilleures pratiques pour protéger votre audition.',
-          image: '/concert.jpg',
-          category: 'Protection'
+          slug: 'installation-caisson-basse',
+          title: 'Comment installer et optimiser un caisson de basse ?',
+          description: 'Guide professionnel pour installer correctement un caisson de basse FBT X-Sub. Optimisation du placement, réglages et connexions pour un son optimal.',
+          image: '/caissonbasse.png',
+          category: 'Installation'
         },
         {
           id: 3,
-          title: 'Les techniques d\'enregistrement d\'un piano',
-          description: 'Enregistrer un piano, c\'est à la fois un art et une aventure. Les conseils présentés ici décryptent toutes les techniques essentielles.',
-          image: '/installation.jpg',
-          category: 'Enregistrement'
+          slug: 'entretien-micro-sans-fil',
+          title: 'Entretien et dépannage des micros sans fil : Guide complet',
+          description: 'Apprenez à entretenir vos micros sans fil Mipro et Shure. Dépannage des problèmes courants, changement de piles, réglage des fréquences.',
+          image: '/microshure.png',
+          category: 'Entretien'
         },
         {
           id: 4,
-          title: 'DJ : Comment résoudre un problème de latence audio ?',
-          description: 'Vous venez de brancher votre contrôleur DJ favori, prêt à lancer vos premiers sets, mais quelque chose ne va pas ? Découvrez les solutions.',
-          image: '/platinedj2.jpg',
-          category: 'DJ'
+          slug: 'configuration-sonorisation-evenement',
+          title: 'Configuration sonorisation événement : Guide professionnel',
+          description: 'Comment configurer une sonorisation complète pour votre événement ? Réglages console, placement enceintes, gestion des micros et optimisation du son.',
+          image: '/installation.jpg',
+          category: 'Configuration'
         }
       ]
     },
@@ -49,31 +54,35 @@ export default function TutosSection({ language }: TutosSectionProps) {
       tutorials: [
         {
           id: 1,
-          title: 'Complete guide: Installation and setup of a mixing console',
-          description: 'Learn how to install and configure your mixing console to get the best sound for your events.',
-          image: '/platinedj.jpg',
-          category: 'Console'
+          slug: 'installation-pack-s',
+          title: 'Complete guide: Installing a Pack S for small events',
+          description: 'Learn how to install and configure a SoundRush Pack S for your events with 30 to 70 people. Step-by-step guide with our experts.',
+          image: '/pack2c.jpg',
+          category: 'Installation'
         },
         {
           id: 2,
-          title: 'How to protect your ears during a concert or festival?',
-          description: 'Tinnitus, ringing ears or temporary hearing loss: discover best practices to protect your hearing.',
-          image: '/concert.jpg',
-          category: 'Protection'
+          slug: 'installation-caisson-basse',
+          title: 'How to install and optimize a subwoofer?',
+          description: 'Professional guide to properly install an FBT X-Sub subwoofer. Placement optimization, settings and connections for optimal sound.',
+          image: '/caissonbasse.png',
+          category: 'Installation'
         },
         {
           id: 3,
-          title: 'Piano recording techniques',
-          description: 'Recording a piano is both an art and an adventure. The advice presented here deciphers all essential techniques.',
-          image: '/installation.jpg',
-          category: 'Recording'
+          slug: 'entretien-micro-sans-fil',
+          title: 'Wireless microphone maintenance and troubleshooting: Complete guide',
+          description: 'Learn how to maintain your Mipro and Shure wireless microphones. Troubleshooting common issues, battery replacement, frequency adjustment.',
+          image: '/microshure.png',
+          category: 'Maintenance'
         },
         {
           id: 4,
-          title: 'DJ: How to solve an audio latency problem?',
-          description: 'You\'ve just plugged in your favorite DJ controller, ready to launch your first sets, but something\'s wrong? Discover the solutions.',
-          image: '/platinedj2.jpg',
-          category: 'DJ'
+          slug: 'configuration-sonorisation-evenement',
+          title: 'Event sound system configuration: Professional guide',
+          description: 'How to configure a complete sound system for your event? Console settings, speaker placement, microphone management and sound optimization.',
+          image: '/installation.jpg',
+          category: 'Configuration'
         }
       ]
     }
@@ -99,13 +108,9 @@ export default function TutosSection({ language }: TutosSectionProps) {
         {/* Tutorials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {currentTexts.tutorials.map((tutorial) => (
+            <Link href={`/guides/${tutorial.slug}`} key={tutorial.id}>
             <Card
-              key={tutorial.id}
               className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group border border-gray-100 flex flex-col h-full"
-              onClick={() => {
-                // Pour l'instant, pas de navigation
-                // TODO: Ajouter la navigation vers la page du tutoriel
-              }}
             >
               {/* Image */}
               <div className="relative w-full h-48 overflow-hidden bg-gray-200">
@@ -133,6 +138,7 @@ export default function TutosSection({ language }: TutosSectionProps) {
                 </p>
               </CardContent>
             </Card>
+            </Link>
           ))}
         </div>
       </div>

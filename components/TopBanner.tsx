@@ -14,7 +14,8 @@ export default function TopBanner({ language }: TopBannerProps) {
     fr: {
       catalogue: 'Catalogue',
       packs: 'Packs',
-      urgency: 'Urgence 24/7',
+      tutos: 'Tutos',
+      testimonials: 'Avis clients',
       faq: 'FAQ',
       contact: {
         phone: 'Appeler',
@@ -24,7 +25,8 @@ export default function TopBanner({ language }: TopBannerProps) {
     en: {
       catalogue: 'Catalog',
       packs: 'Packs',
-      urgency: 'Emergency 24/7',
+      tutos: 'Tutorials',
+      testimonials: 'Client reviews',
       faq: 'FAQ',
       contact: {
         phone: 'Call',
@@ -65,16 +67,28 @@ export default function TopBanner({ language }: TopBannerProps) {
             {currentTexts.packs}
           </Link>
           <Link 
-            href="/#urgency"
+            href="/#tutos"
             onClick={(e) => {
               if (pathname === '/') {
                 e.preventDefault();
-                scrollToSection('urgency');
+                scrollToSection('tutos');
               }
             }}
             className="text-white hover:text-white/80 transition-colors font-medium text-xs sm:text-sm lg:text-base whitespace-nowrap"
           >
-            {currentTexts.urgency}
+            {currentTexts.tutos}
+          </Link>
+          <Link 
+            href="/#testimonials"
+            onClick={(e) => {
+              if (pathname === '/') {
+                e.preventDefault();
+                scrollToSection('testimonials');
+              }
+            }}
+            className="text-white hover:text-white/80 transition-colors font-medium text-xs sm:text-sm lg:text-base whitespace-nowrap"
+          >
+            {currentTexts.testimonials}
           </Link>
           <Link 
             href="/#faq"
