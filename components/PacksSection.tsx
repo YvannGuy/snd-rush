@@ -123,22 +123,22 @@ export default function PacksSection({ language }: PacksSectionProps) {
       },
       {
         id: 5,
-        name: "Pack XL Maxi / Sur mesure",
-        tagline: "Solution sur mesure pour très grands événements",
-        description: "Pack XL avec sonorisation professionnelle complète pour événements de plus de 300 personnes.",
+        name: "Pack Custom",
+        tagline: "Composez votre pack sur mesure",
+        description: "Sélectionnez uniquement le matériel dont vous avez besoin. Devis personnalisé adapté à votre événement avec accompagnement complet.",
         priceParis: "Sur devis",
         priceHorsParis: "Sur devis",
         featured: false,
         image: "/concert.jpg",
         features: [
-          "Sonorisation pro",
-          "Micros HF & instruments",
-          "Technicien & régie",
-          "Logistique complète"
+          "Sélectionnez uniquement ce dont vous avez besoin",
+          "Matériel adapté à votre événement",
+          "Devis personnalisé selon vos besoins",
+          "Accompagnement de A à Z"
         ],
         highlight: "Caution : selon devis",
-        ideal: "Plus de 300 personnes",
-        note: "Parfait pour très grands événements, festivals, concerts, événements corporate."
+        ideal: "Tous types d'événements",
+        note: "Parfait pour composer une solution sur mesure adaptée à vos besoins spécifiques."
       },
       {
         id: 1,

@@ -279,12 +279,9 @@ export default function FloatingChatWidget() {
         
         console.log(`[CHAT] ${itemsWithImages.length} items ajoutés au panier avec succès`);
         
-        // Attendre un court délai pour que le panier soit mis à jour avant d'ouvrir le mini cart
+        // Dispatcher immédiatement l'événement pour mettre à jour le compteur sans délai
         // Le mini cart s'ouvrira automatiquement via l'événement productAddedToCart
-        setTimeout(() => {
-          // Forcer l'ouverture du mini cart si ce n'est pas déjà fait
-          window.dispatchEvent(new CustomEvent('productAddedToCart'));
-        }, 100);
+        window.dispatchEvent(new CustomEvent('productAddedToCart'));
         
         // Seulement maintenant on confirme
         addAssistantMessage('C\'est dans ton panier. Tu peux passer commande depuis l\'icône panier en haut.');

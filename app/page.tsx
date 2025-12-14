@@ -14,6 +14,7 @@ import GallerySection from '@/components/GallerySection';
 import TrustedBySection from '@/components/TrustedBySection';
 import TrustindexReviews from '@/components/TrustindexReviews';
 import FaqInteractive from '@/components/FaqInteractive';
+import TutosSection from '@/components/TutosSection';
 import Footer from '@/components/Footer';
 import SectionAnimation from '@/components/SectionAnimation';
 import ScrollToTopButton from '@/components/ScrollToTopButton';
@@ -184,6 +185,11 @@ export default function Home() {
         {/* Section Témoignages Clients */}
         <SectionAnimation delay={0.5}>
           <TrustindexReviews />
+        </SectionAnimation>
+
+        {/* Section Tutos */}
+        <SectionAnimation delay={0.55}>
+          <TutosSection language={language} />
         </SectionAnimation>
 
         {/* Section Questions Fréquentes */}

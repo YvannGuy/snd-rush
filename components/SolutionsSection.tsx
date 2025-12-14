@@ -77,16 +77,16 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
         },
         {
           id: 5,
-          name: 'Pack XL Maxi / Sur mesure',
+          name: 'Pack Custom',
           price: 'Sur mesure',
-          capacity: 'Plus de 300 personnes',
+          capacity: 'Composez votre pack sur mesure',
           includes: [
-            'Sonorisation pro',
-            'Micros HF & instruments',
-            'Technicien & régie',
-            'Logistique complète'
+            'Sélectionnez uniquement ce dont vous avez besoin',
+            'Matériel adapté à votre événement',
+            'Devis personnalisé selon vos besoins',
+            'Accompagnement de A à Z'
           ],
-          cta: 'Utiliser l\'assistant SoundRush Paris',
+          cta: 'Composez votre pack',
           ctaType: 'quote' as const
         }
       ]
@@ -159,16 +159,16 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
         },
         {
           id: 5,
-          name: 'Pack XL Maxi / Custom',
+          name: 'Pack Custom',
           price: 'On quote',
-          capacity: 'More than 300 people',
+          capacity: 'Compose your custom pack',
           includes: [
-            'Pro sound system',
-            'Wireless mics & instruments',
-            'Technician & control room',
-            'Complete logistics'
+            'Select only what you need',
+            'Equipment tailored to your event',
+            'Personalized quote based on your needs',
+            'Full support from A to Z'
           ],
-          cta: 'Use SoundRush Paris Assistant',
+          cta: 'Compose your pack',
           ctaType: 'quote' as const
         }
       ]
@@ -182,7 +182,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
   };
 
   const handleRequestQuote = () => {
-    window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
+    window.location.href = '/catalogue';
   };
 
   return (

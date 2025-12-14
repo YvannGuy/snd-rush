@@ -447,7 +447,6 @@ export default function MesFacturesPage() {
                           <TableRow>
                             <TableHead>{currentTexts.invoice}</TableHead>
                             <TableHead>{currentTexts.date}</TableHead>
-                            <TableHead>{language === 'fr' ? 'Réservation liée' : 'Linked reservation'}</TableHead>
                             <TableHead>{currentTexts.amount}</TableHead>
                             <TableHead>{currentTexts.status}</TableHead>
                             <TableHead className="text-right">{language === 'fr' ? 'Action' : 'Action'}</TableHead>
@@ -471,29 +470,6 @@ export default function MesFacturesPage() {
                                     <Calendar className="w-4 h-4 text-gray-400" />
                                     {formatDate(order.created_at)}
                                   </div>
-                                </TableCell>
-                                <TableCell>
-                                  {(() => {
-                                    // Utiliser le mapping pré-calculé
-                                    const reservationId = orderToReservationMap[order.id] || order.reservation_id;
-
-                                    // Vérifier si la réservation existe dans notre map
-                                    if (reservationId && reservationsMap[reservationId]) {
-                                      return (
-                                        <Button
-                                          asChild
-                                          variant="link"
-                                          className="text-[#F2431E] hover:text-[#E63A1A] p-0 h-auto font-medium"
-                                        >
-                                          <Link href={`/mes-reservations/${reservationId}`}>
-                                            {language === 'fr' ? 'Voir réservation' : 'View reservation'}
-                                          </Link>
-                                        </Button>
-                                      );
-                                    }
-                                    
-                                    return <span className="text-gray-400">—</span>;
-                                  })()}
                                 </TableCell>
                                 <TableCell className="font-semibold">
                                   <span className="text-gray-900">{parseFloat(order.total || 0).toFixed(2)}€</span>

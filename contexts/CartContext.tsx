@@ -314,23 +314,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const { total, depositTotal } = calculateTotals(newItems);
       const newCart = { items: newItems, total, depositTotal };
       
-      // Marquer qu'un produit vient d'être ajouté (pour dispatcher l'événement après le rendu)
-      if (isNewItem) {
-        productAddedRef.current = true;
-      }
+      // Marquer qu'un produit vient d'être ajouté (nouveau ou quantité augmentée)
+      // Cela déclenchera la mise à jour du compteur
+      productAddedRef.current = true;
       
       return newCart;
     });
   };
 
-  // Dispatcher l'événement productAddedToCart après le rendu
+  // Dispatcher l'événement productAddedToCart après chaque changement du panier
   useEffect(() => {
+    // Dispatcher immédiatement pour une mise à jour instantanée du compteur
+    window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
+    
     if (productAddedRef.current) {
       productAddedRef.current = false;
-      // Utiliser setTimeout pour différer après le rendu
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('productAddedToCart', { detail: cart }));
-      }, 0);
+      // Dispatcher aussi productAddedToCart pour ouvrir le mini cart
+      window.dispatchEvent(new CustomEvent('productAddedToCart', { detail: cart }));
     }
   }, [cart]);
 

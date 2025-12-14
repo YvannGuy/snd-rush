@@ -39,11 +39,17 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-  const { getCartItemCount } = useCart();
+  const { getCartItemCount, cart } = useCart();
   const [cartCount, setCartCount] = useState(0);
   const { user } = useUser();
   const { signOut } = useAuth();
   const [userFirstName, setUserFirstName] = useState<string>('');
+
+  // Synchroniser le compteur avec le panier en temps réel
+  useEffect(() => {
+    const count = getCartItemCount();
+    setCartCount(count);
+  }, [cart, getCartItemCount]);
 
   useEffect(() => {
     // Initialiser le compteur au montage
@@ -61,11 +67,12 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     };
     
     const handleProductAdded = () => {
+      // Mettre à jour le compteur immédiatement
+      setCartCount(getCartItemCount());
       // Ne pas ouvrir le MiniCart si on est déjà sur la page panier
       if (pathname !== '/panier') {
         setIsMiniCartOpen(true);
       }
-      setCartCount(getCartItemCount());
     };
     
     // Écouter l'événement avec le type correct
@@ -78,7 +85,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       window.removeEventListener('productAddedToCart', handleProductAdded);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]); // Inclure pathname pour vérifier la page actuelle
+  }, [pathname, getCartItemCount]); // Inclure getCartItemCount pour la réactivité
 
   // Récupérer le prénom de l'utilisateur
   useEffect(() => {
@@ -276,6 +283,28 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               
               {/* Séparateur vertical */}
               <div className="hidden lg:block w-px h-6 bg-white/20" />
+
+              {/* Panier - Desktop only */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMiniCartOpen(true)}
+                className="hidden lg:flex relative text-white hover:text-[#F2431E] hover:bg-white/10"
+                aria-label="Panier"
+              >
+                <ShoppingCart className="h-6 w-6" />
+                {cartCount > 0 && (
+                  <Badge 
+                    variant="default" 
+                    className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center p-0 animate-pulse"
+                  >
+                    {cartCount > 9 ? '9+' : cartCount}
+                  </Badge>
+                )}
+              </Button>
+              
+              {/* Séparateur vertical */}
+              <div className="hidden lg:block w-px h-6 bg-white/20" />
               
               {/* Language switcher - Desktop only */}
               <DropdownMenu>
@@ -309,31 +338,44 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              
-              {/* Séparateur vertical */}
-              <div className="hidden lg:block w-px h-6 bg-white/20" />
-
-              {/* Panier - Desktop only */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMiniCartOpen(true)}
-                className="hidden lg:flex relative text-white hover:text-[#F2431E] hover:bg-white/10"
-                aria-label="Panier"
-              >
-                <ShoppingCart className="h-6 w-6" />
-                {cartCount > 0 && (
-                  <Badge 
-                    variant="default" 
-                    className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center p-0 animate-pulse"
-                  >
-                    {cartCount > 9 ? '9+' : cartCount}
-                  </Badge>
-                )}
-              </Button>
 
               {/* Mobile buttons - Panier, Auth et Toggle regroupés */}
               <div className="lg:hidden flex items-center gap-0">
+                {/* Language switcher Mobile */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-2"
+                    >
+                      <Globe className="h-5 w-5" />
+                      <span className="font-semibold text-xs uppercase">{language === 'fr' ? 'Fra' : 'Eng'}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-32">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (language !== 'fr') toggleLanguage();
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <span className="font-semibold">Français</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (language !== 'en') toggleLanguage();
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <span className="font-semibold">English</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                {/* Séparateur vertical mobile */}
+                <div className="w-px h-6 bg-white/20" />
+                
                 {/* Panier Mobile */}
                 <Button
                   variant="ghost"

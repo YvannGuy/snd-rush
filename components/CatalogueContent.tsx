@@ -304,9 +304,9 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
       },
       {
         id: 'pack-5',
-        name: 'Pack XL Maxi / Sur mesure',
+        name: 'Pack Custom',
         category: 'packs',
-        description: 'Plus de 300 personnes. Sonorisation pro, micros HF, technicien & régie, logistique complète',
+        description: 'Composez votre pack sur mesure. Sélectionnez uniquement ce dont vous avez besoin, matériel adapté à votre événement, devis personnalisé',
         price: 'Sur devis',
         image: '/concert.jpg',
         capacity: '300+',
