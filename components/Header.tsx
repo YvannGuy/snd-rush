@@ -48,6 +48,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   const { user } = useUser();
   const { signOut } = useAuth();
   const [userFirstName, setUserFirstName] = useState<string>('');
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   // Synchroniser le compteur avec le panier en temps réel
   useEffect(() => {
@@ -91,11 +92,12 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, getCartItemCount]); // Inclure getCartItemCount pour la réactivité
 
-  // Récupérer le prénom de l'utilisateur
+  // Récupérer le prénom de l'utilisateur et vérifier le rôle admin
   useEffect(() => {
-    const fetchUserFirstName = async () => {
+    const fetchUserData = async () => {
       if (!user?.id || !supabase) {
         setUserFirstName('');
+        setIsAdmin(false);
         return;
       }
 
@@ -103,24 +105,39 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
         // Essayer de récupérer depuis user_profiles
         const { data: profile } = await supabase
           .from('user_profiles')
-          .select('first_name')
+          .select('first_name, role')
           .eq('user_id', user.id)
           .single();
 
-        if (profile?.first_name) {
-          // Capitaliser la première lettre
-          const firstName = profile.first_name.charAt(0).toUpperCase() + profile.first_name.slice(1).toLowerCase();
-          setUserFirstName(firstName);
-        } else if (user.user_metadata?.first_name) {
-          const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
-          setUserFirstName(firstName);
-        } else if (user.email) {
-          // Fallback: utiliser la partie avant @ de l'email
-          const emailPart = user.email.split('@')[0];
-          setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
+        if (profile) {
+          // Vérifier le rôle admin
+          setIsAdmin(profile.role === 'admin');
+
+          if (profile.first_name) {
+            // Capitaliser la première lettre
+            const firstName = profile.first_name.charAt(0).toUpperCase() + profile.first_name.slice(1).toLowerCase();
+            setUserFirstName(firstName);
+          } else if (user.user_metadata?.first_name) {
+            const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
+            setUserFirstName(firstName);
+          } else if (user.email) {
+            // Fallback: utiliser la partie avant @ de l'email
+            const emailPart = user.email.split('@')[0];
+            setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
+          }
+        } else {
+          setIsAdmin(false);
+          if (user.user_metadata?.first_name) {
+            const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
+            setUserFirstName(firstName);
+          } else if (user.email) {
+            const emailPart = user.email.split('@')[0];
+            setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
+          }
         }
       } catch (error) {
-        console.error('Erreur récupération prénom:', error);
+        console.error('Erreur récupération données utilisateur:', error);
+        setIsAdmin(false);
         // Fallback vers user_metadata ou email
         if (user.user_metadata?.first_name) {
           const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
@@ -133,9 +150,10 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     };
 
     if (user) {
-      fetchUserFirstName();
+      fetchUserData();
     } else {
       setUserFirstName('');
+      setIsAdmin(false);
     }
   }, [user]);
 
@@ -168,6 +186,11 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       contracts: 'Mes contrats',
       invoices: 'Mes factures',
       signOut: 'Déconnexion',
+      adminPanel: 'Panneau admin',
+      adminReservations: 'Réservations',
+      adminClients: 'Clients',
+      adminCatalog: 'Catalogue',
+      adminInvoices: 'Factures',
     },
     en: {
       catalogue: 'Catalogue',
@@ -181,6 +204,11 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       contracts: 'My contracts',
       invoices: 'My invoices',
       signOut: 'Sign out',
+      adminPanel: 'Admin panel',
+      adminReservations: 'Reservations',
+      adminClients: 'Clients',
+      adminCatalog: 'Catalog',
+      adminInvoices: 'Invoices',
     }
   };
 
@@ -236,30 +264,77 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href="/dashboard"
-                          className="cursor-pointer"
-                        >
-                          {texts[language].account}
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href="/mes-reservations"
-                          className="cursor-pointer"
-                        >
-                          {texts[language].reservations}
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href="/mes-contrats"
-                          className="cursor-pointer"
-                        >
-                          {texts[language].contracts}
-                        </Link>
-                      </DropdownMenuItem>
+                      {isAdmin ? (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminPanel}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin/reservations"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminReservations}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin/clients"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminClients}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin/catalogue"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminCatalog}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin/factures"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminInvoices}
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/dashboard"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].account}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/mes-reservations"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].reservations}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/mes-contrats"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].contracts}
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={async () => {
@@ -400,30 +475,77 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href="/dashboard"
-                          className="cursor-pointer"
-                        >
-                          {texts[language].account}
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href="/mes-reservations"
-                          className="cursor-pointer"
-                        >
-                          {texts[language].reservations}
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href="/mes-contrats"
-                          className="cursor-pointer"
-                        >
-                          {texts[language].contracts}
-                        </Link>
-                      </DropdownMenuItem>
+                      {isAdmin ? (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminPanel}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin/reservations"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminReservations}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin/clients"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminClients}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin/catalogue"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminCatalog}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin/factures"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminInvoices}
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/dashboard"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].account}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/mes-reservations"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].reservations}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/mes-contrats"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].contracts}
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={async () => {

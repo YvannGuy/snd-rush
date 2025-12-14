@@ -565,21 +565,11 @@ export default function MesEtatsLieuxPage() {
         <Dialog open={true} onOpenChange={closeCarousel}>
           <DialogContent className="max-w-5xl max-h-[95vh] p-0">
             <DialogHeader className="px-6 pt-6 pb-4">
-              <div className="flex items-center justify-between">
-                <DialogTitle>
-                  {carouselState.phase === 'before' 
-                    ? (language === 'fr' ? 'Photos avant' : 'Photos before')
-                    : (language === 'fr' ? 'Photos après' : 'Photos after')}
-                </DialogTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={closeCarousel}
-                  className="h-8 w-8"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              <DialogTitle>
+                {carouselState.phase === 'before' 
+                  ? (language === 'fr' ? 'Photos avant' : 'Photos before')
+                  : (language === 'fr' ? 'Photos après' : 'Photos after')}
+              </DialogTitle>
               <p className="text-sm text-gray-500 mt-1">
                 {carouselState.index + 1} / {carouselState.photos.length}
               </p>

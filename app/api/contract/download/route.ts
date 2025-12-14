@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import puppeteer from 'puppeteer';
+import { jsPDF } from 'jspdf';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -152,6 +152,28 @@ async function getProviderSignature(): Promise<string> {
   }
 }
 
+// Fonction helper pour diviser le texte en lignes
+function splitText(doc: jsPDF, text: string, maxWidth: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  words.forEach((word) => {
+    const testLine = currentLine + (currentLine ? ' ' : '') + word;
+    const width = doc.getTextWidth(testLine);
+    if (width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  });
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  return lines;
+}
+
 async function generateContractPDF(reservation: any, customerName: string, customerEmail: string, customerPhone: string = ''): Promise<Buffer> {
   const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
   const contractDate = new Date(reservation.created_at || new Date()).toLocaleDateString('fr-FR', {
@@ -177,9 +199,6 @@ async function generateContractPDF(reservation: any, customerName: string, custo
 
   // Charger la signature du prestataire
   const providerSignatureBase64 = await getProviderSignature();
-  const providerSignatureImg = providerSignatureBase64 
-    ? `<img src="data:image/jpeg;base64,${providerSignatureBase64}" alt="Signature SoundRush" style="max-width: 200px; max-height: 80px; object-fit: contain; margin-top: 10px;" />`
-    : '';
 
   // Date de signature client
   const clientSignedDate = reservation.client_signed_at 
@@ -192,391 +211,423 @@ async function generateContractPDF(reservation: any, customerName: string, custo
       })
     : '';
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Contrat de Location ${reservationNumber}</title>
-  <style>
-    @page {
-      margin: 50px;
-      size: A4;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      line-height: 1.6;
-      color: #333;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-      border-bottom: 3px solid #F2431E;
-      padding-bottom: 20px;
-    }
-    .header h1 {
-      font-size: 28px;
-      font-weight: bold;
-      margin: 0;
-      color: #F2431E;
-    }
-    .header p {
-      font-size: 14px;
-      color: #666;
-      margin-top: 10px;
-    }
-    .contract-info {
-      margin-bottom: 30px;
-    }
-    .contract-info h2 {
-      font-size: 18px;
-      font-weight: bold;
-      color: #F2431E;
-      margin-bottom: 15px;
-      border-bottom: 2px solid #F2431E;
-      padding-bottom: 5px;
-    }
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid #eee;
-    }
-    .info-label {
-      font-weight: bold;
-      color: #555;
-      width: 40%;
-    }
-    .info-value {
-      color: #333;
-      width: 60%;
-      text-align: right;
-    }
-    .conditions-section {
-      margin-top: 40px;
-      padding: 20px;
-      background: #f9fafb;
-      border-left: 4px solid #F2431E;
-    }
-    .conditions-section h3 {
-      font-size: 16px;
-      font-weight: bold;
-      color: #F2431E;
-      margin-bottom: 15px;
-    }
-    .conditions-section p {
-      font-size: 12px;
-      line-height: 1.8;
-      margin-bottom: 10px;
-      color: #555;
-    }
-    .signature-section {
-      margin-top: 50px;
-      display: flex;
-      justify-content: space-between;
-      padding-top: 30px;
-      border-top: 2px solid #ddd;
-    }
-    .signature-box {
-      width: 45%;
-      text-align: center;
-    }
-    .signature-box p {
-      margin-top: 60px;
-      border-top: 1px solid #333;
-      padding-top: 5px;
-      font-size: 12px;
-    }
-    .footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 2px solid #ddd;
-      font-size: 10px;
-      color: #666;
-      text-align: center;
-    }
-    .highlight {
-      background: #fff3cd;
-      padding: 15px;
-      border-left: 4px solid #F2431E;
-      margin: 20px 0;
-      font-size: 11px;
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>CONTRAT DE LOCATION</h1>
-    <p>N° ${reservationNumber}</p>
-    <p>Date d'établissement : ${contractDate}</p>
-  </div>
+  // Créer le PDF avec jsPDF
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
 
-  <div class="contract-info">
-    <h2>INFORMATIONS CONTRACTUELLES</h2>
-    
-    <div class="info-row">
-      <span class="info-label">Locataire :</span>
-      <span class="info-value">${customerName || 'Non spécifié'}</span>
-    </div>
-    
-    <div class="info-row">
-      <span class="info-label">Email :</span>
-      <span class="info-value">${customerEmail || 'Non spécifié'}</span>
-    </div>
-    
-    <div class="info-row">
-      <span class="info-label">Téléphone :</span>
-      <span class="info-value">${customerPhone || 'Non spécifié'}</span>
-    </div>
-    
-    <div class="info-row">
-      <span class="info-label">Prestataire :</span>
-      <span class="info-value">SoundRush - Guy Location Events</span>
-    </div>
-    
-    <div class="info-row">
-      <span class="info-label">SIRET :</span>
-      <span class="info-value">799596176000217</span>
-    </div>
-    
-    <div class="info-row">
-      <span class="info-label">Adresse :</span>
-      <span class="info-value">78 avenue des Champs-Élysées, 75008 Paris</span>
-    </div>
-  </div>
+  const pageWidth = 210;
+  const pageHeight = 297;
+  const margin = 20;
+  const maxWidth = pageWidth - (margin * 2);
+  let yPos = margin;
 
-  <div class="contract-info">
-    <h2>DÉTAILS DE LA LOCATION</h2>
-    
-    <div class="info-row">
-      <span class="info-label">Date de début :</span>
-      <span class="info-value">${startDate}</span>
-    </div>
-    
-    <div class="info-row">
-      <span class="info-label">Date de fin :</span>
-      <span class="info-value">${endDate}</span>
-    </div>
-    
-    <div class="info-row">
-      <span class="info-label">Durée :</span>
-      <span class="info-value">${daysDiff} jour${daysDiff > 1 ? 's' : ''}</span>
-    </div>
-    
-    ${reservation.address ? `
-    <div class="info-row">
-      <span class="info-label">Adresse de livraison :</span>
-      <span class="info-value">${reservation.address}</span>
-    </div>
-    ` : ''}
-    
-    ${reservation.pack_id ? `
-    <div class="info-row">
-      <span class="info-label">Pack réservé :</span>
-      <span class="info-value">Pack ${reservation.pack_id}</span>
-    </div>
-    ` : ''}
-  </div>
+  const checkPageBreak = (requiredSpace: number) => {
+    if (yPos + requiredSpace > pageHeight - margin) {
+      doc.addPage();
+      yPos = margin;
+    }
+  };
 
-  <div class="contract-info">
-    <h2>CONDITIONS FINANCIÈRES</h2>
-    
-    ${reservation.total_price ? `
-    <div class="info-row">
-      <span class="info-label">Montant total TTC :</span>
-      <span class="info-value"><strong>${parseFloat(reservation.total_price).toFixed(2)}€</strong></span>
-    </div>
-    ` : ''}
-    
-    ${reservation.deposit_amount ? `
-    <div class="info-row">
-      <span class="info-label">Dépôt de garantie :</span>
-      <span class="info-value">${parseFloat(reservation.deposit_amount).toFixed(2)}€</span>
-    </div>
-    ` : ''}
-    
-    <div class="info-row">
-      <span class="info-label">Statut :</span>
-      <span class="info-value">${reservation.status === 'CONFIRMED' || reservation.status === 'confirmed' ? 'Confirmée' : reservation.status}</span>
-    </div>
-  </div>
+  // En-tête
+  doc.setFontSize(24);
+  doc.setTextColor(242, 67, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CONTRAT DE LOCATION', pageWidth / 2, yPos, { align: 'center' });
+  yPos += 10;
 
-  <div class="highlight">
-    <strong>IMPORTANT :</strong> En signant ce contrat, le locataire reconnaît avoir pris connaissance et accepté l'intégralité des Conditions Générales de Vente et de Location disponibles sur www.sndrush.com/cgv. Ces conditions sont opposables et font partie intégrante du présent contrat.
-  </div>
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`N° ${reservationNumber}`, pageWidth / 2, yPos, { align: 'center' });
+  yPos += 6;
+  doc.text(`Date d'établissement : ${contractDate}`, pageWidth / 2, yPos, { align: 'center' });
+  yPos += 15;
 
-  <div class="conditions-section">
-    <h3>CONDITIONS GÉNÉRALES DE LOCATION</h3>
-    
-    <p><strong>ARTICLE 1 - Champ d'application</strong></p>
-    <p>• Les présentes Conditions Générales de Vente (CGV) s'appliquent à toute prestation de location, livraison, installation et assistance technique d'équipements audiovisuels proposée par Guy Location Events, agissant sous la marque SND Rush.</p>
-    <p>• Elles prévalent sur tout autre document, sauf accord écrit contraire du prestataire.</p>
-    <p>• Prestataire : Guy Location Events – SIRET 799596176000217 – 78 avenue des Champs-Élysées, 75008 Paris.</p>
-    <p>• La signature d'un devis et le versement de l'acompte valent acceptation pleine et entière des présentes CGV.</p>
-    
-    <p style="margin-top: 15px;"><strong>ARTICLE 2 - Prix</strong></p>
-    <p>• Les prix sont exprimés en euros TTC.</p>
-    <p>• Ils tiennent compte d'éventuelles réductions ou promotions applicables au jour de la commande.</p>
-    <p>• Les frais de traitement, transport et livraison sont facturés en supplément et précisés sur le devis.</p>
-    <p>• Une facture est établie et remise au client à la fourniture des services.</p>
-    <p>• Les devis sont valables 7 jours après leur établissement.</p>
-    <p>• Les tarifs sont susceptibles d'être ajustés avant validation du devis, notamment en cas de variation des coûts de transport, carburant ou main-d'œuvre.</p>
-    
-    <p style="margin-top: 15px;"><strong>ARTICLE 3 - Commandes</strong></p>
-    <p>• Demande par e-mail ou téléphone précisant : matériel, date, lieu, durée, services souhaités.</p>
-    <p>• Envoi d'un devis personnalisé, valable 7 jours.</p>
-    <p>• Commande ferme après signature du devis et versement de 30 % d'acompte.</p>
-    <p>• Solde de 70 % à régler au plus tard 24 h avant la prestation ou le jour même.</p>
-    <p>• Livraison, installation et désinstallation assurées par nos équipes.</p>
-    <p>• Facturation transmise après la prestation.</p>
-    <p>• Toute réclamation doit être formulée dans un délai maximum de 48 h après la livraison, sauf vice caché dûment prouvé.</p>
-    
-    <p style="margin-top: 15px;"><strong>ARTICLE 4 - Conditions de paiement</strong></p>
-    <p>• Acompte de 30 % à la commande (signature du devis).</p>
-    <p>• Solde de 70 % à la livraison ou au plus tard le jour de la prestation.</p>
-    <p>• Paiement exclusivement par carte bancaire sécurisée.</p>
-    <p>• Aucun paiement par chèque n'est accepté.</p>
-    <p>• En cas de retard de paiement, des pénalités au taux légal en vigueur seront appliquées.</p>
-    <p>• Tout rejet de paiement entraînera des frais de gestion de 25 €.</p>
-    <p>• Le prestataire se réserve le droit de suspendre la prestation en cas de non-paiement du solde.</p>
-    
-    <p style="margin-top: 15px;"><strong>ARTICLE 5 - Caution</strong></p>
-    <p>• Une empreinte bancaire est demandée à titre de caution de sécurité, équivalente à la valeur totale du matériel confié (indiquée sur le devis).</p>
-    <p>• Cette empreinte n'est pas prélevée, sauf en cas de perte, casse, dégradation du matériel ou de non-respect des conditions de location.</p>
-    <p>• Aucune caution par chèque ou espèces ne sera acceptée.</p>
-    <p>• Exception : en cas de choix de l'option "installation par technicien" ou de pack clé en main, aucune caution ne sera demandée, la présence du technicien sur place garantissant la sécurité du matériel.</p>
-    
-    <p style="margin-top: 15px;"><strong>ARTICLE 6 - Fourniture des prestations</strong></p>
-    <p>• Services concernés : location, livraison, installation, assistance technique.</p>
-    <p>• Délai standard : 3 à 7 jours ouvrés après validation du devis et versement de l'acompte.</p>
-    <p>• Interventions possibles du lundi au samedi, entre 8h et 20h.</p>
-    <p>• Zone d'intervention : Paris, Île-de-France et zones limitrophes.</p>
-    <p>• Le client signe un bon de livraison attestant la conformité du matériel.</p>
-    <p>• Un état du matériel est effectué à la livraison et à la reprise. Toute dégradation constatée donnera lieu à facturation selon le barème du prestataire.</p>
-    
-    <p style="margin-top: 15px;"><strong>ARTICLE 7 - État des lieux, tests et restitution du matériel</strong></p>
-    <p>• Un état des lieux contradictoire et des tests de fonctionnement sont réalisés à la livraison et à la reprise, en présence du client uniquement si une installation est prévue.</p>
-    <p>• Si le client n'a pas choisi l'option installation, les tests sont effectués en atelier avant le départ du matériel. Un rapport de test ou des photos peuvent être produits à titre de preuve.</p>
-    <p>• Le matériel est réputé livré en parfait état de fonctionnement dès sa remise au client ou à son représentant.</p>
-    <p>• Le client s'engage à vérifier le contenu au moment de la réception et à signaler immédiatement toute anomalie visible (manque, casse, erreur de modèle, etc.).</p>
-    <p>• En l'absence de signalement dans l'heure suivant la réception, le matériel est réputé conforme et en bon état.</p>
-    <p>• La signature du bon de livraison vaut acceptation du matériel en bon état de fonctionnement et conforme au devis.</p>
-    <p>• À la reprise, un test de contrôle est réalisé par le prestataire.</p>
-    <p>• Tout élément manquant, détérioré, sale ou non fonctionnel sera facturé selon le barème en vigueur, sauf si un vice préexistant est prouvé.</p>
-    <p>• En cas d'absence du client lors de la reprise, l'état des lieux réalisé par l'équipe Guy Location Events fera foi.</p>
-    <p>• Les photos, vidéos et rapports techniques réalisés par le prestataire pourront servir de preuve contractuelle en cas de litige.</p>
-    <p>• Le client reste pleinement responsable du matériel jusqu'à sa restitution effective au prestataire.</p>
-    
-    <p style="margin-top: 15px;"><strong>ARTICLE 8 - Dégradations et facturation des dommages esthétiques</strong></p>
-    <p>• Tout dommage constaté lors de la reprise du matériel (rayures, chocs, traces, salissures, casse, déformation, oxydation, etc.) fera l'objet d'une évaluation selon le barème interne de dégradation établi par Guy Location Events.</p>
-    <p>• Ce barème classe les dégradations par niveaux de gravité (mineure, moyenne, majeure) et détermine le montant forfaitaire applicable.</p>
-    <p>• Une rayure légère mais visible ou toute marque esthétique non présente avant la location peut entraîner une facturation de remise en état, même si le matériel reste fonctionnel.</p>
-    <p>• En cas de contestation, les photos ou vidéos datées réalisées avant et après la prestation feront foi.</p>
-    <p>• Les coûts de réparation, nettoyage ou remplacement sont déductibles de la caution (empreinte bancaire) et pourront être accompagnés d'un justificatif de coût (devis fournisseur, ticket de réparation).</p>
-    <p>• En cas de détérioration majeure ou de perte du matériel, le client sera facturé à hauteur de la valeur à neuf ou de remplacement du matériel concerné.</p>
-    
-    <p style="margin-top: 15px;"><strong>ARTICLE 9 - Annulation et modification</strong></p>
-    <p><strong>➤ Annulation par le client</strong></p>
-    <p>• Plus de 7 jours avant la date prévue : remboursement intégral du montant versé.</p>
-    <p>• Entre 3 et 7 jours avant : remboursement à hauteur de 50 %.</p>
-    <p>• Moins de 3 jours avant : aucun remboursement ne sera accordé.</p>
-    <p>• Le client est invité à prévenir le plus tôt possible en cas de changement d'avis ou d'imprévu afin de libérer la date.</p>
-    <p><strong>➤ Modification du lieu ou de l'horaire</strong></p>
-    <p>Possible jusqu'à 5 jours avant la prestation, uniquement avec accord écrit du prestataire, et sous réserve de disponibilité du matériel et du personnel.</p>
-    <p><strong>➤ Annulation par le prestataire</strong></p>
-    <p>• En cas d'imprévu exceptionnel (panne, indisponibilité du personnel ou du matériel), Guy Location Events s'engage à proposer une solution de remplacement équivalente.</p>
-    <p>• Si aucune alternative n'est possible, un remboursement intégral sera effectué sous 14 jours.</p>
-    <p style="font-style: italic; margin-top: 10px;">Conformément à l'article L221-28 du Code de la consommation, le délai de rétractation de 14 jours ne s'applique pas aux prestations de services datées ou personnalisées.</p>
-    
-    <p style="margin-top: 15px;"><strong>ARTICLE 10 - Réclamations</strong></p>
-    <p>Toute réclamation doit être adressée dans un délai maximum de 48 h après la prestation :</p>
-    <p>• Par e-mail à contact@guylocationevents.com (photos justificatives appréciées).</p>
-    <p>• Ou par courrier recommandé à : 78 avenue des Champs-Élysées, 75008 Paris.</p>
-    <p>• Un accusé de réception sera envoyé sous 5 jours ouvrés.</p>
-    <p>• Réponse ou solution sous 15 jours ouvrés maximum.</p>
-    <p>• La date de réception de la réclamation fera foi.</p>
-    
-    <p style="margin-top: 15px;"><strong>ARTICLE 11 - Frais d'attente, absence et responsabilité du matériel</strong></p>
-    <p>• En cas d'absence du client ou de son représentant lors de la reprise du matériel, des frais d'attente de 25 € par tranche de 30 minutes (soit 50 € par heure) pourront être facturés à compter de l'heure prévue de récupération.</p>
-    <p>• Le client doit notifier par écrit à Guy Location Events (par e-mail, SMS ou message signé) le nom, prénom et numéro de téléphone du représentant autorisé à assister à la reprise du matériel.</p>
-    <p>• Si aucune notification préalable n'a été faite, la personne présente sur place ne sera pas considérée comme représentant officiel et l'état des lieux réalisé par l'équipe Guy Location Events fera foi sans possibilité de contestation ultérieure.</p>
-    <p>• Si le client reste injoignable ou ne permet pas la récupération du matériel dans un délai de 2 heures, un forfait de déplacement supplémentaire de 80 € sera appliqué pour un nouveau passage.</p>
-    <p>• Le matériel reste sous la responsabilité du client jusqu'à sa restitution effective à Guy Location Events.</p>
-    <p>• En cas de contestation sur l'heure réelle de disponibilité du matériel (coursier, retard, etc.), le client devra fournir un justificatif daté, vérifiable et opposable.</p>
-    <p>• Guy Location Events se réserve le droit de refuser tout justificatif non fiable, falsifié ou non vérifiable.</p>
-    <p>• À défaut de preuve recevable, l'heure initialement prévue de récupération fera foi.</p>
-    <p>• Toute décision du prestataire en la matière est souveraine et ne pourra donner lieu à compensation, sauf erreur manifeste dûment prouvée.</p>
-    <p style="margin-top: 10px;"><strong>Responsabilité du matériel en période d'attente</strong></p>
-    <p>• Le matériel demeure sous la garde et la responsabilité exclusive du client tant qu'il n'a pas été récupéré.</p>
-    <p>• Toute perte, casse, vol, dégradation ou disparition survenant pendant la période d'attente reste entièrement à la charge du client.</p>
-    <p>• Les frais de réparation, de remplacement ou de nettoyage seront facturés sur justificatif.</p>
-    <p>• En cas de litige, les relevés internes de Guy Location Events (horodatages, appels, SMS, présence sur site, etc.) feront foi.</p>
-    
-    <p style="margin-top: 20px; font-size: 11px; color: #666;">
-      <strong>Pour consulter l'intégralité des Conditions Générales de Vente :</strong><br>
-      www.sndrush.com/cgv<br>
-      Contact : contact@guylocationevents.com | 06 51 08 49 94
-    </p>
-  </div>
+  // Ligne de séparation
+  doc.setDrawColor(242, 67, 30);
+  doc.setLineWidth(1);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  yPos += 10;
 
-  <div class="signature-section">
-    <div class="signature-box">
-      <p><strong>Le Locataire</strong><br>${customerName || '________________'}</p>
-      ${reservation.client_signature ? `
-        <div style="margin-top: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f9fafb;">
-          <p style="font-size: 10px; color: #666; margin-bottom: 5px;">Signature du client :</p>
-          <p style="font-size: 14px; font-style: italic; color: #333; font-weight: 600;">${reservation.client_signature}</p>
-          ${clientSignedDate ? `<p style="font-size: 9px; color: #999; margin-top: 5px;">Signé le ${clientSignedDate}</p>` : ''}
-        </div>
-      ` : '<p style="margin-top: 40px; color: #999; font-size: 11px;">En attente de signature</p>'}
-    </div>
-    <div class="signature-box">
-      <p><strong>SoundRush - Guy Location Events</strong><br>Le Prestataire</p>
-      <div style="margin-top: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f9fafb;">
-        <p style="font-size: 10px; color: #666; margin-bottom: 5px;">Signature du prestataire :</p>
-        ${providerSignatureImg || '<p style="font-size: 11px; color: #999; font-style: italic;">Signature SoundRush</p>'}
-      </div>
-    </div>
-  </div>
+  // Informations contractuelles
+  doc.setFontSize(16);
+  doc.setTextColor(242, 67, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.text('INFORMATIONS CONTRACTUELLES', margin, yPos);
+  yPos += 8;
 
-  <div class="footer">
-    <p>Contrat établi le ${contractDate} | N° ${reservationNumber}</p>
-    <p>SoundRush - Guy Location Events | SIRET 799596176000217 | 78 avenue des Champs-Élysées, 75008 Paris</p>
-    <p>contact@guylocationevents.com | 06 51 08 49 94 | www.sndrush.com</p>
-  </div>
-</body>
-</html>
-  `;
+  doc.setFontSize(11);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
 
-  try {
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  const infoItems = [
+    { label: 'Locataire :', value: customerName || 'Non spécifié' },
+    { label: 'Email :', value: customerEmail || 'Non spécifié' },
+    { label: 'Téléphone :', value: customerPhone || 'Non spécifié' },
+    { label: 'Prestataire :', value: 'SoundRush - Guy Location Events' },
+    { label: 'SIRET :', value: '799596176000217' },
+    { label: 'Adresse :', value: '78 avenue des Champs-Élysées, 75008 Paris' },
+  ];
+
+  infoItems.forEach((item) => {
+    checkPageBreak(8);
+    const labelWidth = doc.getTextWidth(item.label);
+    doc.setFont('helvetica', 'bold');
+    doc.text(item.label, margin, yPos);
+    doc.setFont('helvetica', 'normal');
+    const valueLines = splitText(doc, item.value, maxWidth - labelWidth - 10);
+    valueLines.forEach((line) => {
+      doc.text(line, margin + labelWidth + 5, yPos);
+      yPos += 6;
     });
-    
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      margin: {
-        top: '50px',
-        right: '50px',
-        bottom: '50px',
-        left: '50px',
-      },
-      printBackground: true,
-    });
-    
-    await browser.close();
-    
-    return Buffer.from(pdfBuffer);
-  } catch (error) {
-    console.error('Erreur génération PDF avec puppeteer:', error);
-    throw error;
+    yPos += 2;
+  });
+
+  yPos += 5;
+
+  // Détails de la location
+  checkPageBreak(15);
+  doc.setFontSize(16);
+  doc.setTextColor(242, 67, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.text('DÉTAILS DE LA LOCATION', margin, yPos);
+  yPos += 8;
+
+  doc.setFontSize(11);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+
+  const locationItems = [
+    { label: 'Date de début :', value: startDate },
+    { label: 'Date de fin :', value: endDate },
+    { label: 'Durée :', value: `${daysDiff} jour${daysDiff > 1 ? 's' : ''}` },
+  ];
+
+  if (reservation.address) {
+    locationItems.push({ label: 'Adresse de livraison :', value: reservation.address });
   }
-}
+  if (reservation.pack_id) {
+    locationItems.push({ label: 'Pack réservé :', value: `Pack ${reservation.pack_id}` });
+  }
 
+  locationItems.forEach((item) => {
+    checkPageBreak(8);
+    const labelWidth = doc.getTextWidth(item.label);
+    doc.setFont('helvetica', 'bold');
+    doc.text(item.label, margin, yPos);
+    doc.setFont('helvetica', 'normal');
+    const valueLines = splitText(doc, item.value, maxWidth - labelWidth - 10);
+    valueLines.forEach((line) => {
+      doc.text(line, margin + labelWidth + 5, yPos);
+      yPos += 6;
+    });
+    yPos += 2;
+  });
+
+  yPos += 5;
+
+  // Conditions financières
+  checkPageBreak(15);
+  doc.setFontSize(16);
+  doc.setTextColor(242, 67, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CONDITIONS FINANCIÈRES', margin, yPos);
+  yPos += 8;
+
+  doc.setFontSize(11);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+
+  if (reservation.total_price) {
+    checkPageBreak(8);
+    const labelWidth = doc.getTextWidth('Montant total TTC :');
+    doc.setFont('helvetica', 'bold');
+    doc.text('Montant total TTC :', margin, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${parseFloat(reservation.total_price).toFixed(2)}€`, pageWidth - margin, yPos, { align: 'right' });
+    yPos += 8;
+  }
+
+  if (reservation.deposit_amount) {
+    checkPageBreak(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Dépôt de garantie :', margin, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${parseFloat(reservation.deposit_amount).toFixed(2)}€`, pageWidth - margin, yPos, { align: 'right' });
+    yPos += 8;
+  }
+
+  checkPageBreak(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Statut :', margin, yPos);
+  doc.setFont('helvetica', 'normal');
+  const statusText = reservation.status === 'CONFIRMED' || reservation.status === 'confirmed' ? 'Confirmée' : reservation.status;
+  doc.text(statusText, pageWidth - margin, yPos, { align: 'right' });
+  yPos += 10;
+
+  // Message important
+  checkPageBreak(20);
+  doc.setFillColor(255, 243, 205);
+  doc.rect(margin, yPos - 5, pageWidth - (margin * 2), 15, 'F');
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'bold');
+  const importantText = "IMPORTANT : En signant ce contrat, le locataire reconnaît avoir pris connaissance et accepté l'intégralité des Conditions Générales de Vente et de Location disponibles sur www.sndrush.com/cgv.";
+  const importantLines = splitText(doc, importantText, maxWidth - 10);
+  importantLines.forEach((line) => {
+    doc.text(line, margin + 5, yPos);
+    yPos += 5;
+  });
+  yPos += 5;
+
+  // Conditions générales (version complète)
+  checkPageBreak(30);
+  doc.setFontSize(14);
+  doc.setTextColor(242, 67, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CONDITIONS GÉNÉRALES DE LOCATION', margin, yPos);
+  yPos += 8;
+
+  doc.setFontSize(8);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+
+  const cgvTexts = [
+    { title: "ARTICLE 1 - Champ d'application", content: [
+      "Les présentes Conditions Générales de Vente (CGV) s'appliquent à toute prestation de location, livraison, installation et assistance technique d'équipements audiovisuels proposée par Guy Location Events, agissant sous la marque SND Rush.",
+      "Elles prévalent sur tout autre document, sauf accord écrit contraire du prestataire.",
+      "Prestataire : Guy Location Events – SIRET 799596176000217 – 78 avenue des Champs-Élysées, 75008 Paris.",
+      "La signature d'un devis et le versement de l'acompte valent acceptation pleine et entière des présentes CGV."
+    ]},
+    { title: "ARTICLE 2 - Prix", content: [
+      "Les prix sont exprimés en euros TTC.",
+      "Ils tiennent compte d'éventuelles réductions ou promotions applicables au jour de la commande.",
+      "Les frais de traitement, transport et livraison sont facturés en supplément et précisés sur le devis.",
+      "Une facture est établie et remise au client à la fourniture des services.",
+      "Les devis sont valables 7 jours après leur établissement.",
+      "Les tarifs sont susceptibles d'être ajustés avant validation du devis, notamment en cas de variation des coûts de transport, carburant ou main-d'œuvre."
+    ]},
+    { title: "ARTICLE 3 - Commandes", content: [
+      "Demande par e-mail ou téléphone précisant : matériel, date, lieu, durée, services souhaités.",
+      "Envoi d'un devis personnalisé, valable 7 jours.",
+      "Commande ferme après signature du devis et versement de 30 % d'acompte.",
+      "Solde de 70 % à régler au plus tard 24 h avant la prestation ou le jour même.",
+      "Livraison, installation et désinstallation assurées par nos équipes.",
+      "Facturation transmise après la prestation.",
+      "Toute réclamation doit être formulée dans un délai maximum de 48 h après la livraison, sauf vice caché dûment prouvé."
+    ]},
+    { title: "ARTICLE 4 - Conditions de paiement", content: [
+      "Acompte de 30 % à la commande (signature du devis).",
+      "Solde de 70 % à la livraison ou au plus tard le jour de la prestation.",
+      "Paiement exclusivement par carte bancaire sécurisée.",
+      "Aucun paiement par chèque n'est accepté.",
+      "En cas de retard de paiement, des pénalités au taux légal en vigueur seront appliquées.",
+      "Tout rejet de paiement entraînera des frais de gestion de 25 €.",
+      "Le prestataire se réserve le droit de suspendre la prestation en cas de non-paiement du solde."
+    ]},
+    { title: "ARTICLE 5 - Caution", content: [
+      "Une empreinte bancaire est demandée à titre de caution de sécurité, équivalente à la valeur totale du matériel confié (indiquée sur le devis).",
+      "Cette empreinte n'est pas prélevée, sauf en cas de perte, casse, dégradation du matériel ou de non-respect des conditions de location.",
+      "Aucune caution par chèque ou espèces ne sera acceptée.",
+      "Exception : en cas de choix de l'option \"installation par technicien\" ou de pack clé en main, aucune caution ne sera demandée, la présence du technicien sur place garantissant la sécurité du matériel."
+    ]},
+    { title: "ARTICLE 6 - Fourniture des prestations", content: [
+      "Services concernés : location, livraison, installation, assistance technique.",
+      "Délai standard : 3 à 7 jours ouvrés après validation du devis et versement de l'acompte.",
+      "Interventions possibles du lundi au samedi, entre 8h et 20h.",
+      "Zone d'intervention : Paris, Île-de-France et zones limitrophes.",
+      "Le client signe un bon de livraison attestant la conformité du matériel.",
+      "Un état du matériel est effectué à la livraison et à la reprise. Toute dégradation constatée donnera lieu à facturation selon le barème du prestataire."
+    ]},
+    { title: "ARTICLE 7 - État des lieux, tests et restitution du matériel", content: [
+      "Un état des lieux contradictoire et des tests de fonctionnement sont réalisés à la livraison et à la reprise, en présence du client uniquement si une installation est prévue.",
+      "Si le client n'a pas choisi l'option installation, les tests sont effectués en atelier avant le départ du matériel. Un rapport de test ou des photos peuvent être produits à titre de preuve.",
+      "Le matériel est réputé livré en parfait état de fonctionnement dès sa remise au client ou à son représentant.",
+      "Le client s'engage à vérifier le contenu au moment de la réception et à signaler immédiatement toute anomalie visible (manque, casse, erreur de modèle, etc.).",
+      "En l'absence de signalement dans l'heure suivant la réception, le matériel est réputé conforme et en bon état.",
+      "La signature du bon de livraison vaut acceptation du matériel en bon état de fonctionnement et conforme au devis.",
+      "À la reprise, un test de contrôle est réalisé par le prestataire.",
+      "Tout élément manquant, détérioré, sale ou non fonctionnel sera facturé selon le barème en vigueur, sauf si un vice préexistant est prouvé.",
+      "En cas d'absence du client lors de la reprise, l'état des lieux réalisé par l'équipe Guy Location Events fera foi.",
+      "Les photos, vidéos et rapports techniques réalisés par le prestataire pourront servir de preuve contractuelle en cas de litige.",
+      "Le client reste pleinement responsable du matériel jusqu'à sa restitution effective au prestataire."
+    ]},
+    { title: "ARTICLE 8 - Dégradations et facturation des dommages esthétiques", content: [
+      "Tout dommage constaté lors de la reprise du matériel (rayures, chocs, traces, salissures, casse, déformation, oxydation, etc.) fera l'objet d'une évaluation selon le barème interne de dégradation établi par Guy Location Events.",
+      "Ce barème classe les dégradations par niveaux de gravité (mineure, moyenne, majeure) et détermine le montant forfaitaire applicable.",
+      "Une rayure légère mais visible ou toute marque esthétique non présente avant la location peut entraîner une facturation de remise en état, même si le matériel reste fonctionnel.",
+      "En cas de contestation, les photos ou vidéos datées réalisées avant et après la prestation feront foi.",
+      "Les coûts de réparation, nettoyage ou remplacement sont déductibles de la caution (empreinte bancaire) et pourront être accompagnés d'un justificatif de coût (devis fournisseur, ticket de réparation).",
+      "En cas de détérioration majeure ou de perte du matériel, le client sera facturé à hauteur de la valeur à neuf ou de remplacement du matériel concerné."
+    ]},
+    { title: "ARTICLE 9 - Annulation et modification", content: [
+      "➤ Annulation par le client",
+      "Plus de 7 jours avant la date prévue : remboursement intégral du montant versé.",
+      "Entre 3 et 7 jours avant : remboursement à hauteur de 50 %.",
+      "Moins de 3 jours avant : aucun remboursement ne sera accordé.",
+      "Le client est invité à prévenir le plus tôt possible en cas de changement d'avis ou d'imprévu afin de libérer la date.",
+      "➤ Modification du lieu ou de l'horaire",
+      "Possible jusqu'à 5 jours avant la prestation, uniquement avec accord écrit du prestataire, et sous réserve de disponibilité du matériel et du personnel.",
+      "➤ Annulation par le prestataire",
+      "En cas d'imprévu exceptionnel (panne, indisponibilité du personnel ou du matériel), Guy Location Events s'engage à proposer une solution de remplacement équivalente.",
+      "Si aucune alternative n'est possible, un remboursement intégral sera effectué sous 14 jours.",
+      "Conformément à l'article L221-28 du Code de la consommation, le délai de rétractation de 14 jours ne s'applique pas aux prestations de services datées ou personnalisées."
+    ]},
+    { title: "ARTICLE 10 - Réclamations", content: [
+      "Toute réclamation doit être adressée dans un délai maximum de 48 h après la prestation :",
+      "Par e-mail à contact@guylocationevents.com (photos justificatives appréciées).",
+      "Ou par courrier recommandé à : 78 avenue des Champs-Élysées, 75008 Paris.",
+      "Un accusé de réception sera envoyé sous 5 jours ouvrés.",
+      "Réponse ou solution sous 15 jours ouvrés maximum.",
+      "La date de réception de la réclamation fera foi."
+    ]},
+    { title: "ARTICLE 11 - Frais d'attente, absence et responsabilité du matériel", content: [
+      "En cas d'absence du client ou de son représentant lors de la reprise du matériel, des frais d'attente de 25 € par tranche de 30 minutes (soit 50 € par heure) pourront être facturés à compter de l'heure prévue de récupération.",
+      "Le client doit notifier par écrit à Guy Location Events (par e-mail, SMS ou message signé) le nom, prénom et numéro de téléphone du représentant autorisé à assister à la reprise du matériel.",
+      "Si aucune notification préalable n'a été faite, la personne présente sur place ne sera pas considérée comme représentant officiel et l'état des lieux réalisé par l'équipe Guy Location Events fera foi sans possibilité de contestation ultérieure.",
+      "Si le client reste injoignable ou ne permet pas la récupération du matériel dans un délai de 2 heures, un forfait de déplacement supplémentaire de 80 € sera appliqué pour un nouveau passage.",
+      "Le matériel reste sous la responsabilité du client jusqu'à sa restitution effective à Guy Location Events.",
+      "En cas de contestation sur l'heure réelle de disponibilité du matériel (coursier, retard, etc.), le client devra fournir un justificatif daté, vérifiable et opposable.",
+      "Guy Location Events se réserve le droit de refuser tout justificatif non fiable, falsifié ou non vérifiable.",
+      "À défaut de preuve recevable, l'heure initialement prévue de récupération fera foi.",
+      "Toute décision du prestataire en la matière est souveraine et ne pourra donner lieu à compensation, sauf erreur manifeste dûment prouvée.",
+      "Responsabilité du matériel en période d'attente",
+      "Le matériel demeure sous la garde et la responsabilité exclusive du client tant qu'il n'a pas été récupéré.",
+      "Toute perte, casse, vol, dégradation ou disparition survenant pendant la période d'attente reste entièrement à la charge du client.",
+      "Les frais de réparation, de remplacement ou de nettoyage seront facturés sur justificatif.",
+      "En cas de litige, les relevés internes de Guy Location Events (horodatages, appels, SMS, présence sur site, etc.) feront foi."
+    ]},
+    { title: "ARTICLE 12 - Données personnelles", content: [
+      "Données collectées : nom, prénom, adresse, email, téléphone, informations de paiement.",
+      "Conservation : 5 ans.",
+      "Droits d'accès, de rectification et de suppression via : contact@guylocationevents.com.",
+      "Traitement sous 30 jours.",
+      "Les données sont hébergées dans l'Union Européenne et ne font l'objet d'aucun transfert hors UE.",
+      "Destinataires : prestataires de paiement et techniciens, dans la limite nécessaire à l'exécution du service."
+    ]},
+    { title: "ARTICLE 13 - Propriété intellectuelle", content: [
+      "Le contenu du site www.sndrush.com (textes, visuels, logo, éléments graphiques) est la propriété exclusive de Guy Location Events.",
+      "Toute reproduction ou utilisation non autorisée est strictement interdite et pourra donner lieu à poursuites judiciaires."
+    ]},
+    { title: "ARTICLE 14 - Droit applicable et juridiction compétente", content: [
+      "Les présentes CGV sont régies par le droit français.",
+      "Tout différend relatif à leur interprétation ou à leur exécution relève de la compétence exclusive des tribunaux de Paris."
+    ]},
+    { title: "ARTICLE 15 - Litiges et médiation", content: [
+      "Avant toute procédure, les parties s'engagent à rechercher une solution amiable.",
+      "En cas de désaccord persistant :",
+      "Médiation : CNPM – Médiation de la Consommation",
+      "Adresse : 3 rue J. Constant Milleret, 42000 Saint-Étienne",
+      "Email : contact-admin@cnpm-mediation-consommation.eu",
+      "Pour tout litige non éligible à la médiation (client professionnel, impayé, contentieux juridique, etc.), Guy Location Events bénéficie d'une assurance protection juridique auprès d'Orus, pouvant fournir assistance et représentation légale si nécessaire."
+    ]}
+  ];
+
+  cgvTexts.forEach((article) => {
+    checkPageBreak(15);
+    // Titre de l'article
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(242, 67, 30);
+    doc.text(article.title, margin, yPos);
+    yPos += 6;
+    
+    // Contenu de l'article
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    article.content.forEach((paragraph) => {
+      checkPageBreak(8);
+      const lines = splitText(doc, paragraph, maxWidth);
+      lines.forEach((line) => {
+        doc.text(line, margin, yPos);
+        yPos += 4;
+      });
+      yPos += 2;
+    });
+    yPos += 3;
+  });
+
+  yPos += 10;
+
+  // Signatures
+  checkPageBreak(40);
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.5);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  yPos += 10;
+
+  // Signature client
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Le Locataire', margin, yPos);
+  yPos += 6;
+  doc.setFont('helvetica', 'normal');
+  doc.text(customerName || '________________', margin, yPos);
+  yPos += 8;
+
+  if (reservation.client_signature) {
+    doc.setFontSize(9);
+    doc.text('Signature du client :', margin, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'italic');
+    doc.text(reservation.client_signature, margin, yPos);
+    yPos += 5;
+    if (clientSignedDate) {
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Signé le ${clientSignedDate}`, margin, yPos);
+      doc.setTextColor(0, 0, 0);
+    }
+    yPos += 10;
+  } else {
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text('En attente de signature', margin, yPos);
+    doc.setTextColor(0, 0, 0);
+    yPos += 10;
+  }
+
+  // Signature prestataire
+  const signatureX = pageWidth / 2 + 20;
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('SoundRush - Guy Location Events', signatureX, yPos - 20);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Le Prestataire', signatureX, yPos - 14);
+  
+  if (providerSignatureBase64) {
+    try {
+      // Ajouter l'image de signature
+      const imgData = `data:image/jpeg;base64,${providerSignatureBase64}`;
+      doc.addImage(imgData, 'JPEG', signatureX, yPos - 8, 50, 20);
+      yPos += 15;
+    } catch (e) {
+      console.error('Erreur ajout signature image:', e);
+      doc.setFontSize(9);
+      doc.text('Signature SoundRush', signatureX, yPos - 5);
+    }
+  } else {
+    doc.setFontSize(9);
+    doc.text('Signature SoundRush', signatureX, yPos - 5);
+  }
+
+  // Pied de page
+  doc.addPage();
+  yPos = pageHeight - 30;
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Contrat établi le ${contractDate} | N° ${reservationNumber}`, pageWidth / 2, yPos, { align: 'center' });
+  yPos += 5;
+  doc.text('SoundRush - Guy Location Events | SIRET 799596176000217 | 78 avenue des Champs-Élysées, 75008 Paris', pageWidth / 2, yPos, { align: 'center' });
+  yPos += 5;
+  doc.text('contact@guylocationevents.com | 06 51 08 49 94 | www.sndrush.com', pageWidth / 2, yPos, { align: 'center' });
+
+  // Convertir en Buffer
+  const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+  return pdfBuffer;
+}

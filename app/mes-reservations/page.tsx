@@ -37,6 +37,10 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PACKS } from '@/lib/packs';
 import { getCatalogItemById } from '@/lib/catalog';
+import CancelRequestModal from '@/components/reservations/CancelRequestModal';
+import ChangeRequestModal from '@/components/reservations/ChangeRequestModal';
+import { getReservationStatusUI, shouldShowActionButtons } from '@/lib/reservationStatus';
+import { XCircle, Edit } from 'lucide-react';
 
 export default function MesReservationsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -52,6 +56,9 @@ export default function MesReservationsPage() {
   const { isCollapsed: isSidebarCollapsed, toggleSidebar: handleToggleSidebar } = useSidebarCollapse();
   const [selectedReservation, setSelectedReservation] = useState<any | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isChangeModalOpen, setIsChangeModalOpen] = useState(false);
+  const [reservationForAction, setReservationForAction] = useState<any | null>(null);
 
   // Rediriger vers l'accueil si l'utilisateur n'est pas connecté
   useEffect(() => {
@@ -167,15 +174,41 @@ export default function MesReservationsPage() {
     setIsDetailsModalOpen(true);
   };
 
-  // Obtenir le statut traduit
+  // Obtenir le statut traduit (utilise le nouveau système)
   const getStatusText = (status: string, lang: 'fr' | 'en') => {
-    const statusMap: { [key: string]: { fr: string; en: string } } = {
-      'confirmed': { fr: 'Confirmée', en: 'Confirmed' },
-      'pending': { fr: 'En attente', en: 'Pending' },
-      'cancelled': { fr: 'Annulée', en: 'Cancelled' },
-      'completed': { fr: 'Terminée', en: 'Completed' },
-    };
-    return statusMap[status]?.[lang] || status;
+    return getReservationStatusUI(status, lang).label;
+  };
+
+  // Ouvrir modal d'annulation
+  const openCancelModal = (reservation: any) => {
+    setReservationForAction(reservation);
+    setIsCancelModalOpen(true);
+  };
+
+  // Ouvrir modal de modification
+  const openChangeModal = (reservation: any) => {
+    setReservationForAction(reservation);
+    setIsChangeModalOpen(true);
+  };
+
+  // Recharger les réservations après action
+  const handleActionSuccess = async () => {
+    if (!user || !supabase) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      setReservations(data || []);
+      setFilteredReservations(data || []);
+    } catch (error) {
+      console.error('Erreur rechargement réservations:', error);
+    }
   };
 
   const texts = {
@@ -387,6 +420,10 @@ export default function MesReservationsPage() {
                 const isConfirmed = reservation.status === 'confirmed' || reservation.status === 'CONFIRMED';
                 const isPending = reservation.status === 'pending' || reservation.status === 'PENDING';
                 const isSigned = !!reservation.client_signature;
+                const statusUI = getReservationStatusUI(reservation.status, language);
+                const showActionButtons = shouldShowActionButtons(reservation);
+                const isCancelRequested = reservation.status === 'CANCEL_REQUESTED' || reservation.status === 'cancel_requested';
+                const isChangeRequested = reservation.status === 'CHANGE_REQUESTED' || reservation.status === 'change_requested';
                 
                 return (
                   <Card key={reservation.id} className="hover:shadow-lg transition-all">
@@ -413,20 +450,19 @@ export default function MesReservationsPage() {
                             <CardTitle className="text-base sm:text-lg truncate">
                               {currentTexts.reservationNumber} #{reservationNumber}
                             </CardTitle>
-                            <div className="mt-2 flex items-center gap-2">
+                            <div className="mt-2 flex items-center gap-2 flex-wrap">
                               <Badge 
-                                variant={isConfirmed ? 'default' : isPending ? 'secondary' : 'outline'}
-                                className={
-                                  isConfirmed
-                                    ? 'bg-green-100 text-green-800 hover:bg-green-100'
-                                    : isPending
-                                    ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
-                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
-                                }
+                                variant={statusUI.badgeVariant || undefined}
+                                className={statusUI.badgeClass}
                               >
-                                {getStatusText(reservation.status.toLowerCase(), language)}
+                                {statusUI.label}
                               </Badge>
-                              {!isSigned && isConfirmed && (
+                              {statusUI.message && !isCancelRequested && !isChangeRequested && (
+                                <CardDescription className="text-xs text-gray-600 mt-0">
+                                  {statusUI.message}
+                                </CardDescription>
+                              )}
+                              {!isSigned && isConfirmed && !isCancelRequested && !isChangeRequested && (
                                 <CardDescription className="text-xs text-gray-600 mt-0">
                                   {language === 'fr' ? 'Signature requise pour finaliser la réservation.' : 'Signature required to finalize the reservation.'}
                                 </CardDescription>
@@ -441,50 +477,92 @@ export default function MesReservationsPage() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          {isConfirmed && (
-                            <>
-                              {!isSigned ? (
+                        <div className="flex flex-col gap-2 w-full sm:w-auto">
+                          {/* Boutons d'action (annulation/modification) - affichés conditionnellement */}
+                          {showActionButtons && !isCancelRequested && !isChangeRequested && (
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                variant="outline"
+                                onClick={() => openCancelModal(reservation)}
+                                className="border-red-300 text-red-700 hover:bg-red-50 flex-1 sm:flex-initial min-w-0 px-3 py-2.5 sm:px-4 sm:py-2"
+                                title={language === 'fr' ? 'Demander annulation' : 'Request cancellation'}
+                                aria-label={language === 'fr' ? 'Demander annulation' : 'Request cancellation'}
+                              >
+                                <XCircle className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+                                <span className="hidden sm:inline truncate text-xs sm:text-sm">{language === 'fr' ? 'Demander annulation' : 'Request cancellation'}</span>
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => openChangeModal(reservation)}
+                                className="border-blue-300 text-blue-700 hover:bg-blue-50 flex-1 sm:flex-initial min-w-0 px-3 py-2.5 sm:px-4 sm:py-2"
+                                title={language === 'fr' ? 'Demander modification' : 'Request change'}
+                                aria-label={language === 'fr' ? 'Demander modification' : 'Request change'}
+                              >
+                                <Edit className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+                                <span className="hidden sm:inline truncate text-xs sm:text-sm">{language === 'fr' ? 'Demander modification' : 'Request change'}</span>
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {/* Message si demande déjà envoyée */}
+                          {(isCancelRequested || isChangeRequested) && (
+                            <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
+                              {language === 'fr' 
+                                ? 'Demande reçue. Nous revenons vers vous rapidement.'
+                                : 'Request received. We will get back to you shortly.'}
+                            </div>
+                          )}
+
+                          {/* Boutons existants (signature, téléchargement) - optimisés mobile */}
+                          <div className="flex flex-wrap gap-2">
+                            {isConfirmed && (
+                              <>
+                                {!isSigned ? (
+                                  <Button
+                                    asChild
+                                    className="bg-green-600 hover:bg-green-700 text-white flex-1 sm:flex-initial min-w-0 px-3 py-2.5 sm:px-4 sm:py-2"
+                                    title={currentTexts.signContract}
+                                    aria-label={currentTexts.signContract}
+                                  >
+                                    <Link href={`/sign-contract?reservationId=${reservation.id}`}>
+                                      <FilePenLine className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+                                      <span className="hidden sm:inline truncate text-xs sm:text-sm">{currentTexts.signContract}</span>
+                                    </Link>
+                                  </Button>
+                                ) : (
+                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100 px-3 py-2.5 sm:px-3 sm:py-2 h-auto flex-1 sm:flex-initial justify-center">
+                                    <CheckCircle2 className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+                                    <span className="hidden sm:inline truncate text-xs sm:text-sm">{currentTexts.contractSigned}</span>
+                                  </Badge>
+                                )}
                                 <Button
                                   asChild
-                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                  variant="default"
+                                  className="bg-[#F2431E] hover:bg-[#E63A1A] text-white flex-1 sm:flex-initial min-w-0 px-3 py-2.5 sm:px-4 sm:py-2"
+                                  title={currentTexts.downloadContract}
+                                  aria-label={currentTexts.downloadContract}
                                 >
-                                  <Link href={`/sign-contract?reservationId=${reservation.id}`}>
-                                    <FilePenLine className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                                    <span className="hidden sm:inline">{currentTexts.signContract}</span>
-                                    <span className="sm:hidden">Signer</span>
-                                  </Link>
+                                  <a
+                                    href={`/api/contract/download?reservationId=${reservation.id}`}
+                                    download={`contrat-${reservationNumber}.pdf`}
+                                  >
+                                    <Download className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+                                    <span className="hidden sm:inline truncate text-xs sm:text-sm">{currentTexts.downloadContract}</span>
+                                  </a>
                                 </Button>
-                              ) : (
-                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100 px-3 sm:px-4 py-2 h-auto">
-                                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                                  <span className="hidden sm:inline">{currentTexts.contractSigned}</span>
-                                  <span className="sm:hidden">Signé</span>
-                                </Badge>
-                              )}
-                              <Button
-                                asChild
-                                variant="default"
-                                className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
-                              >
-                                <a
-                                  href={`/api/contract/download?reservationId=${reservation.id}`}
-                                  download={`contrat-${reservationNumber}.pdf`}
-                                >
-                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                                  <span className="hidden sm:inline">{currentTexts.downloadContract}</span>
-                                  <span className="sm:hidden">PDF</span>
-                                </a>
-                              </Button>
-                            </>
-                          )}
-                          <Button
-                            variant="outline"
-                            onClick={() => openDetailsModal(reservation)}
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            {currentTexts.viewDetails}
-                          </Button>
+                              </>
+                            )}
+                            <Button
+                              variant="outline"
+                              onClick={() => openDetailsModal(reservation)}
+                              className="flex-1 sm:flex-initial min-w-0 px-3 py-2.5 sm:px-4 sm:py-2"
+                              title={currentTexts.viewDetails}
+                              aria-label={currentTexts.viewDetails}
+                            >
+                              <Eye className="w-6 h-6 sm:w-4 sm:h-4 sm:mr-2 flex-shrink-0" />
+                              <span className="hidden sm:inline truncate text-xs sm:text-sm">{currentTexts.viewDetails}</span>
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </CardHeader>
@@ -694,6 +772,32 @@ export default function MesReservationsPage() {
       </div>
       <Footer language={language} />
 
+      {/* Modals d'annulation et modification */}
+      {reservationForAction && (
+        <>
+          <CancelRequestModal
+            isOpen={isCancelModalOpen}
+            onClose={() => {
+              setIsCancelModalOpen(false);
+              setReservationForAction(null);
+            }}
+            reservation={reservationForAction}
+            language={language}
+            onSuccess={handleActionSuccess}
+          />
+          <ChangeRequestModal
+            isOpen={isChangeModalOpen}
+            onClose={() => {
+              setIsChangeModalOpen(false);
+              setReservationForAction(null);
+            }}
+            reservation={reservationForAction}
+            language={language}
+            onSuccess={handleActionSuccess}
+          />
+        </>
+      )}
+
       {/* Modal de détails de la réservation */}
       <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -809,7 +913,7 @@ export default function MesReservationsPage() {
                               if (packKey && PACKS[packKey]) {
                                 // Utiliser la composition du pack
                                 packEquipment = PACKS[packKey].composition.map(comp => ({ name: comp, qty: 1 }));
-                              } else if (item.metadata?.breakdown) {
+                              } else if (item.metadata?.breakdown && Array.isArray(item.metadata.breakdown)) {
                                 // Utiliser le breakdown depuis metadata si disponible
                                 packEquipment = item.metadata.breakdown.map((b: any) => ({
                                   name: b.name || b.productName || b,

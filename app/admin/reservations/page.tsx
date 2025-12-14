@@ -11,6 +11,11 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { getReservationStatusUI } from '@/lib/reservationStatus';
+import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
 export default function AdminReservationsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -24,6 +29,9 @@ export default function AdminReservationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const [selectedReservation, setSelectedReservation] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -191,6 +199,20 @@ export default function AdminReservationsPage() {
       signInRequired: 'Connexion requise',
       signInDescription: 'Connectez-vous pour accéder aux réservations.',
       signIn: 'Se connecter',
+      reservationDetails: 'Détails de la réservation',
+      cancelRequest: 'Demande d\'annulation',
+      changeRequest: 'Demande de modification',
+      validateCancel: 'Valider l\'annulation',
+      validateChange: 'Valider la modification',
+      rejectCancel: 'Refuser l\'annulation',
+      rejectChange: 'Refuser la modification',
+      reason: 'Raison',
+      requestedChanges: 'Modifications demandées',
+      message: 'Message',
+      refundPolicy: 'Politique de remboursement',
+      refundEstimate: 'Remboursement estimé',
+      requestedAt: 'Demandé le',
+      close: 'Fermer',
     },
     en: {
       title: 'Reservations',
@@ -205,6 +227,20 @@ export default function AdminReservationsPage() {
       signInRequired: 'Sign in required',
       signInDescription: 'Sign in to access reservations.',
       signIn: 'Sign in',
+      reservationDetails: 'Reservation details',
+      cancelRequest: 'Cancellation request',
+      changeRequest: 'Change request',
+      validateCancel: 'Validate cancellation',
+      validateChange: 'Validate modification',
+      rejectCancel: 'Reject cancellation',
+      rejectChange: 'Reject modification',
+      reason: 'Reason',
+      requestedChanges: 'Requested changes',
+      message: 'Message',
+      refundPolicy: 'Refund policy',
+      refundEstimate: 'Estimated refund',
+      requestedAt: 'Requested on',
+      close: 'Close',
     },
   };
 
@@ -367,12 +403,15 @@ export default function AdminReservationsPage() {
                                 {reservation.total_price ? `${reservation.total_price}€` : reservation.order?.total ? `${reservation.order.total}€` : 'N/A'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <Link
-                                  href={`/admin/reservations/${reservation.id}`}
+                                <button
+                                  onClick={() => {
+                                    setSelectedReservation(reservation);
+                                    setIsDetailModalOpen(true);
+                                  }}
                                   className="text-[#F2431E] hover:text-[#E63A1A]"
                                 >
                                   {currentTexts.view}
-                                </Link>
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -410,6 +449,303 @@ export default function AdminReservationsPage() {
         </main>
       </div>
       <Footer language={language} />
+
+      {/* Modal de détails de réservation */}
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {selectedReservation && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{currentTexts.reservationDetails}</DialogTitle>
+                <DialogDescription>
+                  {selectedReservation.customerName} - {formatDate(selectedReservation.start_date)} au {formatDate(selectedReservation.end_date)}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-6 mt-4">
+                {/* Informations générales */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">{currentTexts.customer}</label>
+                    <p className="text-sm text-gray-900">{selectedReservation.customerName || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">{selectedReservation.customerEmail || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">{currentTexts.status}</label>
+                    <div className="mt-1">
+                      {(() => {
+                        const statusUI = getReservationStatusUI(selectedReservation.status, language);
+                        return (
+                          <Badge 
+                            variant={statusUI.badgeVariant}
+                            className={statusUI.badgeClass}
+                          >
+                            {statusUI.label}
+                          </Badge>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">{currentTexts.dates}</label>
+                    <p className="text-sm text-gray-900">
+                      {formatDate(selectedReservation.start_date)} - {formatDate(selectedReservation.end_date)}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">{currentTexts.total}</label>
+                    <p className="text-sm text-gray-900">
+                      {selectedReservation.total_price ? `${selectedReservation.total_price}€` : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Demande d'annulation */}
+                {selectedReservation.status === 'CANCEL_REQUESTED' && (() => {
+                  let cancelRequest: any = null;
+                  if (selectedReservation.notes) {
+                    try {
+                      const notesData = typeof selectedReservation.notes === 'string' 
+                        ? JSON.parse(selectedReservation.notes) 
+                        : selectedReservation.notes;
+                      cancelRequest = notesData.cancelRequest;
+                    } catch (e) {
+                      // Ignorer
+                    }
+                  }
+
+                  return cancelRequest ? (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5" />
+                        {currentTexts.cancelRequest}
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        {cancelRequest.requestedAt && (
+                          <p>
+                            <span className="font-semibold">{currentTexts.requestedAt}:</span>{' '}
+                            {new Date(cancelRequest.requestedAt).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        )}
+                        {cancelRequest.reason && (
+                          <p>
+                            <span className="font-semibold">{currentTexts.reason}:</span> {cancelRequest.reason}
+                          </p>
+                        )}
+                        {cancelRequest.refundPolicyApplied && (
+                          <p>
+                            <span className="font-semibold">{currentTexts.refundPolicy}:</span>{' '}
+                            {cancelRequest.refundPolicyApplied === 'FULL' ? 'Remboursement intégral' :
+                             cancelRequest.refundPolicyApplied === 'HALF' ? 'Remboursement 50%' :
+                             'Aucun remboursement'}
+                          </p>
+                        )}
+                        {cancelRequest.refundEstimateAmount && (
+                          <p>
+                            <span className="font-semibold">{currentTexts.refundEstimate}:</span>{' '}
+                            {cancelRequest.refundEstimateAmount}€
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          onClick={async () => {
+                            setIsValidating(true);
+                            try {
+                              const response = await fetch(`/api/reservations/${selectedReservation.id}/validate-cancel`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'approve' })
+                              });
+                              if (response.ok) {
+                                setIsDetailModalOpen(false);
+                                // Recharger les réservations
+                                window.location.reload();
+                              } else {
+                                alert('Erreur lors de la validation');
+                              }
+                            } catch (error) {
+                              console.error('Erreur:', error);
+                              alert('Erreur lors de la validation');
+                            } finally {
+                              setIsValidating(false);
+                            }
+                          }}
+                          disabled={isValidating}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          {currentTexts.validateCancel}
+                        </Button>
+                        <Button
+                          onClick={async () => {
+                            setIsValidating(true);
+                            try {
+                              const response = await fetch(`/api/reservations/${selectedReservation.id}/validate-cancel`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'reject' })
+                              });
+                              if (response.ok) {
+                                setIsDetailModalOpen(false);
+                                window.location.reload();
+                              } else {
+                                alert('Erreur lors du refus');
+                              }
+                            } catch (error) {
+                              console.error('Erreur:', error);
+                              alert('Erreur lors du refus');
+                            } finally {
+                              setIsValidating(false);
+                            }
+                          }}
+                          disabled={isValidating}
+                          variant="outline"
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          <XCircle className="w-4 h-4 mr-2" />
+                          {currentTexts.rejectCancel}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* Demande de modification */}
+                {selectedReservation.status === 'CHANGE_REQUESTED' && (() => {
+                  let changeRequest: any = null;
+                  if (selectedReservation.notes) {
+                    try {
+                      const notesData = typeof selectedReservation.notes === 'string' 
+                        ? JSON.parse(selectedReservation.notes) 
+                        : selectedReservation.notes;
+                      changeRequest = notesData.changeRequest;
+                    } catch (e) {
+                      // Ignorer
+                    }
+                  }
+
+                  return changeRequest ? (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5" />
+                        {currentTexts.changeRequest}
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        {changeRequest.requestedAt && (
+                          <p>
+                            <span className="font-semibold">{currentTexts.requestedAt}:</span>{' '}
+                            {new Date(changeRequest.requestedAt).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        )}
+                        {changeRequest.requestedChanges && Object.keys(changeRequest.requestedChanges).length > 0 && (
+                          <div>
+                            <span className="font-semibold">{currentTexts.requestedChanges}:</span>
+                            <ul className="list-disc list-inside ml-2 mt-1">
+                              {changeRequest.requestedChanges.nouveauLieu && (
+                                <li>Nouveau lieu: {changeRequest.requestedChanges.nouveauLieu}</li>
+                              )}
+                              {changeRequest.requestedChanges.nouveauxHoraires && (
+                                <li>Nouveaux horaires: {changeRequest.requestedChanges.nouveauxHoraires}</li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
+                        {changeRequest.message && (
+                          <p>
+                            <span className="font-semibold">{currentTexts.message}:</span> {changeRequest.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          onClick={async () => {
+                            setIsValidating(true);
+                            try {
+                              const response = await fetch(`/api/reservations/${selectedReservation.id}/validate-change`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'approve' })
+                              });
+                              if (response.ok) {
+                                setIsDetailModalOpen(false);
+                                window.location.reload();
+                              } else {
+                                alert('Erreur lors de la validation');
+                              }
+                            } catch (error) {
+                              console.error('Erreur:', error);
+                              alert('Erreur lors de la validation');
+                            } finally {
+                              setIsValidating(false);
+                            }
+                          }}
+                          disabled={isValidating}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          {currentTexts.validateChange}
+                        </Button>
+                        <Button
+                          onClick={async () => {
+                            setIsValidating(true);
+                            try {
+                              const response = await fetch(`/api/reservations/${selectedReservation.id}/validate-change`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'reject' })
+                              });
+                              if (response.ok) {
+                                setIsDetailModalOpen(false);
+                                window.location.reload();
+                              } else {
+                                alert('Erreur lors du refus');
+                              }
+                            } catch (error) {
+                              console.error('Erreur:', error);
+                              alert('Erreur lors du refus');
+                            } finally {
+                              setIsValidating(false);
+                            }
+                          }}
+                          disabled={isValidating}
+                          variant="outline"
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          <XCircle className="w-4 h-4 mr-2" />
+                          {currentTexts.rejectChange}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* Bouton fermer */}
+                <div className="flex justify-end pt-4 border-t">
+                  <Button
+                    onClick={() => setIsDetailModalOpen(false)}
+                    variant="outline"
+                  >
+                    {currentTexts.close}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

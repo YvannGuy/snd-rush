@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import WhatsAppButton from './WhatsAppButton';
 import ScrollToTopButton from './ScrollToTopButton';
 
 export default function GlobalButtons() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setMounted(true);
@@ -53,9 +55,12 @@ export default function GlobalButtons() {
 
   if (!mounted) return null;
 
+  // Masquer le bouton WhatsApp sur les pages dashboard (admin et user)
+  const isDashboardPage = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/mes-');
+
   return (
     <>
-      <WhatsAppButton language={language} />
+      {!isDashboardPage && <WhatsAppButton language={language} />}
       <ScrollToTopButton />
     </>
   );
