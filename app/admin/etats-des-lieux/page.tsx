@@ -6,6 +6,9 @@ import { supabase } from '@/lib/supabase';
 import { useUser } from '@/hooks/useUser';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
+import AdminFooter from '@/components/AdminFooter';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import Link from 'next/link';
 // Shadcn UI components
 import { Button } from '@/components/ui/button';
@@ -31,6 +34,8 @@ export default function AdminEtatsDesLieuxPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
   const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
   const [filteredReservations, setFilteredReservations] = useState<any[]>([]);
   const [etatsLieuxMap, setEtatsLieuxMap] = useState<Record<string, any>>({});
@@ -41,6 +46,29 @@ export default function AdminEtatsDesLieuxPage() {
   // État pour le modal
   const [selectedReservation, setSelectedReservation] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Marquer comme "viewé" quand le modal s'ouvre
+  useEffect(() => {
+    if (!isModalOpen || !selectedReservation) return;
+
+    const markAsViewed = () => {
+      const reservationId = selectedReservation.id;
+      const etatLieux = etatsLieuxMap[reservationId];
+      
+      if (etatLieux && etatLieux.id) {
+        const viewed = JSON.parse(localStorage.getItem('admin_viewed_condition_reports') || '[]');
+        if (!viewed.includes(etatLieux.id)) {
+          viewed.push(etatLieux.id);
+          localStorage.setItem('admin_viewed_condition_reports', JSON.stringify(viewed));
+        }
+      }
+
+      // Dispatcher l'événement pour mettre à jour les compteurs
+      window.dispatchEvent(new CustomEvent('pendingActionsUpdated'));
+    };
+
+    markAsViewed();
+  }, [isModalOpen, selectedReservation, etatsLieuxMap]);
 
   useEffect(() => {
     if (loading) return;
@@ -245,11 +273,43 @@ export default function AdminEtatsDesLieuxPage() {
   const paginatedReservations = filteredReservations.slice(startIndex, endIndex);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminHeader language={language} />
-      <div className="flex">
-        <AdminSidebar language={language} />
-        <main className="flex-1 ml-64 p-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Header language={language} onLanguageChange={setLanguage} />
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
+        {/* Sidebar - Fixed, ne prend pas d'espace dans le flux */}
+        <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+        <AdminSidebar 
+          language={language} 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
+        <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">
+            <Link href="/admin" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">SoundRush</span>
+            </Link>
+            <button 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Header Desktop */}
+          <div className="hidden lg:block">
+            <AdminHeader language={language} />
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">{currentTexts.title}</h1>
 
           {/* Barre de recherche */}
@@ -387,8 +447,12 @@ export default function AdminEtatsDesLieuxPage() {
               )}
             </>
           )}
+            </div>
+          </div>
+          <AdminFooter language={language} />
         </main>
       </div>
+      <Footer language={language} />
 
       {/* Modal pour gérer l'état des lieux */}
       {selectedReservation && (

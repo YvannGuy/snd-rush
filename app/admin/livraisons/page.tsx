@@ -417,7 +417,21 @@ export default function AdminLivraisonsPage() {
                         : 'N/A';
                       
                       return (
-                        <Card key={delivery.id} className="hover:shadow-md transition-all">
+                        <Card 
+                          key={delivery.id} 
+                          className="hover:shadow-md transition-all cursor-pointer"
+                          onClick={() => {
+                            // Marquer comme "viewé" si c'est une livraison en cours
+                            if (reservation && reservation.id && deliveryStatus && deliveryStatus !== 'termine') {
+                              const viewed = JSON.parse(localStorage.getItem('admin_viewed_deliveries') || '[]');
+                              if (!viewed.includes(reservation.id)) {
+                                viewed.push(reservation.id);
+                                localStorage.setItem('admin_viewed_deliveries', JSON.stringify(viewed));
+                                window.dispatchEvent(new CustomEvent('pendingActionsUpdated'));
+                              }
+                            }
+                          }}
+                        >
                           <CardContent className="p-4 sm:p-5">
                             <div className="flex items-center justify-between gap-4">
                               <div className="flex-1 min-w-0">

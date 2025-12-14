@@ -38,24 +38,71 @@ export async function DELETE(req: NextRequest) {
     }
 
     const userId = user.id;
+    const userEmail = user.email;
 
     // Supprimer toutes les données utilisateur dans l'ordre approprié
-    // 1. Supprimer le panier
+    // (en respectant les contraintes de clés étrangères)
+
+    // 1. Récupérer toutes les réservations de l'utilisateur pour supprimer les états des lieux associés
+    const { data: userReservations } = await supabaseAdmin
+      .from('reservations')
+      .select('id')
+      .eq('user_id', userId);
+
+    const reservationIds = userReservations?.map(r => r.id) || [];
+
+    // 2. Supprimer les états des lieux associés aux réservations
+    if (reservationIds.length > 0) {
+      await supabaseAdmin
+        .from('etat_lieux')
+        .delete()
+        .in('reservation_id', reservationIds);
+    }
+
+    // 3. Supprimer les réservations de l'utilisateur
+    await supabaseAdmin
+      .from('reservations')
+      .delete()
+      .eq('user_id', userId);
+
+    // 4. Récupérer les IDs des commandes pour supprimer les order_items associés
+    let orderIds: string[] = [];
+    if (userEmail) {
+      const { data: userOrders } = await supabaseAdmin
+        .from('orders')
+        .select('id')
+        .eq('customer_email', userEmail);
+      
+      orderIds = userOrders?.map(o => o.id) || [];
+
+      // Supprimer les order_items associés
+      if (orderIds.length > 0) {
+        await supabaseAdmin
+          .from('order_items')
+          .delete()
+          .in('order_id', orderIds);
+      }
+
+      // Supprimer les commandes
+      await supabaseAdmin
+        .from('orders')
+        .delete()
+        .eq('customer_email', userEmail);
+    }
+
+    // 5. Supprimer le panier
     await supabaseAdmin
       .from('carts')
       .delete()
       .eq('user_id', userId);
 
-    // 2. Supprimer le profil utilisateur
+    // 6. Supprimer le profil utilisateur
     await supabaseAdmin
       .from('user_profiles')
       .delete()
       .eq('user_id', userId);
 
-    // Note: Les réservations et commandes sont conservées pour des raisons légales/financières
-    // mais peuvent être anonymisées si nécessaire
-
-    // 3. Supprimer le compte auth (nécessite service role)
+    // 7. Supprimer le compte auth (nécessite service role)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {

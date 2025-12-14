@@ -110,8 +110,10 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
           .single();
 
         if (profile) {
-          // Vérifier le rôle admin
-          setIsAdmin(profile.role === 'admin');
+          // Vérifier le rôle admin (insensible à la casse)
+          const isAdminRole = profile.role?.toLowerCase() === 'admin';
+          setIsAdmin(isAdminRole);
+          console.log('🔍 Header - Profile trouvé:', { role: profile.role, isAdmin: isAdminRole, userId: user.id });
 
           if (profile.first_name) {
             // Capitaliser la première lettre
@@ -126,7 +128,12 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
             setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
           }
         } else {
-          setIsAdmin(false);
+          // Fallback: vérifier dans user_metadata
+          const metadataRole = user.user_metadata?.role?.toLowerCase();
+          const isAdminFromMetadata = metadataRole === 'admin';
+          setIsAdmin(isAdminFromMetadata);
+          console.log('🔍 Header - Pas de profile, vérification metadata:', { metadataRole, isAdmin: isAdminFromMetadata });
+
           if (user.user_metadata?.first_name) {
             const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
             setUserFirstName(firstName);
@@ -138,6 +145,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       } catch (error) {
         console.error('Erreur récupération données utilisateur:', error);
         setIsAdmin(false);
+        console.log('🔍 Header - Erreur, isAdmin défini à false');
         // Fallback vers user_metadata ou email
         if (user.user_metadata?.first_name) {
           const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
@@ -165,7 +173,37 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+      // Attendre un peu pour que l'état d'authentification soit mis à jour
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Vider également le localStorage du panier et autres données utilisateur
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('sndrush_cart');
+        // Dispatcher un événement pour vider le panier dans le contexte
+        window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { items: [], total: 0, depositTotal: 0 } }));
+      }
+      
+      // Forcer un rechargement complet de la page pour s'assurer que l'utilisateur est déconnecté
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      // En cas d'erreur, vider quand même le localStorage et rediriger
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('sndrush_cart');
+        // Vider les clés Supabase
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        window.location.href = '/';
+      }
+    }
   };
 
   const toggleLanguage = () => {
@@ -190,6 +228,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       adminReservations: 'Réservations',
       adminPlanning: 'Planning',
       adminClients: 'Clients',
+      adminEtatsDesLieux: 'États des lieux',
       adminCatalog: 'Catalogue',
       adminInvoices: 'Factures',
     },
@@ -209,6 +248,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       adminReservations: 'Reservations',
       adminPlanning: 'Planning',
       adminClients: 'Clients',
+      adminEtatsDesLieux: 'Condition reports',
       adminCatalog: 'Catalog',
       adminInvoices: 'Invoices',
     }
@@ -278,18 +318,18 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link
-                              href="/admin/planning"
-                              className="cursor-pointer"
-                            >
-                              {texts[language].adminPlanning}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link
                               href="/admin/clients"
                               className="cursor-pointer"
                             >
                               {texts[language].adminClients}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin/etats-des-lieux"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminEtatsDesLieux}
                             </Link>
                           </DropdownMenuItem>
                         </>
@@ -473,18 +513,18 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link
-                              href="/admin/planning"
-                              className="cursor-pointer"
-                            >
-                              {texts[language].adminPlanning}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link
                               href="/admin/clients"
                               className="cursor-pointer"
                             >
                               {texts[language].adminClients}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin/etats-des-lieux"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminEtatsDesLieux}
                             </Link>
                           </DropdownMenuItem>
                         </>

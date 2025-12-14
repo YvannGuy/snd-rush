@@ -15,14 +15,29 @@ interface AdminSidebarProps {
   onClose?: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  pendingActions?: {
+    pendingReservations?: number;
+    contractsToSign?: number;
+    conditionReportsToReview?: number;
+    deliveriesInProgress?: number;
+    pendingCancellations?: number;
+    pendingModifications?: number;
+  };
 }
 
-export default function AdminSidebar({ language = 'fr', isOpen = false, onClose, isCollapsed = false, onToggleCollapse }: AdminSidebarProps) {
+export default function AdminSidebar({ language = 'fr', isOpen = false, onClose, isCollapsed = false, onToggleCollapse, pendingActions: propsPendingActions }: AdminSidebarProps) {
   const pathname = usePathname();
   const { signOut } = useAuth();
   const router = useRouter();
   const { user } = useUser();
-  const [pendingReservationsCount, setPendingReservationsCount] = useState(0);
+  const [localPendingActions, setLocalPendingActions] = useState({
+    pendingReservations: 0,
+    contractsToSign: 0,
+    conditionReportsToReview: 0,
+    deliveriesInProgress: 0,
+    pendingCancellations: 0,
+    pendingModifications: 0,
+  });
 
   const texts = {
     fr: {
@@ -37,6 +52,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
       contracts: 'Contrats',
       deliveries: 'Livraisons',
       etatsDesLieux: 'États des lieux',
+      payment: 'Paiement',
       settings: 'Paramètres',
       administrator: 'Administrateur',
       logout: 'Déconnexion',
@@ -53,6 +69,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
       contracts: 'Contracts',
       deliveries: 'Deliveries',
       etatsDesLieux: 'Condition reports',
+      payment: 'Payment',
       settings: 'Settings',
       administrator: 'Administrator',
       logout: 'Logout',
@@ -87,30 +104,129 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
     return name.substring(0, 2).toUpperCase();
   };
 
-  // Charger le nombre de réservations en attente
-  useEffect(() => {
-    if (!user || !supabase) return;
+  // Utiliser les props si fournies, sinon calculer localement
+  const pendingActions = propsPendingActions || localPendingActions;
 
-    const loadPendingReservationsCount = async () => {
+  // Calculer les compteurs si pas fournis en props
+  useEffect(() => {
+    if (propsPendingActions || !user || !supabase) return;
+
+    const calculatePendingActions = async () => {
       try {
-        const { count, error } = await supabase
+        // Réservations en attente
+        const { count: pendingCount } = await supabase
           .from('reservations')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'PENDING');
+        
+        const pendingReservations = pendingCount || 0;
 
-        if (error) throw error;
-        setPendingReservationsCount(count || 0);
+        // Contrats à signer par les clients
+        const viewedContracts = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('admin_viewed_contracts') || '[]')
+          : [];
+        
+        const { data: contractsData } = await supabase
+          .from('reservations')
+          .select('id, status, client_signature')
+          .in('status', ['CONFIRMED', 'CONTRACT_PENDING', 'confirmed'])
+          .or('client_signature.is.null,client_signature.eq.');
+        
+        const contractsToSign = (contractsData || []).filter(
+          (r) => (!r.client_signature || r.client_signature.trim() === '')
+            && !viewedContracts.includes(r.id)
+        ).length;
+
+        // États des lieux à traiter
+        const viewedConditionReports = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('admin_viewed_condition_reports') || '[]')
+          : [];
+        
+        const { data: etatsLieuxData } = await supabase
+          .from('etat_lieux')
+          .select('id, status')
+          .in('status', ['livraison_complete', 'reprise_complete']);
+        
+        const conditionReportsToReview = (etatsLieuxData || []).filter(
+          (el) => !viewedConditionReports.includes(el.id)
+        ).length;
+
+        // Livraisons en cours
+        const viewedDeliveries = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('admin_viewed_deliveries') || '[]')
+          : [];
+        
+        const { data: deliveriesData } = await supabase
+          .from('reservations')
+          .select('id, status, delivery_status')
+          .in('status', ['CONFIRMED', 'confirmed', 'IN_PROGRESS', 'in_progress'])
+          .not('delivery_status', 'is', null)
+          .neq('delivery_status', 'termine');
+        
+        const deliveriesInProgress = (deliveriesData || []).filter(
+          (r) => !viewedDeliveries.includes(r.id)
+        ).length;
+
+        // Demandes d'annulation en attente
+        const viewedCancellations = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('admin_viewed_cancellations') || '[]')
+          : [];
+        
+        const { data: cancellationsData } = await supabase
+          .from('reservations')
+          .select('id, status')
+          .in('status', ['CANCEL_REQUESTED', 'cancel_requested']);
+        
+        const pendingCancellations = (cancellationsData || []).filter(
+          (r) => !viewedCancellations.includes(r.id)
+        ).length;
+
+        // Demandes de modification en attente
+        const viewedModifications = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('admin_viewed_modifications') || '[]')
+          : [];
+        
+        const { data: modificationsData } = await supabase
+          .from('reservations')
+          .select('id, status')
+          .in('status', ['CHANGE_REQUESTED', 'change_requested']);
+        
+        const pendingModifications = (modificationsData || []).filter(
+          (r) => !viewedModifications.includes(r.id)
+        ).length;
+
+        setLocalPendingActions({
+          pendingReservations,
+          contractsToSign,
+          conditionReportsToReview,
+          deliveriesInProgress,
+          pendingCancellations,
+          pendingModifications,
+        });
       } catch (error) {
-        console.error('Erreur chargement réservations en attente:', error);
+        // Erreur silencieuse
       }
     };
 
-    loadPendingReservationsCount();
-    
+    calculatePendingActions();
+
+    // Écouter les changements
+    const handleStorageChange = () => {
+      calculatePendingActions();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('pendingActionsUpdated', handleStorageChange);
+
     // Recharger toutes les 30 secondes
-    const interval = setInterval(loadPendingReservationsCount, 30000);
-    return () => clearInterval(interval);
-  }, [user]);
+    const interval = setInterval(calculatePendingActions, 30000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('pendingActionsUpdated', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [user, supabase, propsPendingActions]);
 
   return (
     <>
@@ -201,7 +317,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
         <Link
           href="/admin/reservations"
           onClick={onClose}
-          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors relative ${
+          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
             isActive('/admin/reservations')
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
@@ -211,17 +327,18 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          {!isCollapsed && <span>{currentTexts.reservations}</span>}
-          {/* Badge pour réservations en attente */}
-          {!isCollapsed && pendingReservationsCount > 0 && (
-            <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
-              {pendingReservationsCount > 99 ? '99+' : pendingReservationsCount}
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.reservations}</span>
+          )}
+          {((pendingActions.pendingReservations ?? 0) > 0 || (pendingActions.pendingCancellations ?? 0) > 0 || (pendingActions.pendingModifications ?? 0) > 0) && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {(pendingActions.pendingReservations ?? 0) + (pendingActions.pendingCancellations ?? 0) + (pendingActions.pendingModifications ?? 0)}
             </span>
           )}
-          {isCollapsed && pendingReservationsCount > 0 && (
-            <span className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
-              {pendingReservationsCount > 99 ? '99+' : pendingReservationsCount}
-            </span>
+          {isCollapsed && (
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              {currentTexts.reservations}
+            </div>
           )}
         </Link>
         <Link
@@ -302,7 +419,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
         <Link
           href="/admin/contrats"
           onClick={onClose}
-          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors ${
+          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
             isActive('/admin/contrats')
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
@@ -312,12 +429,24 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          {!isCollapsed && <span>{currentTexts.contracts}</span>}
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.contracts}</span>
+          )}
+          {(pendingActions.contractsToSign ?? 0) > 0 && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {pendingActions.contractsToSign}
+            </span>
+          )}
+          {isCollapsed && (
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              {currentTexts.contracts}
+            </div>
+          )}
         </Link>
         <Link
           href="/admin/livraisons"
           onClick={onClose}
-          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors ${
+          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
             isActive('/admin/livraisons')
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
@@ -327,12 +456,24 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
-          {!isCollapsed && <span>{currentTexts.deliveries}</span>}
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.deliveries}</span>
+          )}
+          {(pendingActions.deliveriesInProgress ?? 0) > 0 && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {pendingActions.deliveriesInProgress}
+            </span>
+          )}
+          {isCollapsed && (
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              {currentTexts.deliveries}
+            </div>
+          )}
         </Link>
         <Link
           href="/admin/etats-des-lieux"
           onClick={onClose}
-          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors ${
+          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
             isActive('/admin/etats-des-lieux')
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
@@ -342,7 +483,34 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          {!isCollapsed && <span>{currentTexts.etatsDesLieux}</span>}
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.etatsDesLieux}</span>
+          )}
+          {(pendingActions.conditionReportsToReview ?? 0) > 0 && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {pendingActions.conditionReportsToReview}
+            </span>
+          )}
+          {isCollapsed && (
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              {currentTexts.etatsDesLieux}
+            </div>
+          )}
+        </Link>
+        <Link
+          href="/admin/paiement"
+          onClick={onClose}
+          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors ${
+            isActive('/admin/paiement')
+              ? 'bg-[#F2431E] text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+          title={isCollapsed ? currentTexts.payment : undefined}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          {!isCollapsed && <span>{currentTexts.payment}</span>}
         </Link>
         <Link
           href="/admin/parametres"

@@ -178,8 +178,9 @@ export default function MesInformationsPage() {
       deleteAccountConfirm: 'Confirmer la suppression',
       deleteAccountCancel: 'Annuler',
       deleteAccountWarning: 'Attention : Cette action est irréversible',
-      deleteAccountDescription: 'En supprimant votre compte, toutes vos données personnelles seront définitivement supprimées. Cette action ne peut pas être annulée.',
-      deleteAccountConfirmText: 'Je comprends et souhaite supprimer mon compte',
+      deleteAccountDescription: 'En supprimant votre compte, toutes vos données personnelles seront définitivement supprimées, y compris : vos réservations, vos commandes, vos états des lieux, vos contrats et toutes vos informations. Cette action ne peut pas être annulée.',
+      deleteAccountReservationsWarning: '⚠️ Si vous avez des réservations en cours, vous ne pourrez plus les retrouver après la suppression de votre compte.',
+      deleteAccountConfirmText: 'Je comprends que cette action est irréversible et que toutes mes données, y compris mes réservations en cours, seront définitivement supprimées',
       signInRequired: 'Connexion requise',
       signInDescription: 'Connectez-vous pour accéder à vos informations.',
       signIn: 'Se connecter',
@@ -196,8 +197,9 @@ export default function MesInformationsPage() {
       deleteAccountConfirm: 'Confirm deletion',
       deleteAccountCancel: 'Cancel',
       deleteAccountWarning: 'Warning: This action is irreversible',
-      deleteAccountDescription: 'By deleting your account, all your personal data will be permanently deleted. This action cannot be undone.',
-      deleteAccountConfirmText: 'I understand and wish to delete my account',
+      deleteAccountDescription: 'By deleting your account, all your personal data will be permanently deleted, including: your reservations, orders, condition reports, contracts and all your information. This action cannot be undone.',
+      deleteAccountReservationsWarning: '⚠️ If you have ongoing reservations, you will no longer be able to retrieve them after deleting your account.',
+      deleteAccountConfirmText: 'I understand that this action is irreversible and that all my data, including my ongoing reservations, will be permanently deleted',
       signInRequired: 'Sign in required',
       signInDescription: 'Sign in to access your information.',
       signIn: 'Sign in',
@@ -390,7 +392,10 @@ export default function MesInformationsPage() {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">{currentTexts.deleteAccountDescription}</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+                  <p className="text-sm text-gray-700 font-medium">{currentTexts.deleteAccountDescription}</p>
+                  <p className="text-sm text-red-700 font-semibold">{currentTexts.deleteAccountReservationsWarning}</p>
+                </div>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"

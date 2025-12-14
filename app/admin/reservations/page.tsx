@@ -34,6 +34,42 @@ export default function AdminReservationsPage() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
 
+  // Marquer comme "viewé" quand le modal s'ouvre
+  useEffect(() => {
+    if (!isDetailModalOpen || !selectedReservation) return;
+
+    const markAsViewed = () => {
+      const reservationId = selectedReservation.id;
+      const status = selectedReservation.status;
+
+      // Marquer selon le type
+      if (status === 'PENDING' || status === 'pending') {
+        const viewed = JSON.parse(localStorage.getItem('admin_viewed_reservations') || '[]');
+        if (!viewed.includes(reservationId)) {
+          viewed.push(reservationId);
+          localStorage.setItem('admin_viewed_reservations', JSON.stringify(viewed));
+        }
+      } else if (status === 'CANCEL_REQUESTED' || status === 'cancel_requested') {
+        const viewed = JSON.parse(localStorage.getItem('admin_viewed_cancellations') || '[]');
+        if (!viewed.includes(reservationId)) {
+          viewed.push(reservationId);
+          localStorage.setItem('admin_viewed_cancellations', JSON.stringify(viewed));
+        }
+      } else if (status === 'CHANGE_REQUESTED' || status === 'change_requested') {
+        const viewed = JSON.parse(localStorage.getItem('admin_viewed_modifications') || '[]');
+        if (!viewed.includes(reservationId)) {
+          viewed.push(reservationId);
+          localStorage.setItem('admin_viewed_modifications', JSON.stringify(viewed));
+        }
+      }
+
+      // Dispatcher l'événement pour mettre à jour les compteurs
+      window.dispatchEvent(new CustomEvent('pendingActionsUpdated'));
+    };
+
+    markAsViewed();
+  }, [isDetailModalOpen, selectedReservation]);
+
   useEffect(() => {
     if (!user || !supabase) return;
 

@@ -288,9 +288,28 @@ export function useAuth() {
 
     setLoading(true);
     try {
-      await supabase.auth.signOut();
+      // Forcer la déconnexion avec scope global pour déconnecter sur tous les onglets
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        throw error;
+      }
+
+      // Vider manuellement le localStorage lié à Supabase
+      if (typeof window !== 'undefined') {
+        // Supprimer toutes les clés Supabase du localStorage
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+      }
     } catch (err: any) {
       setError(err.message);
+      throw err; // Propager l'erreur pour que le composant puisse la gérer
     } finally {
       setLoading(false);
     }

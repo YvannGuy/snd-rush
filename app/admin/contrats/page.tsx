@@ -282,7 +282,19 @@ export default function AdminContratsPage() {
                       const dateRange = `${formatDate(contract.start_date)} - ${formatDate(contract.end_date)}`;
                       
                       return (
-                        <Card key={contract.id} className="hover:shadow-md transition-all">
+                        <Card 
+                          key={contract.id} 
+                          className="hover:shadow-md transition-all cursor-pointer"
+                          onClick={() => {
+                            // Marquer comme "viewé"
+                            const viewed = JSON.parse(localStorage.getItem('admin_viewed_contracts') || '[]');
+                            if (!viewed.includes(contract.id)) {
+                              viewed.push(contract.id);
+                              localStorage.setItem('admin_viewed_contracts', JSON.stringify(viewed));
+                              window.dispatchEvent(new CustomEvent('pendingActionsUpdated'));
+                            }
+                          }}
+                        >
                           <CardContent className="p-4 sm:p-5">
                             <div className="flex items-center justify-between gap-4">
                               <div className="flex-1 min-w-0">
