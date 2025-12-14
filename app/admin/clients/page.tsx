@@ -13,7 +13,8 @@ import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search, X, Mail, Phone, User as UserIcon, ChevronRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Search, X, Mail, Phone, User as UserIcon, ChevronRight, Calendar, DollarSign, FileText } from 'lucide-react';
 
 export default function AdminClientsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -27,6 +28,10 @@ export default function AdminClientsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [clientDetails, setClientDetails] = useState<{ orders: any[]; reservations: any[] }>({ orders: [], reservations: [] });
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -113,6 +118,14 @@ export default function AdminClientsPage() {
       lastOrder: 'Dernière commande',
       actions: 'Actions',
       view: 'Voir',
+      clientDetails: 'Détails du client',
+      orders: 'Commandes',
+      reservations: 'Réservations',
+      date: 'Date',
+      amount: 'Montant',
+      status: 'Statut',
+      noOrders: 'Aucune commande',
+      noReservations: 'Aucune réservation',
       signInRequired: 'Connexion requise',
       signInDescription: 'Connectez-vous pour accéder aux clients.',
       signIn: 'Se connecter',
@@ -129,6 +142,14 @@ export default function AdminClientsPage() {
       lastOrder: 'Last order',
       actions: 'Actions',
       view: 'View',
+      clientDetails: 'Client Details',
+      orders: 'Orders',
+      reservations: 'Reservations',
+      date: 'Date',
+      amount: 'Amount',
+      status: 'Status',
+      noOrders: 'No orders',
+      noReservations: 'No reservations',
       signInRequired: 'Sign in required',
       signInDescription: 'Sign in to access clients.',
       signIn: 'Sign in',
@@ -136,6 +157,81 @@ export default function AdminClientsPage() {
   };
 
   const currentTexts = texts[language];
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric'
+    });
+  };
+
+  const getStatusText = (status: string) => {
+    const statusMap: Record<string, { text: string; color: string }> = {
+      pending: { text: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
+      confirmed: { text: 'Confirmée', color: 'bg-green-100 text-green-800' },
+      cancelled: { text: 'Annulée', color: 'bg-red-100 text-red-800' },
+      completed: { text: 'Terminée', color: 'bg-blue-100 text-blue-800' },
+      paid: { text: 'Payée', color: 'bg-green-100 text-green-800' },
+      unpaid: { text: 'Non payée', color: 'bg-yellow-100 text-yellow-800' },
+    };
+    return statusMap[status?.toLowerCase()] || { text: status, color: 'bg-gray-100 text-gray-800' };
+  };
+
+  const openClientModal = async (client: any) => {
+    setSelectedClient(client);
+    setIsModalOpen(true);
+    setLoadingDetails(true);
+
+    try {
+      // Charger les commandes du client
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('customer_email', client.email)
+        .order('created_at', { ascending: false });
+
+      // Charger les réservations du client
+      const { data: allReservations } = await supabase
+        .from('reservations')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Filtrer les réservations qui correspondent à ce client
+      let reservationsData: any[] = [];
+      if (allReservations) {
+        const sessionIds = (ordersData || []).map((o: any) => o.stripe_session_id).filter(Boolean);
+        
+        reservationsData = allReservations.filter((reservation: any) => {
+          if (reservation.notes) {
+            try {
+              const notesData = JSON.parse(reservation.notes);
+              if (notesData.sessionId && sessionIds.includes(notesData.sessionId)) {
+                return true;
+              }
+              if (notesData.customerEmail && notesData.customerEmail.toLowerCase() === client.email.toLowerCase()) {
+                return true;
+              }
+            } catch (e) {
+              // Ignorer
+            }
+          }
+          return false;
+        });
+      }
+
+      setClientDetails({
+        orders: ordersData || [],
+        reservations: reservationsData || [],
+      });
+    } catch (error) {
+      console.error('Erreur chargement détails client:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
 
   // Charger l'état de la sidebar depuis localStorage
   useEffect(() => {
@@ -267,8 +363,7 @@ export default function AdminClientsPage() {
                     {paginatedClients.map((client, index) => (
                       <Card 
                         key={index} 
-                        className="hover:shadow-md transition-all cursor-pointer"
-                        onClick={() => router.push(`/admin/clients/${encodeURIComponent(client.email)}`)}
+                        className="hover:shadow-md transition-all"
                       >
                         <CardContent className="p-4 sm:p-5">
                           <div className="flex items-center justify-between gap-4">
@@ -307,10 +402,7 @@ export default function AdminClientsPage() {
                             
                             {/* Bouton circulaire orange avec chevron */}
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(`/admin/clients/${encodeURIComponent(client.email)}`);
-                              }}
+                              onClick={() => openClientModal(client)}
                               className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F2431E] hover:bg-[#E63A1A] text-white flex items-center justify-center flex-shrink-0 transition-colors"
                               aria-label={currentTexts.view}
                             >
@@ -354,6 +446,118 @@ export default function AdminClientsPage() {
         </main>
       </div>
       <Footer language={language} />
+
+      {/* Modal détails client */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900">
+              {currentTexts.clientDetails}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedClient && (
+            <div className="space-y-6 mt-4">
+              {/* Informations client */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-bold text-gray-900 mb-3">{selectedClient.name}</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Mail className="w-4 h-4 text-gray-400" />
+                    <span>{selectedClient.email}</span>
+                  </div>
+                  {selectedClient.phone && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      <span>{selectedClient.phone}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <DollarSign className="w-4 h-4 text-gray-400" />
+                    <span>{currentTexts.totalSpent}: {selectedClient.totalSpent.toLocaleString('fr-FR')}€</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <FileText className="w-4 h-4 text-gray-400" />
+                    <span>{currentTexts.reservations}: {selectedClient.reservations}</span>
+                  </div>
+                </div>
+              </div>
+
+              {loadingDetails ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F2431E]"></div>
+                </div>
+              ) : (
+                <>
+                  {/* Commandes */}
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-3">{currentTexts.orders}</h4>
+                    {clientDetails.orders.length === 0 ? (
+                      <p className="text-gray-500 text-sm">{currentTexts.noOrders}</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {clientDetails.orders.slice(0, 5).map((order: any) => {
+                          const statusInfo = getStatusText(order.payment_status || order.status);
+                          return (
+                            <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <Calendar className="w-4 h-4 text-gray-400" />
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">
+                                    {formatDate(order.created_at)}
+                                  </p>
+                                  <p className="text-xs text-gray-600">
+                                    {parseFloat(order.total || 0).toLocaleString('fr-FR')}€
+                                  </p>
+                                </div>
+                              </div>
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusInfo.color}`}>
+                                {statusInfo.text}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Réservations */}
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-3">{currentTexts.reservations}</h4>
+                    {clientDetails.reservations.length === 0 ? (
+                      <p className="text-gray-500 text-sm">{currentTexts.noReservations}</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {clientDetails.reservations.slice(0, 5).map((reservation: any) => {
+                          const statusInfo = getStatusText(reservation.status);
+                          return (
+                            <div key={reservation.id} className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <Calendar className="w-4 h-4 text-gray-400" />
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">
+                                    {formatDate(reservation.start_date)} - {formatDate(reservation.end_date)}
+                                  </p>
+                                  <p className="text-xs text-gray-600">
+                                    {parseFloat(reservation.total_price || 0).toLocaleString('fr-FR')}€
+                                  </p>
+                                </div>
+                              </div>
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusInfo.color}`}>
+                                {statusInfo.text}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
