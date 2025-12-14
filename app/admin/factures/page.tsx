@@ -11,6 +11,10 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Download } from 'lucide-react';
 
 export default function AdminFacturesPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -258,75 +262,101 @@ export default function AdminFacturesPage() {
               </div>
 
               {paginatedOrders.length === 0 ? (
-                <div className="bg-white rounded-2xl p-12 text-center">
-                  <p className="text-gray-500 text-lg">{currentTexts.noInvoices}</p>
-                </div>
+                <Card>
+                  <CardContent className="text-center py-16">
+                    <p className="text-gray-500 text-lg">{currentTexts.noInvoices}</p>
+                  </CardContent>
+                </Card>
               ) : (
                 <>
-                  <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.customer}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.date}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.total}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.status}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.actions}</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {paginatedOrders.map((order) => (
-                            <tr key={order.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900">{order.customer_name || 'Client'}</div>
-                                <div className="text-sm text-gray-500">{order.customer_email}</div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {new Date(order.created_at).toLocaleDateString('fr-FR')}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {order.total}€
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                                  {order.status}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a
-                                  href={`/api/invoice/download?orderId=${order.id}`}
-                                  className="text-[#F2431E] hover:text-[#E63A1A] mr-4"
-                                >
-                                  {currentTexts.download}
-                                </a>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                  <div className="space-y-4 mb-6">
+                    {paginatedOrders.map((order) => {
+                      const getStatusBadgeColor = (status: string) => {
+                        const upperStatus = status.toUpperCase();
+                        if (upperStatus === 'PAID' || upperStatus === 'PAYE') {
+                          return { bg: 'bg-green-100', dot: 'bg-green-500', text: 'text-green-800' };
+                        } else if (upperStatus === 'PENDING' || upperStatus === 'EN_ATTENTE') {
+                          return { bg: 'bg-orange-100', dot: 'bg-orange-500', text: 'text-orange-800' };
+                        } else if (upperStatus === 'CANCELLED' || upperStatus === 'ANNULEE') {
+                          return { bg: 'bg-red-100', dot: 'bg-red-500', text: 'text-red-800' };
+                        }
+                        return { bg: 'bg-gray-100', dot: 'bg-gray-500', text: 'text-gray-800' };
+                      };
+                      
+                      const badgeColors = getStatusBadgeColor(order.status);
+                      
+                      return (
+                        <Card key={order.id} className="hover:shadow-md transition-all">
+                          <CardContent className="p-4 sm:p-5">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                {/* Badge de statut */}
+                                <div className="flex items-center gap-2 mb-3">
+                                  <Badge className={`${badgeColors.bg} ${badgeColors.text} border-0 px-3 py-1`}>
+                                    <span className={`w-2 h-2 rounded-full ${badgeColors.dot} mr-2 inline-block`}></span>
+                                    {order.status}
+                                  </Badge>
+                                </div>
+                                
+                                {/* Nom du client */}
+                                <h3 className="font-bold text-gray-900 text-lg mb-2">
+                                  {order.customer_name || 'Client'}
+                                </h3>
+                                
+                                {/* Email */}
+                                {order.customer_email && (
+                                  <p className="text-sm text-gray-600 mb-3">{order.customer_email}</p>
+                                )}
+                                
+                                {/* Date */}
+                                <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                  <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                  <span className="text-sm">{new Date(order.created_at).toLocaleDateString('fr-FR')}</span>
+                                </div>
+                                
+                                {/* Montant */}
+                                <div className="text-lg font-semibold text-gray-900 mt-3">
+                                  {order.total}€
+                                </div>
+                              </div>
+                              
+                              {/* Bouton télécharger */}
+                              <a
+                                href={`/api/invoice/download?orderId=${order.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-4 py-2 bg-[#F2431E] hover:bg-[#E63A1A] text-white rounded-lg font-semibold transition-colors flex-shrink-0"
+                              >
+                                {currentTexts.download}
+                              </a>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
 
+                  {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="mt-6 flex justify-center gap-2">
-                      <button
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Précédent
-                      </button>
-                      <span className="px-4 py-2 text-gray-700">
+                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+                      <div className="text-sm text-gray-600">
                         Page {currentPage} sur {totalPages}
-                      </span>
-                      <button
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Suivant
-                      </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Précédent
+                        </Button>
+                        <Button
+                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                        >
+                          Suivant
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </>

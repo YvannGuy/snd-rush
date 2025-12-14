@@ -11,6 +11,9 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Calendar, Download, Mail, ChevronRight, Search, X } from 'lucide-react';
 
 export default function AdminContratsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -235,84 +238,119 @@ export default function AdminContratsPage() {
           </div>
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">{currentTexts.title}</h1>
-              
-              <div className="mb-4">
-                <input
-                  type="text"
-                  placeholder={currentTexts.searchPlaceholder}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
-                />
-              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">{currentTexts.title}</h1>
+
+              {/* Barre de recherche */}
+              {contracts.length > 0 && (
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder={currentTexts.searchPlaceholder}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-12 pr-10 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7 flex items-center justify-center text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  {searchQuery && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      {filteredContracts.length} {filteredContracts.length === 1 ? 'contrat' : 'contrats'} trouvé{filteredContracts.length > 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {paginatedContracts.length === 0 ? (
-                <div className="bg-white rounded-2xl p-12 text-center">
-                  <p className="text-gray-500 text-lg">{currentTexts.noContracts}</p>
-                </div>
+                <Card>
+                  <CardContent className="text-center py-16">
+                    <p className="text-gray-500 text-lg">{currentTexts.noContracts}</p>
+                  </CardContent>
+                </Card>
               ) : (
                 <>
-                  <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.customer}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.dates}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.signedAt}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.actions}</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {paginatedContracts.map((contract) => (
-                            <tr key={contract.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900">{contract.customerName || 'Client'}</div>
-                                  <div className="text-sm text-gray-500">{contract.customerEmail || 'N/A'}</div>
+                  <div className="space-y-4 mb-6">
+                    {paginatedContracts.map((contract) => {
+                      const dateRange = `${formatDate(contract.start_date)} - ${formatDate(contract.end_date)}`;
+                      
+                      return (
+                        <Card key={contract.id} className="hover:shadow-md transition-all">
+                          <CardContent className="p-4 sm:p-5">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                {/* Nom du client */}
+                                <h3 className="font-bold text-gray-900 text-lg mb-2">
+                                  {contract.customerName || 'Client'}
+                                </h3>
+                                
+                                {/* Email */}
+                                {contract.customerEmail && (
+                                  <div className="flex items-center gap-2 text-gray-600 mb-3">
+                                    <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <span className="text-sm truncate">{contract.customerEmail}</span>
+                                  </div>
+                                )}
+                                
+                                {/* Dates avec icône calendrier */}
+                                <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                  <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                  <span className="text-sm">{dateRange}</span>
                                 </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {formatDate(contract.start_date)} - {formatDate(contract.end_date)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {contract.client_signed_at ? formatDate(contract.client_signed_at) : 'N/A'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a
-                                  href={`/api/contract/download?reservationId=${contract.id}`}
-                                  className="text-[#F2431E] hover:text-[#E63A1A]"
-                                >
-                                  {currentTexts.download}
-                                </a>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                                
+                                {/* Date de signature */}
+                                {contract.client_signed_at && (
+                                  <div className="text-sm text-gray-600 mt-2">
+                                    {currentTexts.signedAt}: {formatDate(contract.client_signed_at)}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Bouton télécharger */}
+                              <a
+                                href={`/api/contract/download?reservationId=${contract.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-4 py-2 bg-[#F2431E] hover:bg-[#E63A1A] text-white rounded-lg font-semibold transition-colors flex items-center gap-2 flex-shrink-0"
+                              >
+                                <Download className="w-4 h-4" />
+                                {currentTexts.download}
+                              </a>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
 
+                  {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="mt-6 flex justify-center gap-2">
-                      <button
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Précédent
-                      </button>
-                      <span className="px-4 py-2 text-gray-700">
+                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+                      <div className="text-sm text-gray-600">
                         Page {currentPage} sur {totalPages}
-                      </span>
-                      <button
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Suivant
-                      </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Précédent
+                        </Button>
+                        <Button
+                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                        >
+                          Suivant
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </>

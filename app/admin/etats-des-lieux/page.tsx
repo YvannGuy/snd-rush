@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { MapPin } from 'lucide-react';
 import EtatDesLieuxModal from '@/components/EtatDesLieuxModal';
 // Icônes lucide-react
 import { 
@@ -302,56 +302,61 @@ export default function AdminEtatsDesLieuxPage() {
             </Card>
           ) : (
             <>
-              <div className="mb-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{currentTexts.reservation}</TableHead>
-                      <TableHead>{currentTexts.dates}</TableHead>
-                      <TableHead>{currentTexts.address}</TableHead>
-                      <TableHead>{currentTexts.status}</TableHead>
-                      <TableHead className="text-right">{currentTexts.action}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedReservations.map((reservation) => {
-                      const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
-                      
-                      return (
-                        <TableRow key={reservation.id}>
-                          <TableCell className="font-semibold">
-                            #{reservationNumber}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm">
-                                {formatDate(reservation.start_date)} → {formatDate(reservation.end_date)}
-                              </span>
+              <div className="space-y-4 mb-6">
+                {paginatedReservations.map((reservation) => {
+                  const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
+                  const dateRange = `${formatDate(reservation.start_date)} → ${formatDate(reservation.end_date)}`;
+                  
+                  return (
+                    <Card 
+                      key={reservation.id} 
+                      className="hover:shadow-md transition-all cursor-pointer"
+                      onClick={() => openModal(reservation)}
+                    >
+                      <CardContent className="p-4 sm:p-5">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            {/* Numéro de réservation */}
+                            <h3 className="font-bold text-gray-900 text-lg mb-3">
+                              #{reservationNumber}
+                            </h3>
+                            
+                            {/* Date avec icône calendrier */}
+                            <div className="flex items-center gap-2 text-gray-600 mb-2">
+                              <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <span className="text-sm">{dateRange}</span>
                             </div>
-                          </TableCell>
-                          <TableCell className="text-gray-600">
-                            {reservation.address || <span className="text-gray-400">—</span>}
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(reservation.id)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => openModal(reservation)}
-                              className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              {currentTexts.view}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                            
+                            {/* Lieu avec icône map pin */}
+                            {reservation.address && (
+                              <div className="flex items-center gap-2 text-gray-600 mb-3">
+                                <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <span className="text-sm truncate">{reservation.address}</span>
+                              </div>
+                            )}
+                            
+                            {/* Statut */}
+                            <div className="mt-3">
+                              {getStatusBadge(reservation.id)}
+                            </div>
+                          </div>
+                          
+                          {/* Bouton circulaire orange avec chevron */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openModal(reservation);
+                            }}
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F2431E] hover:bg-[#E63A1A] text-white flex items-center justify-center flex-shrink-0 transition-colors"
+                            aria-label={currentTexts.view}
+                          >
+                            <Eye className="w-5 h-5 sm:w-6 sm:h-6" />
+                          </button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
 
               {/* Pagination */}

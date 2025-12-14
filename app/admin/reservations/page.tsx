@@ -14,8 +14,9 @@ import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { getReservationStatusUI } from '@/lib/reservationStatus';
-import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Calendar, MapPin, ChevronRight, Search, X } from 'lucide-react';
 
 export default function AdminReservationsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -332,113 +333,161 @@ export default function AdminReservationsPage() {
           </div>
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-              <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">{currentTexts.title}</h1>
-                <div className="flex gap-4 mb-4">
-                  <input
-                    type="text"
-                    placeholder={currentTexts.searchPlaceholder}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
-                  />
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">{currentTexts.title}</h1>
+
+              {/* Barre de recherche */}
+              {reservations.length > 0 && (
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder={currentTexts.searchPlaceholder}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-12 pr-10 h-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7 flex items-center justify-center text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  {searchQuery && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      {filteredReservations.length} {filteredReservations.length === 1 ? 'réservation' : 'réservations'} trouvée{filteredReservations.length > 1 ? 's' : ''}
+                    </p>
+                  )}
                 </div>
-                <p className="text-sm text-gray-600">
-                  {filteredReservations.length} {filteredReservations.length === 1 ? 'réservation' : 'réservations'}
-                </p>
-              </div>
+              )}
 
               {paginatedReservations.length === 0 ? (
-                <div className="bg-white rounded-2xl p-12 text-center">
-                  <p className="text-gray-500 text-lg">{currentTexts.noResults}</p>
-                </div>
+                <Card>
+                  <CardContent className="text-center py-16">
+                    <Search className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                    <p className="text-gray-500 text-lg">{currentTexts.noResults}</p>
+                  </CardContent>
+                </Card>
               ) : (
                 <>
-                  <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto -mx-4 sm:mx-0">
-                      <table className="w-full min-w-[640px]">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              {currentTexts.customer}
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              {currentTexts.dates}
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              {currentTexts.status}
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              {currentTexts.total}
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              {currentTexts.actions}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {paginatedReservations.map((reservation) => (
-                            <tr key={reservation.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900">
-                                    {reservation.customerName || 'Client'}
-                                  </div>
-                                  <div className="text-sm text-gray-500">
-                                    {reservation.customerEmail || 'N/A'}
-                                  </div>
+                  <div className="space-y-4 mb-6">
+                    {paginatedReservations.map((reservation) => {
+                      const statusUI = getReservationStatusUI(reservation.status, language);
+                      const dateRange = `${formatDate(reservation.start_date)} - ${formatDate(reservation.end_date)}`;
+                      
+                      // Couleurs du badge selon le statut
+                      const getStatusBadgeColor = (status: string) => {
+                        const upperStatus = status.toUpperCase();
+                        if (upperStatus === 'CONFIRMED' || upperStatus === 'CONTRACT_SIGNED') {
+                          return { bg: 'bg-green-100', dot: 'bg-green-500', text: 'text-green-800' };
+                        } else if (upperStatus === 'PENDING' || upperStatus === 'CONTRACT_PENDING') {
+                          return { bg: 'bg-orange-100', dot: 'bg-orange-500', text: 'text-orange-800' };
+                        } else if (upperStatus === 'IN_PROGRESS' || upperStatus === 'COMPLETED') {
+                          return { bg: 'bg-blue-100', dot: 'bg-blue-500', text: 'text-blue-800' };
+                        } else if (upperStatus === 'CANCELLED' || upperStatus === 'CANCELED') {
+                          return { bg: 'bg-red-100', dot: 'bg-red-500', text: 'text-red-800' };
+                        }
+                        return { bg: 'bg-gray-100', dot: 'bg-gray-500', text: 'text-gray-800' };
+                      };
+                      
+                      const badgeColors = getStatusBadgeColor(reservation.status);
+                      
+                      return (
+                        <Card 
+                          key={reservation.id} 
+                          className="hover:shadow-md transition-all cursor-pointer"
+                          onClick={() => {
+                            setSelectedReservation(reservation);
+                            setIsDetailModalOpen(true);
+                          }}
+                        >
+                          <CardContent className="p-4 sm:p-5">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                {/* Badge de statut avec point coloré */}
+                                <div className="flex items-center gap-2 mb-3">
+                                  <Badge className={`${badgeColors.bg} ${badgeColors.text} border-0 px-3 py-1`}>
+                                    <span className={`w-2 h-2 rounded-full ${badgeColors.dot} mr-2 inline-block`}></span>
+                                    {statusUI.label}
+                                  </Badge>
                                 </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">
-                                  {formatDate(reservation.start_date)} - {formatDate(reservation.end_date)}
+                                
+                                {/* Nom du client */}
+                                <h3 className="font-bold text-gray-900 text-lg mb-2">
+                                  {reservation.customerName || 'Client'}
+                                </h3>
+                                
+                                {/* Email */}
+                                {reservation.customerEmail && (
+                                  <p className="text-sm text-gray-600 mb-3">{reservation.customerEmail}</p>
+                                )}
+                                
+                                {/* Date avec icône calendrier */}
+                                <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                  <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                  <span className="text-sm">{dateRange}</span>
                                 </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(reservation.status)}`}>
-                                  {reservation.status}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {reservation.total_price ? `${reservation.total_price}€` : reservation.order?.total ? `${reservation.order.total}€` : 'N/A'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button
-                                  onClick={() => {
-                                    setSelectedReservation(reservation);
-                                    setIsDetailModalOpen(true);
-                                  }}
-                                  className="text-[#F2431E] hover:text-[#E63A1A]"
-                                >
-                                  {currentTexts.view}
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                                
+                                {/* Lieu avec icône map pin */}
+                                {reservation.address && (
+                                  <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <span className="text-sm truncate">{reservation.address}</span>
+                                  </div>
+                                )}
+                                
+                                {/* Total */}
+                                {(reservation.total_price || reservation.order?.total) && (
+                                  <div className="text-sm font-semibold text-gray-900 mt-2">
+                                    {reservation.total_price ? `${reservation.total_price}€` : `${reservation.order.total}€`}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Bouton circulaire orange avec chevron */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedReservation(reservation);
+                                  setIsDetailModalOpen(true);
+                                }}
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F2431E] hover:bg-[#E63A1A] text-white flex items-center justify-center flex-shrink-0 transition-colors"
+                                aria-label={currentTexts.view}
+                              >
+                                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                              </button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
 
+                  {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="mt-6 flex justify-center gap-2">
-                      <button
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Précédent
-                      </button>
-                      <span className="px-4 py-2 text-gray-700">
+                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+                      <div className="text-sm text-gray-600">
                         Page {currentPage} sur {totalPages}
-                      </span>
-                      <button
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Suivant
-                      </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Précédent
+                        </Button>
+                        <Button
+                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                        >
+                          Suivant
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </>

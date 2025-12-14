@@ -11,6 +11,10 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, MapPin, Phone, Package, Truck, ChevronRight } from 'lucide-react';
 
 export default function AdminLivraisonsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -362,167 +366,190 @@ export default function AdminLivraisonsPage() {
               </div>
 
               {paginatedDeliveries.length === 0 ? (
-                <div className="bg-white rounded-2xl p-12 text-center">
-                  <p className="text-gray-500 text-lg">{currentTexts.noDeliveries}</p>
-                </div>
+                <Card>
+                  <CardContent className="text-center py-16">
+                    <Truck className="w-16 h-16 mx-auto mb-6 text-gray-400" />
+                    <p className="text-gray-500 text-lg">{currentTexts.noDeliveries}</p>
+                  </CardContent>
+                </Card>
               ) : (
                 <>
-                  <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.type}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.customer}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.address}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.phone}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.dates}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.deliveryOption}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.status}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{currentTexts.actions}</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {paginatedDeliveries.map((delivery) => {
-                            // Trouver la réservation associée
-                            let reservation = delivery.reservation;
-                            if (!reservation && delivery.order?.metadata?.reservation_id) {
-                              reservation = reservationsData.find((r: any) => r.id === delivery.order.metadata.reservation_id);
+                  <div className="space-y-4 mb-6">
+                    {paginatedDeliveries.map((delivery) => {
+                      // Trouver la réservation associée
+                      let reservation = delivery.reservation;
+                      if (!reservation && delivery.order?.metadata?.reservation_id) {
+                        reservation = reservationsData.find((r: any) => r.id === delivery.order.metadata.reservation_id);
+                      }
+                      if (!reservation && delivery.order?.id) {
+                        reservation = reservationsData.find((r: any) => {
+                          if (r.notes) {
+                            try {
+                              const notes = JSON.parse(r.notes);
+                              return notes.orderId === delivery.order.id || notes.sessionId === delivery.order.stripe_session_id;
+                            } catch (e) {
+                              return false;
                             }
-                            // Si toujours pas trouvé, chercher par order_id dans les notes des réservations
-                            if (!reservation && delivery.order?.id) {
-                              reservation = reservationsData.find((r: any) => {
-                                if (r.notes) {
-                                  try {
-                                    const notes = JSON.parse(r.notes);
-                                    return notes.orderId === delivery.order.id || notes.sessionId === delivery.order.stripe_session_id;
-                                  } catch (e) {
-                                    return false;
-                                  }
-                                }
-                                return false;
-                              });
-                            }
-                            const deliveryStatus = reservation?.delivery_status || null;
-                            
-                            return (
-                            <tr key={delivery.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                  delivery.type === 'livraison'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : 'bg-green-100 text-green-800'
-                                }`}>
-                                  {delivery.type === 'livraison' ? '📦 Livraison' : '↩️ Récupération'}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900">{delivery.customer_name}</div>
-                                  <div className="text-sm text-gray-500">{delivery.customer_email}</div>
+                          }
+                          return false;
+                        });
+                      }
+                      const deliveryStatus = reservation?.delivery_status || null;
+                      
+                      const getStatusBadgeColor = (status: string | null) => {
+                        if (status === 'termine') {
+                          return { bg: 'bg-green-100', dot: 'bg-green-500', text: 'text-green-800' };
+                        } else if (status === 'en_cours') {
+                          return { bg: 'bg-yellow-100', dot: 'bg-yellow-500', text: 'text-yellow-800' };
+                        }
+                        return { bg: 'bg-gray-100', dot: 'bg-gray-500', text: 'text-gray-800' };
+                      };
+                      
+                      const statusColors = getStatusBadgeColor(deliveryStatus);
+                      const statusText = deliveryStatus === 'termine' 
+                        ? (language === 'fr' ? 'Terminé' : 'Completed')
+                        : deliveryStatus === 'en_cours'
+                        ? (language === 'fr' ? 'En cours' : 'In progress')
+                        : (language === 'fr' ? 'En attente' : 'Pending');
+                      
+                      const dateRange = delivery.start_date && delivery.end_date
+                        ? `${formatDate(delivery.start_date)} - ${formatDate(delivery.end_date)}`
+                        : 'N/A';
+                      
+                      return (
+                        <Card key={delivery.id} className="hover:shadow-md transition-all">
+                          <CardContent className="p-4 sm:p-5">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                {/* Type et statut */}
+                                <div className="flex items-center gap-2 mb-3">
+                                  <Badge className={`${delivery.type === 'livraison' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'} border-0 px-3 py-1`}>
+                                    {delivery.type === 'livraison' ? (
+                                      <><Package className="w-3 h-3 mr-1 inline" /> Livraison</>
+                                    ) : (
+                                      <><Truck className="w-3 h-3 mr-1 inline" /> Récupération</>
+                                    )}
+                                  </Badge>
+                                  <Badge className={`${statusColors.bg} ${statusColors.text} border-0 px-3 py-1`}>
+                                    <span className={`w-2 h-2 rounded-full ${statusColors.dot} mr-2 inline-block`}></span>
+                                    {statusText}
+                                  </Badge>
                                 </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="text-sm text-gray-900 max-w-xs truncate">{delivery.address}</div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {delivery.customer_phone || 'N/A'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {delivery.start_date && delivery.end_date
-                                  ? `${formatDate(delivery.start_date)} - ${formatDate(delivery.end_date)}`
-                                  : 'N/A'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {getDeliveryOptionText(delivery.delivery_option)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                  deliveryStatus === 'termine'
-                                    ? 'bg-green-100 text-green-800'
-                                    : deliveryStatus === 'en_cours'
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {deliveryStatus === 'termine' 
-                                    ? (language === 'fr' ? '✅ Terminé' : '✅ Completed')
-                                    : deliveryStatus === 'en_cours'
-                                    ? (language === 'fr' ? '🔄 En cours' : '🔄 In progress')
-                                    : (language === 'fr' ? '⏳ En attente' : '⏳ Pending')}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                {reservation && (
-                                  <div className="flex gap-2">
-                                    {deliveryStatus !== 'en_cours' && deliveryStatus !== 'termine' && (
-                                      <button
-                                        onClick={async () => {
-                                          if (!supabase || !reservation) return;
-                                          const { error } = await supabase
-                                            .from('reservations')
-                                            .update({ delivery_status: 'en_cours' })
-                                            .eq('id', reservation.id);
-                                          if (error) {
-                                            console.error('Erreur mise à jour statut:', error);
-                                            alert(language === 'fr' ? 'Erreur lors de la mise à jour' : 'Update error');
-                                          } else {
-                                            window.location.reload();
-                                          }
-                                        }}
-                                        className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-semibold"
-                                      >
-                                        {currentTexts.start}
-                                      </button>
-                                    )}
-                                    {deliveryStatus === 'en_cours' && (
-                                      <button
-                                        onClick={async () => {
-                                          if (!supabase || !reservation) return;
-                                          const { error } = await supabase
-                                            .from('reservations')
-                                            .update({ delivery_status: 'termine' })
-                                            .eq('id', reservation.id);
-                                          if (error) {
-                                            console.error('Erreur mise à jour statut:', error);
-                                            alert(language === 'fr' ? 'Erreur lors de la mise à jour' : 'Update error');
-                                          } else {
-                                            window.location.reload();
-                                          }
-                                        }}
-                                        className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs font-semibold"
-                                      >
-                                        {currentTexts.complete}
-                                      </button>
-                                    )}
+                                
+                                {/* Nom du client */}
+                                <h3 className="font-bold text-gray-900 text-lg mb-2">
+                                  {delivery.customer_name}
+                                </h3>
+                                
+                                {/* Email */}
+                                {delivery.customer_email && (
+                                  <p className="text-sm text-gray-600 mb-3">{delivery.customer_email}</p>
+                                )}
+                                
+                                {/* Adresse */}
+                                {delivery.address && (
+                                  <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <span className="text-sm truncate">{delivery.address}</span>
                                   </div>
                                 )}
-                              </td>
-                            </tr>
-                          )})}
-                        </tbody>
-                      </table>
-                    </div>
+                                
+                                {/* Téléphone */}
+                                {delivery.customer_phone && (
+                                  <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                    <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <span className="text-sm">{delivery.customer_phone}</span>
+                                  </div>
+                                )}
+                                
+                                {/* Dates */}
+                                {dateRange !== 'N/A' && (
+                                  <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                    <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <span className="text-sm">{dateRange}</span>
+                                  </div>
+                                )}
+                                
+                                {/* Option de livraison */}
+                                {delivery.delivery_option && (
+                                  <div className="text-sm text-gray-600 mt-2">
+                                    {getDeliveryOptionText(delivery.delivery_option)}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Actions */}
+                              {reservation && (
+                                <div className="flex flex-col gap-2 flex-shrink-0">
+                                  {deliveryStatus !== 'en_cours' && deliveryStatus !== 'termine' && (
+                                    <Button
+                                      onClick={async () => {
+                                        if (!supabase || !reservation) return;
+                                        const { error } = await supabase
+                                          .from('reservations')
+                                          .update({ delivery_status: 'en_cours' })
+                                          .eq('id', reservation.id);
+                                        if (error) {
+                                          alert(language === 'fr' ? 'Erreur lors de la mise à jour' : 'Update error');
+                                        } else {
+                                          window.location.reload();
+                                        }
+                                      }}
+                                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
+                                    >
+                                      {currentTexts.start}
+                                    </Button>
+                                  )}
+                                  {deliveryStatus === 'en_cours' && (
+                                    <Button
+                                      onClick={async () => {
+                                        if (!supabase || !reservation) return;
+                                        const { error } = await supabase
+                                          .from('reservations')
+                                          .update({ delivery_status: 'termine' })
+                                          .eq('id', reservation.id);
+                                        if (error) {
+                                          alert(language === 'fr' ? 'Erreur lors de la mise à jour' : 'Update error');
+                                        } else {
+                                          window.location.reload();
+                                        }
+                                      }}
+                                      className="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold"
+                                    >
+                                      {currentTexts.complete}
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
 
+                  {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="mt-6 flex justify-center gap-2">
-                      <button
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Précédent
-                      </button>
-                      <span className="px-4 py-2 text-gray-700">
+                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+                      <div className="text-sm text-gray-600">
                         Page {currentPage} sur {totalPages}
-                      </span>
-                      <button
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                      >
-                        Suivant
-                      </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Précédent
+                        </Button>
+                        <Button
+                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                        >
+                          Suivant
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </>

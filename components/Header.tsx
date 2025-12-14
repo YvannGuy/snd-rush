@@ -188,6 +188,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       signOut: 'Déconnexion',
       adminPanel: 'Panneau admin',
       adminReservations: 'Réservations',
+      adminPlanning: 'Planning',
       adminClients: 'Clients',
       adminCatalog: 'Catalogue',
       adminInvoices: 'Factures',
@@ -206,6 +207,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       signOut: 'Sign out',
       adminPanel: 'Admin panel',
       adminReservations: 'Reservations',
+      adminPlanning: 'Planning',
       adminClients: 'Clients',
       adminCatalog: 'Catalog',
       adminInvoices: 'Invoices',
@@ -268,14 +270,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                         <>
                           <DropdownMenuItem asChild>
                             <Link
-                              href="/admin"
-                              className="cursor-pointer"
-                            >
-                              {texts[language].adminPanel}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link
                               href="/admin/reservations"
                               className="cursor-pointer"
                             >
@@ -284,26 +278,18 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link
+                              href="/admin/planning"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminPlanning}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
                               href="/admin/clients"
                               className="cursor-pointer"
                             >
                               {texts[language].adminClients}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link
-                              href="/admin/catalogue"
-                              className="cursor-pointer"
-                            >
-                              {texts[language].adminCatalog}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link
-                              href="/admin/factures"
-                              className="cursor-pointer"
-                            >
-                              {texts[language].adminInvoices}
                             </Link>
                           </DropdownMenuItem>
                         </>
@@ -479,14 +465,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                         <>
                           <DropdownMenuItem asChild>
                             <Link
-                              href="/admin"
-                              className="cursor-pointer"
-                            >
-                              {texts[language].adminPanel}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link
                               href="/admin/reservations"
                               className="cursor-pointer"
                             >
@@ -495,26 +473,18 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link
+                              href="/admin/planning"
+                              className="cursor-pointer"
+                            >
+                              {texts[language].adminPlanning}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
                               href="/admin/clients"
                               className="cursor-pointer"
                             >
                               {texts[language].adminClients}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link
-                              href="/admin/catalogue"
-                              className="cursor-pointer"
-                            >
-                              {texts[language].adminCatalog}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link
-                              href="/admin/factures"
-                              className="cursor-pointer"
-                            >
-                              {texts[language].adminInvoices}
                             </Link>
                           </DropdownMenuItem>
                         </>
