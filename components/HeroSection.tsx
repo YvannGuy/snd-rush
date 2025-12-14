@@ -23,7 +23,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
     fr: {
       title1: 'Location de sonorisation, lumière & DJ gear',
       title2: 'en 2 minutes',
-      subtitle: 'Faites appel à nos spécialistes de l\'urgence sonore ou planifiez votre événement avec Sound Rush, notre service de réservation à l\'avance. Matériel professionnel, intervention express et équipe disponible 24h/24 - 7j/7 sur Paris et région parisienne pour tous vos besoins en matière de son.',
+      subtitle: 'Leader de la location de sonorisation express à paris, SoundRush accompagne vos évènements urgents comme planifiés. Matériel professionnel, réactivité immédiate et équipes disponibles 24h/24 - 7j/7 sur paris et région parisienne',
       cta: 'Voir les packs & tarifs',
       ctaSecondary: 'Trouver mon pack',
       catalogue: 'Voir le catalogue',
@@ -32,7 +32,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
     en: {
       title1: 'Sound system, lighting & DJ gear rental',
       title2: 'in 2 minutes',
-      subtitle: 'Call on our sound emergency specialists or plan your event with Sound Rush, our advance booking service. Professional equipment, express intervention and team available 24/7 in Paris and the Paris region for all your sound needs.',
+      subtitle: 'Leader in express sound system rental in Paris, SoundRush supports your urgent and planned events. Professional equipment, immediate responsiveness and teams available 24/7 in Paris and the Paris region',
       cta: 'View packs & prices',
       ctaSecondary: 'Find my pack',
       catalogue: 'View catalogue',

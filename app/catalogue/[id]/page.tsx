@@ -509,7 +509,7 @@ export default function ProductDetailPage() {
     <div className="min-h-screen bg-white">
       <Header language={language} onLanguageChange={setLanguage} />
       
-      <main className="pt-20 pb-32 bg-white">
+      <main className="pt-[180px] sm:pt-[200px] pb-32 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
           {/* Hero Section - Image Gallery + Infos principales */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">

@@ -18,7 +18,8 @@ export default function PourQuiSection({ language }: PourQuiSectionProps) {
         { name: 'Soirées privées', icon: '🎉' },
         { name: 'Corporate & séminaires', icon: '🏢' },
         { name: 'Associations & églises', icon: '⛪' },
-        { name: 'Écoles & salles municipales', icon: '🏛️' }
+        { name: 'Écoles & salles municipales', icon: '🏛️' },
+        { name: 'Festivals & événements', icon: '🎪' }
       ],
       cta: 'Voir les packs adaptés'
     },
@@ -32,7 +33,8 @@ export default function PourQuiSection({ language }: PourQuiSectionProps) {
         { name: 'Private parties', icon: '🎉' },
         { name: 'Corporate & seminars', icon: '🏢' },
         { name: 'Associations & churches', icon: '⛪' },
-        { name: 'Schools & town halls', icon: '🏛️' }
+        { name: 'Schools & town halls', icon: '🏛️' },
+        { name: 'Festivals & events', icon: '🎪' }
       ],
       cta: 'View adapted packs'
     }

@@ -10,6 +10,7 @@ import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import SignModal from '@/components/auth/SignModal';
 import TopBanner from '@/components/TopBanner';
+import GuaranteesBanner from '@/components/GuaranteesBanner';
 import SearchBar from '@/components/SearchBar';
 import UserIconWithName from '@/components/UserIconWithName';
 import { supabase } from '@/lib/supabase';
@@ -340,48 +341,32 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               </DropdownMenu>
 
               {/* Mobile buttons - Panier, Auth et Toggle regroupés */}
-              <div className="lg:hidden flex items-center gap-0">
-                {/* Language switcher Mobile */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-2"
-                    >
-                      <Globe className="h-5 w-5" />
-                      <span className="font-semibold text-xs uppercase">{language === 'fr' ? 'Fra' : 'Eng'}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-32">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        if (language !== 'fr') toggleLanguage();
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <span className="font-semibold">Français</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        if (language !== 'en') toggleLanguage();
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <span className="font-semibold">English</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <div className="lg:hidden flex items-center gap-0 flex-shrink-0">
+                {/* Mobile menu button - Priorité pour être toujours visible */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/10 rounded-lg relative z-50 flex-shrink-0"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+                  aria-expanded={isMobileMenuOpen}
+                >
+                  {isMobileMenuOpen ? (
+                    <X className="h-6 w-6" />
+                  ) : (
+                    <Menu className="h-6 w-6" />
+                  )}
+                </Button>
                 
                 {/* Séparateur vertical mobile */}
-                <div className="w-px h-6 bg-white/20" />
+                <div className="w-px h-6 bg-white/20 mx-1" />
                 
                 {/* Panier Mobile */}
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsMiniCartOpen(true)}
-                  className="relative text-white"
+                  className="relative text-white flex-shrink-0"
                   aria-label="Panier"
                 >
                   <ShoppingCart className="h-6 w-6" />
@@ -394,18 +379,21 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                     </Badge>
                   )}
                 </Button>
-                {/* Auth Icon - Mobile */}
+                
+                {/* Séparateur vertical mobile */}
+                <div className="w-px h-6 bg-white/20 mx-1" />
+                
+                {/* Auth Icon - Mobile - Version compacte */}
                 {user ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-2 text-white hover:bg-white/10 rounded-lg px-3 ml-1"
+                        size="icon"
+                        className="text-white hover:bg-white/10 rounded-lg flex-shrink-0"
                         aria-label={texts[language].account}
                       >
                         <User className="h-5 w-5" />
-                        <span className="font-semibold text-sm">{userFirstName || 'Login'}</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
@@ -447,31 +435,48 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 ) : (
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     onClick={() => setIsSignModalOpen(true)}
-                    className="flex items-center gap-2 text-white hover:bg-white/10 rounded-lg px-3 ml-1"
+                    className="text-white hover:bg-white/10 rounded-lg flex-shrink-0"
                     aria-label="Se connecter"
                   >
                     <User className="h-5 w-5" />
-                    <span className="font-semibold text-sm">{language === 'fr' ? 'Connexion' : 'Login'}</span>
                   </Button>
                 )}
-
-                {/* Mobile menu button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white hover:bg-white/10 rounded-lg relative z-50 ml-1"
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-                  aria-expanded={isMobileMenuOpen}
-                >
-                  {isMobileMenuOpen ? (
-                    <X className="h-6 w-6" />
-                  ) : (
-                    <Menu className="h-6 w-6" />
-                  )}
-                </Button>
+                
+                {/* Séparateur vertical mobile */}
+                <div className="w-px h-6 bg-white/20 mx-1" />
+                
+                {/* Language switcher Mobile - Version compacte */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-white hover:text-[#F2431E] hover:bg-transparent flex-shrink-0"
+                    >
+                      <Globe className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-32">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (language !== 'fr') toggleLanguage();
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <span className="font-semibold">Français</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (language !== 'en') toggleLanguage();
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <span className="font-semibold">English</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
@@ -539,6 +544,9 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
 
       {/* Bandeau orange en bas - collé directement au Header */}
       <TopBanner language={language} />
+      
+      {/* Bandeau garanties */}
+      <GuaranteesBanner language={language} />
 
       {/* Mini Cart */}
       <MiniCart

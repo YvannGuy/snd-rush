@@ -387,7 +387,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
   };
 
   return (
-    <div className="pt-[112px]">
+    <div className="pt-[180px] sm:pt-[200px]">
       {/* Header Section */}
       <div className="bg-white py-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">

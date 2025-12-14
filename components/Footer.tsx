@@ -187,8 +187,53 @@ export default function Footer({ language }: FooterProps) {
             </div>
           </div>
 
-          {/* Bottom bar */}
+          {/* Moyens de paiement */}
           <div className="mt-12 pt-8 border-t border-gray-800">
+            <div className="w-full px-2 sm:px-4">
+              <div className="flex items-center justify-between gap-2 sm:gap-3 md:gap-4 lg:gap-6 overflow-x-auto scrollbar-hide min-w-0">
+                {/* CB Logo */}
+                <div className="flex items-center justify-center w-12 h-8 sm:w-14 sm:h-9 md:w-16 md:h-10 bg-gradient-to-b from-blue-600 to-green-500 rounded px-1.5 sm:px-2 flex-shrink-0">
+                  <span className="text-white font-bold text-sm sm:text-base md:text-lg">CB</span>
+                </div>
+                
+                {/* Mastercard Logo */}
+                <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
+                  <div className="flex items-center">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full bg-red-500 -mr-0.5 sm:-mr-1 md:-mr-2"></div>
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full bg-yellow-500"></div>
+                  </div>
+                  <span className="text-white font-bold text-[9px] sm:text-[10px] md:text-xs ml-0.5 sm:ml-1 md:ml-2 whitespace-nowrap">MASTERCARD</span>
+                </div>
+                
+                {/* American Express Logo */}
+                <div className="flex items-center justify-center w-16 h-8 sm:w-20 sm:h-9 md:w-24 md:h-10 bg-blue-600 rounded px-1.5 sm:px-2 flex-shrink-0">
+                  <span className="text-white font-bold text-[8px] sm:text-[9px] md:text-xs leading-tight text-center">AMERICAN<br />EXPRESS</span>
+                </div>
+                
+                {/* Apple Pay Logo */}
+                <div className="flex items-center justify-center w-16 h-8 sm:w-20 sm:h-9 md:w-24 md:h-10 border border-gray-300 rounded px-1.5 sm:px-2 md:px-3 bg-white flex-shrink-0">
+                  <div className="flex items-center gap-0.5 sm:gap-1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-black sm:w-4 sm:h-4 md:w-5 md:h-5">
+                      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                    </svg>
+                    <span className="text-black font-semibold text-[10px] sm:text-xs md:text-sm whitespace-nowrap">Pay</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <style jsx>{`
+              .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+              }
+              .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="pt-4 border-t border-gray-800">
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
               <p className="text-gray-400 text-sm">
                 © 2025 <span className="text-[#F2431E]">SoundRush</span><span className="text-white"> Paris</span> - Tous droits réservés.

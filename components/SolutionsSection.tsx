@@ -30,7 +30,9 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
           { name: 'Consoles', icon: '🎛️' },
           { name: 'Micros filaires & sans fil', icon: '🎤' },
           { name: 'Caissons de basse', icon: '📻' },
-          { name: 'Pieds & accessoires', icon: '🔧' }
+          { name: 'Pieds & accessoires', icon: '🔧' },
+          { name: 'DJ gear', icon: '🎧' },
+          { name: 'Lumière', icon: '💡' }
         ],
         cta: 'Voir le catalogue'
       },
@@ -112,7 +114,9 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
           { name: 'Consoles', icon: '🎛️' },
           { name: 'Wired & wireless mics', icon: '🎤' },
           { name: 'Subwoofers', icon: '📻' },
-          { name: 'Stands & accessories', icon: '🔧' }
+          { name: 'Stands & accessories', icon: '🔧' },
+          { name: 'DJ gear', icon: '🎧' },
+          { name: 'Lighting', icon: '💡' }
         ],
         cta: 'View catalog'
       },
@@ -309,7 +313,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
           </p>
 
           {/* Catégories Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-10">
             {currentTexts.catalogueSection.categories.map((category, index) => (
               <div
                 key={index}
