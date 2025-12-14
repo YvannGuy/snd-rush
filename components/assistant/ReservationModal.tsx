@@ -141,21 +141,6 @@ export default function ReservationModal({
                      formData.postalCode.trim() && 
                      cgvAccepted;
 
-  // Debug temporaire pour voir ce qui pose problème
-    firstName: formData.firstName.trim(),
-    lastName: formData.lastName.trim(),
-    email: formData.email.trim(),
-    emailValid: /\S+@\S+\.\S+/.test(formData.email),
-    phone: formData.phone.trim(),
-    startDate: formData.startDate.trim(),
-    endDate: formData.endDate.trim(),
-    startTime: formData.startTime.trim(),
-    endTime: formData.endTime.trim(),
-    postalCode: formData.postalCode.trim(),
-    cgvAccepted,
-    isFormValid
-  });
-
   if (!isOpen) return null;
 
   return (
