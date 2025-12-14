@@ -36,6 +36,9 @@ interface HeaderProps {
 export default function Header({ language, onLanguageChange }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  
+  // Ne pas afficher le bandeau noir sur les pages dashboard/admin et toutes les pages utilisateur (mes-*)
+  const isDashboardPage = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/mes-');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
@@ -546,7 +549,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       <TopBanner language={language} />
       
       {/* Bandeau garanties */}
-      <GuaranteesBanner language={language} />
+      {!isDashboardPage && <GuaranteesBanner language={language} />}
 
       {/* Mini Cart */}
       <MiniCart
