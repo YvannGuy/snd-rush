@@ -129,7 +129,6 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
           reservationsWithContractsToSign,
         });
       } catch (error) {
-        console.error('Erreur calcul compteurs sidebar:', error);
       }
     };
 

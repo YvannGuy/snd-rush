@@ -81,7 +81,6 @@ export default function MesReservationsPage() {
       if (!supabaseClient) return;
       
       try {
-        console.log('🔍 Chargement réservations pour user.id:', user.id);
         const { data, error } = await supabaseClient
           .from('reservations')
           .select('*')
@@ -89,11 +88,9 @@ export default function MesReservationsPage() {
           .order('created_at', { ascending: false });
 
         if (error) {
-          console.error('❌ Erreur chargement réservations:', error);
           throw error;
         }
         
-        console.log('✅ Réservations trouvées:', data?.length || 0, data);
         setReservations(data || []);
         setFilteredReservations(data || []);
       } catch (error) {

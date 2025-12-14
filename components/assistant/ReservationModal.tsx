@@ -142,7 +142,6 @@ export default function ReservationModal({
                      cgvAccepted;
 
   // Debug temporaire pour voir ce qui pose problème
-  console.log('🔍 DEBUG MODAL RÉSERVATION:', {
     firstName: formData.firstName.trim(),
     lastName: formData.lastName.trim(),
     email: formData.email.trim(),

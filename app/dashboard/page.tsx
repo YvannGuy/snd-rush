@@ -92,7 +92,6 @@ export default function DashboardPage() {
       
       const confirmDeposit = async () => {
         try {
-          console.log('💰 Confirmation de la caution via API:', { sessionId, reservationId });
           
           const response = await fetch('/api/deposit/confirm', {
             method: 'POST',
@@ -108,7 +107,6 @@ export default function DashboardPage() {
           const data = await response.json();
 
           if (data.success) {
-            console.log('✅ Caution confirmée avec succès');
             // Recharger les données du dashboard
             if (user && supabase) {
               const loadDashboardData = async () => {
@@ -124,10 +122,8 @@ export default function DashboardPage() {
             // Nettoyer l'URL
             router.replace('/dashboard');
           } else {
-            console.error('❌ Erreur confirmation caution:', data.error);
           }
         } catch (error) {
-          console.error('❌ Erreur lors de la confirmation de la caution:', error);
         } finally {
           setIsConfirmingDeposit(false);
         }
@@ -146,7 +142,6 @@ export default function DashboardPage() {
       
       try {
         // Charger les réservations
-        console.log('🔍 Chargement réservations pour user.id:', user.id);
         const { data: reservationsData, error: reservationsError } = await supabaseClient
           .from('reservations')
           .select('*')
@@ -158,7 +153,6 @@ export default function DashboardPage() {
           throw reservationsError;
         }
 
-        console.log('✅ Réservations trouvées:', reservationsData?.length || 0, reservationsData);
         setReservations(reservationsData || []);
 
         // Charger les commandes (factures)
