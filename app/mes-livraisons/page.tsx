@@ -14,7 +14,6 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 // Icônes lucide-react
 import { 
   Calendar, 
@@ -24,8 +23,11 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRightLeft,
-  Menu
+  Menu,
+  Truck,
+  Music
 } from 'lucide-react';
+import { PACKS } from '@/lib/packs';
 
 export default function MesLivraisonsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -47,6 +49,32 @@ export default function MesLivraisonsPage() {
       return;
     }
   }, [user, loading, router]);
+
+  // Marquer les livraisons comme consultées quand la page est visitée
+  useEffect(() => {
+    if (!user || !supabase || typeof window === 'undefined') return;
+    
+    const markAsViewed = async () => {
+      try {
+        const { data: reservationsData } = await supabase
+          .from('reservations')
+          .select('id')
+          .eq('user_id', user.id)
+          .in('status', ['confirmed', 'CONFIRMED', 'completed', 'COMPLETED']);
+        
+        if (reservationsData && reservationsData.length > 0) {
+          const viewedIds = reservationsData.map(r => r.id);
+          localStorage.setItem('viewed_deliveries', JSON.stringify(viewedIds));
+          // Dispatcher un événement pour mettre à jour les compteurs du dashboard
+          window.dispatchEvent(new CustomEvent('pendingActionsUpdated'));
+        }
+      } catch (error) {
+        console.error('Erreur marquage livraisons comme consultées:', error);
+      }
+    };
+    
+    markAsViewed();
+  }, [user, supabase]);
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -104,6 +132,72 @@ export default function MesLivraisonsPage() {
     } catch (e) {
       return { startTime: null, endTime: null };
     }
+  };
+
+  // Fonction pour obtenir le nom d'un pack
+  const getPackName = (packId: string | null, lang: 'fr' | 'en' = 'fr') => {
+    if (!packId) return null;
+    const packNames: { [key: string]: { fr: string; en: string } } = {
+      '1': { fr: 'Essentiel', en: 'Essential' },
+      '2': { fr: 'Standard', en: 'Standard' },
+      '3': { fr: 'Premium', en: 'Premium' },
+      '4': { fr: 'Événement', en: 'Event' },
+      'pack-1': { fr: 'Essentiel', en: 'Essential' },
+      'pack-2': { fr: 'Standard', en: 'Standard' },
+      'pack-3': { fr: 'Premium', en: 'Premium' },
+      'pack-4': { fr: 'Événement', en: 'Event' },
+    };
+    return packNames[packId]?.[lang] || `Pack ${packId}`;
+  };
+
+  // Fonction pour obtenir le titre de la livraison
+  const getDeliveryTitle = (reservation: any, lang: 'fr' | 'en' = 'fr'): string => {
+    if (reservation.pack_id) {
+      const packName = getPackName(String(reservation.pack_id), lang);
+      if (packName) {
+        return `Pack ${packName}`;
+      }
+    }
+    if (reservation.notes) {
+      try {
+        const parsedNotes = JSON.parse(reservation.notes);
+        if (parsedNotes?.cartItems && Array.isArray(parsedNotes.cartItems) && parsedNotes.cartItems.length > 0) {
+          const firstItem = parsedNotes.cartItems[0];
+          if (firstItem.productId?.startsWith('pack-') || firstItem.productId?.startsWith('pack_')) {
+            const packId = firstItem.productId.replace('pack-', '').replace('pack_', '');
+            const packName = getPackName(packId, lang);
+            if (packName) {
+              return `Pack ${packName}`;
+            }
+          }
+          if (firstItem.productName) {
+            return firstItem.productName;
+          }
+        }
+      } catch (e) {
+        // Ignorer
+      }
+    }
+    return lang === 'fr' ? 'Livraison' : 'Delivery';
+  };
+
+  // Fonction pour formater la date au format court
+  const formatDateShort = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
+  };
+
+  // Fonction pour obtenir les couleurs du badge selon le statut
+  const getStatusBadgeColor = (status: string) => {
+    if (status === 'termine') {
+      return { bg: 'bg-green-100', dot: 'bg-green-500', text: 'text-green-800' };
+    } else if (status === 'en_cours') {
+      return { bg: 'bg-blue-100', dot: 'bg-blue-500', text: 'text-blue-800' };
+    }
+    return { bg: 'bg-orange-100', dot: 'bg-orange-500', text: 'text-orange-800' };
   };
 
 
@@ -238,92 +332,78 @@ export default function MesLivraisonsPage() {
             </Card>
           ) : (
             <>
-              <div className="mb-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{currentTexts.reservationNumber}</TableHead>
-                      <TableHead>{currentTexts.deliveryDate}</TableHead>
-                      <TableHead>{currentTexts.returnDate}</TableHead>
-                      <TableHead>{currentTexts.address}</TableHead>
-                      <TableHead>{language === 'fr' ? 'Type' : 'Type'}</TableHead>
-                      <TableHead>{currentTexts.status}</TableHead>
-                      <TableHead className="text-right">{language === 'fr' ? 'Action' : 'Action'}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedReservations.map((reservation) => {
-                      const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
-                      const { startTime, endTime } = getTimesFromNotes(reservation.notes);
-                      const isDelivery = !!reservation.address;
-                      const deliveryStatus = reservation.delivery_status || 'en_attente';
-                      
-                      return (
-                        <TableRow key={reservation.id}>
-                          <TableCell className="font-semibold">
-                            #{reservationNumber}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm">{formatDate(reservation.start_date, startTime)}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm">{reservation.end_date ? formatDate(reservation.end_date, endTime) : '—'}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-600">
-                            {reservation.address ? (
-                              <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-gray-400" />
-                                <span className="text-sm max-w-xs truncate">{reservation.address}</span>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
-                              {isDelivery ? (language === 'fr' ? 'Livraison' : 'Delivery') : (language === 'fr' ? 'Retrait' : 'Pickup')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant={deliveryStatus === 'termine' ? 'default' : deliveryStatus === 'en_cours' ? 'secondary' : 'outline'}
-                              className={
-                                deliveryStatus === 'termine'
-                                  ? 'bg-green-100 text-green-800 hover:bg-green-100'
+              <div className="space-y-4 mb-6">
+                {paginatedReservations.map((reservation) => {
+                  const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
+                  const { startTime } = getTimesFromNotes(reservation.notes);
+                  const isDelivery = !!reservation.address;
+                  const deliveryStatus = reservation.delivery_status || 'en_attente';
+                  const deliveryTitle = getDeliveryTitle(reservation, language);
+                  const deliveryDate = formatDateShort(reservation.start_date);
+                  const badgeColors = getStatusBadgeColor(deliveryStatus);
+                  
+                  return (
+                    <Card 
+                      key={reservation.id} 
+                      className="hover:shadow-md transition-all"
+                    >
+                      <CardContent className="p-4 sm:p-5">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            {/* Badge de statut avec point coloré */}
+                            <div className="flex items-center gap-2 mb-3">
+                              <Badge className={`${badgeColors.bg} ${badgeColors.text} border-0 px-3 py-1`}>
+                                <span className={`w-2 h-2 rounded-full ${badgeColors.dot} mr-2 inline-block`}></span>
+                                {deliveryStatus === 'termine'
+                                  ? (language === 'fr' ? 'Terminé' : 'Completed')
                                   : deliveryStatus === 'en_cours'
-                                  ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
-                                  : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
-                              }
-                            >
-                              {deliveryStatus === 'termine'
-                                ? (language === 'fr' ? 'Terminé' : 'Completed')
-                                : deliveryStatus === 'en_cours'
-                                ? (language === 'fr' ? 'En cours' : 'In progress')
-                                : (language === 'fr' ? 'En attente' : 'Pending')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              asChild
-                            >
-                              <a href="tel:+33651084994" title={language === 'fr' ? 'Contacter SoundRush' : 'Contact SoundRush'}>
-                                <Phone className="w-4 h-4" />
-                              </a>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                                  ? (language === 'fr' ? 'En cours' : 'In progress')
+                                  : (language === 'fr' ? 'En attente' : 'Pending')}
+                              </Badge>
+                              {isDelivery && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200 text-xs">
+                                  {language === 'fr' ? 'Livraison' : 'Delivery'}
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            {/* Titre de la livraison */}
+                            <h3 className="font-bold text-gray-900 text-lg mb-3">
+                              {deliveryTitle}
+                            </h3>
+                            
+                            {/* Date de livraison */}
+                            <div className="flex items-center gap-2 text-gray-600 mb-2">
+                              <Truck className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <span className="text-sm">
+                                {language === 'fr' ? 'Livraison le' : 'Delivery on'} {deliveryDate}
+                                {startTime && ` à ${startTime}`}
+                              </span>
+                            </div>
+                            
+                            {/* Lieu */}
+                            {reservation.address && (
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <span className="text-sm truncate">{reservation.address}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Bouton contact */}
+                          <a
+                            href="tel:+33651084994"
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F2431E] hover:bg-[#E63A1A] text-white flex items-center justify-center flex-shrink-0 transition-colors"
+                            title={language === 'fr' ? 'Contacter SoundRush' : 'Contact SoundRush'}
+                          >
+                            <Phone className="w-5 h-5 sm:w-6 sm:h-6" />
+                          </a>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
 
               {/* Pagination */}

@@ -23,7 +23,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
     fr: {
       title1: 'La location ',
       title2: 'sono express',
-      title3: ' à paris',
+      title3: ' à paris en 2min',
       subtitle: 'Leader de la location de sonorisation express à paris, SoundRush accompagne vos évènements urgents comme planifiés. Matériel professionnel, réactivité immédiate et équipes disponibles 24h/24 - 7j/7 sur paris et région parisienne',
       cta: 'Voir les packs & tarifs',
       ctaSecondary: 'Trouver mon pack',

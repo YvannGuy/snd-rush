@@ -55,13 +55,13 @@ export default function GlobalButtons() {
 
   if (!mounted) return null;
 
-  // Masquer le bouton WhatsApp sur les pages dashboard (admin et user)
+  // Masquer le bouton WhatsApp et retour en haut sur les pages dashboard (admin et user)
   const isDashboardPage = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/mes-');
 
   return (
     <>
       {!isDashboardPage && <WhatsAppButton language={language} />}
-      <ScrollToTopButton />
+      {!isDashboardPage && <ScrollToTopButton />}
     </>
   );
 }

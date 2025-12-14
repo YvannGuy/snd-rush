@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 // Icônes lucide-react
 import { 
   Search, 
@@ -27,8 +26,10 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  Music
 } from 'lucide-react';
+import { PACKS } from '@/lib/packs';
 
 export default function MesContratsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -52,6 +53,32 @@ export default function MesContratsPage() {
       return;
     }
   }, [user, loading, router]);
+
+  // Marquer les contrats comme consultés quand la page est visitée
+  useEffect(() => {
+    if (!user || !supabase || typeof window === 'undefined') return;
+    
+    const markAsViewed = async () => {
+      try {
+        // Marquer TOUS les contrats (signés ou non) comme consultés
+        const { data: reservationsData } = await supabase
+          .from('reservations')
+          .select('id')
+          .eq('user_id', user.id);
+        
+        if (reservationsData && reservationsData.length > 0) {
+          const viewedIds = reservationsData.map(r => r.id);
+          localStorage.setItem('viewed_contracts', JSON.stringify(viewedIds));
+          // Dispatcher un événement pour mettre à jour les compteurs du dashboard
+          window.dispatchEvent(new CustomEvent('pendingActionsUpdated'));
+        }
+      } catch (error) {
+        console.error('Erreur marquage contrats comme consultés:', error);
+      }
+    };
+    
+    markAsViewed();
+  }, [user, supabase]);
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -127,6 +154,68 @@ export default function MesContratsPage() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Fonction pour obtenir le nom d'un pack
+  const getPackName = (packId: string | null, lang: 'fr' | 'en' = 'fr') => {
+    if (!packId) return null;
+    const packNames: { [key: string]: { fr: string; en: string } } = {
+      '1': { fr: 'Essentiel', en: 'Essential' },
+      '2': { fr: 'Standard', en: 'Standard' },
+      '3': { fr: 'Premium', en: 'Premium' },
+      '4': { fr: 'Événement', en: 'Event' },
+      'pack-1': { fr: 'Essentiel', en: 'Essential' },
+      'pack-2': { fr: 'Standard', en: 'Standard' },
+      'pack-3': { fr: 'Premium', en: 'Premium' },
+      'pack-4': { fr: 'Événement', en: 'Event' },
+    };
+    return packNames[packId]?.[lang] || `Pack ${packId}`;
+  };
+
+  // Fonction pour obtenir le titre du contrat
+  const getContractTitle = (contract: any, lang: 'fr' | 'en' = 'fr'): string => {
+    if (contract.pack_id) {
+      const packName = getPackName(String(contract.pack_id), lang);
+      if (packName) {
+        return `Pack ${packName}`;
+      }
+    }
+    if (contract.notes) {
+      try {
+        const parsedNotes = JSON.parse(contract.notes);
+        if (parsedNotes?.cartItems && Array.isArray(parsedNotes.cartItems) && parsedNotes.cartItems.length > 0) {
+          const firstItem = parsedNotes.cartItems[0];
+          if (firstItem.productId?.startsWith('pack-') || firstItem.productId?.startsWith('pack_')) {
+            const packId = firstItem.productId.replace('pack-', '').replace('pack_', '');
+            const packName = getPackName(packId, lang);
+            if (packName) {
+              return `Pack ${packName}`;
+            }
+          }
+          if (firstItem.productName) {
+            return firstItem.productName;
+          }
+        }
+      } catch (e) {
+        // Ignorer
+      }
+    }
+    return lang === 'fr' ? 'Contrat' : 'Contract';
+  };
+
+  // Fonction pour formater la date au format court
+  const formatDateShort = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const startDay = start.getDate();
+    const endDay = end.getDate();
+    const startMonth = start.toLocaleDateString('fr-FR', { month: 'short' });
+    const year = start.getFullYear();
+    
+    if (startDay === endDay) {
+      return `${startDay} ${startMonth} ${year}`;
+    }
+    return `${startDay}-${endDay} ${startMonth} ${year}`;
   };
 
   const texts = {
@@ -282,81 +371,76 @@ export default function MesContratsPage() {
                 
                 return (
                   <>
-                    <div className="mb-6">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>{currentTexts.reservationNumber}</TableHead>
-                            <TableHead>{currentTexts.signedOn}</TableHead>
-                            <TableHead>{currentTexts.dates}</TableHead>
-                            <TableHead>{language === 'fr' ? 'Adresse' : 'Address'}</TableHead>
-                            <TableHead>{currentTexts.total}</TableHead>
-                            <TableHead>{language === 'fr' ? 'Statut' : 'Status'}</TableHead>
-                            <TableHead className="text-right">{language === 'fr' ? 'Action' : 'Action'}</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedContracts.map((contract) => {
-                            const reservationNumber = contract.id.slice(0, 8).toUpperCase();
-                            
-                            return (
-                              <TableRow key={contract.id}>
-                                <TableCell className="font-semibold">
-                                  #{reservationNumber}
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                    {contract.client_signed_at ? formatDateTime(contract.client_signed_at) : '—'}
+                    <div className="space-y-4 mb-6">
+                      {paginatedContracts.map((contract) => {
+                        const reservationNumber = contract.id.slice(0, 8).toUpperCase();
+                        const contractTitle = getContractTitle(contract, language);
+                        const dateRange = formatDateShort(contract.start_date, contract.end_date);
+                        const signedDate = contract.client_signed_at 
+                          ? new Date(contract.client_signed_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+                          : null;
+                        
+                        return (
+                          <Card 
+                            key={contract.id} 
+                            className="hover:shadow-md transition-all"
+                          >
+                            <CardContent className="p-4 sm:p-5">
+                              <div className="flex items-center justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                  {/* Badge de statut avec point coloré */}
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Badge className="bg-green-100 text-green-800 border-0 px-3 py-1">
+                                      <span className="w-2 h-2 rounded-full bg-green-500 mr-2 inline-block"></span>
+                                      {language === 'fr' ? 'Contrat signé' : 'Contract signed'}
+                                    </Badge>
                                   </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-2 text-gray-600">
-                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                    <span className="text-sm">
-                                      {formatDate(contract.start_date)} → {formatDate(contract.end_date)}
-                                    </span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-gray-600">
-                                  {contract.address ? (
-                                    <div className="flex items-center gap-2">
-                                      <MapPin className="w-4 h-4 text-gray-400" />
-                                      <span className="text-sm max-w-xs truncate">{contract.address}</span>
+                                  
+                                  {/* Titre du contrat */}
+                                  <h3 className="font-bold text-gray-900 text-lg mb-3">
+                                    {contractTitle}
+                                  </h3>
+                                  
+                                  {/* Date de signature */}
+                                  {signedDate && (
+                                    <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                      <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                      <span className="text-sm">
+                                        {language === 'fr' ? 'Signé le' : 'Signed on'} {signedDate}
+                                      </span>
                                     </div>
-                                  ) : (
-                                    <span className="text-gray-400">—</span>
                                   )}
-                                </TableCell>
-                                <TableCell className="font-semibold">
-                                  <span className="text-gray-900">{contract.total_price ? parseFloat(contract.total_price).toFixed(2) : '0.00'}€</span>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                                    {language === 'fr' ? 'Contrat signé' : 'Contract signed'}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    asChild
-                                  >
-                                    <a
-                                      href={`/api/contract/download?reservationId=${contract.id}`}
-                                      download={`contrat-${reservationNumber}.pdf`}
-                                      title={currentTexts.downloadContract}
-                                    >
-                                      <Download className="w-4 h-4" />
-                                    </a>
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
+                                  
+                                  {/* Dates de location */}
+                                  <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                    <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <span className="text-sm">{dateRange}</span>
+                                  </div>
+                                  
+                                  {/* Lieu */}
+                                  {contract.address && (
+                                    <div className="flex items-center gap-2 text-gray-600">
+                                      <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                      <span className="text-sm truncate">{contract.address}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Bouton télécharger */}
+                                <a
+                                  href={`/api/contract/download?reservationId=${contract.id}`}
+                                  download={`contrat-${reservationNumber}.pdf`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F2431E] hover:bg-[#E63A1A] text-white flex items-center justify-center flex-shrink-0 transition-colors"
+                                  title={currentTexts.downloadContract}
+                                >
+                                  <Download className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </a>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                     </div>
 
                     {/* Pagination */}

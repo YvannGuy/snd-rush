@@ -158,7 +158,7 @@ export default function AllPacksPage() {
         onLanguageChange={setLanguage}
       />
       
-      <main className="pt-[112px]">
+      <main className="pt-[180px] sm:pt-[190px]">
         {/* Header Section */}
         <div className="bg-white py-12">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">

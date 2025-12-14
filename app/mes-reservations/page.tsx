@@ -104,6 +104,34 @@ export default function MesReservationsPage() {
     loadReservations();
   }, [user]);
 
+  // Marquer les réservations avec contrats à signer comme "viewées" quand on visite la page
+  useEffect(() => {
+    if (!reservations.length) return;
+
+    const reservationsWithContractsToSign = reservations.filter(
+      (r) => (r.status === 'CONFIRMED' || r.status === 'CONTRACT_PENDING' || r.status === 'confirmed') 
+        && (!r.client_signature || r.client_signature.trim() === '')
+    );
+
+    if (reservationsWithContractsToSign.length > 0) {
+      const viewedReservationsWithContracts = typeof window !== 'undefined'
+        ? JSON.parse(localStorage.getItem('viewed_reservations_with_contracts') || '[]')
+        : [];
+
+      const newViewedIds = reservationsWithContractsToSign
+        .map(r => r.id)
+        .filter(id => !viewedReservationsWithContracts.includes(id));
+
+      if (newViewedIds.length > 0) {
+        const updated = [...viewedReservationsWithContracts, ...newViewedIds];
+        localStorage.setItem('viewed_reservations_with_contracts', JSON.stringify(updated));
+        
+        // Dispatcher l'événement pour mettre à jour les compteurs
+        window.dispatchEvent(new CustomEvent('pendingActionsUpdated'));
+      }
+    }
+  }, [reservations]);
+
   // Filtrer les réservations selon la recherche
   useEffect(() => {
     if (!searchQuery.trim()) {

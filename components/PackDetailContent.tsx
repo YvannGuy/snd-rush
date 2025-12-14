@@ -536,7 +536,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
   const capacity = parseCapacity(pack.ideal);
 
   return (
-    <div className="pt-[112px] bg-white">
+    <div className="pt-[180px] sm:pt-[190px] bg-white">
       {/* Hero Section - Image + Infos principales */}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">

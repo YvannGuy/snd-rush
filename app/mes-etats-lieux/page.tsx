@@ -60,6 +60,40 @@ export default function MesEtatsLieuxPage() {
     }
   }, [user, loading, router]);
 
+  // Marquer les états des lieux comme consultés quand la page est visitée
+  useEffect(() => {
+    if (!user || !supabase || typeof window === 'undefined') return;
+    
+    const markAsViewed = async () => {
+      try {
+        // D'abord charger les réservations de l'utilisateur
+        const { data: reservationsData } = await supabase
+          .from('reservations')
+          .select('id')
+          .eq('user_id', user.id);
+        
+        if (!reservationsData || reservationsData.length === 0) return;
+        
+        // Ensuite charger les états des lieux associés
+        const { data: etatsLieuxData } = await supabase
+          .from('etat_lieux')
+          .select('id')
+          .in('reservation_id', reservationsData.map(r => r.id));
+        
+        if (etatsLieuxData && etatsLieuxData.length > 0) {
+          const viewedIds = etatsLieuxData.map(el => el.id);
+          localStorage.setItem('viewed_condition_reports', JSON.stringify(viewedIds));
+          // Dispatcher un événement pour mettre à jour les compteurs du dashboard
+          window.dispatchEvent(new CustomEvent('pendingActionsUpdated'));
+        }
+      } catch (error) {
+        console.error('Erreur marquage états des lieux comme consultés:', error);
+      }
+    };
+    
+    markAsViewed();
+  }, [user, supabase]);
+
   useEffect(() => {
     if (!user || !supabase) return;
 
@@ -342,184 +376,107 @@ export default function MesEtatsLieuxPage() {
                     commentaireApres = itemsData.commentaire_apres || '';
                   }
 
+                  // Déterminer le statut et les couleurs
+                  const status = etatLieux.status || 'brouillon';
+                  const getStatusBadgeColor = (status: string) => {
+                    if (status === 'reprise_complete' || status === 'livraison_complete') {
+                      return { bg: 'bg-green-100', dot: 'bg-green-500', text: 'text-green-800' };
+                    } else if (status === 'livraison_complete') {
+                      return { bg: 'bg-blue-100', dot: 'bg-blue-500', text: 'text-blue-800' };
+                    }
+                    return { bg: 'bg-gray-100', dot: 'bg-gray-500', text: 'text-gray-800' };
+                  };
+                  const badgeColors = getStatusBadgeColor(status);
+                  const statusLabel = status === 'reprise_complete' 
+                    ? (language === 'fr' ? 'Reprise complète' : 'Pickup complete')
+                    : status === 'livraison_complete'
+                    ? (language === 'fr' ? 'Livraison complète' : 'Delivery complete')
+                    : (language === 'fr' ? 'Brouillon' : 'Draft');
+                  
+                  const createdAt = new Date(etatLieux.created_at).toLocaleDateString('fr-FR', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    year: 'numeric' 
+                  });
+                  
                   return (
-                    <Card key={etatLieux.id} className="hover:shadow-lg transition-all">
-                      {/* Header */}
-                      <CardHeader className="bg-purple-50 border-b border-purple-200">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                          <div className="flex items-center gap-3 sm:gap-4">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-                              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+                    <Card key={etatLieux.id} className="hover:shadow-md transition-all">
+                      <CardContent className="p-4 sm:p-5">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            {/* Badge de statut avec point coloré */}
+                            <div className="flex items-center gap-2 mb-3">
+                              <Badge className={`${badgeColors.bg} ${badgeColors.text} border-0 px-3 py-1`}>
+                                <span className={`w-2 h-2 rounded-full ${badgeColors.dot} mr-2 inline-block`}></span>
+                                {statusLabel}
+                              </Badge>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <CardTitle className="text-base sm:text-lg truncate">
-                                {currentTexts.reservationNumber} #{reservationNumber}
-                              </CardTitle>
+                            
+                            {/* Titre */}
+                            <h3 className="font-bold text-gray-900 text-lg mb-3">
+                              {language === 'fr' ? 'État des lieux' : 'Condition report'} #{reservationNumber}
+                            </h3>
+                            
+                            {/* Date de création */}
+                            <div className="flex items-center gap-2 text-gray-600 mb-2">
+                              <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <span className="text-sm">
+                                {language === 'fr' ? 'Créé le' : 'Created on'} {createdAt}
+                              </span>
                             </div>
-                          </div>
-                        </div>
-                      </CardHeader>
-
-                      {/* Contenu */}
-                      <CardContent className="p-4 sm:p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                          {/* Section Avant */}
-                          <Card className="bg-blue-50 border-blue-200">
-                            <CardHeader className="pb-3">
-                              <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                                {language === 'fr' ? 'Avant' : 'Before'}
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                              <div>
-                                <p className="text-sm font-medium text-gray-700 mb-1">
-                                  {language === 'fr' ? 'Photos' : 'Photos'}:
-                                </p>
-                                {photosAvant.length > 0 ? (
-                                  <div className="flex items-center gap-2">
-                                    <ImageIcon className="w-4 h-4 text-[#F2431E]" />
-                                    <span className="text-sm text-gray-900">
-                                      {photosAvant.length} {language === 'fr' ? 'photos accessibles' : 'photos available'}
-                                    </span>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-6 text-xs"
-                                      onClick={() => openCarousel('before', photosAvant)}
-                                    >
-                                      {language === 'fr' ? 'Voir' : 'View'}
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <span className="text-sm text-gray-500">{language === 'fr' ? 'Aucune photo' : 'No photos'}</span>
-                                )}
-                              </div>
-                              {commentaireAvant && (
-                                <div>
-                                  <p className="text-sm font-medium text-gray-700 mb-1">
-                                    {language === 'fr' ? 'Commentaire' : 'Comment'}:
-                                  </p>
-                                  <p className="text-sm text-gray-600">{commentaireAvant}</p>
+                            
+                            {/* Photos */}
+                            <div className="flex items-center gap-4 text-gray-600">
+                              {photosAvant.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <ImageIcon className="w-4 h-4 text-gray-400" />
+                                  <span className="text-sm">
+                                    {photosAvant.length} {language === 'fr' ? 'avant' : 'before'}
+                                  </span>
                                 </div>
                               )}
-                            </CardContent>
-                          </Card>
-
-                          {/* Section Après */}
-                          <Card className="bg-green-50 border-green-200">
-                            <CardHeader className="pb-3">
-                              <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                {language === 'fr' ? 'Après' : 'After'}
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                              <div>
-                                <p className="text-sm font-medium text-gray-700 mb-1">
-                                  {language === 'fr' ? 'Photos' : 'Photos'}:
-                                </p>
-                                {photosApres.length > 0 ? (
-                                  <div className="flex items-center gap-2">
-                                    <ImageIcon className="w-4 h-4 text-[#F2431E]" />
-                                    <span className="text-sm text-gray-900">
-                                      {photosApres.length} {language === 'fr' ? 'photos accessibles' : 'photos available'}
-                                    </span>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-6 text-xs"
-                                      onClick={() => openCarousel('after', photosApres)}
-                                    >
-                                      {language === 'fr' ? 'Voir' : 'View'}
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <span className="text-sm text-gray-500">{language === 'fr' ? 'Aucune photo' : 'No photos'}</span>
-                                )}
-                              </div>
-                              {commentaireApres && (
-                                <div>
-                                  <p className="text-sm font-medium text-gray-700 mb-1">
-                                    {language === 'fr' ? 'Commentaire' : 'Comment'}:
-                                  </p>
-                                  <p className="text-sm text-gray-600">{commentaireApres}</p>
+                              {photosApres.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <ImageIcon className="w-4 h-4 text-gray-400" />
+                                  <span className="text-sm">
+                                    {photosApres.length} {language === 'fr' ? 'après' : 'after'}
+                                  </span>
                                 </div>
                               )}
-                            </CardContent>
-                          </Card>
-                        </div>
-
-                        {/* Message dommages si constatés */}
-                        {detectedDamages.length > 0 && (
-                          <Alert className="mt-6 bg-amber-50 border-amber-200">
-                            <AlertTriangle className="h-4 w-4 text-amber-600" />
-                            <AlertTitle className="text-amber-900">
-                              {language === 'fr' ? 'Anomalies constatées' : 'Anomalies detected'}
-                            </AlertTitle>
-                            <AlertDescription className="text-amber-800 mt-2">
-                              <div className="space-y-2">
-                                <p className="font-medium">
-                                  {detectedDamages.map((d, idx) => {
-                                    const damageTypes: Record<string, string> = {
-                                      rayure: language === 'fr' ? 'Rayure(s)' : 'Scratch(es)',
-                                      choc: language === 'fr' ? 'Choc / Impact' : 'Impact',
-                                      casse: language === 'fr' ? 'Casse' : 'Broken',
-                                      manque: language === 'fr' ? 'Pièce manquante' : 'Missing part',
-                                      autre: language === 'fr' ? 'Autre' : 'Other'
-                                    };
-                                    return (
-                                      <span key={idx}>
-                                        {idx > 0 && ', '}
-                                        {damageTypes[d.type] || d.type}
-                                      </span>
-                                    );
-                                  })}
-                                </p>
-                                <p className="text-sm">
-                                  {language === 'fr' 
-                                    ? 'Des anomalies ont été constatées lors de l\'état des lieux. Vous recevrez un email dans les prochains jours pour vous informer des suites à donner selon nos conditions générales de location.'
-                                    : 'Anomalies were detected during the condition report. You will receive an email in the coming days to inform you of the next steps according to our rental terms and conditions.'}
-                                </p>
-                              </div>
-                            </AlertDescription>
-                          </Alert>
-                        )}
-
-                        {/* Statut et téléchargement */}
-                        <div className="mt-6 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                          <div>
-                            <h4 className="text-sm font-semibold text-gray-500 mb-2">{currentTexts.status}</h4>
-                            <Badge 
-                              variant={etatLieux.status === 'reprise_complete' ? 'default' : 'secondary'}
-                              className={
-                                etatLieux.status === 'reprise_complete'
-                                  ? 'bg-green-100 text-green-800 hover:bg-green-100'
-                                  : 'bg-blue-100 text-blue-800 hover:bg-blue-100'
-                              }
-                            >
-                              {etatLieux.status === 'reprise_complete' ? (
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                              ) : (
-                                <Clock className="w-3 h-3 mr-1" />
-                              )}
-                              {getStatusText(etatLieux.status)}
-                            </Badge>
+                            </div>
                           </div>
-                          <Button
-                            asChild
-                            variant="default"
-                            className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
-                          >
+                          
+                          {/* Boutons d'action */}
+                          <div className="flex items-center gap-2">
+                            {/* Bouton télécharger PDF */}
                             <a
                               href={`/api/etat-lieux/download?reservationId=${etatLieux.reservation_id}`}
                               target="_blank"
                               rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F2431E] hover:bg-[#E63A1A] text-white flex items-center justify-center flex-shrink-0 transition-colors"
+                              title={language === 'fr' ? 'Télécharger le PDF' : 'Download PDF'}
                             >
-                              <Download className="w-4 h-4 mr-2" />
-                              {currentTexts.downloadPDF}
+                              <Download className="w-5 h-5 sm:w-6 sm:h-6" />
                             </a>
-                          </Button>
+                            
+                            {/* Bouton voir détails */}
+                            <button
+                              onClick={() => {
+                                // Ouvrir un modal ou rediriger vers les détails
+                                // Pour l'instant, on peut ouvrir le carrousel si des photos existent
+                                if (photosAvant.length > 0) {
+                                  openCarousel('before', photosAvant);
+                                } else if (photosApres.length > 0) {
+                                  openCarousel('after', photosApres);
+                                }
+                              }}
+                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F2431E] hover:bg-[#E63A1A] text-white flex items-center justify-center flex-shrink-0 transition-colors"
+                              title={language === 'fr' ? 'Voir les détails' : 'View details'}
+                            >
+                              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                            </button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

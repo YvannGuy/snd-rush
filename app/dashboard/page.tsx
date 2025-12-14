@@ -49,6 +49,12 @@ export default function DashboardPage() {
     totalDeposit: 0,
     totalRentals: 0,
   });
+  const [pendingActions, setPendingActions] = useState({
+    contractsToSign: 0,
+    conditionReportsToReview: 0,
+    deliveriesNotReturned: 0,
+    newInvoices: 0,
+  });
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isConfirmingDeposit, setIsConfirmingDeposit] = useState(false);
@@ -156,9 +162,10 @@ export default function DashboardPage() {
         setReservations(reservationsData || []);
 
         // Charger les commandes (factures)
+        let ordersData: any[] = [];
         if (user.email) {
           try {
-            const { data: ordersData, error: ordersError } = await supabaseClient
+            const { data, error: ordersError } = await supabaseClient
               .from('orders')
               .select('*')
               .eq('customer_email', user.email)
@@ -177,7 +184,8 @@ export default function DashboardPage() {
               // Ne pas bloquer l'affichage du dashboard si les commandes ne peuvent pas être chargées
               setOrders([]);
             } else {
-              setOrders(ordersData || []);
+              ordersData = data || [];
+              setOrders(ordersData);
             }
           } catch (error) {
             // Capturer les erreurs de sérialisation ou autres erreurs inattendues
@@ -207,6 +215,76 @@ export default function DashboardPage() {
           totalDeposit: totalDeposit,
           totalRentals: total,
         });
+
+        // Calculer les actions en attente
+        // 1. Contrats à signer : réservations confirmées sans signature ET non consultés
+        const viewedContracts = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('viewed_contracts') || '[]')
+          : [];
+        
+        const contractsToSign = (reservationsData || []).filter(
+          (r) => (r.status === 'CONFIRMED' || r.status === 'CONTRACT_PENDING' || r.status === 'confirmed') 
+            && (!r.client_signature || r.client_signature.trim() === '')
+            && !viewedContracts.includes(r.id)
+        ).length;
+
+        // 2. États des lieux à regarder : états des lieux avec status livraison_complete ou reprise_complete
+        // Exclure ceux qui ont été consultés (marqués dans localStorage)
+        const { data: etatsLieuxData } = await supabaseClient
+          .from('etat_lieux')
+          .select('id, status, reservation_id')
+          .in('reservation_id', (reservationsData || []).map(r => r.id));
+        
+        // Récupérer les IDs consultés depuis localStorage
+        const viewedConditionReports = typeof window !== 'undefined' 
+          ? JSON.parse(localStorage.getItem('viewed_condition_reports') || '[]')
+          : [];
+        
+        const conditionReportsToReview = (etatsLieuxData || []).filter(
+          (el) => (el.status === 'livraison_complete' || el.status === 'reprise_complete')
+            && !viewedConditionReports.includes(el.id)
+        ).length;
+
+        // 3. Livraisons non rendues : réservations confirmées avec delivery_status != 'termine'
+        // Exclure celles qui ont été consultées (marquées dans localStorage)
+        const viewedDeliveries = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('viewed_deliveries') || '[]')
+          : [];
+        
+        const deliveriesNotReturned = (reservationsData || []).filter(
+          (r) => (r.status === 'CONFIRMED' || r.status === 'confirmed' || r.status === 'IN_PROGRESS' || r.status === 'in_progress')
+            && r.delivery_status 
+            && r.delivery_status !== 'termine'
+            && !viewedDeliveries.includes(r.id)
+        ).length;
+
+        // 4. Nouvelles factures : factures non consultées
+        const viewedInvoices = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('viewed_invoices') || '[]')
+          : [];
+        
+        const newInvoices = ordersData.filter(
+          (o) => !viewedInvoices.includes(o.id)
+        ).length;
+
+        // 5. Réservations avec contrats à signer (pour "Mes réservations")
+        const viewedReservationsWithContracts = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('viewed_reservations_with_contracts') || '[]')
+          : [];
+        
+        const reservationsWithContractsToSign = (reservationsData || []).filter(
+          (r) => (r.status === 'CONFIRMED' || r.status === 'CONTRACT_PENDING' || r.status === 'confirmed') 
+            && (!r.client_signature || r.client_signature.trim() === '')
+            && !viewedReservationsWithContracts.includes(r.id)
+        ).length;
+
+        setPendingActions({
+          contractsToSign,
+          conditionReportsToReview,
+          deliveriesNotReturned,
+          newInvoices,
+          reservationsWithContractsToSign,
+        });
       } catch (error) {
         console.error('Erreur chargement dashboard:', error);
       }
@@ -215,11 +293,105 @@ export default function DashboardPage() {
     loadDashboardData();
   }, [user]);
 
+  // Écouter les changements de localStorage pour mettre à jour les compteurs
+  useEffect(() => {
+    if (!user) return;
+    
+    const handleStorageChange = () => {
+      // Recharger les données du dashboard quand localStorage change
+      if (supabase) {
+        const loadDashboardData = async () => {
+          try {
+            const { data: reservationsData } = await supabase
+              .from('reservations')
+              .select('*')
+              .eq('user_id', user.id)
+              .order('start_date', { ascending: true });
+
+            if (!reservationsData) return;
+
+            // Recalculer les actions en attente
+            const viewedContracts = typeof window !== 'undefined'
+              ? JSON.parse(localStorage.getItem('viewed_contracts') || '[]')
+              : [];
+            
+            const contractsToSign = (reservationsData || []).filter(
+              (r) => (r.status === 'CONFIRMED' || r.status === 'CONTRACT_PENDING' || r.status === 'confirmed') 
+                && (!r.client_signature || r.client_signature.trim() === '')
+                && !viewedContracts.includes(r.id)
+            ).length;
+
+            const { data: etatsLieuxData } = await supabase
+              .from('etat_lieux')
+              .select('id, status, reservation_id')
+              .in('reservation_id', (reservationsData || []).map(r => r.id));
+            
+            const viewedConditionReports = typeof window !== 'undefined' 
+              ? JSON.parse(localStorage.getItem('viewed_condition_reports') || '[]')
+              : [];
+            
+            const conditionReportsToReview = (etatsLieuxData || []).filter(
+              (el) => (el.status === 'livraison_complete' || el.status === 'reprise_complete')
+                && !viewedConditionReports.includes(el.id)
+            ).length;
+
+            const viewedDeliveries = typeof window !== 'undefined'
+              ? JSON.parse(localStorage.getItem('viewed_deliveries') || '[]')
+              : [];
+            
+            const deliveriesNotReturned = (reservationsData || []).filter(
+              (r) => (r.status === 'CONFIRMED' || r.status === 'confirmed' || r.status === 'IN_PROGRESS' || r.status === 'in_progress')
+                && r.delivery_status 
+                && r.delivery_status !== 'termine'
+                && !viewedDeliveries.includes(r.id)
+            ).length;
+
+            // Recalculer les nouvelles factures (recharger les orders)
+            const { data: ordersData } = await supabase
+              .from('orders')
+              .select('*')
+              .eq('customer_email', user.email)
+              .order('created_at', { ascending: false })
+              .limit(5);
+            
+            const viewedInvoices = typeof window !== 'undefined'
+              ? JSON.parse(localStorage.getItem('viewed_invoices') || '[]')
+              : [];
+            
+            const newInvoices = (ordersData || []).filter(
+              (o) => !viewedInvoices.includes(o.id)
+            ).length;
+
+            setPendingActions({
+              contractsToSign,
+              conditionReportsToReview,
+              deliveriesNotReturned,
+              newInvoices,
+            });
+          } catch (error) {
+            console.error('Erreur mise à jour compteurs:', error);
+          }
+        };
+        loadDashboardData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Écouter aussi les changements dans le même onglet via un événement personnalisé
+    window.addEventListener('pendingActionsUpdated', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('pendingActionsUpdated', handleStorageChange);
+    };
+  }, [user, supabase]);
+
   const texts = {
     fr: {
       dashboard: 'Tableau de bord',
       hello: 'Bonjour',
       welcome: 'Bienvenue sur votre espace client SoundRush',
+      welcomeDescription: 'Gérez vos réservations, suivez vos livraisons, consultez vos états des lieux, signez vos contrats, annulez ou modifiez vos réservations, et bien plus encore depuis cet espace dédié.',
       signedContracts: 'Contrats signés',
       totalDeposit: 'Dépôt de garantie total',
       totalRentals: 'Locations totales',
@@ -236,7 +408,8 @@ export default function DashboardPage() {
       contract: 'Contrat location',
       quickActions: 'Actions rapides',
       newReservation: 'Nouvelle réservation',
-      contactSupport: 'Contacter le support',
+      myContracts: 'Mes contrats',
+      myConditionReports: 'États des lieux',
       myInvoices: 'Mes factures',
       settings: 'Paramètres',
       needHelp: 'Besoin d\'aide ?',
@@ -255,6 +428,7 @@ export default function DashboardPage() {
       dashboard: 'Dashboard',
       hello: 'Hello',
       welcome: 'Welcome to your SoundRush client area',
+      welcomeDescription: 'Manage your reservations, track your deliveries, view your condition reports, sign your contracts, cancel or modify your reservations, and much more from this dedicated space.',
       signedContracts: 'Signed contracts',
       totalDeposit: 'Total deposit',
       totalRentals: 'Total rentals',
@@ -271,7 +445,8 @@ export default function DashboardPage() {
       contract: 'Rental contract',
       quickActions: 'Quick actions',
       newReservation: 'New reservation',
-      contactSupport: 'Contact support',
+      myContracts: 'My contracts',
+      myConditionReports: 'Condition reports',
       myInvoices: 'My invoices',
       settings: 'Settings',
       needHelp: 'Need help?',
@@ -462,32 +637,38 @@ export default function DashboardPage() {
           onClose={() => setIsSidebarOpen(false)}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={handleToggleSidebar}
+          pendingActions={pendingActions}
         />
 
         {/* Main Content */}
         <main className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           {/* Header Mobile-First */}
-          <div className="flex items-center justify-between mb-4 sm:mb-6 lg:mb-8">
-            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-              {/* Bouton menu hamburger mobile */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden"
-              >
-                <Menu className="h-6 w-6" />
-              </Button>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 truncate">
-                  {currentTexts.dashboard}
-                </h1>
-                <p className="text-base sm:text-lg lg:text-2xl text-gray-900 mb-0.5 sm:mb-1 truncate">
-                  {currentTexts.hello} {getUserFirstName()} 👋
-                </p>
-                <p className="text-sm sm:text-base text-gray-600 hidden sm:block">{currentTexts.welcome}</p>
+          <div className="mb-4 sm:mb-6 lg:mb-8">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                {/* Bouton menu hamburger mobile */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="lg:hidden"
+                >
+                  <Menu className="h-6 w-6" />
+                </Button>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 truncate">
+                    {currentTexts.dashboard}
+                  </h1>
+                  <p className="text-base sm:text-lg lg:text-2xl text-gray-900 mb-0.5 sm:mb-1 truncate">
+                    {currentTexts.hello} {getUserFirstName()} 👋
+                  </p>
+                </div>
               </div>
+            </div>
+            <div className="mb-2 sm:mb-3">
+              <p className="text-sm sm:text-base text-gray-900 font-semibold mb-1">{currentTexts.welcome}</p>
+              <p className="text-xs sm:text-sm text-gray-600">{currentTexts.welcomeDescription}</p>
             </div>
           </div>
 
@@ -678,9 +859,9 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {[
                 { icon: Plus, label: currentTexts.newReservation, color: 'orange', href: '/packs' },
-                { icon: Headphones, label: currentTexts.contactSupport, color: 'blue', href: 'tel:+33651084994' },
-                { icon: FileText, label: currentTexts.myInvoices, color: 'green', href: '/mes-factures' },
-                { icon: Settings, label: currentTexts.settings, color: 'purple', href: '/mes-informations' },
+                { icon: FileText, label: currentTexts.myContracts, color: 'blue', href: '/mes-contrats' },
+                { icon: ClipboardList, label: currentTexts.myConditionReports, color: 'green', href: '/mes-etats-lieux' },
+                { icon: FileText, label: currentTexts.myInvoices, color: 'red', href: '/mes-factures' },
               ].map((action, index) => {
                 const IconComponent = action.icon;
                 return (
@@ -691,12 +872,14 @@ export default function DashboardPage() {
                           action.color === 'orange' ? 'bg-orange-100' :
                           action.color === 'blue' ? 'bg-blue-100' :
                           action.color === 'green' ? 'bg-green-100' :
+                          action.color === 'red' ? 'bg-red-100' :
                           'bg-purple-100'
                         }`}>
                           <IconComponent className={`w-6 h-6 sm:w-8 sm:h-8 ${
                             action.color === 'orange' ? 'text-[#F2431E]' :
                             action.color === 'blue' ? 'text-blue-600' :
                             action.color === 'green' ? 'text-green-600' :
+                            action.color === 'red' ? 'text-red-600' :
                             'text-purple-600'
                           }`} />
                         </div>

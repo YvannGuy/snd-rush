@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useUser } from '@/hooks/useUser';
+import { supabase } from '@/lib/supabase';
 
 interface DashboardSidebarProps {
   language?: 'fr' | 'en';
@@ -12,12 +14,140 @@ interface DashboardSidebarProps {
   onClose?: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  pendingActions?: {
+    contractsToSign?: number;
+    conditionReportsToReview?: number;
+    deliveriesNotReturned?: number;
+    newInvoices?: number;
+    reservationsWithContractsToSign?: number;
+  };
 }
 
-export default function DashboardSidebar({ language = 'fr', isOpen = false, onClose, isCollapsed = false, onToggleCollapse }: DashboardSidebarProps) {
+export default function DashboardSidebar({ language = 'fr', isOpen = false, onClose, isCollapsed = false, onToggleCollapse, pendingActions: propsPendingActions }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { signOut } = useAuth();
   const router = useRouter();
+  const { user } = useUser();
+  const [localPendingActions, setLocalPendingActions] = useState({
+    contractsToSign: 0,
+    conditionReportsToReview: 0,
+    deliveriesNotReturned: 0,
+    newInvoices: 0,
+  });
+
+  // Utiliser les props si fournies, sinon calculer localement
+  const pendingActions = propsPendingActions || localPendingActions;
+
+  // Calculer les compteurs si pas fournis en props
+  useEffect(() => {
+    if (propsPendingActions || !user || !supabase) return;
+
+    const calculatePendingActions = async () => {
+      try {
+        // Charger les réservations
+        const { data: reservationsData } = await supabase
+          .from('reservations')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('start_date', { ascending: true });
+
+        if (!reservationsData) return;
+
+        // Contrats à signer (pour "Mes contrats")
+        const viewedContracts = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('viewed_contracts') || '[]')
+          : [];
+        
+        const contractsToSign = reservationsData.filter(
+          (r) => (r.status === 'CONFIRMED' || r.status === 'CONTRACT_PENDING' || r.status === 'confirmed') 
+            && (!r.client_signature || r.client_signature.trim() === '')
+            && !viewedContracts.includes(r.id)
+        ).length;
+
+        // Réservations avec contrats à signer (pour "Mes réservations")
+        const viewedReservationsWithContracts = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('viewed_reservations_with_contracts') || '[]')
+          : [];
+        
+        const reservationsWithContractsToSign = reservationsData.filter(
+          (r) => (r.status === 'CONFIRMED' || r.status === 'CONTRACT_PENDING' || r.status === 'confirmed') 
+            && (!r.client_signature || r.client_signature.trim() === '')
+            && !viewedReservationsWithContracts.includes(r.id)
+        ).length;
+
+        // États des lieux
+        const { data: etatsLieuxData } = await supabase
+          .from('etat_lieux')
+          .select('id, status, reservation_id')
+          .in('reservation_id', reservationsData.map(r => r.id));
+        
+        const viewedConditionReports = typeof window !== 'undefined' 
+          ? JSON.parse(localStorage.getItem('viewed_condition_reports') || '[]')
+          : [];
+        
+        const conditionReportsToReview = (etatsLieuxData || []).filter(
+          (el) => (el.status === 'livraison_complete' || el.status === 'reprise_complete')
+            && !viewedConditionReports.includes(el.id)
+        ).length;
+
+        // Livraisons
+        const viewedDeliveries = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('viewed_deliveries') || '[]')
+          : [];
+        
+        const deliveriesNotReturned = reservationsData.filter(
+          (r) => (r.status === 'CONFIRMED' || r.status === 'confirmed' || r.status === 'IN_PROGRESS' || r.status === 'in_progress')
+            && r.delivery_status 
+            && r.delivery_status !== 'termine'
+            && !viewedDeliveries.includes(r.id)
+        ).length;
+
+        // Factures
+        let newInvoices = 0;
+        if (user.email) {
+          const { data: ordersData } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('customer_email', user.email)
+            .order('created_at', { ascending: false })
+            .limit(5);
+          
+          const viewedInvoices = typeof window !== 'undefined'
+            ? JSON.parse(localStorage.getItem('viewed_invoices') || '[]')
+            : [];
+          
+          newInvoices = (ordersData || []).filter(
+            (o) => !viewedInvoices.includes(o.id)
+          ).length;
+        }
+
+        setLocalPendingActions({
+          contractsToSign,
+          conditionReportsToReview,
+          deliveriesNotReturned,
+          newInvoices,
+          reservationsWithContractsToSign,
+        });
+      } catch (error) {
+        console.error('Erreur calcul compteurs sidebar:', error);
+      }
+    };
+
+    calculatePendingActions();
+
+    // Écouter les changements
+    const handleStorageChange = () => {
+      calculatePendingActions();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('pendingActionsUpdated', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('pendingActionsUpdated', handleStorageChange);
+    };
+  }, [user, supabase, propsPendingActions]);
 
   const texts = {
     fr: {
@@ -172,7 +302,14 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
           <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          {!isCollapsed && <span>{currentTexts.myReservations}</span>}
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.myReservations}</span>
+          )}
+          {pendingActions.reservationsWithContractsToSign && pendingActions.reservationsWithContractsToSign > 0 && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {pendingActions.reservationsWithContractsToSign}
+            </span>
+          )}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
               {currentTexts.myReservations}
@@ -192,7 +329,14 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
           <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
-          {!isCollapsed && <span>{currentTexts.myDeliveries}</span>}
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.myDeliveries}</span>
+          )}
+          {(pendingActions.deliveriesNotReturned ?? 0) > 0 && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {pendingActions.deliveriesNotReturned}
+            </span>
+          )}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
               {currentTexts.myDeliveries}
@@ -212,7 +356,14 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
           <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          {!isCollapsed && <span>{currentTexts.myEtatsLieux}</span>}
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.myEtatsLieux}</span>
+          )}
+          {(pendingActions.conditionReportsToReview ?? 0) > 0 && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {pendingActions.conditionReportsToReview}
+            </span>
+          )}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
               {currentTexts.myEtatsLieux}
@@ -232,7 +383,14 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
           <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          {!isCollapsed && <span>{currentTexts.documentsInvoices}</span>}
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.documentsInvoices}</span>
+          )}
+          {(pendingActions.newInvoices ?? 0) > 0 && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {pendingActions.newInvoices}
+            </span>
+          )}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
               {currentTexts.documentsInvoices}
@@ -252,7 +410,14 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
           <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          {!isCollapsed && <span>{currentTexts.myContracts}</span>}
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.myContracts}</span>
+          )}
+          {(pendingActions.contractsToSign ?? 0) > 0 && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {pendingActions.contractsToSign}
+            </span>
+          )}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
               {currentTexts.myContracts}

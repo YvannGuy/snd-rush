@@ -36,7 +36,7 @@ export default function PackDetailPage() {
         onLanguageChange={setLanguage}
       />
       
-      <main>
+      <main className="pt-[180px] sm:pt-[190px]">
         <PackDetailContent packId={packId} language={language} />
       </main>
 

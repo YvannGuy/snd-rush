@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 // Icônes lucide-react
 import { 
   Search, 
@@ -53,6 +52,31 @@ export default function MesFacturesPage() {
       return;
     }
   }, [user, loading, router]);
+
+  // Marquer les factures comme consultées quand la page est visitée
+  useEffect(() => {
+    if (!user || !supabase || typeof window === 'undefined') return;
+    
+    const markAsViewed = async () => {
+      try {
+        const { data: ordersData } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('customer_email', user.email);
+        
+        if (ordersData && ordersData.length > 0) {
+          const viewedIds = ordersData.map(o => o.id);
+          localStorage.setItem('viewed_invoices', JSON.stringify(viewedIds));
+          // Dispatcher un événement pour mettre à jour les compteurs du dashboard
+          window.dispatchEvent(new CustomEvent('pendingActionsUpdated'));
+        }
+      } catch (error) {
+        console.error('Erreur marquage factures comme consultées:', error);
+      }
+    };
+    
+    markAsViewed();
+  }, [user, supabase]);
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -283,6 +307,30 @@ export default function MesFacturesPage() {
     });
   };
 
+  // Fonction pour formater la date au format court
+  const formatDateShort = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
+  };
+
+  // Fonction pour obtenir les couleurs du badge selon le statut
+  const getStatusBadgeColor = (status: string) => {
+    const upperStatus = status.toUpperCase();
+    if (upperStatus === 'PAID') {
+      return { bg: 'bg-green-100', dot: 'bg-green-500', text: 'text-green-800' };
+    } else if (upperStatus === 'PENDING') {
+      return { bg: 'bg-orange-100', dot: 'bg-orange-500', text: 'text-orange-800' };
+    } else if (upperStatus === 'REFUNDED') {
+      return { bg: 'bg-blue-100', dot: 'bg-blue-500', text: 'text-blue-800' };
+    } else if (upperStatus === 'CANCELLED') {
+      return { bg: 'bg-red-100', dot: 'bg-red-500', text: 'text-red-800' };
+    }
+    return { bg: 'bg-gray-100', dot: 'bg-gray-500', text: 'text-gray-800' };
+  };
+
   const getStatusText = (status: string) => {
     const statusMap: { [key: string]: string } = {
       'PAID': currentTexts.paid,
@@ -441,93 +489,82 @@ export default function MesFacturesPage() {
                 
                 return (
                   <>
-                    <div className="mb-6">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>{currentTexts.invoice}</TableHead>
-                            <TableHead>{currentTexts.date}</TableHead>
-                            <TableHead>{currentTexts.amount}</TableHead>
-                            <TableHead>{currentTexts.status}</TableHead>
-                            <TableHead className="text-right">{language === 'fr' ? 'Action' : 'Action'}</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedOrders.map((order) => {
-                            const orderNumber = order.id.slice(0, 8).toUpperCase();
-                            const isPaid = order.status === 'PAID';
-                            const isPending = order.status === 'PENDING';
-                            const isCancelled = order.status === 'CANCELLED';
-                            const isRefunded = order.status === 'REFUNDED';
-                            
-                            return (
-                              <TableRow key={order.id}>
-                                <TableCell className="font-semibold">
-                                  #{orderNumber}
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                    {formatDate(order.created_at)}
+                    <div className="space-y-4 mb-6">
+                      {paginatedOrders.map((order) => {
+                        const orderNumber = order.id.slice(0, 8).toUpperCase();
+                        const invoiceDate = formatDateShort(order.created_at);
+                        const amount = parseFloat(order.total || 0).toFixed(2);
+                        const badgeColors = getStatusBadgeColor(order.status);
+                        
+                        return (
+                          <Card 
+                            key={order.id} 
+                            className="hover:shadow-md transition-all"
+                          >
+                            <CardContent className="p-4 sm:p-5">
+                              <div className="flex items-center justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                  {/* Badge de statut avec point coloré */}
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Badge className={`${badgeColors.bg} ${badgeColors.text} border-0 px-3 py-1`}>
+                                      <span className={`w-2 h-2 rounded-full ${badgeColors.dot} mr-2 inline-block`}></span>
+                                      {getStatusText(order.status)}
+                                    </Badge>
                                   </div>
-                                </TableCell>
-                                <TableCell className="font-semibold">
-                                  <span className="text-gray-900">{parseFloat(order.total || 0).toFixed(2)}€</span>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge 
-                                    variant={isPaid ? 'default' : isPending ? 'secondary' : 'outline'}
-                                    className={
-                                      isPaid
-                                        ? 'bg-green-100 text-green-800 hover:bg-green-100'
-                                        : isPending
-                                        ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
-                                        : isCancelled
-                                        ? 'bg-gray-100 text-gray-800 hover:bg-gray-100'
-                                        : isRefunded
-                                        ? 'bg-blue-100 text-blue-800 hover:bg-blue-100'
-                                        : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
-                                    }
-                                  >
-                                    {getStatusText(order.status)}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={async () => {
-                                      try {
-                                        const response = await fetch(`/api/invoice/download?orderId=${order.id}`);
-                                        if (response.ok) {
-                                          const blob = await response.blob();
-                                          const url = window.URL.createObjectURL(blob);
-                                          const a = document.createElement('a');
-                                          a.href = url;
-                                          a.download = `facture-${order.id.slice(0, 8)}.pdf`;
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          window.URL.revokeObjectURL(url);
-                                          document.body.removeChild(a);
-                                        } else {
-                                          const error = await response.json();
-                                          alert(language === 'fr' ? `Erreur: ${error.error || 'Impossible de télécharger la facture'}` : `Error: ${error.error || 'Unable to download invoice'}`);
-                                        }
-                                      } catch (error) {
-                                        console.error('Erreur téléchargement:', error);
-                                        alert(language === 'fr' ? 'Erreur lors du téléchargement de la facture' : 'Error downloading invoice');
+                                  
+                                  {/* Titre de la facture */}
+                                  <h3 className="font-bold text-gray-900 text-lg mb-3">
+                                    {language === 'fr' ? 'Facture' : 'Invoice'} #{orderNumber}
+                                  </h3>
+                                  
+                                  {/* Date */}
+                                  <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                    <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <span className="text-sm">{invoiceDate}</span>
+                                  </div>
+                                  
+                                  {/* Montant */}
+                                  <div className="flex items-center gap-2 text-gray-900">
+                                    <DollarSign className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <span className="text-sm font-semibold">{amount}€</span>
+                                  </div>
+                                </div>
+                                
+                                {/* Bouton télécharger */}
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    try {
+                                      const response = await fetch(`/api/invoice/download?orderId=${order.id}`);
+                                      if (response.ok) {
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `facture-${orderNumber}.pdf`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                        document.body.removeChild(a);
+                                      } else {
+                                        const error = await response.json();
+                                        alert(language === 'fr' ? `Erreur: ${error.error || 'Impossible de télécharger la facture'}` : `Error: ${error.error || 'Unable to download invoice'}`);
                                       }
-                                    }}
-                                    title={language === 'fr' ? 'Télécharger la facture' : 'Download invoice'}
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
+                                    } catch (error) {
+                                      console.error('Erreur téléchargement:', error);
+                                      alert(language === 'fr' ? 'Erreur lors du téléchargement de la facture' : 'Error downloading invoice');
+                                    }
+                                  }}
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F2431E] hover:bg-[#E63A1A] text-white flex items-center justify-center flex-shrink-0 transition-colors"
+                                  title={language === 'fr' ? 'Télécharger la facture' : 'Download invoice'}
+                                >
+                                  <Download className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                     </div>
 
                     {/* Pagination */}

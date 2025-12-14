@@ -79,6 +79,46 @@ export async function GET(req: NextRequest) {
       .eq('id', etatLieux.reservation_id)
       .single();
 
+    // Récupérer les informations du client
+    let clientName = 'N/A';
+    let clientEmail = 'N/A';
+    
+    // Essayer depuis user_profiles
+    if (reservation?.user_id) {
+      const { data: userProfile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('first_name, last_name, email')
+        .eq('user_id', reservation.user_id)
+        .single();
+      
+      if (userProfile) {
+        if (userProfile.first_name || userProfile.last_name) {
+          clientName = `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim();
+        }
+        if (userProfile.email) {
+          clientEmail = userProfile.email;
+        }
+      }
+    }
+    
+    // Essayer depuis reservation.notes (fallback)
+    if ((!clientName || clientName === 'N/A') && reservation?.notes) {
+      try {
+        const notesData = typeof reservation.notes === 'string' ? JSON.parse(reservation.notes) : reservation.notes;
+        if (notesData.customerName && clientName === 'N/A') {
+          clientName = notesData.customerName;
+        }
+        if (notesData.customer_name && clientName === 'N/A') {
+          clientName = notesData.customer_name;
+        }
+        if (notesData.customerEmail && clientEmail === 'N/A') {
+          clientEmail = notesData.customerEmail;
+        }
+      } catch (e) {
+        // Ignorer les erreurs de parsing
+      }
+    }
+
     // Parser les items
     const items = typeof etatLieux.items === 'string' ? JSON.parse(etatLieux.items) : etatLieux.items || {};
     
