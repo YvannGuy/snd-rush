@@ -13,7 +13,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "html2pdf.js": "^0.12.1",
-    "next": "15.3.2",
+    "next": "15.3.8",
     "nodemailer": "^7.0.5",
     "openai": "^4.77.3",
     "react": "^19.0.0",
