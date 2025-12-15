@@ -426,12 +426,6 @@ export default function CartPage() {
       return;
     }
 
-    // Vérifier que les champs requis sont remplis
-    if (!customerEmail || !customerName || !customerPhone) {
-      alert(currentTexts.requiredFields);
-      return;
-    }
-
     // Si l'utilisateur n'est pas connecté ou n'a pas d'ID, ouvrir le modal de connexion
     if (!user || !user.id) {
       setPendingCheckout(true);
@@ -473,6 +467,11 @@ export default function CartPage() {
         };
       });
 
+      // Utiliser les données du profil utilisateur si disponibles, sinon les valeurs par défaut
+      const finalCustomerEmail = customerEmail || user.email || '';
+      const finalCustomerName = customerName || user.user_metadata?.first_name || user.user_metadata?.firstName || user.email?.split('@')[0] || '';
+      const finalCustomerPhone = customerPhone || user.user_metadata?.phone || '';
+
       const response = await fetch('/api/checkout/create-session', {
         method: 'POST',
         headers: {
@@ -486,9 +485,9 @@ export default function CartPage() {
             depositTotal,
             deliveryFee,
             deliveryOption: finalDeliveryOption,
-            customerEmail,
-            customerName,
-            customerPhone,
+            customerEmail: finalCustomerEmail,
+            customerName: finalCustomerName,
+            customerPhone: finalCustomerPhone,
             address: finalDeliveryOption !== 'retrait' ? customerAddress : '',
           }),
       });
@@ -586,7 +585,7 @@ export default function CartPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <Header language={language} onLanguageChange={setLanguage} />
-        <main className="pt-20 pb-16">
+        <main className="pt-[112px] pb-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
             <div className="mb-8">
               <svg className="w-24 h-24 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -619,7 +618,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header language={language} onLanguageChange={setLanguage} />
-      <main className="pt-[112px] pb-16">
+      <main className="pt-[150px] pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           {/* Header épuré */}
           <div className="mb-8 flex items-start justify-between gap-4">
@@ -1028,10 +1027,71 @@ export default function CartPage() {
 
                 {/* Résumé des prix */}
                 <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-gray-600">
-                    <span>{currentTexts.subtotal}</span>
-                    <span className="font-semibold text-gray-900">{cart.total.toFixed(2)}€</span>
-                  </div>
+                  {/* Calculer les montants séparés */}
+                  {(() => {
+                    // Matériel : total sans livraison ni installation
+                    const materialItems = cart.items.filter(
+                      item => !item.productId.startsWith('delivery-') && item.productId !== 'installation-service'
+                    );
+                    const materialTotal = materialItems.reduce((sum, item) => {
+                      const itemTotal = item.dailyPrice * item.quantity * item.rentalDays;
+                      const addonsTotal = item.addons.reduce((addonSum, addon) => addonSum + addon.price, 0);
+                      const urgencySurcharge = item.metadata?.urgencySurcharge || 0;
+                      return sum + itemTotal + addonsTotal + urgencySurcharge;
+                    }, 0);
+                    
+                    // Livraison
+                    const deliveryItem = cart.items.find(item => item.productId.startsWith('delivery-'));
+                    const deliveryTotal = deliveryItem ? deliveryItem.dailyPrice : 0;
+                    
+                    // Installation
+                    const installationItem = cart.items.find(item => item.productId === 'installation-service');
+                    const installationTotal = installationItem ? installationItem.dailyPrice : 0;
+                    
+                    return (
+                      <>
+                        {/* Matériel */}
+                        {materialTotal > 0 && (
+                          <div className="flex justify-between text-gray-600">
+                            <span>{language === 'fr' ? 'Matériel' : 'Equipment'}</span>
+                            <span className="font-semibold text-gray-900">{materialTotal.toFixed(2)}€</span>
+                          </div>
+                        )}
+                        
+                        {/* Livraison */}
+                        {deliveryTotal > 0 && (
+                          <div className="flex justify-between text-gray-600">
+                            <span>{language === 'fr' ? 'Livraison' : 'Delivery'}</span>
+                            <span className="font-semibold text-gray-900">{deliveryTotal.toFixed(2)}€</span>
+                          </div>
+                        )}
+                        
+                        {/* Installation */}
+                        {installationTotal > 0 && (
+                          <div className="flex justify-between text-gray-600">
+                            <span>{language === 'fr' ? 'Installation' : 'Installation'}</span>
+                            <span className="font-semibold text-gray-900">{installationTotal.toFixed(2)}€</span>
+                          </div>
+                        )}
+                        
+                        {/* Sous-total (si plusieurs éléments) */}
+                        {(deliveryTotal > 0 || installationTotal > 0) && (
+                          <div className="flex justify-between text-gray-600 pt-2 border-t border-gray-200">
+                            <span>{currentTexts.subtotal}</span>
+                            <span className="font-semibold text-gray-900">{cart.total.toFixed(2)}€</span>
+                          </div>
+                        )}
+                        
+                        {/* Si seulement matériel, afficher directement le sous-total */}
+                        {deliveryTotal === 0 && installationTotal === 0 && (
+                          <div className="flex justify-between text-gray-600">
+                            <span>{currentTexts.subtotal}</span>
+                            <span className="font-semibold text-gray-900">{cart.total.toFixed(2)}€</span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                   
                   <div className="flex justify-between items-center text-xs text-gray-500 pt-2 relative" ref={depositInfoRef}>
                     <div className="flex items-center gap-1.5">
@@ -1068,66 +1128,6 @@ export default function CartPage() {
                   <span className="text-2xl font-bold text-[#F2431E]">{totalWithDelivery.toFixed(2)}€</span>
                 </div>
 
-                {/* Informations client */}
-                  <div className="mb-6 space-y-4">
-                    <div>
-                    <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700 mb-1.5">
-                        {currentTexts.customerEmail} <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        id="customerEmail"
-                        value={customerEmail}
-                        onChange={(e) => setCustomerEmail(e.target.value)}
-                        required
-                      className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:border-[#F2431E] focus:ring-1 focus:ring-[#F2431E] focus:outline-none transition-colors"
-                        placeholder="votre@email.com"
-                      disabled={!!user?.email}
-                      />
-                    </div>
-                    <div>
-                    <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 mb-1.5">
-                        {currentTexts.customerName} <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="customerName"
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
-                        required
-                      className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:border-[#F2431E] focus:ring-1 focus:ring-[#F2431E] focus:outline-none transition-colors"
-                        placeholder={language === 'fr' ? 'Votre nom complet' : 'Your full name'}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700 mb-1.5">
-                        {currentTexts.customerPhone} <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        id="customerPhone"
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        required
-                        className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:border-[#F2431E] focus:ring-1 focus:ring-[#F2431E] focus:outline-none transition-colors"
-                        placeholder={language === 'fr' ? '06 12 34 56 78' : '+33 6 12 34 56 78'}
-                      />
-                    </div>
-                  {currentDeliveryOption && currentDeliveryOption !== 'retrait' && (
-                      <div>
-                      <label htmlFor="customerAddress" className="block text-sm font-medium text-gray-700 mb-1.5">
-                          {currentTexts.deliveryAddress}
-                        </label>
-                      <AddressAutocomplete
-                          id="customerAddress"
-                          value={customerAddress}
-                        onChange={setCustomerAddress}
-                        placeholder={language === 'fr' ? 'Commencez à taper une adresse...' : 'Start typing an address...'}
-                        className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:border-[#F2431E] focus:ring-1 focus:ring-[#F2431E] focus:outline-none transition-colors"
-                        />
-                      </div>
-                    )}
-                  </div>
 
                 {/* Case à cocher conditions */}
                 {user && (
@@ -1156,7 +1156,7 @@ export default function CartPage() {
                 {/* Bouton checkout - Toujours actif */}
                   <button
                     onClick={handleCheckout}
-                  disabled={isProcessing || !customerEmail || !customerName || !customerPhone || (user ? !acceptTerms : false)}
+                  disabled={isProcessing || (user ? !acceptTerms : false)}
                   className="w-full bg-[#F2431E] text-white py-3.5 rounded-xl font-bold text-base hover:bg-[#E63A1A] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                 >
                   {isProcessing ? (

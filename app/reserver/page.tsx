@@ -40,7 +40,7 @@ function ReserverContent() {
     <div className="min-h-screen bg-white">
       <Header language={language} onLanguageChange={handleLanguageChange} />
       
-      <main className="pt-20">
+      <main className="pt-[112px]">
         {step === 1 && (
           <PackSelection 
             language={language} 

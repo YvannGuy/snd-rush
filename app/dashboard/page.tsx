@@ -110,10 +110,15 @@ export default function DashboardPage() {
             // Recharger les données du dashboard
             if (user && supabase) {
               const loadDashboardData = async () => {
+                // Ne charger que les réservations payées (exclure PENDING et CANCELLED)
                 const { data: reservationsData } = await supabase
                   .from('reservations')
                   .select('*')
                   .eq('user_id', user.id)
+                  .not('status', 'eq', 'PENDING')
+                  .not('status', 'eq', 'pending')
+                  .not('status', 'eq', 'CANCELLED')
+                  .not('status', 'eq', 'cancelled')
                   .order('start_date', { ascending: true });
                 setReservations(reservationsData || []);
               };
@@ -142,11 +147,16 @@ export default function DashboardPage() {
       
       try {
         // Charger les réservations
-        const { data: reservationsData, error: reservationsError } = await supabaseClient
-          .from('reservations')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('start_date', { ascending: true });
+            // Ne charger que les réservations payées (exclure PENDING et CANCELLED)
+            const { data: reservationsData, error: reservationsError } = await supabaseClient
+              .from('reservations')
+              .select('*')
+              .eq('user_id', user.id)
+              .not('status', 'eq', 'PENDING')
+              .not('status', 'eq', 'pending')
+              .not('status', 'eq', 'CANCELLED')
+              .not('status', 'eq', 'cancelled')
+              .order('start_date', { ascending: true });
 
         if (reservationsError) {
           console.error('❌ Erreur chargement réservations:', reservationsError);
@@ -296,10 +306,15 @@ export default function DashboardPage() {
       if (supabase) {
         const loadDashboardData = async () => {
           try {
+            // Ne charger que les réservations payées (exclure PENDING et CANCELLED)
             const { data: reservationsData } = await supabase
               .from('reservations')
               .select('*')
               .eq('user_id', user.id)
+              .not('status', 'eq', 'PENDING')
+              .not('status', 'eq', 'pending')
+              .not('status', 'eq', 'CANCELLED')
+              .not('status', 'eq', 'cancelled')
               .order('start_date', { ascending: true });
 
             if (!reservationsData) return;
@@ -665,6 +680,52 @@ export default function DashboardPage() {
               <p className="text-xs sm:text-sm text-gray-600">{currentTexts.welcomeDescription}</p>
             </div>
           </div>
+
+          {/* Message persistant pour les réservations payées non signées */}
+          {(() => {
+            const unpaidSignedReservations = reservations.filter(
+              (r) => (r.status === 'CONFIRMED' || r.status === 'confirmed' || r.status === 'CONTRACT_PENDING') 
+                && (!r.client_signature || r.client_signature.trim() === '')
+            );
+            
+            if (unpaidSignedReservations.length > 0) {
+              return (
+                <Card className="mb-6 border-2 border-orange-500 bg-orange-50">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 mt-1">
+                        <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-orange-900 mb-2">
+                          {language === 'fr' 
+                            ? `⚠️ ${unpaidSignedReservations.length} contrat${unpaidSignedReservations.length > 1 ? 's' : ''} à signer`
+                            : `⚠️ ${unpaidSignedReservations.length} contract${unpaidSignedReservations.length > 1 ? 's' : ''} to sign`}
+                        </h3>
+                        <p className="text-orange-800 mb-3">
+                          {language === 'fr'
+                            ? 'Vous avez des réservations payées qui nécessitent votre signature. Veuillez signer le contrat pour finaliser votre réservation.'
+                            : 'You have paid reservations that require your signature. Please sign the contract to finalize your reservation.'}
+                        </p>
+                        <Link
+                          href="/mes-contrats"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold transition-colors"
+                        >
+                          {language === 'fr' ? 'Voir mes contrats à signer' : 'View contracts to sign'}
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Link>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            }
+            return null;
+          })()}
 
           {/* Stats Cards - Mobile First */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">

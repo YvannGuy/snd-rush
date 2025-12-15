@@ -118,7 +118,7 @@ export async function GET(req: NextRequest) {
             "Selon l'ampleur des dégâts, le montant correspondant sera déduit de la caution.",
         },
       },
-      success_url: `https://www.sndrush.com?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/admin/paiement/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/admin/paiement?cancelled=true`,
       metadata: {
         type: 'deposit',

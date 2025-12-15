@@ -39,6 +39,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL('/reinitialiser-mot-de-passe', redirectUrl));
     }
 
+    // Vérifier s'il y a un panier dans localStorage (via cookie ou paramètre)
+    // Rediriger vers le panier si l'utilisateur avait un panier avant de créer son compte
+    // Sinon, rediriger vers le dashboard
+    const hasCart = requestUrl.searchParams.get('has_cart') === 'true';
+    if (hasCart) {
+      return NextResponse.redirect(new URL('/panier', redirectUrl));
+    }
+
     // Sinon, rediriger vers le dashboard
     return NextResponse.redirect(new URL('/dashboard', redirectUrl));
   }

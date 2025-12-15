@@ -93,8 +93,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Calculer le montant total
-    const totalAmount = total + (deliveryFee || 0);
+    // Calculer le montant total (la livraison est déjà incluse dans total car elle est dans cart.items)
+    const totalAmount = total;
 
     // Vérifier l'email vérifié pour les commandes importantes (> 1000€)
     // Seulement si on a réussi à récupérer l'utilisateur
@@ -108,6 +108,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Créer les line items pour Stripe
+    // La livraison est déjà incluse dans items car elle fait partie de cart.items
     const lineItems = items.map((item: { name: string; quantity: number; price: number }) => ({
       price_data: {
         currency: 'eur',
@@ -118,20 +119,6 @@ export async function POST(req: NextRequest) {
       },
       quantity: item.quantity,
     }));
-
-    // Ajouter les frais de livraison si nécessaire
-    if (deliveryFee && deliveryFee > 0) {
-      lineItems.push({
-        price_data: {
-          currency: 'eur',
-          product_data: {
-            name: `Livraison - ${deliveryOption}`,
-          },
-          unit_amount: deliveryFee * 100, // Convertir en centimes
-        },
-        quantity: 1,
-      });
-    }
 
     // Extraire les dates depuis les cartItems (utiliser les dates du premier item)
     const firstCartItem = cartItems && cartItems.length > 0 ? cartItems[0] : null;

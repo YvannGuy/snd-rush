@@ -103,7 +103,7 @@ export default function CartSuccessPage() {
   return (
     <div className="min-h-screen bg-white">
       <Header language={language} onLanguageChange={setLanguage} />
-      <main className="pt-20 min-h-screen flex items-center justify-center">
+      <main className="pt-[112px] min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-6">
           <div className="text-6xl mb-6">✅</div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">{currentTexts.title}</h1>

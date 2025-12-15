@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { resend } from '@/lib/resend';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil',
@@ -149,6 +150,144 @@ export async function POST(req: NextRequest) {
                 status: updatedReservation?.status,
                 depositSessionId: session.id,
               });
+
+              // Envoyer un email de confirmation après le paiement complet
+              if (updatedReservation) {
+                try {
+                  // Récupérer les informations de la réservation pour l'email
+                  const { data: fullReservation } = await supabaseClient
+                    .from('reservations')
+                    .select('*')
+                    .eq('id', reservationId)
+                    .single();
+
+                  if (fullReservation) {
+                    let notesData: any = {};
+                    try {
+                      notesData = fullReservation.notes ? JSON.parse(fullReservation.notes) : {};
+                    } catch (e) {
+                      console.warn('⚠️ Erreur parsing notes:', e);
+                    }
+
+                    const customerEmail = notesData.customerEmail || session.customer_email || '';
+                    const customerName = notesData.customerName || '';
+
+                    if (customerEmail && process.env.RESEND_API_KEY && process.env.RESEND_FROM) {
+                      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.sndrush.com';
+                      const reservationUrl = `${baseUrl}/mes-reservations/${reservationId}`;
+                      const signContractUrl = `${baseUrl}/sign-contract?reservationId=${reservationId}`;
+
+                      const emailHtml = `
+                        <!DOCTYPE html>
+                        <html style="background-color: #ffffff;">
+                          <head>
+                            <meta charset="utf-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                          </head>
+                          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #000000; background-color: #ffffff !important; margin: 0; padding: 0; background: #ffffff !important;">
+                            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff !important; background: #ffffff !important; padding: 40px 20px;">
+                              <!-- Header avec logo -->
+                              <div style="text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #F2431E;">
+                                <div style="background-color: #F2431E; color: #ffffff; padding: 20px; border-radius: 8px; display: inline-block; margin-bottom: 15px;">
+                                  <h1 style="margin: 0; font-size: 32px; color: #ffffff; font-weight: bold; letter-spacing: 1px;">SoundRush Paris</h1>
+                                </div>
+                                <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">La location sono express à Paris en 2min</p>
+                              </div>
+                              
+                              <!-- Main Content -->
+                              <div style="background-color: #ffffff !important; background: #ffffff !important;">
+                                <div style="text-align: center; margin-bottom: 30px;">
+                                  <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                                  <h2 style="color: #F2431E; margin-top: 0; margin-bottom: 20px; font-size: 28px; font-weight: bold;">Merci pour votre achat !</h2>
+                                  <p style="color: #000000; font-size: 18px; margin-bottom: 30px;">
+                                    Votre paiement a été confirmé avec succès.
+                                  </p>
+                                </div>
+                                
+                                <!-- Prochaines étapes -->
+                                <div style="background-color: #fff7ed !important; background: #fff7ed !important; padding: 30px; border-radius: 10px; border: 3px solid #F2431E; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(242, 67, 30, 0.15);">
+                                  <h3 style="color: #F2431E; margin-top: 0; margin-bottom: 20px; font-size: 22px; font-weight: bold; padding-bottom: 10px; border-bottom: 2px solid #F2431E;">🚀 Prochaines étapes</h3>
+                                  <ol style="color: #000000; font-size: 16px; line-height: 2; padding-left: 20px; margin: 0;">
+                                    <li style="margin-bottom: 15px;">
+                                      <strong>Allez dans "Mes réservations"</strong> pour voir le détail de votre réservation
+                                    </li>
+                                    <li style="margin-bottom: 15px;">
+                                      <strong>Cliquez sur votre réservation</strong> pour accéder aux détails
+                                    </li>
+                                    <li style="margin-bottom: 15px;">
+                                      <strong>Signez le contrat de location</strong> en cliquant sur le bouton "Signer le contrat"
+                                    </li>
+                                  </ol>
+                                </div>
+
+                                <!-- Boutons CTA -->
+                                <div style="text-align: center; margin: 40px 0;">
+                                  <a href="${reservationUrl}" 
+                                     style="display: inline-block; background-color: #F2431E; color: #ffffff; padding: 18px 40px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 18px; box-shadow: 0 6px 20px rgba(242, 67, 30, 0.4); margin-bottom: 15px; margin-right: 10px;">
+                                    📋 Voir ma réservation
+                                  </a>
+                                  <a href="${signContractUrl}" 
+                                     style="display: inline-block; background-color: #10b981; color: #ffffff; padding: 18px 40px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 18px; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); margin-bottom: 15px;">
+                                    ✍️ Signer le contrat
+                                  </a>
+                                </div>
+
+                                <!-- Informations importantes -->
+                                <div style="background-color: #f0fdf4 !important; background: #f0fdf4 !important; padding: 20px; border-radius: 8px; border: 2px solid #10b981; margin-top: 30px;">
+                                  <p style="color: #000000; font-size: 15px; margin: 0; line-height: 1.8;">
+                                    <strong style="color: #10b981;">📝 Important :</strong> Votre réservation sera finalisée une fois le contrat signé. 
+                                    N'hésitez pas à nous contacter si vous avez des questions.
+                                  </p>
+                                </div>
+
+                                <!-- Footer -->
+                                <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #F2431E;">
+                                  <p style="color: #000000; font-size: 15px; text-align: center; margin-bottom: 20px; line-height: 1.6;">
+                                    Nous sommes ravis de vous accompagner dans votre événement.<br>
+                                    Notre équipe reste disponible pour toute question.
+                                  </p>
+                                  <div style="background-color: #ffffff !important; background: #ffffff !important; padding: 25px; border-radius: 8px; border: 2px solid #F2431E; margin-top: 20px;">
+                                    <p style="color: #F2431E; font-size: 16px; font-weight: bold; text-align: center; margin: 0 0 15px 0;">L'équipe SoundRush Paris</p>
+                                    <div style="text-align: center; color: #000000; font-size: 14px; line-height: 2;">
+                                      <p style="margin: 5px 0;">
+                                        <strong style="color: #F2431E;">📧 Email :</strong> 
+                                        <a href="mailto:contact@guylocationevents.com" style="color: #0066cc; text-decoration: none;">contact@guylocationevents.com</a>
+                                      </p>
+                                      <p style="margin: 5px 0;">
+                                        <strong style="color: #F2431E;">📞 Téléphone :</strong> 
+                                        <a href="tel:+33651084994" style="color: #0066cc; text-decoration: none;">06 51 08 49 94</a>
+                                      </p>
+                                      <p style="margin: 5px 0;">
+                                        <strong style="color: #F2431E;">📍 Adresse :</strong> 
+                                        <span style="color: #000000;">Paris, Île-de-France</span>
+                                      </p>
+                                      <p style="margin: 15px 0 5px 0; color: #666; font-size: 13px;">
+                                        Service disponible 24h/24 - 7j/7
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </body>
+                        </html>
+                      `;
+
+                      await resend.emails.send({
+                        from: process.env.RESEND_FROM!,
+                        to: customerEmail,
+                        subject: '✅ Paiement confirmé - Prochaine étape : Signature du contrat SoundRush',
+                        html: emailHtml,
+                      });
+
+                      console.log('✅ Email de confirmation envoyé à:', customerEmail);
+                    }
+                  }
+                } catch (emailError: any) {
+                  console.error('❌ Erreur envoi email de confirmation:', emailError);
+                  // Ne pas faire échouer le webhook si l'email échoue
+                }
+              }
             }
           } else {
             console.warn('⚠️ Aucun reservationId dans les métadonnées de la session caution');

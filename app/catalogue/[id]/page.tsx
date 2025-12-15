@@ -478,7 +478,7 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen bg-white">
         <Header language={language} onLanguageChange={setLanguage} />
-        <main className="pt-20 min-h-screen flex items-center justify-center">
+        <main className="pt-[112px] min-h-screen flex items-center justify-center">
           <p className="text-gray-600">{language === 'fr' ? 'Chargement...' : 'Loading...'}</p>
         </main>
         <Footer language={language} onLegalNoticeClick={() => {}} onRentalConditionsClick={() => {}} />
@@ -490,7 +490,7 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen bg-white">
         <Header language={language} onLanguageChange={setLanguage} />
-        <main className="pt-20 min-h-screen flex items-center justify-center">
+        <main className="pt-[112px] min-h-screen flex items-center justify-center">
           <p className="text-gray-600">{error || (language === 'fr' ? 'Produit non trouvé' : 'Product not found')}</p>
         </main>
         <Footer language={language} onLegalNoticeClick={() => {}} onRentalConditionsClick={() => {}} />

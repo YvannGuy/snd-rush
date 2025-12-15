@@ -44,11 +44,15 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
 
     const calculatePendingActions = async () => {
       try {
-        // Charger les réservations
+        // Charger uniquement les réservations payées (exclure PENDING et CANCELLED)
         const { data: reservationsData } = await supabase
           .from('reservations')
           .select('*')
           .eq('user_id', user.id)
+          .not('status', 'eq', 'PENDING')
+          .not('status', 'eq', 'pending')
+          .not('status', 'eq', 'CANCELLED')
+          .not('status', 'eq', 'cancelled')
           .order('start_date', { ascending: true });
 
         if (!reservationsData) return;

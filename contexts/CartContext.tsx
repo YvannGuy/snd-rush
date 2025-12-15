@@ -113,6 +113,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const data = await response.json();
           const serverCart = data.cart;
           
+          // Récupérer le panier localStorage pour le fusionner
+          const localCartStr = localStorage.getItem('sndrush_cart');
+          const localCart = localCartStr ? JSON.parse(localCartStr) : null;
+          
           // Vérifier si le panier correspond à une commande déjà payée
           // Si l'utilisateur a des réservations CONFIRMED récentes, vider le panier
           if (serverCart && serverCart.items && serverCart.items.length > 0) {
@@ -156,12 +160,54 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 depositTotal: serverCart.deposit_total || 0,
               });
             }
-          } else if (serverCart && (!serverCart.items || serverCart.items.length === 0)) {
-            // Si le panier serveur est vide, vider aussi le panier local
-            if (!cartClearedRef.current) {
+          } else {
+            // Si le panier serveur est vide ou n'existe pas, vérifier le panier localStorage
+            if (localCart && localCart.items && localCart.items.length > 0 && !cartClearedRef.current) {
+              // Restaurer le panier localStorage et le sauvegarder dans Supabase
+              console.log('📦 Restauration du panier depuis localStorage après connexion');
+              setCart({
+                items: localCart.items || [],
+                total: localCart.total || 0,
+                depositTotal: localCart.depositTotal || 0,
+              });
+              
+              // Sauvegarder le panier localStorage dans Supabase
+              setIsAttaching(true);
+              try {
+                await fetch('/api/cart/attach', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    userId: user.id,
+                    items: localCart.items,
+                    total: localCart.total || 0,
+                    depositTotal: localCart.depositTotal || 0,
+                  }),
+                });
+              } catch (error) {
+                console.error('Erreur sauvegarde panier dans Supabase:', error);
+              } finally {
+                setIsAttaching(false);
+              }
+            } else if (!cartClearedRef.current) {
+              // Si les deux sont vides, s'assurer que le panier est vide
               setCart({ items: [], total: 0, depositTotal: 0 });
-              localStorage.removeItem('sndrush_cart');
             }
+          }
+        } else {
+          // Si erreur API, utiliser le panier localStorage s'il existe
+          const localCartStr = localStorage.getItem('sndrush_cart');
+          const localCart = localCartStr ? JSON.parse(localCartStr) : null;
+          
+          if (localCart && localCart.items && localCart.items.length > 0 && !cartClearedRef.current) {
+            console.log('📦 Utilisation du panier localStorage (erreur API)');
+            setCart({
+              items: localCart.items || [],
+              total: localCart.total || 0,
+              depositTotal: localCart.depositTotal || 0,
+            });
           }
         }
       } catch (error) {

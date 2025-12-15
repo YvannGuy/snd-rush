@@ -135,7 +135,7 @@ function SignContractContent() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header language={language} onLanguageChange={setLanguage} />
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex items-center justify-center min-h-[60vh] pt-[150px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E] mx-auto"></div>
             <p className="mt-4 text-gray-600">{language === 'fr' ? 'Chargement...' : 'Loading...'}</p>
@@ -154,7 +154,7 @@ function SignContractContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header language={language} onLanguageChange={setLanguage} />
-      <div className="flex items-center justify-center min-h-[60vh] py-12">
+      <div className="flex items-center justify-center min-h-[60vh] pt-[150px] pb-12">
         <div className="bg-white rounded-2xl p-8 sm:p-12 max-w-2xl mx-4 text-center shadow-lg">
           <div className="text-6xl mb-6">✅</div>
           <h1 className="text-3xl font-bold text-green-600 mb-4">{currentTexts.signed}</h1>
@@ -177,7 +177,7 @@ function SignContractContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header language={language} onLanguageChange={setLanguage} />
-      <div className="flex items-center justify-center min-h-[60vh] pt-24 sm:pt-28 pb-8 sm:pb-12 px-4">
+      <div className="flex items-center justify-center min-h-[60vh] pt-[150px] pb-8 sm:pb-12 px-4">
         <div className="bg-white rounded-2xl p-6 sm:p-10 max-w-2xl w-full shadow-lg overflow-visible">
           <div className="text-center mb-8 pt-2">
             <div className="text-5xl mb-4 leading-none">✍️</div>

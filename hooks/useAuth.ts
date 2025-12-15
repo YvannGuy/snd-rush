@@ -73,11 +73,17 @@ export function useAuth() {
     try {
       console.log('🔐 Tentative d\'inscription pour:', email);
 
+      // Vérifier s'il y a un panier dans localStorage pour rediriger vers le panier après validation
+      const hasCart = typeof window !== 'undefined' && localStorage.getItem('sndrush_cart');
+      const redirectUrl = hasCart 
+        ? `${getBaseUrl()}/auth/callback?has_cart=true`
+        : `${getBaseUrl()}/auth/callback`;
+
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${getBaseUrl()}/auth/callback`,
+          emailRedirectTo: redirectUrl,
           data: {
             title: metadata?.title,
             first_name: metadata?.firstName,
