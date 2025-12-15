@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -17,8 +18,9 @@ import { Calendar, Download, Mail, ChevronRight, Search, X } from 'lucide-react'
 
 export default function AdminContratsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
-  const { user, loading } = useUser();
   const router = useRouter();
+  const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -28,10 +30,19 @@ export default function AdminContratsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
 
+    // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
-    if (!user || !supabase) return;
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+useEffect(() => {
+    if (!user || !supabase || !isAdmin) return;
 
     const loadContracts = async () => {
+      if (!supabase) return;
       try {
         // Récupérer toutes les réservations signées
         const { data: reservationsData, error } = await supabase
@@ -88,7 +99,7 @@ export default function AdminContratsPage() {
     };
 
     loadContracts();
-  }, [user]);
+  }, [user, isAdmin]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -165,10 +176,39 @@ export default function AdminContratsPage() {
 
   const currentTexts = texts[language];
 
-  if (loading) {
+  // Rediriger si l'utilisateur n'est pas admin
+  useEffect(() => {
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+  if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E]"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E] mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Si l'utilisateur n'est pas admin, rediriger
+  if (!isAdmin && user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-6">
+          <div className="text-6xl mb-6">🚫</div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Accès refusé</h1>
+          <p className="text-xl text-gray-600 mb-8">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
+          >
+            Retour au dashboard
+          </button>
+        </div>
       </div>
     );
   }
@@ -200,6 +240,11 @@ export default function AdminContratsPage() {
         />
       </div>
     );
+  }
+
+  // Double vérification de sécurité
+  if (!isAdmin) {
+    return null;
   }
 
   return (

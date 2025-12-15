@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -15,6 +16,7 @@ import Link from 'next/link';
 export default function AdminPacksPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -25,7 +27,15 @@ export default function AdminPacksPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
+    // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+useEffect(() => {
     if (!user) return;
 
     // Utiliser les packs de la homepage (même source que PacksSection)
@@ -40,6 +50,7 @@ export default function AdminPacksPage() {
     // Optionnellement, enrichir avec les données de Supabase si disponibles
     if (supabase) {
       const loadPacksFromSupabase = async () => {
+        if (!supabase) return;
         try {
           const { data, error } = await supabase
             .from('packs')
@@ -148,7 +159,7 @@ export default function AdminPacksPage() {
     localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
   }, [isSidebarCollapsed]);
 
-  if (loading) {
+  if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E]"></div>

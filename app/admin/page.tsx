@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -16,6 +17,7 @@ import Link from 'next/link';
 export default function AdminDashboardPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const { signOut } = useAuth();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
@@ -50,8 +52,16 @@ export default function AdminDashboardPage() {
     localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
   }, [isSidebarCollapsed]);
 
+  // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
-    if (!user || !supabase) return;
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+  useEffect(() => {
+    if (!user || !supabase || !isAdmin) return;
 
     const loadAdminData = async () => {
       const supabaseClient = supabase;
@@ -67,33 +77,120 @@ export default function AdminDashboardPage() {
         startOfMonth.setHours(0, 0, 0, 0);
         const startOfMonthStr = startOfMonth.toISOString().split('T')[0];
 
-        // 1. Réservations du mois
-        const { data: reservationsData, error: reservationsError } = await supabaseClient
+        // OPTIMISATION: Exécuter les requêtes en parallèle avec Promise.all
+        // OPTIMISATION CRITIQUE: Ne sélectionner QUE les colonnes nécessaires au lieu de '*'
+        // 1. Réservations du mois (limitées à 50 pour les performances)
+        const reservationsPromise = supabaseClient
           .from('reservations')
-          .select('*')
+          .select('id, status, start_date, end_date, created_at, total_price, customer_name, customer_email, customer_phone, delivery_status, client_signature')
           .gte('created_at', startOfMonthStr)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(50);
 
-        // Récupérer tous les orders pour enrichir les réservations
-        const { data: allOrdersForReservations } = await supabaseClient
+        // 2. Orders récents uniquement (limité à 100 pour les performances)
+        const ordersPromise = supabaseClient
           .from('orders')
           .select('customer_email, customer_name, customer_phone, total, status, created_at, stripe_session_id, metadata')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(100);
 
-        // Associer les orders aux réservations via sessionId dans notes
+        // 3. Statistiques - Réservations du mois (count uniquement)
+        const reservationsCountPromise = supabaseClient
+          .from('reservations')
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', startOfMonthStr);
+
+        // 4. Statistiques - CA ce mois
+        const reservationsRevenuePromise = supabaseClient
+          .from('reservations')
+          .select('id, total_price, created_at')
+          .gte('created_at', startOfMonthStr);
+
+        // 5. Matériel sorti ce mois
+        const equipmentOutPromise = supabaseClient
+          .from('reservations')
+          .select('quantity, start_date')
+          .gte('start_date', startOfMonthStr)
+          .in('status', ['CONFIRMED', 'confirmed', 'completed', 'COMPLETED']);
+
+        // 6. Retours en retard
+        const lateReturnsPromise = supabaseClient
+          .from('reservations')
+          .select('id')
+          .lt('end_date', todayStr)
+          .eq('status', 'CONFIRMED');
+
+        // 7. Clients récents
+        const recentOrdersPromise = supabaseClient
+          .from('orders')
+          .select('customer_email, customer_name, total, created_at')
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        // 8. État du matériel (réservations actives)
+        const equipmentDataPromise = supabaseClient
+          .from('reservations')
+          .select('*')
+          .lte('start_date', todayStr)
+          .gte('end_date', todayStr)
+          .eq('status', 'CONFIRMED')
+          .order('end_date', { ascending: true })
+          .limit(5);
+
+        // 9. Planning - Réservations pour le mois
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const calendarReservationsPromise = supabaseClient
+          .from('reservations')
+          .select('start_date, end_date, status')
+          .gte('start_date', startOfMonth.toISOString().split('T')[0])
+          .lte('start_date', endOfMonth.toISOString().split('T')[0]);
+
+        // Exécuter toutes les requêtes en parallèle
+        const [
+          { data: reservationsData, error: reservationsError },
+          { data: allOrdersForReservations },
+          { count: reservationsThisMonthCount },
+          { data: reservationsThisMonth },
+          { data: reservationsStartedThisMonth },
+          { data: lateReturns },
+          { data: recentOrders },
+          { data: equipmentData },
+          { data: calendarReservations }
+        ] = await Promise.all([
+          reservationsPromise,
+          ordersPromise,
+          reservationsCountPromise,
+          reservationsRevenuePromise,
+          equipmentOutPromise,
+          lateReturnsPromise,
+          recentOrdersPromise,
+          equipmentDataPromise,
+          calendarReservationsPromise
+        ]);
+
+        // Traitement des données récupérées
+        // 1. Associer les orders aux réservations via sessionId dans notes
+        // OPTIMISATION: Créer un Map pour recherche O(1) au lieu de O(n)
+        const ordersMap = new Map();
+        if (allOrdersForReservations) {
+          allOrdersForReservations.forEach((order: any) => {
+            if (order.stripe_session_id) {
+              ordersMap.set(order.stripe_session_id, order);
+            }
+          });
+        }
+
         let reservationsWithOrders = [];
         if (reservationsData) {
           reservationsWithOrders = reservationsData.map((reservation) => {
             let matchingOrder = null;
             
-            // Chercher l'order via sessionId dans notes
-            if (reservation.notes && allOrdersForReservations) {
+            // Chercher l'order via sessionId dans notes (optimisé avec Map)
+            if (reservation.notes) {
               try {
                 const notesData = JSON.parse(reservation.notes);
-                if (notesData.sessionId) {
-                  matchingOrder = allOrdersForReservations.find(
-                    (o: any) => o.stripe_session_id === notesData.sessionId
-                  );
+                if (notesData.sessionId && ordersMap.has(notesData.sessionId)) {
+                  matchingOrder = ordersMap.get(notesData.sessionId);
                 }
               } catch (e) {
                 // Ignorer les erreurs de parsing
@@ -113,19 +210,7 @@ export default function AdminDashboardPage() {
           setTodayReservations(reservationsWithOrders || []);
         }
 
-        // 2. Statistiques - Réservations du mois
-        const { count: reservationsThisMonthCount } = await supabaseClient
-          .from('reservations')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', startOfMonthStr);
-
-        // 3. Statistiques - CA ce mois (depuis le 1er du mois)
-        // CA basé sur toutes les réservations du mois (tous statuts confondus)
-        const { data: reservationsThisMonth, error: reservationsMonthError } = await supabaseClient
-          .from('reservations')
-          .select('id, total_price, created_at')
-          .gte('created_at', startOfMonthStr);
-
+        // 2. Calculer le CA du mois
         let revenueThisMonth = 0;
         if (reservationsThisMonth) {
           revenueThisMonth = reservationsThisMonth.reduce((sum, reservation) => {
@@ -134,33 +219,13 @@ export default function AdminDashboardPage() {
           }, 0);
         }
 
-        // 4. Statistiques - Matériel sorti ce mois (réservations qui ont commencé ce mois)
-        const { data: reservationsStartedThisMonth, error: activeError } = await supabaseClient
-          .from('reservations')
-          .select('quantity, start_date')
-          .gte('start_date', startOfMonthStr)
-          .in('status', ['CONFIRMED', 'confirmed', 'completed', 'COMPLETED']);
-
+        // 3. Calculer le matériel sorti
         let equipmentOut = 0;
         if (reservationsStartedThisMonth) {
           equipmentOut = reservationsStartedThisMonth.reduce((sum, r) => sum + (r.quantity || 1), 0);
         }
 
-        // 5. Retours en retard (réservations où end_date < aujourd'hui et status = CONFIRMED)
-        const { data: lateReturns, error: lateError } = await supabaseClient
-          .from('reservations')
-          .select('id')
-          .lt('end_date', todayStr)
-          .eq('status', 'CONFIRMED');
-
-        // 6. Clients récents (dernières commandes)
-        const { data: recentOrders, error: clientsError } = await supabaseClient
-          .from('orders')
-          .select('customer_email, customer_name, total, created_at')
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        // Grouper par client et calculer les stats
+        // 4. Grouper les clients récents
         const clientsMap = new Map();
         if (recentOrders) {
           recentOrders.forEach((order: any) => {
@@ -180,44 +245,20 @@ export default function AdminDashboardPage() {
           });
         }
 
-        // Compter les réservations par client
-        const { data: allReservations } = await supabaseClient
-          .from('reservations')
-          .select('user_id');
-
-        // Récupérer les emails des utilisateurs pour compter les réservations
         const clientsArray = Array.from(clientsMap.values()).slice(0, 3);
 
-        // 7. État du matériel (réservations actives avec détails)
-        const { data: equipmentData, error: equipmentError } = await supabaseClient
-          .from('reservations')
-          .select('*')
-          .lte('start_date', todayStr)
-          .gte('end_date', todayStr)
-          .eq('status', 'CONFIRMED')
-          .order('end_date', { ascending: true })
-          .limit(5);
-
-        // Enrichir avec les données des orders récents
-        // Récupérer les orders pour associer aux réservations d'équipement
-        const { data: ordersForEquipment } = await supabaseClient
-          .from('orders')
-          .select('customer_email, customer_name, customer_phone, total, status, created_at, stripe_session_id, metadata')
-          .order('created_at', { ascending: false });
-
+        // 5. Enrichir les données d'équipement avec les orders (utiliser le même Map)
         let equipmentWithOrders = [];
         if (equipmentData) {
           equipmentWithOrders = equipmentData.map((item) => {
             let matchingOrder = null;
             
-            // Chercher l'order via sessionId dans notes
-            if (item.notes && ordersForEquipment) {
+            // Chercher l'order via sessionId dans notes (optimisé avec Map)
+            if (item.notes) {
               try {
                 const notesData = JSON.parse(item.notes);
-                if (notesData.sessionId) {
-                  matchingOrder = ordersForEquipment.find(
-                    (o: any) => o.stripe_session_id === notesData.sessionId
-                  );
+                if (notesData.sessionId && ordersMap.has(notesData.sessionId)) {
+                  matchingOrder = ordersMap.get(notesData.sessionId);
                 }
               } catch (e) {
                 // Ignorer les erreurs de parsing
@@ -231,16 +272,7 @@ export default function AdminDashboardPage() {
           });
         }
 
-        // 8. Planning - Réservations pour le mois
-        // Réutiliser startOfMonth déjà défini plus haut
-        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        
-        const { data: calendarReservations, error: calendarError } = await supabaseClient
-          .from('reservations')
-          .select('start_date, end_date, status')
-          .gte('start_date', startOfMonth.toISOString().split('T')[0])
-          .lte('start_date', endOfMonth.toISOString().split('T')[0]);
-
+        // Mettre à jour tous les états en une seule fois
         setStats({
           reservationsToday: reservationsThisMonthCount || 0,
           revenueThisMonth: revenueThisMonth,
@@ -425,11 +457,30 @@ export default function AdminDashboardPage() {
   const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
   const currentDay = new Date().getDate();
 
-  if (loading) {
+  if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E] mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Si l'utilisateur n'est pas admin, ne rien afficher (redirection en cours)
+  if (!isAdmin && !checkingAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-6">
+          <div className="text-6xl mb-6">🚫</div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Accès refusé</h1>
+          <p className="text-xl text-gray-600 mb-8">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
+          >
+            Retour au dashboard
+          </button>
         </div>
       </div>
     );
@@ -473,6 +524,11 @@ export default function AdminDashboardPage() {
         />
       </div>
     );
+  }
+
+  // Double vérification de sécurité avant d'afficher le contenu admin
+  if (!isAdmin) {
+    return null;
   }
 
   return (

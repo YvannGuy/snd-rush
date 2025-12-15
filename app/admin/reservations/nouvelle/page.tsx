@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -12,6 +13,7 @@ import SignModal from '@/components/auth/SignModal';
 export default function NouvelleReservationPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,7 +109,7 @@ export default function NouvelleReservationPage() {
 
   const currentTexts = texts[language];
 
-  if (loading) {
+  if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E]"></div>

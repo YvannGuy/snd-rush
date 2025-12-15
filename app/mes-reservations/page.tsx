@@ -81,16 +81,14 @@ export default function MesReservationsPage() {
       if (!supabaseClient) return;
       
       try {
-        // Ne charger que les réservations payées (CONFIRMED, COMPLETED, CONTRACT_SIGNED, etc.)
-        // Exclure les réservations PENDING qui ne sont pas encore payées
+        // Charger toutes les réservations sauf PENDING (inclure CANCELLED pour l'historique)
         const { data, error } = await supabaseClient
           .from('reservations')
           .select('*')
           .eq('user_id', user.id)
           .not('status', 'eq', 'PENDING')
           .not('status', 'eq', 'pending')
-          .not('status', 'eq', 'CANCELLED')
-          .not('status', 'eq', 'cancelled')
+          // Ne plus filtrer CANCELLED pour afficher toutes les réservations dans l'historique
           .order('created_at', { ascending: false });
 
         if (error) {

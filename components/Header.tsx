@@ -101,59 +101,68 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
         return;
       }
 
+      // OPTIMISATION: Vérifier d'abord user_metadata et email avant de faire une requête DB
+      // Cela évite les requêtes inutiles qui échouent (400)
+      const metadataRole = user.user_metadata?.role?.toLowerCase();
+      const isAdminFromMetadata = metadataRole === 'admin' || user.email?.toLowerCase() === 'yvann.guyonnet@gmail.com';
+      
+      if (user.user_metadata?.first_name) {
+        const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
+        setUserFirstName(firstName);
+        setIsAdmin(isAdminFromMetadata);
+        return; // Ne pas faire de requête DB si on a déjà les données
+      } else if (user.email) {
+        const emailPart = user.email.split('@')[0];
+        setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
+        setIsAdmin(isAdminFromMetadata);
+        return; // Ne pas faire de requête DB si on a déjà les données
+      }
+
+      // Seulement si pas de données dans metadata, essayer user_profiles (avec gestion d'erreur)
+      // MAIS seulement si vraiment nécessaire (pas de first_name dans metadata ET pas d'email)
+      // En pratique, on ne devrait jamais arriver ici car on a toujours un email
+      if (!user.email) {
+        // Pas d'email, on ne peut rien faire
+        setIsAdmin(false);
+        setUserFirstName('');
+        return;
+      }
+      
+      // Si on arrive ici, on a un email mais pas de first_name dans metadata
+      // On peut essayer user_profiles, mais avec une gestion d'erreur robuste
       try {
-        // Essayer de récupérer depuis user_profiles
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('user_profiles')
           .select('first_name, role')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle(); // Utiliser maybeSingle() au lieu de single() pour éviter les erreurs 400
+
+        // Ignorer les erreurs 400 (PGRST116 = no rows returned, c'est normal)
+        if (error) {
+          // Ne logger que les vraies erreurs (pas PGRST116)
+          if (error.code !== 'PGRST116' && error.code !== '42P01') { // 42P01 = table doesn't exist
+            console.warn('⚠️ Header - Erreur récupération user_profiles (ignorée):', error.code, error.message);
+          }
+          // En cas d'erreur, utiliser les métadonnées
+          setIsAdmin(isAdminFromMetadata);
+          return;
+        }
 
         if (profile) {
-          // Vérifier le rôle admin (insensible à la casse)
-          const isAdminRole = profile.role?.toLowerCase() === 'admin';
+          const isAdminRole = profile.role?.toLowerCase() === 'admin' || user.email?.toLowerCase() === 'yvann.guyonnet@gmail.com';
           setIsAdmin(isAdminRole);
-          console.log('🔍 Header - Profile trouvé:', { role: profile.role, isAdmin: isAdminRole, userId: user.id });
 
           if (profile.first_name) {
-            // Capitaliser la première lettre
             const firstName = profile.first_name.charAt(0).toUpperCase() + profile.first_name.slice(1).toLowerCase();
             setUserFirstName(firstName);
-          } else if (user.user_metadata?.first_name) {
-            const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
-            setUserFirstName(firstName);
-          } else if (user.email) {
-            // Fallback: utiliser la partie avant @ de l'email
-            const emailPart = user.email.split('@')[0];
-            setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
           }
         } else {
-          // Fallback: vérifier dans user_metadata
-          const metadataRole = user.user_metadata?.role?.toLowerCase();
-          const isAdminFromMetadata = metadataRole === 'admin';
           setIsAdmin(isAdminFromMetadata);
-          console.log('🔍 Header - Pas de profile, vérification metadata:', { metadataRole, isAdmin: isAdminFromMetadata });
-
-          if (user.user_metadata?.first_name) {
-            const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
-            setUserFirstName(firstName);
-          } else if (user.email) {
-            const emailPart = user.email.split('@')[0];
-            setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
-          }
         }
-      } catch (error) {
-        console.error('Erreur récupération données utilisateur:', error);
-        setIsAdmin(false);
-        console.log('🔍 Header - Erreur, isAdmin défini à false');
-        // Fallback vers user_metadata ou email
-        if (user.user_metadata?.first_name) {
-          const firstName = user.user_metadata.first_name.charAt(0).toUpperCase() + user.user_metadata.first_name.slice(1).toLowerCase();
-          setUserFirstName(firstName);
-        } else if (user.email) {
-          const emailPart = user.email.split('@')[0];
-          setUserFirstName(emailPart.charAt(0).toUpperCase() + emailPart.slice(1).toLowerCase());
-        }
+      } catch (error: any) {
+        // En cas d'erreur, utiliser les métadonnées (ne pas logger pour éviter le spam)
+        setIsAdmin(isAdminFromMetadata);
+        // Le prénom est déjà défini depuis l'email plus haut
       }
     };
 

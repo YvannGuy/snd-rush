@@ -54,7 +54,9 @@ export default function DashboardPage() {
     conditionReportsToReview: 0,
     deliveriesNotReturned: 0,
     newInvoices: 0,
+    reservationsWithContractsToSign: 0,
   });
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isConfirmingDeposit, setIsConfirmingDeposit] = useState(false);
@@ -145,72 +147,106 @@ export default function DashboardPage() {
       const supabaseClient = supabase;
       if (!supabaseClient) return;
       
+      console.time('⏱️ Dashboard - Chargement total');
+      setIsLoadingData(true);
+      
       try {
-        // Charger les réservations
-            // Ne charger que les réservations payées (exclure PENDING et CANCELLED)
-            const { data: reservationsData, error: reservationsError } = await supabaseClient
-              .from('reservations')
-              .select('*')
-              .eq('user_id', user.id)
-              .not('status', 'eq', 'PENDING')
-              .not('status', 'eq', 'pending')
-              .not('status', 'eq', 'CANCELLED')
-              .not('status', 'eq', 'cancelled')
-              .order('start_date', { ascending: true });
+        // OPTIMISATION CRITIQUE: Ne sélectionner QUE les colonnes nécessaires au lieu de '*'
+        // Cela réduit drastiquement la taille des données transférées
+        console.time('⏱️ Dashboard - Requête réservations');
+        // Essayer d'abord avec select('*') pour voir si le problème vient des colonnes spécifiques
+        console.log('🔍 User ID pour requête:', user.id);
+        console.log('🔍 User Email:', user.email);
+        
+        // Charger les réservations actives (pas PENDING)
+        // Inclure CANCELLED pour afficher l'historique complet
+        const reservationsPromise = supabaseClient
+          .from('reservations')
+          .select('*')
+          .eq('user_id', user.id)
+          .not('status', 'eq', 'PENDING')
+          .not('status', 'eq', 'pending')
+          // Ne plus filtrer CANCELLED pour afficher toutes les réservations
+          .order('start_date', { ascending: true });
 
-        if (reservationsError) {
-          console.error('❌ Erreur chargement réservations:', reservationsError);
-          throw reservationsError;
-        }
-
-        setReservations(reservationsData || []);
-
-        // Charger les commandes (factures)
-        let ordersData: any[] = [];
-        if (user.email) {
-          try {
-            const { data, error: ordersError } = await supabaseClient
+        console.time('⏱️ Dashboard - Requête orders');
+        // OPTIMISATION: Ne sélectionner que les colonnes nécessaires
+        const ordersPromise = user.email
+          ? supabaseClient
               .from('orders')
-              .select('*')
+              .select('id, customer_email, total, created_at, status')
               .eq('customer_email', user.email)
               .order('created_at', { ascending: false })
-              .limit(5);
+              .limit(20)
+          : Promise.resolve({ data: [], error: null });
 
-            if (ordersError) {
-              // Logger l'erreur complète pour le débogage
-              console.error('Erreur chargement commandes:', {
-                message: ordersError.message || 'Erreur inconnue',
-                details: ordersError.details || null,
-                hint: ordersError.hint || null,
-                code: ordersError.code || null,
-                fullError: JSON.stringify(ordersError, Object.getOwnPropertyNames(ordersError))
-              });
-              // Ne pas bloquer l'affichage du dashboard si les commandes ne peuvent pas être chargées
-              setOrders([]);
-            } else {
-              ordersData = data || [];
-              setOrders(ordersData);
-            }
-          } catch (error) {
-            // Capturer les erreurs de sérialisation ou autres erreurs inattendues
-            console.error('Erreur inattendue lors du chargement des commandes:', error);
-            setOrders([]);
+        // Exécuter les premières requêtes en parallèle
+        const [
+          { data: reservationsData, error: reservationsError },
+          { data: ordersData, error: ordersError }
+        ] = await Promise.all([
+          reservationsPromise,
+          ordersPromise
+        ]);
+
+        console.timeEnd('⏱️ Dashboard - Requête réservations');
+        console.timeEnd('⏱️ Dashboard - Requête orders');
+        console.log('✅ Données chargées:', { 
+          reservations: reservationsData?.length || 0, 
+          orders: ordersData?.length || 0,
+          userId: user?.id,
+          userEmail: user?.email
+        });
+        console.log('📊 Réservations brutes:', reservationsData);
+        console.log('📊 Orders bruts:', ordersData);
+
+        // Mettre à jour les données immédiatement pour un rendu rapide (SANS attendre etat_lieux)
+        // Gérer les erreurs sans bloquer le chargement
+        if (reservationsError) {
+          // Afficher l'erreur complète pour debug
+          const errorDetails = {
+            message: (reservationsError as any)?.message,
+            code: (reservationsError as any)?.code,
+            details: (reservationsError as any)?.details,
+            hint: (reservationsError as any)?.hint,
+            status: (reservationsError as any)?.status,
+            statusCode: (reservationsError as any)?.statusCode,
+          };
+          
+          console.error('❌ Erreur chargement réservations:', errorDetails);
+          console.error('❌ Erreur complète (raw):', reservationsError);
+          
+          // Si c'est une erreur 400, c'est probablement un problème de RLS ou de colonnes
+          if ((reservationsError as any)?.code === 'PGRST301' || (reservationsError as any)?.statusCode === 400) {
+            console.warn('⚠️ Erreur 400 - Vérifier les politiques RLS ou les colonnes de la table reservations');
           }
+          
+          setReservations([]);
         } else {
-          // Si pas d'email, pas de commandes à charger
-          setOrders([]);
+          setReservations(reservationsData || []);
         }
-
-        // Calculer les stats
-        const total = (reservationsData || []).length;
         
-        // Calculer le nombre de contrats signés
-        const signedContracts = (reservationsData || []).filter(
+        if (ordersError) {
+          console.error('❌ Erreur chargement orders:', JSON.stringify(ordersError, null, 2));
+          setOrders([]);
+        } else {
+          setOrders(ordersData || []);
+        }
+        
+        // Libérer le rendu IMMÉDIATEMENT après avoir les données principales
+        console.timeEnd('⏱️ Dashboard - Chargement total');
+        setIsLoadingData(false);
+        
+        // Calculer les stats immédiatement
+        // Filtrer les CANCELLED pour les stats (mais les garder pour l'affichage)
+        const activeReservations = (reservationsData || []).filter(
+          (r) => r.status !== 'CANCELLED' && r.status !== 'cancelled'
+        );
+        const total = activeReservations.length;
+        const signedContracts = activeReservations.filter(
           (r) => r.client_signature && r.client_signature.trim() !== ''
         ).length;
-        
-        // Calculer le dépôt de garantie total (somme des dépôts de toutes les réservations)
-        const totalDeposit = (reservationsData || []).reduce((sum, r) => {
+        const totalDeposit = activeReservations.reduce((sum, r) => {
           return sum + (parseFloat(r.deposit_amount) || 0);
         }, 0);
 
@@ -220,8 +256,7 @@ export default function DashboardPage() {
           totalRentals: total,
         });
 
-        // Calculer les actions en attente
-        // 1. Contrats à signer : réservations confirmées sans signature ET non consultés
+        // Calculer les actions en attente (sans etat_lieux pour l'instant)
         const viewedContracts = typeof window !== 'undefined'
           ? JSON.parse(localStorage.getItem('viewed_contracts') || '[]')
           : [];
@@ -232,25 +267,6 @@ export default function DashboardPage() {
             && !viewedContracts.includes(r.id)
         ).length;
 
-        // 2. États des lieux à regarder : états des lieux avec status livraison_complete ou reprise_complete
-        // Exclure ceux qui ont été consultés (marqués dans localStorage)
-        const { data: etatsLieuxData } = await supabaseClient
-          .from('etat_lieux')
-          .select('id, status, reservation_id')
-          .in('reservation_id', (reservationsData || []).map(r => r.id));
-        
-        // Récupérer les IDs consultés depuis localStorage
-        const viewedConditionReports = typeof window !== 'undefined' 
-          ? JSON.parse(localStorage.getItem('viewed_condition_reports') || '[]')
-          : [];
-        
-        const conditionReportsToReview = (etatsLieuxData || []).filter(
-          (el) => (el.status === 'livraison_complete' || el.status === 'reprise_complete')
-            && !viewedConditionReports.includes(el.id)
-        ).length;
-
-        // 3. Livraisons non rendues : réservations confirmées avec delivery_status != 'termine'
-        // Exclure celles qui ont été consultées (marquées dans localStorage)
         const viewedDeliveries = typeof window !== 'undefined'
           ? JSON.parse(localStorage.getItem('viewed_deliveries') || '[]')
           : [];
@@ -262,16 +278,14 @@ export default function DashboardPage() {
             && !viewedDeliveries.includes(r.id)
         ).length;
 
-        // 4. Nouvelles factures : factures non consultées
         const viewedInvoices = typeof window !== 'undefined'
           ? JSON.parse(localStorage.getItem('viewed_invoices') || '[]')
           : [];
         
-        const newInvoices = ordersData.filter(
+        const newInvoices = (ordersData || []).filter(
           (o) => !viewedInvoices.includes(o.id)
         ).length;
 
-        // 5. Réservations avec contrats à signer (pour "Mes réservations")
         const viewedReservationsWithContracts = typeof window !== 'undefined'
           ? JSON.parse(localStorage.getItem('viewed_reservations_with_contracts') || '[]')
           : [];
@@ -282,31 +296,137 @@ export default function DashboardPage() {
             && !viewedReservationsWithContracts.includes(r.id)
         ).length;
 
+        // Mettre à jour les actions en attente (sans conditionReportsToReview pour l'instant)
         setPendingActions({
           contractsToSign,
-          conditionReportsToReview,
+          conditionReportsToReview: 0, // Sera mis à jour plus tard
           deliveriesNotReturned,
           newInvoices,
           reservationsWithContractsToSign,
         });
-      } catch (error) {
-        console.error('Erreur chargement dashboard:', error);
+
+        // 2. États des lieux à regarder : charger EN ARRIÈRE-PLAN après le rendu initial
+        // Cette requête ne bloque plus le chargement de la page
+        if (reservationsData && reservationsData.length > 0) {
+          // Charger en arrière-plan sans bloquer (IIFE - Immediately Invoked Function Expression)
+          (async () => {
+            try {
+              const reservationIds = reservationsData.map(r => r.id);
+              let etatsLieuxData = null;
+              
+              // OPTIMISATION: Limiter à 50 IDs pour éviter les requêtes trop longues
+              const limitedIds = reservationIds.slice(0, 50);
+              const { data } = await supabaseClient
+                .from('etat_lieux')
+                .select('id, status, reservation_id')
+                .in('reservation_id', limitedIds);
+              etatsLieuxData = data;
+              
+              // Récupérer les IDs consultés depuis localStorage
+              const viewedConditionReports = typeof window !== 'undefined' 
+                ? JSON.parse(localStorage.getItem('viewed_condition_reports') || '[]')
+                : [];
+              
+              const count = (etatsLieuxData || []).filter(
+                (el) => (el.status === 'livraison_complete' || el.status === 'reprise_complete')
+                  && !viewedConditionReports.includes(el.id)
+              ).length;
+              
+              // Mettre à jour seulement le compteur
+              setPendingActions(prev => ({
+                ...prev,
+                conditionReportsToReview: count
+              }));
+            } catch (error) {
+              console.error('Erreur chargement etat_lieux:', error);
+            }
+          })();
+        }
+      } catch (error: any) {
+        console.error('Erreur chargement dashboard:', {
+          message: error?.message || 'Erreur inconnue',
+          details: error?.details,
+          hint: error?.hint,
+          code: error?.code,
+          fullError: error
+        });
+        setIsLoadingData(false);
       }
     };
 
+    // Démarrer le chargement immédiatement
     loadDashboardData();
-  }, [user]);
+  }, [user, supabase]);
 
   // Écouter les changements de localStorage pour mettre à jour les compteurs
   useEffect(() => {
-    if (!user) return;
+    if (!user || !supabase) return;
     
     const handleStorageChange = () => {
-      // Recharger les données du dashboard quand localStorage change
+      // OPTIMISATION: Recalculer seulement les compteurs depuis les données déjà chargées
+      // Ne pas recharger toutes les données depuis la base
+      if (reservations.length > 0 || orders.length > 0) {
+        // Recalculer les actions en attente depuis les données déjà en mémoire
+        const viewedContracts = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('viewed_contracts') || '[]')
+          : [];
+        
+        const contractsToSign = reservations.filter(
+          (r) => (r.status === 'CONFIRMED' || r.status === 'CONTRACT_PENDING' || r.status === 'confirmed') 
+            && (!r.client_signature || r.client_signature.trim() === '')
+            && !viewedContracts.includes(r.id)
+        ).length;
+
+        const viewedConditionReports = typeof window !== 'undefined' 
+          ? JSON.parse(localStorage.getItem('viewed_condition_reports') || '[]')
+          : [];
+        
+        // Note: On ne peut pas recalculer conditionReportsToReview sans recharger etat_lieux
+        // Mais c'est acceptable car cette donnée change rarement
+        
+        const viewedDeliveries = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('viewed_deliveries') || '[]')
+          : [];
+        
+        const deliveriesNotReturned = reservations.filter(
+          (r) => (r.status === 'CONFIRMED' || r.status === 'confirmed' || r.status === 'IN_PROGRESS' || r.status === 'in_progress')
+            && r.delivery_status 
+            && r.delivery_status !== 'termine'
+            && !viewedDeliveries.includes(r.id)
+        ).length;
+
+        const viewedInvoices = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('viewed_invoices') || '[]')
+          : [];
+        
+        const newInvoices = orders.filter(
+          (o) => !viewedInvoices.includes(o.id)
+        ).length;
+
+        const viewedReservationsWithContracts = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('viewed_reservations_with_contracts') || '[]')
+          : [];
+        
+        const reservationsWithContractsToSign = reservations.filter(
+          (r) => (r.status === 'CONFIRMED' || r.status === 'CONTRACT_PENDING' || r.status === 'confirmed') 
+            && (!r.client_signature || r.client_signature.trim() === '')
+            && !viewedReservationsWithContracts.includes(r.id)
+        ).length;
+
+        setPendingActions({
+          contractsToSign,
+          conditionReportsToReview: pendingActions.conditionReportsToReview, // Garder la valeur précédente
+          deliveriesNotReturned,
+          newInvoices,
+          reservationsWithContractsToSign,
+        });
+        return;
+      }
+      
+      // Si pas de données en mémoire, recharger (mais sans limite)
       if (supabase) {
         const loadDashboardData = async () => {
           try {
-            // Ne charger que les réservations payées (exclure PENDING et CANCELLED)
             const { data: reservationsData } = await supabase
               .from('reservations')
               .select('*')
@@ -330,10 +450,32 @@ export default function DashboardPage() {
                 && !viewedContracts.includes(r.id)
             ).length;
 
-            const { data: etatsLieuxData } = await supabase
-              .from('etat_lieux')
-              .select('id, status, reservation_id')
-              .in('reservation_id', (reservationsData || []).map(r => r.id));
+            // OPTIMISATION: Charger seulement si on a des réservations
+            let etatsLieuxData = null;
+            if (reservationsData && reservationsData.length > 0) {
+              const reservationIds = reservationsData.map(r => r.id);
+              // Charger par batch si beaucoup de réservations
+              if (reservationIds.length <= 100) {
+                const { data } = await supabase
+                  .from('etat_lieux')
+                  .select('id, status, reservation_id')
+                  .in('reservation_id', reservationIds);
+                etatsLieuxData = data;
+              } else {
+                const batches = [];
+                for (let i = 0; i < reservationIds.length; i += 100) {
+                  batches.push(reservationIds.slice(i, i + 100));
+                }
+                const batchPromises = batches.map(batch =>
+                  supabase
+                    .from('etat_lieux')
+                    .select('id, status, reservation_id')
+                    .in('reservation_id', batch)
+                );
+                const batchResults = await Promise.all(batchPromises);
+                etatsLieuxData = batchResults.flatMap(result => result.data || []);
+              }
+            }
             
             const viewedConditionReports = typeof window !== 'undefined' 
               ? JSON.parse(localStorage.getItem('viewed_condition_reports') || '[]')
@@ -530,19 +672,28 @@ export default function DashboardPage() {
     return userFirstName || '';
   };
 
-  // Obtenir la prochaine réservation
+  // Obtenir la prochaine réservation (exclure CANCELLED)
   const getNextReservation = () => {
     const upcoming = reservations
-      .filter((r) => r.status === 'confirmed' && new Date(r.start_date) >= new Date())
+      .filter((r) => 
+        r.status !== 'CANCELLED' && 
+        r.status !== 'cancelled' &&
+        (r.status === 'confirmed' || r.status === 'CONFIRMED') && 
+        new Date(r.start_date) >= new Date()
+      )
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
     return upcoming[0] || null;
   };
 
-  // Obtenir les réservations à venir (sans la prochaine)
+  // Obtenir les réservations à venir (sans la prochaine, exclure CANCELLED)
   const getUpcomingReservations = () => {
     const next = getNextReservation();
     return reservations
-      .filter((r) => r.status !== 'cancelled' && r.id !== next?.id)
+      .filter((r) => 
+        r.status !== 'CANCELLED' && 
+        r.status !== 'cancelled' && 
+        r.id !== next?.id
+      )
       .slice(0, 2);
   };
 
@@ -580,11 +731,14 @@ export default function DashboardPage() {
     return packNames[packId]?.[language] || `Pack ${packId}`;
   };
 
-  if (loading) {
+  if (loading || isLoadingData) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E]"></div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E] mx-auto mb-4"></div>
+            <p className="text-gray-600">Chargement de vos données...</p>
+          </div>
         </div>
       </div>
     );

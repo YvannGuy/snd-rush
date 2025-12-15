@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -18,8 +19,9 @@ import { Search, X, Mail, Phone, User as UserIcon, ChevronRight, Calendar, Dolla
 
 export default function AdminClientsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
-  const { user, loading } = useUser();
   const router = useRouter();
+  const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -33,16 +35,26 @@ export default function AdminClientsPage() {
   const [clientDetails, setClientDetails] = useState<{ orders: any[]; reservations: any[] }>({ orders: [], reservations: [] });
   const [loadingDetails, setLoadingDetails] = useState(false);
 
+  // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
-    if (!user || !supabase) return;
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+  useEffect(() => {
+    if (!user || !supabase || !isAdmin) return;
 
     const loadClients = async () => {
+      if (!supabase) return;
       try {
-        // Récupérer tous les orders pour extraire les clients uniques
+        // OPTIMISATION: Limiter à 200 orders récents pour les performances (suffisant pour la plupart des cas)
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('customer_email, customer_name, customer_phone, total, created_at')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(200);
 
         if (ordersError) throw ordersError;
 
@@ -113,7 +125,6 @@ export default function AdminClientsPage() {
       name: 'Nom',
       email: 'Email',
       phone: 'Téléphone',
-      reservations: 'Réservations',
       totalSpent: 'Total dépensé',
       lastOrder: 'Dernière commande',
       actions: 'Actions',
@@ -137,7 +148,6 @@ export default function AdminClientsPage() {
       name: 'Name',
       email: 'Email',
       phone: 'Phone',
-      reservations: 'Reservations',
       totalSpent: 'Total spent',
       lastOrder: 'Last order',
       actions: 'Actions',
@@ -185,30 +195,35 @@ export default function AdminClientsPage() {
     setIsModalOpen(true);
     setLoadingDetails(true);
 
+    if (!supabase) return;
     try {
       // Charger les commandes du client
       const { data: ordersData } = await supabase
         .from('orders')
         .select('*')
-        .eq('customer_email', client.email)
+        .eq('customer_email', client.email || '')
         .order('created_at', { ascending: false });
 
-      // Charger les réservations du client
-      const { data: allReservations } = await supabase
+      // OPTIMISATION: Charger seulement les réservations récentes (limitées à 200)
+      // et filtrer côté serveur si possible
+      const { data: recentReservations } = await supabase
         .from('reservations')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       // Filtrer les réservations qui correspondent à ce client
       let reservationsData: any[] = [];
-      if (allReservations) {
+      if (recentReservations) {
         const sessionIds = (ordersData || []).map((o: any) => o.stripe_session_id).filter(Boolean);
+        // OPTIMISATION: Créer un Set pour recherche O(1)
+        const sessionIdsSet = new Set(sessionIds);
         
-        reservationsData = allReservations.filter((reservation: any) => {
+        reservationsData = recentReservations.filter((reservation: any) => {
           if (reservation.notes) {
             try {
               const notesData = JSON.parse(reservation.notes);
-              if (notesData.sessionId && sessionIds.includes(notesData.sessionId)) {
+              if (notesData.sessionId && sessionIdsSet.has(notesData.sessionId)) {
                 return true;
               }
               if (notesData.customerEmail && notesData.customerEmail.toLowerCase() === client.email.toLowerCase()) {
@@ -281,6 +296,11 @@ export default function AdminClientsPage() {
         />
       </div>
     );
+  }
+
+  // Double vérification de sécurité
+  if (!isAdmin) {
+    return null;
   }
 
   return (

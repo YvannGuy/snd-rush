@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:webhook": "stripe listen --forward-to http://localhost:3000/api/webhooks/stripe",
+    "trigger:webhook": "stripe trigger checkout.session.completed",
+    "check:webhook": "node scripts/check-webhook-orders.js",
+    "create:orders": "node scripts/create-orders-from-reservations.js",
     "dev": "cross-env NODE_ENV=development NODE_OPTIONS=--no-deprecation next dev -H 0.0.0.0 -p 3000",
     "build": "cross-env NODE_OPTIONS=--no-deprecation next build",
     "lint": "next lint"

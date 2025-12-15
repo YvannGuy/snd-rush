@@ -461,7 +461,8 @@ export async function POST(req: NextRequest) {
     console.log('[API/CHAT] ✅ Message utilisateur détecté, traitement normal');
 
     // LOG : Vérifier si le system prompt/welcome est utilisé
-    const hasSystemMessage = filteredMessages.some((m: ChatMessage) => m.role === 'system');
+    // Note: ChatMessage n'a pas de role 'system', seulement 'user' | 'assistant'
+    const hasSystemMessage = false; // Les messages système ne sont pas dans filteredMessages
     const hasWelcomeMessage = filteredMessages.some((m: ChatMessage) => m.kind === 'welcome');
     console.log('[API/CHAT] System message présent:', hasSystemMessage);
     console.log('[API/CHAT] Welcome message présent:', hasWelcomeMessage);
@@ -588,7 +589,7 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       { role: 'system', content: systemPromptWithCatalog },
       ...filteredMessages
         .filter((msg: ChatMessage) => msg.kind === 'normal' || msg.kind === 'welcome')
-        .map((msg: ChatMessage) => ({
+        .map((msg: ChatMessage): OpenAI.Chat.Completions.ChatCompletionUserMessageParam | OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam => ({
           role: msg.role === 'user' ? 'user' : 'assistant',
           content: msg.content,
         })),

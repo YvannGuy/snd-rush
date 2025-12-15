@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
@@ -17,15 +18,25 @@ export default function AdminReservationDetailPage() {
   const reservationId = params?.id as string;
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const [reservation, setReservation] = useState<any>(null);
   const [loadingReservation, setLoadingReservation] = useState(true);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [etatLieux, setEtatLieux] = useState<any>(null);
 
+    // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+useEffect(() => {
     if (!user || !supabase || !reservationId) return;
 
     const loadReservation = async () => {
+      if (!supabase) return;
       try {
         const { data, error } = await supabase
           .from('reservations')
@@ -41,6 +52,7 @@ export default function AdminReservationDetailPage() {
           try {
             const notesData = JSON.parse(data.notes);
             if (notesData.sessionId) {
+              if (!supabase) return;
               const { data: orderData } = await supabase
                 .from('orders')
                 .select('*')
@@ -56,6 +68,7 @@ export default function AdminReservationDetailPage() {
         setReservation({ ...data, order });
 
         // Charger l'état des lieux si existant
+        if (!supabase) return;
         const { data: etatLieuxData } = await supabase
           .from('etat_lieux')
           .select('*')

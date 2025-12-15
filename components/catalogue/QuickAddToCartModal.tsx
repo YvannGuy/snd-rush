@@ -55,6 +55,41 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
       return;
     }
 
+    // Empêcher l'ajout des lumières au panier
+    const productNameLower = product.name.toLowerCase();
+    
+    // Exclure les produits qui ne sont clairement pas des lumières
+    const isNotLight = productNameLower.includes('pied') || 
+                       productNameLower.includes('stand') ||
+                       productNameLower.includes('support') ||
+                       productNameLower.includes('micro') ||
+                       productNameLower.includes('cable') ||
+                       productNameLower.includes('câble') ||
+                       productNameLower.includes('xlr') ||
+                       productNameLower.includes('adaptateur');
+    
+    if (!isNotLight) {
+      // Vérifier les mots-clés spécifiques aux lumières
+      const isLight = productNameLower.includes('led') || 
+                      productNameLower.includes('lumière') || 
+                      productNameLower.includes('lumieres') ||
+                      productNameLower.includes('lyre led') || 
+                      productNameLower.includes('barre led') ||
+                      productNameLower.includes('par led') ||
+                      (productNameLower.includes('boomtone') && 
+                       (productNameLower.includes('led') || productNameLower.includes('lumière') || productNameLower.includes('light'))) ||
+                      (productNameLower.includes('par') && 
+                       (productNameLower.includes('led') || productNameLower.includes('lumière') || productNameLower.includes('light'))) ||
+                      productNameLower.includes('light');
+      
+      if (isLight) {
+        alert(language === 'fr' 
+          ? 'Ce produit est actuellement indisponible.' 
+          : 'This product is currently unavailable.');
+        return;
+      }
+    }
+
     // Mapper les IDs de packs du catalogue vers les IDs utilisés dans le système
     let productId = product.id.toString();
     const isPack = productId.startsWith('pack-');

@@ -21,6 +21,9 @@ export async function POST(
     }
 
     // Récupérer la réservation pour vérifier l'utilisateur
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase non configuré' }, { status: 500 });
+    }
     const { data: reservation, error: fetchError } = await supabase
       .from('reservations')
       .select('*, user_id')
@@ -85,6 +88,9 @@ export async function POST(
       }),
     };
 
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase non configuré' }, { status: 500 });
+    }
     const { data: updatedReservation, error: updateError } = await supabase
       .from('reservations')
       .update(updateData)

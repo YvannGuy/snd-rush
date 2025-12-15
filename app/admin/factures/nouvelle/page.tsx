@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -12,6 +13,7 @@ import SignModal from '@/components/auth/SignModal';
 export default function NouvelleFacturePage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,10 +32,19 @@ export default function NouvelleFacturePage() {
     status: 'PAID',
   });
 
+    // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+useEffect(() => {
     if (!user || !supabase) return;
 
     const loadReservations = async () => {
+      if (!supabase) return;
       try {
         const { data, error } = await supabase
           .from('reservations')
@@ -74,7 +85,7 @@ export default function NouvelleFacturePage() {
         subtotal: reservation.total_price ? reservation.total_price.toString() : '',
         customer_name: customerName,
         customer_email: customerEmail,
-        address: reservation.address || '',
+        delivery_address: reservation.address || '',
       });
     }
   };
@@ -154,7 +165,7 @@ export default function NouvelleFacturePage() {
 
   const currentTexts = texts[language];
 
-  if (loading) {
+  if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E]"></div>

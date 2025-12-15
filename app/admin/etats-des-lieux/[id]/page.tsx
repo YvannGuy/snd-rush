@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import Link from 'next/link';
@@ -30,6 +31,7 @@ import Image from 'next/image';
 export default function AdminEtatDesLieuxDetailPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const router = useRouter();
   const params = useParams();
   const reservationId = params?.id as string;
@@ -50,7 +52,15 @@ export default function AdminEtatDesLieuxDetailPage() {
 
   const [saving, setSaving] = useState(false);
 
+    // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+useEffect(() => {
     if (loading) return;
     if (!user) {
       router.push('/');
@@ -59,9 +69,10 @@ export default function AdminEtatDesLieuxDetailPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!reservationId || !supabase) return;
+    if (!reservationId || !supabase || !isAdmin) return;
 
     const loadData = async () => {
+      if (!supabase) return;
       setLoadingData(true);
       try {
         // Charger la réservation

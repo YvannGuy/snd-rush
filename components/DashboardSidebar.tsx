@@ -44,7 +44,7 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
 
     const calculatePendingActions = async () => {
       try {
-        // Charger uniquement les réservations payées (exclure PENDING et CANCELLED)
+        // OPTIMISATION: Limiter à 50 réservations pour les performances
         const { data: reservationsData } = await supabase
           .from('reservations')
           .select('*')
@@ -53,7 +53,8 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
           .not('status', 'eq', 'pending')
           .not('status', 'eq', 'CANCELLED')
           .not('status', 'eq', 'cancelled')
-          .order('start_date', { ascending: true });
+          .order('start_date', { ascending: true })
+          .limit(50);
 
         if (!reservationsData) return;
 
@@ -79,11 +80,12 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
             && !viewedReservationsWithContracts.includes(r.id)
         ).length;
 
-        // États des lieux
+        // OPTIMISATION: États des lieux - limiter à 50 IDs pour éviter les requêtes lentes
+        const reservationIds = reservationsData.map(r => r.id).slice(0, 50);
         const { data: etatsLieuxData } = await supabase
           .from('etat_lieux')
           .select('id, status, reservation_id')
-          .in('reservation_id', reservationsData.map(r => r.id));
+          .in('reservation_id', reservationIds);
         
         const viewedConditionReports = typeof window !== 'undefined' 
           ? JSON.parse(localStorage.getItem('viewed_condition_reports') || '[]')

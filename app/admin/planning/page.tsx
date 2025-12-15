@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -15,6 +16,7 @@ import Link from 'next/link';
 export default function AdminPlanningPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -30,10 +32,19 @@ export default function AdminPlanningPage() {
   const [selectedReservationDetail, setSelectedReservationDetail] = useState<any>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+    // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+useEffect(() => {
     if (!user || !supabase) return;
 
     const loadReservations = async () => {
+      if (!supabase) return;
       try {
         const { data: reservationsData, error } = await supabase
           .from('reservations')
@@ -43,6 +54,7 @@ export default function AdminPlanningPage() {
         if (error) throw error;
 
         // Récupérer tous les orders pour enrichir les réservations
+        if (!supabase) return;
         const { data: allOrders } = await supabase
           .from('orders')
           .select('*')
@@ -50,6 +62,7 @@ export default function AdminPlanningPage() {
 
         // Récupérer tous les user_profiles pour enrichir avec les noms/prénoms
         const userIds = [...new Set((reservationsData || []).map((r: any) => r.user_id).filter(Boolean))];
+        if (!supabase) return;
         const { data: userProfiles } = userIds.length > 0 ? await supabase
           .from('user_profiles')
           .select('user_id, first_name, last_name, email')
@@ -243,7 +256,7 @@ export default function AdminPlanningPage() {
     localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
   }, [isSidebarCollapsed]);
 
-  if (loading) {
+  if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E]"></div>

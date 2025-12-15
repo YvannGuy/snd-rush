@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -21,6 +22,7 @@ import { CheckCircle2, XCircle, AlertCircle, Calendar, MapPin, ChevronRight, Sea
 export default function AdminReservationsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -35,7 +37,15 @@ export default function AdminReservationsPage() {
   const [isValidating, setIsValidating] = useState(false);
 
   // Marquer comme "viewé" quand le modal s'ouvre
+    // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+useEffect(() => {
     if (!isDetailModalOpen || !selectedReservation) return;
 
     const markAsViewed = () => {
@@ -74,6 +84,7 @@ export default function AdminReservationsPage() {
     if (!user || !supabase) return;
 
     const loadReservations = async () => {
+      if (!supabase) return;
       try {
         // Charger toutes les réservations avec les informations utilisateur
         const { data: reservationsData, error } = await supabase
@@ -179,7 +190,13 @@ export default function AdminReservationsPage() {
 
     const query = searchQuery.toLowerCase();
     const filtered = reservations.filter((reservation) => {
-      return (
+    
+  // Double vérification de sécurité
+  if (!isAdmin) {
+    return null;
+  }
+
+  return (
         reservation.customerName?.toLowerCase().includes(query) ||
         reservation.customerEmail?.toLowerCase().includes(query) ||
         reservation.id.toLowerCase().includes(query) ||
@@ -296,7 +313,7 @@ export default function AdminReservationsPage() {
     localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
   }, [isSidebarCollapsed]);
 
-  if (loading) {
+  if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E]"></div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -16,6 +17,7 @@ import Link from 'next/link';
 export default function AdminParametresPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const { signOut } = useAuth();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
@@ -29,10 +31,19 @@ export default function AdminParametresPage() {
     totalClients: 0,
   });
 
+    // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+useEffect(() => {
     if (!user || !supabase) return;
 
     const loadStats = async () => {
+      if (!supabase) return;
       try {
         const [products, packs, reservations, orders] = await Promise.all([
           supabase.from('products').select('*', { count: 'exact', head: true }),
@@ -121,7 +132,7 @@ export default function AdminParametresPage() {
     localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
   }, [isSidebarCollapsed]);
 
-  if (loading) {
+  if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E]"></div>

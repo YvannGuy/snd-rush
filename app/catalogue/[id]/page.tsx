@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { Product, AvailabilityResponse, CalendarDisabledRange, ProductAddon, CartItem } from '@/types/db';
 import { useCart } from '@/contexts/CartContext';
 import { calculateInstallationPrice } from '@/lib/calculateInstallationPrice';
+import { getDeliveryPrice, getZoneLabel, DELIVERY_AR } from '@/lib/zone-detection';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -391,6 +392,14 @@ export default function ProductDetailPage() {
       return;
     }
 
+    // Empêcher l'ajout des lumières au panier
+    if (isLightProduct()) {
+      alert(language === 'fr' 
+        ? 'Ce produit est actuellement indisponible.' 
+        : 'This product is currently unavailable.');
+      return;
+    }
+
     if (!startTime || !endTime) {
       alert(language === 'fr' 
         ? 'Veuillez sélectionner les heures de début et de fin pour éviter les doublons de réservation.' 
@@ -431,6 +440,163 @@ export default function ProductDetailPage() {
     return basePrice + addonsTotal;
   };
 
+  // Fonction pour vérifier si le produit est une lumière
+  const isLightProduct = (): boolean => {
+    if (!product) return false;
+    if (product.category === 'lumieres') return true;
+    
+    const productNameLower = product.name.toLowerCase();
+    
+    // Exclure les produits qui ne sont clairement pas des lumières
+    if (productNameLower.includes('pied') || 
+        productNameLower.includes('stand') ||
+        productNameLower.includes('support') ||
+        productNameLower.includes('micro') ||
+        productNameLower.includes('cable') ||
+        productNameLower.includes('câble') ||
+        productNameLower.includes('xlr') ||
+        productNameLower.includes('adaptateur')) {
+      return false;
+    }
+    
+    // Vérifier les mots-clés spécifiques aux lumières
+    return productNameLower.includes('led') || 
+           productNameLower.includes('lumière') || 
+           productNameLower.includes('lumieres') ||
+           productNameLower.includes('lyre led') || 
+           productNameLower.includes('barre led') ||
+           productNameLower.includes('par led') ||
+           (productNameLower.includes('boomtone') && 
+            (productNameLower.includes('led') || productNameLower.includes('lumière') || productNameLower.includes('light'))) ||
+           (productNameLower.includes('par') && 
+            (productNameLower.includes('led') || productNameLower.includes('lumière') || productNameLower.includes('light'))) ||
+           productNameLower.includes('light');
+  };
+
+  // Fonction pour obtenir le prix d'installation selon le produit
+  const getInstallationPrice = (): number | null => {
+    if (!product || product.category === 'accessoires') return null;
+    
+    const productNameLower = product.name.toLowerCase();
+    
+    // Enceintes
+    if (productNameLower.includes('enceinte') || productNameLower.includes('as 115') || productNameLower.includes('as 108') || productNameLower.includes('fbt')) {
+      return 40; // 1 enceinte seule
+    }
+    // Caissons
+    else if (productNameLower.includes('caisson') || productNameLower.includes('subwoofer') || productNameLower.includes('basse')) {
+      return 40; // Caisson seul
+    }
+    // Consoles
+    else if (productNameLower.includes('promix') || productNameLower.includes('console') || productNameLower.includes('hpa')) {
+      return 40; // Console seule
+    }
+    // Micros
+    else if (productNameLower.includes('micro')) {
+      return 30; // Micros seuls
+    }
+    // Lumières
+    else if (productNameLower.includes('led') || productNameLower.includes('lumière') || productNameLower.includes('lyre') || productNameLower.includes('barre')) {
+      return 40; // 1 lumière
+    }
+    
+    return null;
+  };
+
+  // Fonction pour ajouter l'installation au panier
+  const handleAddInstallation = () => {
+    if (!product || !startDate || !endDate) {
+      alert(language === 'fr' 
+        ? 'Veuillez d\'abord sélectionner les dates de location.' 
+        : 'Please select rental dates first.');
+      return;
+    }
+
+    const installationPrice = getInstallationPrice();
+    if (!installationPrice) return;
+
+    const installationItem: CartItem = {
+      productId: `installation-${product.id}`,
+      productName: language === 'fr' ? 'Installation' : 'Installation',
+      productSlug: `installation-${product.id}`,
+      quantity: 1,
+      rentalDays: rentalDays,
+      startDate,
+      endDate,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
+      dailyPrice: installationPrice,
+      deposit: 0,
+      addons: [],
+      images: ['/installation.jpg'],
+      metadata: {
+        type: 'installation',
+        relatedProductId: product.id,
+        relatedProductName: product.name,
+      },
+    };
+
+    addToCart(installationItem);
+    
+    if (language === 'fr') {
+      alert('Installation ajoutée au panier');
+    } else {
+      alert('Installation added to cart');
+    }
+  };
+
+  // Fonction pour ajouter la livraison au panier
+  const handleAddDelivery = (zone: string) => {
+    if (!product || !startDate || !endDate) {
+      alert(language === 'fr' 
+        ? 'Veuillez d\'abord sélectionner les dates de location.' 
+        : 'Please select rental dates first.');
+      return;
+    }
+
+    const deliveryPrice = getDeliveryPrice(zone);
+    if (deliveryPrice === 0 && zone !== 'retrait') return;
+
+    const zoneNames: Record<string, string> = {
+      'paris': language === 'fr' ? 'Livraison Paris' : 'Paris Delivery',
+      'petite': language === 'fr' ? 'Livraison Petite Couronne' : 'Inner Suburbs Delivery',
+      'grande': language === 'fr' ? 'Livraison Grande Couronne' : 'Greater Paris Delivery',
+      'retrait': language === 'fr' ? 'Retrait sur place' : 'Pickup on site',
+    };
+
+    const zoneName = zoneNames[zone] || (language === 'fr' ? 'Livraison' : 'Delivery');
+
+    const deliveryItem: CartItem = {
+      productId: `delivery-${zone}`,
+      productName: zoneName,
+      productSlug: `delivery-${zone}`,
+      quantity: 1,
+      rentalDays: 1, // La livraison est facturée une seule fois
+      startDate,
+      endDate,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
+      dailyPrice: deliveryPrice,
+      deposit: 0,
+      addons: [],
+      images: ['/livraison.jpg'],
+      zone: zone,
+      metadata: {
+        type: 'delivery',
+        relatedProductId: product.id,
+        relatedProductName: product.name,
+      },
+    };
+
+    addToCart(deliveryItem);
+    
+    if (language === 'fr') {
+      alert(`${zoneName} ajoutée au panier`);
+    } else {
+      alert(`${zoneName} added to cart`);
+    }
+  };
+
   const texts = {
     fr: {
       pricePerDay: '/jour',
@@ -450,6 +616,7 @@ export default function ProductDetailPage() {
       getQuote: 'Utiliser l\'assistant SoundRush Paris',
       goToCart: 'Voir le panier',
       testimonials: 'Avis clients',
+      commitments: 'Nos engagements',
     },
     en: {
       pricePerDay: '/day',
@@ -469,6 +636,7 @@ export default function ProductDetailPage() {
       getQuote: 'Get a quote for event',
       goToCart: 'View cart',
       testimonials: 'Customer reviews',
+      commitments: 'Our commitments',
     },
   };
 
@@ -729,58 +897,58 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Bouton Ajouter au panier */}
-              <button
-                onClick={handleAddToCart}
-                disabled={!canAddToCart || checkingAvailability}
-                className={`
-                  w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2
-                  ${canAddToCart && !checkingAvailability
-                    ? 'bg-[#F2431E] text-white hover:bg-[#E63A1A] hover:shadow-xl'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              {/* Bouton Ajouter au panier - Indisponible pour les lumières */}
+              {isLightProduct() ? (
+                <button
+                  disabled
+                  className="w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed"
+                >
+                  <span>🚫</span>
+                  {language === 'fr' ? 'Indisponible' : 'Unavailable'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={!canAddToCart || checkingAvailability}
+                  className={`
+                    w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2
+                    ${canAddToCart && !checkingAvailability
+                      ? 'bg-[#F2431E] text-white hover:bg-[#E63A1A] hover:shadow-xl'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  <span>🛒</span>
+                  {checkingAvailability 
+                    ? currentTexts.checking
+                    : needsTime
+                    ? (language === 'fr' ? 'Veuillez spécifier les heures' : 'Please specify times')
+                    : currentTexts.addToCart
                   }
-                `}
-              >
-                <span>🛒</span>
-                {checkingAvailability 
-                  ? currentTexts.checking
-                  : needsTime
-                  ? (language === 'fr' ? 'Veuillez spécifier les heures' : 'Please specify times')
-                  : currentTexts.addToCart
-                }
-              </button>
+                </button>
+              )}
 
-              {/* Carte Installation */}
-              {(() => {
-                // Calculer le prix d'installation selon le produit
-                const productNameLower = product.name.toLowerCase();
-                let installationPrice: number | null = null;
-                
-                // Enceintes
-                if (productNameLower.includes('enceinte') || productNameLower.includes('as 115') || productNameLower.includes('as 108') || productNameLower.includes('fbt')) {
-                  installationPrice = 40; // 1 enceinte seule
-                }
-                // Caissons
-                else if (productNameLower.includes('caisson') || productNameLower.includes('subwoofer') || productNameLower.includes('basse')) {
-                  installationPrice = 40; // Caisson seul
-                }
-                // Consoles
-                else if (productNameLower.includes('promix') || productNameLower.includes('console') || productNameLower.includes('hpa')) {
-                  installationPrice = 40; // Console seule
-                }
-                // Micros
-                else if (productNameLower.includes('micro')) {
-                  installationPrice = 30; // Micros seuls
-                }
-                // Lumières
-                else if (productNameLower.includes('led') || productNameLower.includes('lumière') || productNameLower.includes('lyre') || productNameLower.includes('barre')) {
-                  installationPrice = 40; // 1 lumière
-                }
-                // Accessoires (pas d'installation nécessaire)
-                else if (product.category === 'accessoires') {
-                  installationPrice = null; // Pas d'installation pour les accessoires
-                }
-                
+              {/* Bouton Ajouter à installation - Masqué pour les accessoires et lumières */}
+              {product.category !== 'accessoires' && !isLightProduct() && getInstallationPrice() !== null && (
+                <button
+                  onClick={handleAddInstallation}
+                  disabled={!startDate || !endDate}
+                  className={`
+                    w-full py-3 rounded-lg font-semibold text-sm transition-all shadow-md mb-3 flex items-center justify-center gap-2
+                    ${startDate && endDate
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  <span>🔧</span>
+                  {language === 'fr' ? 'Ajouter à installation' : 'Add to installation'}
+                </button>
+              )}
+
+              {/* Carte Installation - Masquée pour les accessoires et lumières */}
+              {product.category !== 'accessoires' && !isLightProduct() && (() => {
+                const installationPrice = getInstallationPrice();
                 if (installationPrice === null) return null;
                 
                 return (
@@ -799,7 +967,7 @@ export default function ProductDetailPage() {
                         ? 'Installation par technicien professionnel'
                         : 'Installation by professional technician'}
                     </p>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-semibold text-gray-900">
                         {installationPrice}€
                       </span>
@@ -807,9 +975,81 @@ export default function ProductDetailPage() {
                         {language === 'fr' ? 'Optionnel' : 'Optional'}
                       </span>
                     </div>
+                    <button
+                      onClick={handleAddInstallation}
+                      disabled={!startDate || !endDate}
+                      className={`
+                        w-full py-2 rounded-lg font-semibold text-sm transition-all
+                        ${startDate && endDate
+                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }
+                      `}
+                    >
+                      {language === 'fr' ? 'Ajouter' : 'Add'}
+                    </button>
                   </div>
                 );
               })()}
+
+              {/* Carte Livraison - Masquée pour les accessoires et lumières */}
+              {product.category !== 'accessoires' && !isLightProduct() && (
+                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-3 hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-sm text-gray-900">{language === 'fr' ? 'Livraison' : 'Delivery'}</h3>
+                  </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs text-gray-600">
+                      {language === 'fr' 
+                        ? 'Sélectionnez votre zone de livraison'
+                        : 'Select your delivery zone'}
+                    </p>
+                    <span className="text-xs text-gray-500">
+                      {language === 'fr' ? 'Optionnel' : 'Optional'}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {Object.entries(DELIVERY_AR).map(([zone, price]) => {
+                      const zoneLabels: Record<string, string> = {
+                        'paris': language === 'fr' ? 'Paris (75)' : 'Paris (75)',
+                        'petite': language === 'fr' ? 'Petite couronne (92, 93, 94)' : 'Inner suburbs (92, 93, 94)',
+                        'grande': language === 'fr' ? 'Grande couronne (77, 78, 91, 95)' : 'Greater Paris (77, 78, 91, 95)',
+                        'retrait': language === 'fr' ? 'Retrait sur place' : 'Pickup on site',
+                      };
+                      const zoneLabel = zoneLabels[zone] || zone;
+                      
+                      return (
+                        <div key={zone} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                          <div className="flex-1">
+                            <span className="text-sm font-medium text-gray-900">{zoneLabel}</span>
+                            {price > 0 && (
+                              <span className="text-xs text-gray-500 ml-2">{price}€</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleAddDelivery(zone)}
+                            disabled={!startDate || !endDate}
+                            className={`
+                              px-4 py-1.5 rounded-lg font-semibold text-xs transition-all
+                              ${startDate && endDate
+                                ? 'bg-green-600 text-white hover:bg-green-700'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              }
+                            `}
+                          >
+                            {language === 'fr' ? 'Ajouter' : 'Add'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Caution */}
               <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
@@ -1384,56 +1624,83 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Avis clients */}
+          {/* Nos engagements */}
           <div className="bg-gray-50 py-12">
-            <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.testimonials}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-xl p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold">
-                    M
-                  </div>
-                  <div>
-                    <p className="font-semibold text-black">Marie L.</p>
-                    <div className="flex text-[#F2431E]">★★★★★</div>
-                  </div>
+            <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.commitments}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              <div className="bg-white rounded-xl p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
-                <p className="text-gray-700">
-                  "{language === 'fr' 
-                    ? 'Parfait pour notre mariage! Son cristallin et puissance au rendez-vous. Livraison et installation impeccables.' 
-                    : 'Perfect for our wedding! Crystal-clear sound and power delivered. Impeccable delivery and installation.'}"
+                <h3 className="font-semibold text-black mb-2">
+                  {language === 'fr' ? 'Matériel vérifié' : 'Verified equipment'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {language === 'fr' 
+                    ? 'Avant chaque location' 
+                    : 'Before each rental'}
                 </p>
               </div>
-              <div className="bg-white rounded-xl p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold">
-                    T
-                  </div>
-                  <div>
-                    <p className="font-semibold text-black">Thomas R.</p>
-                    <div className="flex text-[#F2431E]">★★★★★</div>
-                  </div>
+              <div className="bg-white rounded-xl p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
-                <p className="text-gray-700">
-                  "{language === 'fr' 
-                    ? 'Matériel professionnel de qualité. Idéal pour nos événements d\'entreprise. Je recommande vivement!' 
-                    : 'Professional quality equipment. Ideal for our corporate events. I highly recommend it!'}"
+                <h3 className="font-semibold text-black mb-2">
+                  {language === 'fr' ? 'Réactivité 24/7' : '24/7 responsiveness'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {language === 'fr' 
+                    ? 'En cas de problème' 
+                    : 'In case of problem'}
                 </p>
               </div>
-              <div className="bg-white rounded-xl p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold">
-                    S
-                  </div>
-                  <div>
-                    <p className="font-semibold text-black">Sophie M.</p>
-                    <div className="flex text-[#F2431E]">★★★★★</div>
-                  </div>
+              <div className="bg-white rounded-xl p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
                 </div>
-                <p className="text-gray-700">
-                  "{language === 'fr' 
-                    ? 'Excellent rapport qualité/prix. Service client réactif et matériel en parfait état. Très satisfaite!' 
-                    : 'Excellent value for money. Responsive customer service and equipment in perfect condition. Very satisfied!'}"
+                <h3 className="font-semibold text-black mb-2">
+                  {language === 'fr' ? 'Transparence totale' : 'Total transparency'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {language === 'fr' 
+                    ? 'Sur les tarifs' 
+                    : 'On pricing'}
+                </p>
+              </div>
+              <div className="bg-white rounded-xl p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-black mb-2">
+                  {language === 'fr' ? 'Réservation sécurisée' : 'Secure booking'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {language === 'fr' 
+                    ? 'Avec confirmation immédiate' 
+                    : 'With instant confirmation'}
+                </p>
+              </div>
+              <div className="bg-white rounded-xl p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-black mb-2">
+                  {language === 'fr' ? 'Accompagnement personnalisé' : 'Personalized support'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {language === 'fr' 
+                    ? 'Pour votre événement' 
+                    : 'For your event'}
                 </p>
               </div>
             </div>

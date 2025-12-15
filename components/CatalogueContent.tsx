@@ -36,6 +36,38 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
     product: null,
   });
 
+  // Fonction pour vérifier si le produit est une lumière
+  const isLightProduct = (product: Product): boolean => {
+    if (product.category === 'lumieres') return true;
+    
+    const productNameLower = product.name.toLowerCase();
+    
+    // Exclure les produits qui ne sont clairement pas des lumières
+    if (productNameLower.includes('pied') || 
+        productNameLower.includes('stand') ||
+        productNameLower.includes('support') ||
+        productNameLower.includes('micro') ||
+        productNameLower.includes('cable') ||
+        productNameLower.includes('câble') ||
+        productNameLower.includes('xlr') ||
+        productNameLower.includes('adaptateur')) {
+      return false;
+    }
+    
+    // Vérifier les mots-clés spécifiques aux lumières
+    return productNameLower.includes('led') || 
+           productNameLower.includes('lumière') || 
+           productNameLower.includes('lumieres') ||
+           productNameLower.includes('lyre led') || 
+           productNameLower.includes('barre led') ||
+           productNameLower.includes('par led') ||
+           (productNameLower.includes('boomtone') && 
+            (productNameLower.includes('led') || productNameLower.includes('lumière') || productNameLower.includes('light'))) ||
+           (productNameLower.includes('par') && 
+            (productNameLower.includes('led') || productNameLower.includes('lumière') || productNameLower.includes('light'))) ||
+           productNameLower.includes('light');
+  };
+
   const texts = {
     fr: {
       title: 'Catalogue de matériel professionnel',
@@ -536,6 +568,14 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                         className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors text-center min-h-[44px] flex items-center justify-center"
                       >
                         {language === 'fr' ? '🤖 Utiliser l\'assistant SoundRush Paris' : '🤖 Use SoundRush Paris Assistant'}
+                      </button>
+                    ) : isLightProduct(product) ? (
+                      <button
+                        disabled
+                        className="w-full bg-gray-300 text-gray-500 px-4 py-3 rounded-lg font-medium cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px]"
+                      >
+                        <span>🚫</span>
+                        {language === 'fr' ? 'Indisponible' : 'Unavailable'}
                       </button>
                     ) : (
                       <button

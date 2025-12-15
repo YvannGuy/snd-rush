@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/hooks/useUser';
+import { useAdmin } from '@/hooks/useAdmin';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
@@ -33,6 +34,7 @@ import {
 export default function AdminEtatsDesLieuxPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -48,7 +50,15 @@ export default function AdminEtatsDesLieuxPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Marquer comme "viewé" quand le modal s'ouvre
+    // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
+    if (!checkingAdmin && !isAdmin && user) {
+      console.warn('⚠️ Accès admin refusé pour:', user.email);
+      router.push('/dashboard');
+    }
+  }, [isAdmin, checkingAdmin, user, router]);
+
+useEffect(() => {
     if (!isModalOpen || !selectedReservation) return;
 
     const markAsViewed = () => {
@@ -84,6 +94,7 @@ export default function AdminEtatsDesLieuxPage() {
     const loadData = async () => {
       try {
         // Charger les réservations confirmées
+        if (!supabase) return;
         const { data: reservationsData, error: reservationsError } = await supabase
           .from('reservations')
           .select('*')
@@ -96,6 +107,7 @@ export default function AdminEtatsDesLieuxPage() {
 
         // Charger les états des lieux existants
         if (reservationsData && reservationsData.length > 0) {
+          if (!supabase) return;
           const reservationIds = reservationsData.map(r => r.id);
           const { data: etatsLieuxData } = await supabase
             .from('etat_lieux')
@@ -200,6 +212,7 @@ export default function AdminEtatsDesLieuxPage() {
         .order('start_date', { ascending: false });
 
       if (reservationsData && reservationsData.length > 0) {
+        if (!supabase) return;
         const reservationIds = reservationsData.map(r => r.id);
         const { data: etatsLieuxData } = await supabase
           .from('etat_lieux')
@@ -256,7 +269,7 @@ export default function AdminEtatsDesLieuxPage() {
 
   const currentTexts = texts[language];
 
-  if (loading) {
+  if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

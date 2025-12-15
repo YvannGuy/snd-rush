@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useCart } from '@/contexts/CartContext';
 import { AvailabilityResponse, CalendarDisabledRange, ProductAddon, CartItem, Product } from '@/types/db';
 import { supabase } from '@/lib/supabase';
+import { getDeliveryPrice, DELIVERY_AR } from '@/lib/zone-detection';
 
 interface PackDetailContentProps {
   packId: string;
@@ -425,6 +426,109 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
     addToCart(cartItem);
   };
 
+  // Fonction pour obtenir le prix d'installation selon le pack
+  const getInstallationPrice = (): number | null => {
+    if (!pack) return null;
+    if (pack.id === 1) return 60;
+    if (pack.id === 2) return 80;
+    if (pack.id === 3) return 120;
+    return null; // Pack XL sur devis
+  };
+
+  // Fonction pour ajouter l'installation au panier
+  const handleAddInstallation = () => {
+    if (!pack || !startDate || !endDate) {
+      alert(language === 'fr' 
+        ? 'Veuillez d\'abord sélectionner les dates de location.' 
+        : 'Please select rental dates first.');
+      return;
+    }
+
+    const installationPrice = getInstallationPrice();
+    if (!installationPrice) return;
+
+    const installationItem: CartItem = {
+      productId: `installation-pack-${pack.id}`,
+      productName: language === 'fr' ? 'Installation' : 'Installation',
+      productSlug: `installation-pack-${pack.id}`,
+      quantity: 1,
+      rentalDays: rentalDays,
+      startDate,
+      endDate,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
+      dailyPrice: installationPrice,
+      deposit: 0,
+      addons: [],
+      images: ['/installation.jpg'],
+      metadata: {
+        type: 'installation',
+        relatedProductId: `pack-${pack.id}`,
+        relatedProductName: `Pack ${pack.name}`,
+      },
+    };
+
+    addToCart(installationItem);
+    
+    if (language === 'fr') {
+      alert('Installation ajoutée au panier');
+    } else {
+      alert('Installation added to cart');
+    }
+  };
+
+  // Fonction pour ajouter la livraison au panier
+  const handleAddDelivery = (zone: string) => {
+    if (!pack || !startDate || !endDate) {
+      alert(language === 'fr' 
+        ? 'Veuillez d\'abord sélectionner les dates de location.' 
+        : 'Please select rental dates first.');
+      return;
+    }
+
+    const deliveryPrice = getDeliveryPrice(zone);
+    if (deliveryPrice === 0 && zone !== 'retrait') return;
+
+    const zoneNames: Record<string, string> = {
+      'paris': language === 'fr' ? 'Livraison Paris' : 'Paris Delivery',
+      'petite': language === 'fr' ? 'Livraison Petite Couronne' : 'Inner Suburbs Delivery',
+      'grande': language === 'fr' ? 'Livraison Grande Couronne' : 'Greater Paris Delivery',
+      'retrait': language === 'fr' ? 'Retrait sur place' : 'Pickup on site',
+    };
+
+    const zoneName = zoneNames[zone] || (language === 'fr' ? 'Livraison' : 'Delivery');
+
+    const deliveryItem: CartItem = {
+      productId: `delivery-${zone}`,
+      productName: zoneName,
+      productSlug: `delivery-${zone}`,
+      quantity: 1,
+      rentalDays: 1, // La livraison est facturée une seule fois
+      startDate,
+      endDate,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
+      dailyPrice: deliveryPrice,
+      deposit: 0,
+      addons: [],
+      images: ['/livraison.jpg'],
+      zone: zone,
+      metadata: {
+        type: 'delivery',
+        relatedProductId: `pack-${pack.id}`,
+        relatedProductName: `Pack ${pack.name}`,
+      },
+    };
+
+    addToCart(deliveryItem);
+    
+    if (language === 'fr') {
+      alert(`${zoneName} ajoutée au panier`);
+    } else {
+      alert(`${zoneName} added to cart`);
+    }
+  };
+
   const texts = {
     fr: {
       perDay: '/jour',
@@ -439,6 +543,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
       interiorExterior: 'Intérieur & Extérieur',
       photos: 'Photos',
       testimonials: 'Avis clients',
+      commitments: 'Nos engagements',
       faq: 'Questions fréquentes',
       call: 'Appeler',
       description: 'Description',
@@ -478,6 +583,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
       interiorExterior: 'Indoor & Outdoor',
       photos: 'Photos',
       testimonials: 'Customer reviews',
+      commitments: 'Our commitments',
       faq: 'Frequently asked questions',
       call: 'Call',
       description: 'Description',
@@ -749,9 +855,29 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
               }
             </button>
 
+            {/* Bouton Ajouter à installation */}
+            {getInstallationPrice() !== null && (
+              <button
+                onClick={handleAddInstallation}
+                disabled={!startDate || !endDate}
+                className={`
+                  w-full py-3 rounded-lg font-semibold text-sm transition-all shadow-md mb-3 flex items-center justify-center gap-2
+                  ${startDate && endDate
+                    ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }
+                `}
+              >
+                <span>🔧</span>
+                {language === 'fr' ? 'Ajouter à installation' : 'Add to installation'}
+              </button>
+            )}
+
             {/* Carte Installation */}
             {(() => {
-              const installationPrice = pack.id === 1 ? 60 : pack.id === 2 ? 80 : pack.id === 3 ? 120 : null;
+              const installationPrice = getInstallationPrice();
+              if (installationPrice === null) return null;
+              
               return (
                 <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-3 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-2">
@@ -768,20 +894,87 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                       ? 'Installation par technicien professionnel'
                       : 'Installation by professional technician'}
                   </p>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold text-gray-900">
-                      {installationPrice !== null 
-                        ? `${installationPrice}€`
-                        : (language === 'fr' ? 'Sur devis' : 'On quote')
-                      }
+                      {installationPrice}€
                     </span>
                     <span className="text-xs text-gray-500">
                       {language === 'fr' ? 'Optionnel' : 'Optional'}
                     </span>
                   </div>
+                  <button
+                    onClick={handleAddInstallation}
+                    disabled={!startDate || !endDate}
+                    className={`
+                      w-full py-2 rounded-lg font-semibold text-sm transition-all
+                      ${startDate && endDate
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }
+                    `}
+                  >
+                    {language === 'fr' ? 'Ajouter' : 'Add'}
+                  </button>
                 </div>
               );
             })()}
+
+            {/* Carte Livraison */}
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-3 hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-sm text-gray-900">{language === 'fr' ? 'Livraison' : 'Delivery'}</h3>
+              </div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-gray-600">
+                  {language === 'fr' 
+                    ? 'Sélectionnez votre zone de livraison'
+                    : 'Select your delivery zone'}
+                </p>
+                <span className="text-xs text-gray-500">
+                  {language === 'fr' ? 'Optionnel' : 'Optional'}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {Object.entries(DELIVERY_AR).map(([zone, price]) => {
+                  const zoneLabels: Record<string, string> = {
+                    'paris': language === 'fr' ? 'Paris (75)' : 'Paris (75)',
+                    'petite': language === 'fr' ? 'Petite couronne (92, 93, 94)' : 'Inner suburbs (92, 93, 94)',
+                    'grande': language === 'fr' ? 'Grande couronne (77, 78, 91, 95)' : 'Greater Paris (77, 78, 91, 95)',
+                    'retrait': language === 'fr' ? 'Retrait sur place' : 'Pickup on site',
+                  };
+                  const zoneLabel = zoneLabels[zone] || zone;
+                  
+                  return (
+                    <div key={zone} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-gray-900">{zoneLabel}</span>
+                        {price > 0 && (
+                          <span className="text-xs text-gray-500 ml-2">{price}€</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleAddDelivery(zone)}
+                        disabled={!startDate || !endDate}
+                        className={`
+                          px-4 py-1.5 rounded-lg font-semibold text-xs transition-all
+                          ${startDate && endDate
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          }
+                        `}
+                      >
+                        {language === 'fr' ? 'Ajouter' : 'Add'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
             {/* Caution */}
             <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
@@ -978,57 +1171,84 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         </div>
       </div>
 
-      {/* Avis clients */}
+      {/* Nos engagements */}
       <div className="bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.testimonials}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold">
-                  M
-                </div>
-                <div>
-                  <p className="font-semibold text-black">Marie L.</p>
-                  <div className="flex text-[#F2431E]">★★★★★</div>
-                </div>
+          <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.commitments}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="bg-white rounded-xl p-6 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-              <p className="text-gray-700">
-                "{language === 'fr' 
-                  ? 'Parfait pour notre mariage! Son cristallin et puissance au rendez-vous. Livraison et installation impeccables.' 
-                  : 'Perfect for our wedding! Crystal-clear sound and power delivered. Impeccable delivery and installation.'}"
+              <h3 className="font-semibold text-black mb-2">
+                {language === 'fr' ? 'Matériel vérifié' : 'Verified equipment'}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {language === 'fr' 
+                  ? 'Avant chaque location' 
+                  : 'Before each rental'}
               </p>
             </div>
-            <div className="bg-white rounded-xl p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold">
-                  T
-                </div>
-                <div>
-                  <p className="font-semibold text-black">Thomas R.</p>
-                  <div className="flex text-[#F2431E]">★★★★★</div>
-                </div>
+            <div className="bg-white rounded-xl p-6 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-              <p className="text-gray-700">
-                "{language === 'fr' 
-                  ? 'Matériel professionnel de qualité. Idéal pour nos événements d\'entreprise. Je recommande vivement!' 
-                  : 'Professional quality equipment. Ideal for our corporate events. I highly recommend it!'}"
+              <h3 className="font-semibold text-black mb-2">
+                {language === 'fr' ? 'Réactivité 24/7' : '24/7 responsiveness'}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {language === 'fr' 
+                  ? 'En cas de problème' 
+                  : 'In case of problem'}
               </p>
             </div>
-            <div className="bg-white rounded-xl p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center text-white font-bold">
-                  S
-                </div>
-                <div>
-                  <p className="font-semibold text-black">Sophie M.</p>
-                  <div className="flex text-[#F2431E]">★★★★★</div>
-                </div>
+            <div className="bg-white rounded-xl p-6 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
-              <p className="text-gray-700">
-                "{language === 'fr' 
-                  ? 'Excellent rapport qualité/prix. Service client réactif et matériel en parfait état. Très satisfaite!' 
-                  : 'Excellent value for money. Responsive customer service and equipment in perfect condition. Very satisfied!'}"
+              <h3 className="font-semibold text-black mb-2">
+                {language === 'fr' ? 'Transparence totale' : 'Total transparency'}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {language === 'fr' 
+                  ? 'Sur les tarifs' 
+                  : 'On pricing'}
+              </p>
+            </div>
+            <div className="bg-white rounded-xl p-6 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-black mb-2">
+                {language === 'fr' ? 'Réservation sécurisée' : 'Secure booking'}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {language === 'fr' 
+                  ? 'Avec confirmation immédiate' 
+                  : 'With instant confirmation'}
+              </p>
+            </div>
+            <div className="bg-white rounded-xl p-6 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-black mb-2">
+                {language === 'fr' ? 'Accompagnement personnalisé' : 'Personalized support'}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {language === 'fr' 
+                  ? 'Pour votre événement' 
+                  : 'For your event'}
               </p>
             </div>
           </div>

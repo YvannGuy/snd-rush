@@ -15,10 +15,16 @@ export function useUser() {
       return;
     }
 
+    console.time('⏱️ useUser - getSession');
     // Récupérer la session initiale
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.timeEnd('⏱️ useUser - getSession');
       setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false);
+    }).catch((error) => {
+      console.error('❌ Erreur getSession:', error);
+      console.timeEnd('⏱️ useUser - getSession');
       setLoading(false);
     });
 

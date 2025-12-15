@@ -37,19 +37,28 @@ export default function SignModal({
   // Réinitialiser l'onglet quand le modal s'ouvre
   useEffect(() => {
     if (isOpen) {
-      // Pour admin, forcer l'onglet signin
+      // Pour admin, forcer l'onglet signin et réinitialiser l'erreur
       if (isAdmin) {
         setActiveTab('signin');
+        setAdminError('');
       } else {
         setActiveTab(initialTab);
       }
     }
   }, [isOpen, initialTab, isAdmin]);
+
+  // Réinitialiser l'erreur admin quand l'email change
+  useEffect(() => {
+    if (isAdmin && adminError) {
+      setAdminError('');
+    }
+  }, [email, isAdmin]);
   const [title, setTitle] = useState<'mr' | 'mme'>('mr');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneCountry, setPhoneCountry] = useState('FR'); // Code pays par défaut
   const [phone, setPhone] = useState('');
+  const [adminError, setAdminError] = useState('');
   const { signInWithEmail, signUpWithEmail, loading, error } = useAuth();
 
   // Liste complète de tous les pays avec indicatifs téléphoniques
@@ -477,6 +486,19 @@ export default function SignModal({
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAdminError(''); // Réinitialiser l'erreur
+    
+    // Vérifier si c'est un mode admin et si l'email est autorisé
+    if (isAdmin) {
+      const authorizedEmail = 'yvann.guyonnet@gmail.com';
+      if (email.toLowerCase() !== authorizedEmail.toLowerCase()) {
+        setAdminError(language === 'fr' 
+          ? 'Vous n\'êtes pas autorisé à vous connecter' 
+          : 'You are not authorized to sign in');
+        return; // Empêcher la connexion
+      }
+    }
+    
     const result = await signInWithEmail(email, password);
     if (!result.error) {
       // Attendre un peu pour que la session soit bien établie
@@ -658,6 +680,18 @@ export default function SignModal({
                   {language === 'fr' ? 'Mot de passe oublié ?' : 'Forgot password?'}
                 </Link>
               </div>
+              {/* Message d'erreur pour les emails non autorisés en mode admin */}
+              {adminError && (
+                <div className="p-3 bg-red-50 border-2 border-red-200 rounded-lg">
+                  <p className="text-sm text-red-800 font-medium text-center">{adminError}</p>
+                </div>
+              )}
+              {/* Message d'erreur général */}
+              {error && !adminError && (
+                <div className="p-3 bg-red-50 border-2 border-red-200 rounded-lg">
+                  <p className="text-sm text-red-800 font-medium text-center">{error}</p>
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={loading}

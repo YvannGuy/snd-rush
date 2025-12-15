@@ -298,7 +298,7 @@ export async function POST(req: NextRequest) {
           
           // Traitement du paiement principal (type: 'cart')
           const userId = metadata.userId;
-          const customerEmail = session.customer_email || metadata.customerEmail || '';
+          let customerEmail = session.customer_email || metadata.customerEmail || '';
           const customerName = metadata.customerName || '';
           const customerPhone = metadata.customerPhone || '';
           const deliveryOption = metadata.deliveryOption || 'paris';
@@ -306,6 +306,76 @@ export async function POST(req: NextRequest) {
           const total = parseFloat(metadata.total || '0');
           const depositTotal = parseFloat(metadata.depositTotal || '0');
           const address = metadata.address || '';
+          const reservationId = metadata.reservationId;
+
+          // Vérifier que les données essentielles sont présentes
+          if (!customerEmail) {
+            console.error('❌ customerEmail manquant dans les métadonnées:', {
+              sessionId: session.id,
+              sessionCustomerEmail: session.customer_email,
+              sessionCustomer: session.customer,
+              metadata: JSON.stringify(metadata),
+            });
+            
+            // Essayer de récupérer depuis le customer Stripe si disponible
+            if (session.customer) {
+              try {
+                const customerId = typeof session.customer === 'string' 
+                  ? session.customer 
+                  : session.customer.id;
+                
+                if (customerId) {
+                  const customer = await stripe.customers.retrieve(customerId);
+                  if (customer && !customer.deleted && customer.email) {
+                    customerEmail = customer.email;
+                    console.log('✅ customerEmail récupéré depuis le customer Stripe:', customerEmail);
+                  }
+                }
+              } catch (e) {
+                console.error('❌ Erreur récupération customerEmail depuis customer Stripe:', e);
+              }
+            }
+            
+            // Essayer de récupérer depuis la réservation si userId est présent
+            if (!customerEmail && reservationId) {
+              try {
+                const { data: reservation } = await supabaseClient
+                  .from('reservations')
+                  .select('notes')
+                  .eq('id', reservationId)
+                  .single();
+                
+                if (reservation?.notes) {
+                  const notesData = JSON.parse(reservation.notes);
+                  if (notesData.customerEmail) {
+                    customerEmail = notesData.customerEmail;
+                    console.log('✅ customerEmail récupéré depuis la réservation:', customerEmail);
+                  }
+                }
+              } catch (e) {
+                console.error('❌ Erreur récupération customerEmail depuis réservation:', e);
+              }
+            }
+
+            // Si toujours pas d'email, essayer de récupérer depuis l'utilisateur
+            if (!customerEmail && userId) {
+              try {
+                const { data: { user } } = await supabaseClient.auth.admin.getUserById(userId);
+                if (user?.email) {
+                  customerEmail = user.email;
+                  console.log('✅ customerEmail récupéré depuis l\'utilisateur:', customerEmail);
+                }
+              } catch (e) {
+                console.error('❌ Erreur récupération email utilisateur:', e);
+              }
+            }
+          }
+
+          // Si toujours pas d'email, ne pas créer l'order (mais ne pas faire échouer le webhook)
+          if (!customerEmail) {
+            console.error('❌ Impossible de créer l\'order: customerEmail manquant pour la session:', session.id);
+            return NextResponse.json({ received: true, warning: 'customerEmail manquant' }, { status: 200 });
+          }
           
           // Récupérer le PaymentIntent pour obtenir l'ID de paiement
           let paymentIntentId = null;
@@ -322,7 +392,6 @@ export async function POST(req: NextRequest) {
 
           // Récupérer les items du panier depuis la réservation (au lieu des métadonnées)
           let cartItems: any[] = [];
-          const reservationId = metadata.reservationId;
         
         if (reservationId) {
           try {
@@ -358,36 +427,54 @@ export async function POST(req: NextRequest) {
         }
 
         // Créer l'order dans Supabase
+        const orderData = {
+          stripe_session_id: session.id,
+          stripe_payment_intent_id: paymentIntentId,
+          customer_email: customerEmail,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          delivery_address: address,
+          delivery_option: deliveryOption,
+          delivery_fee: deliveryFee,
+          subtotal: subtotal,
+          total: (session.amount_total || 0) / 100, // Convertir de centimes en euros
+          deposit_total: depositTotal,
+          status: 'PAID',
+          metadata: {
+            userId: userId,
+            cartItems: cartItems,
+            sessionMetadata: metadata,
+          },
+        };
+
+        console.log('📦 Création de l\'order avec les données:', {
+          customer_email: customerEmail,
+          customer_name: customerName,
+          total: orderData.total,
+          stripe_session_id: session.id,
+        });
+
         const { data: order, error: orderError } = await supabaseClient
           .from('orders')
-          .insert({
-            stripe_session_id: session.id,
-            stripe_payment_intent_id: paymentIntentId,
-            customer_email: customerEmail,
-            customer_name: customerName,
-            customer_phone: customerPhone,
-            delivery_address: address,
-            delivery_option: deliveryOption,
-            delivery_fee: deliveryFee,
-            subtotal: subtotal,
-            total: (session.amount_total || 0) / 100, // Convertir de centimes en euros
-            deposit_total: depositTotal,
-            status: 'PAID',
-            metadata: {
-              userId: userId,
-              cartItems: cartItems,
-              sessionMetadata: metadata,
-            },
-          })
+          .insert(orderData)
           .select()
           .single();
 
         if (orderError) {
-          console.error('❌ Erreur création order:', orderError);
+          console.error('❌ Erreur création order:', {
+            error: orderError,
+            orderData: JSON.stringify(orderData, null, 2),
+            sessionId: session.id,
+          });
           throw orderError;
         }
 
-        console.log('✅ Order créé:', order.id);
+        console.log('✅ Order créé avec succès:', {
+          orderId: order.id,
+          customer_email: order.customer_email,
+          total: order.total,
+          stripe_session_id: order.stripe_session_id,
+        });
 
         // Créer les order_items si on a les données du panier
         let orderItemsToInsert: any[] = [];
@@ -631,7 +718,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error: any) {
     // Gérer toutes les erreurs non capturées
-    console.error('❌ Erreur générale dans le webhook Stripe:', error);
+    console.error('❌ Erreur générale dans le webhook Stripe:', {
+      message: error.message,
+      stack: error.stack,
+      error: error,
+    });
     // Toujours retourner 200 pour éviter que Stripe réessaie indéfiniment
     return NextResponse.json({ received: false, error: error.message || 'Erreur serveur' }, { status: 200 });
   }
