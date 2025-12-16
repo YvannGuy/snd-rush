@@ -381,6 +381,66 @@ useEffect(() => {
                     </div>
                   )}
 
+                  {/* Heures de retrait et retour (pour retrait sur place) */}
+                  {(() => {
+                    // Vérifier si c'est un retrait sur place
+                    let isPickup = false;
+                    if (reservation.notes) {
+                      try {
+                        const parsedNotes = JSON.parse(reservation.notes);
+                        const cartItems = parsedNotes?.cartItems || [];
+                        const hasDelivery = cartItems.some((item: any) => 
+                          item.productId?.startsWith('delivery-') || 
+                          item.metadata?.type === 'delivery'
+                        );
+                        isPickup = !hasDelivery && 
+                          (parsedNotes?.deliveryOption === 'retrait' || !parsedNotes?.deliveryOption);
+                      } catch (e) {
+                        // Ignorer les erreurs de parsing
+                      }
+                    }
+                    
+                    if (!isPickup) return null;
+                    
+                    return (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                          {language === 'fr' ? 'Retrait sur place' : 'Pickup on site'}
+                        </h3>
+                        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                          {reservation.pickup_time && reservation.return_time ? (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600">
+                                  {language === 'fr' ? 'Heure de retrait' : 'Pickup time'}
+                                </span>
+                                <span className="text-lg font-semibold text-gray-900">
+                                  {reservation.pickup_time}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600">
+                                  {language === 'fr' ? 'Heure de retour' : 'Return time'}
+                                </span>
+                                <span className="text-lg font-semibold text-gray-900">
+                                  {reservation.return_time}
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                              <p className="text-sm text-amber-800 font-medium">
+                                {language === 'fr' 
+                                  ? 'Pour le retrait matériel, veuillez renseigner l\'heure de retrait et l\'heure de retour du matériel'
+                                  : 'For material pickup, please provide the pickup time and return time'}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Prix */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Informations financières</h3>

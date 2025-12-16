@@ -62,6 +62,9 @@ export default function MesReservationsPage() {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false);
   const [reservationForAction, setReservationForAction] = useState<any | null>(null);
+  const [pickupTime, setPickupTime] = useState<string>('');
+  const [returnTime, setReturnTime] = useState<string>('');
+  const [isSavingTimes, setIsSavingTimes] = useState(false);
 
   // Rediriger vers l'accueil si l'utilisateur n'est pas connecté
   useEffect(() => {
@@ -256,8 +259,18 @@ export default function MesReservationsPage() {
   // Ouvrir le modal de détails
   const openDetailsModal = (reservation: any) => {
     setSelectedReservation(reservation);
+    setPickupTime(reservation.pickup_time || '');
+    setReturnTime(reservation.return_time || '');
     setIsDetailsModalOpen(true);
   };
+  
+  // Réinitialiser les heures quand le modal se ferme
+  useEffect(() => {
+    if (!isDetailsModalOpen) {
+      setPickupTime('');
+      setReturnTime('');
+    }
+  }, [isDetailsModalOpen]);
 
   // Obtenir le statut traduit (utilise le nouveau système)
   const getStatusText = (status: string, lang: 'fr' | 'en') => {
@@ -707,11 +720,18 @@ export default function MesReservationsPage() {
             // Extraire les cartItems depuis les notes
             let cartItems: any[] = [];
             let deliveryInfo: any = null;
+            let isPickup = false; // Retrait sur place
             if (reservation.notes) {
               try {
                 const parsedNotes = JSON.parse(reservation.notes);
                 if (parsedNotes && parsedNotes.cartItems && Array.isArray(parsedNotes.cartItems)) {
                   cartItems = parsedNotes.cartItems;
+                  // Vérifier si aucun item de livraison n'est présent
+                  const hasDelivery = cartItems.some((item: any) => 
+                    item.productId?.startsWith('delivery-') || 
+                    item.metadata?.type === 'delivery'
+                  );
+                  isPickup = !hasDelivery && (parsedNotes.deliveryOption === 'retrait' || !parsedNotes.deliveryOption);
                 }
                 // Extraire les infos de livraison
                 if (parsedNotes.deliveryOptions || parsedNotes.installationDate) {
@@ -721,10 +741,20 @@ export default function MesReservationsPage() {
                     installationTime: parsedNotes.installationTime || null,
                   };
                 }
+                // Vérifier aussi via deliveryOption dans les notes
+                if (parsedNotes.deliveryOption === 'retrait' || (!parsedNotes.deliveryOption && !deliveryInfo?.deliveryIncluded)) {
+                  isPickup = true;
+                }
               } catch (e) {
                 // Ce n'est pas du JSON ou pas de cartItems
               }
             }
+            
+            // Vérifier si la réservation n'a pas encore commencé (pour permettre l'édition)
+            const reservationStartDate = new Date(reservation.start_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const canEditTimes = reservationStartDate >= today;
 
             // Calculer le breakdown financier
             let financialBreakdown: Array<{ label: string; amount: number }> = [];
@@ -978,6 +1008,122 @@ export default function MesReservationsPage() {
                           </button>
                         </>
                       )}
+                      
+                      {/* Section Retrait sur place - Heures de retrait et retour */}
+                      {isPickup && (
+                        <div className="border-t border-gray-200 pt-3 mt-3">
+                          {!reservation.pickup_time || !reservation.return_time ? (
+                            <div className="mb-3">
+                              <p className="text-sm text-amber-600 mb-3 font-medium">
+                                {language === 'fr' 
+                                  ? 'Pour le retrait matériel, veuillez renseigner l\'heure de retrait et l\'heure de retour du matériel'
+                                  : 'For material pickup, please provide the pickup time and return time'}
+                              </p>
+                              {canEditTimes && (
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      {language === 'fr' ? 'Heure de retrait' : 'Pickup time'}
+                                    </label>
+                                    <Input
+                                      type="time"
+                                      value={pickupTime || reservation.pickup_time || ''}
+                                      onChange={(e) => setPickupTime(e.target.value)}
+                                      className="w-full"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      {language === 'fr' ? 'Heure de retour' : 'Return time'}
+                                    </label>
+                                    <Input
+                                      type="time"
+                                      value={returnTime || reservation.return_time || ''}
+                                      onChange={(e) => setReturnTime(e.target.value)}
+                                      className="w-full"
+                                    />
+                                  </div>
+                                  <Button
+                                    onClick={async () => {
+                                      if (!pickupTime && !reservation.pickup_time) {
+                                        alert(language === 'fr' ? 'Veuillez renseigner l\'heure de retrait' : 'Please provide pickup time');
+                                        return;
+                                      }
+                                      if (!returnTime && !reservation.return_time) {
+                                        alert(language === 'fr' ? 'Veuillez renseigner l\'heure de retour' : 'Please provide return time');
+                                        return;
+                                      }
+                                      
+                                      setIsSavingTimes(true);
+                                      try {
+                                        const { error } = await supabase
+                                          .from('reservations')
+                                          .update({
+                                            pickup_time: pickupTime || reservation.pickup_time,
+                                            return_time: returnTime || reservation.return_time,
+                                          })
+                                          .eq('id', reservation.id);
+                                        
+                                        if (error) throw error;
+                                        
+                                        // Mettre à jour la réservation locale
+                                        setSelectedReservation({
+                                          ...reservation,
+                                          pickup_time: pickupTime || reservation.pickup_time,
+                                          return_time: returnTime || reservation.return_time,
+                                        });
+                                        
+                                        // Mettre à jour la liste des réservations
+                                        setReservations(reservations.map(r => 
+                                          r.id === reservation.id 
+                                            ? { ...r, pickup_time: pickupTime || reservation.pickup_time, return_time: returnTime || reservation.return_time }
+                                            : r
+                                        ));
+                                        
+                                        alert(language === 'fr' ? 'Heures enregistrées avec succès' : 'Times saved successfully');
+                                      } catch (error) {
+                                        console.error('Erreur sauvegarde heures:', error);
+                                        alert(language === 'fr' ? 'Erreur lors de la sauvegarde' : 'Error saving times');
+                                      } finally {
+                                        setIsSavingTimes(false);
+                                      }
+                                    }}
+                                    disabled={isSavingTimes || (!pickupTime && !reservation.pickup_time) || (!returnTime && !reservation.return_time)}
+                                    className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                                  >
+                                    {isSavingTimes 
+                                      ? (language === 'fr' ? 'Enregistrement...' : 'Saving...')
+                                      : (language === 'fr' ? 'Enregistrer les heures' : 'Save times')
+                                    }
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-gray-400" />
+                                <span className="text-sm font-medium text-gray-900">
+                                  {language === 'fr' ? 'Heure de retrait' : 'Pickup time'}
+                                </span>
+                                <span className="text-sm text-gray-600 ml-auto">
+                                  {reservation.pickup_time}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-gray-400" />
+                                <span className="text-sm font-medium text-gray-900">
+                                  {language === 'fr' ? 'Heure de retour' : 'Return time'}
+                                </span>
+                                <span className="text-sm text-gray-600 ml-auto">
+                                  {reservation.return_time}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
                       <a
                         href="https://wa.me/33651084994"
                         target="_blank"

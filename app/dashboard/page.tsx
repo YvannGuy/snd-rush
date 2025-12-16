@@ -974,40 +974,67 @@ export default function DashboardPage() {
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {upcomingReservations.map((reservation) => (
-                  <Card key={reservation.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4 sm:p-6">
-                      <div className="flex gap-3 sm:gap-4">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <Music className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
+                {upcomingReservations.map((reservation) => {
+                  // Vérifier si c'est un retrait sur place sans heures
+                  let isPickupWithoutTimes = false;
+                  if (reservation.notes) {
+                    try {
+                      const parsedNotes = JSON.parse(reservation.notes);
+                      const cartItems = parsedNotes?.cartItems || [];
+                      const hasDelivery = cartItems.some((item: any) => 
+                        item.productId?.startsWith('delivery-') || 
+                        item.metadata?.type === 'delivery'
+                      );
+                      isPickupWithoutTimes = !hasDelivery && 
+                        (parsedNotes?.deliveryOption === 'retrait' || !parsedNotes?.deliveryOption) &&
+                        (!reservation.pickup_time || !reservation.return_time);
+                    } catch (e) {
+                      // Ignorer les erreurs de parsing
+                    }
+                  }
+                  
+                  return (
+                    <Card key={reservation.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4 sm:p-6">
+                        <div className="flex gap-3 sm:gap-4">
+                          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Music className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 truncate">
+                              {reservation.pack_id 
+                                ? `Pack ${getPackName(reservation.pack_id, language) || reservation.pack_id}` 
+                                : reservation.product_id 
+                                ? `Réservation #${reservation.id.slice(0, 8)}`
+                                : 'Réservation'
+                              }
+                            </h3>
+                            <p className="text-gray-600 mb-2">
+                              {formatDate(reservation.start_date)} - {formatDate(reservation.end_date)}
+                            </p>
+                            {isPickupWithoutTimes && (
+                              <p className="text-xs text-amber-600 mb-2 font-medium">
+                                {language === 'fr' 
+                                  ? 'Veuillez ajouter vos heures de retrait et retour'
+                                  : 'Please add your pickup and return times'}
+                              </p>
+                            )}
+                            <Badge 
+                              variant={reservation.status === 'pending' ? 'secondary' : 'default'}
+                              className={
+                                reservation.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
+                                  : 'bg-green-100 text-green-800 hover:bg-green-100'
+                              }
+                            >
+                              {reservation.status === 'pending' ? currentTexts.pending : currentTexts.confirmed}
+                            </Badge>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 truncate">
-                            {reservation.pack_id 
-                              ? `Pack ${getPackName(reservation.pack_id, language) || reservation.pack_id}` 
-                              : reservation.product_id 
-                              ? `Réservation #${reservation.id.slice(0, 8)}`
-                              : 'Réservation'
-                            }
-                          </h3>
-                          <p className="text-gray-600 mb-2">
-                            {formatDate(reservation.start_date)} - {formatDate(reservation.end_date)}
-                          </p>
-                          <Badge 
-                            variant={reservation.status === 'pending' ? 'secondary' : 'default'}
-                            className={
-                              reservation.status === 'pending'
-                                ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
-                                : 'bg-green-100 text-green-800 hover:bg-green-100'
-                            }
-                          >
-                            {reservation.status === 'pending' ? currentTexts.pending : currentTexts.confirmed}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           )}

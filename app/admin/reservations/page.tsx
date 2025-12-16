@@ -602,6 +602,66 @@ useEffect(() => {
                   </div>
                 </div>
 
+                {/* Heures de retrait et retour (pour retrait sur place) */}
+                {(() => {
+                  // Vérifier si c'est un retrait sur place
+                  let isPickup = false;
+                  if (selectedReservation.notes) {
+                    try {
+                      const parsedNotes = typeof selectedReservation.notes === 'string' 
+                        ? JSON.parse(selectedReservation.notes) 
+                        : selectedReservation.notes;
+                      const cartItems = parsedNotes?.cartItems || [];
+                      const hasDelivery = cartItems.some((item: any) => 
+                        item.productId?.startsWith('delivery-') || 
+                        item.metadata?.type === 'delivery'
+                      );
+                      isPickup = !hasDelivery && 
+                        (parsedNotes?.deliveryOption === 'retrait' || !parsedNotes?.deliveryOption);
+                    } catch (e) {
+                      // Ignorer les erreurs de parsing
+                    }
+                  }
+                  
+                  if (!isPickup) return null;
+                  
+                  return (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        {language === 'fr' ? 'Retrait sur place' : 'Pickup on site'}
+                      </h3>
+                      {selectedReservation.pickup_time && selectedReservation.return_time ? (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-semibold text-gray-700">
+                              {language === 'fr' ? 'Heure de retrait' : 'Pickup time'}
+                            </label>
+                            <p className="text-sm text-gray-900 mt-1">
+                              {selectedReservation.pickup_time}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-semibold text-gray-700">
+                              {language === 'fr' ? 'Heure de retour' : 'Return time'}
+                            </label>
+                            <p className="text-sm text-gray-900 mt-1">
+                              {selectedReservation.return_time}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <p className="text-sm text-amber-800 font-medium">
+                            {language === 'fr' 
+                              ? 'Pour le retrait matériel, veuillez renseigner l\'heure de retrait et l\'heure de retour du matériel'
+                              : 'For material pickup, please provide the pickup time and return time'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* Demande d'annulation */}
                 {selectedReservation.status === 'CANCEL_REQUESTED' && (() => {
                   let cancelRequest: any = null;
