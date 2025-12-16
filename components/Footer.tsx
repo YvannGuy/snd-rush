@@ -193,8 +193,8 @@ export default function Footer({ language }: FooterProps) {
           </div>
 
           {/* Moyens de paiement */}
-          <div className="mt-12 pt-8 border-t border-gray-800">
-            <div className="w-full px-2 sm:px-4 flex justify-center">
+          <div className="mt-2 pt-2 border-t border-gray-800">
+            <div className="w-full px-2 sm:px-4 flex justify-center gap-2 md:gap-4 lg:gap-6">
               <Image
                 src="/pay.png"
                 alt="Moyens de paiement acceptés"
