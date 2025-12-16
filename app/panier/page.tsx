@@ -1182,10 +1182,14 @@ export default function CartPage() {
                   </button>
                   
                   {/* Moyens de paiement acceptés */}
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-xs text-gray-500 text-center">
-                      {language === 'fr' ? 'Plusieurs moyens de paiement possibles' : 'Multiple payment methods available'}
-                    </p>
+                  <div className="mt-4 pt-4 border-t border-gray-200 flex justify-center">
+                    <Image
+                      src="/pay.png"
+                      alt="Moyens de paiement acceptés"
+                      width={350}
+                      height={40}
+                      className="w-auto h-auto max-w-full opacity-90"
+                    />
                   </div>
               </div>
             </div>

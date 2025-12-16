@@ -29,7 +29,7 @@ export default function NewsletterBanner({ language }: NewsletterBannerProps) {
 
   return (
     <>
-      <section className="bg-black py-6">
+      <section className="bg-[#F2431E] py-6">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Left: Title */}
@@ -43,7 +43,7 @@ export default function NewsletterBanner({ language }: NewsletterBannerProps) {
             <div className="flex-shrink-0">
               <Button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-[#F2431E] hover:bg-[#E63A1A] text-white font-bold px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
+                className="bg-white hover:bg-gray-100 text-[#F2431E] font-bold px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
               >
                 {currentTexts.button}
                 <ArrowRight className="h-4 w-4" />
