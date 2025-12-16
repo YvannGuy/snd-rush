@@ -21,6 +21,7 @@ import ReservationModal from '@/components/ReservationModal';
 import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
 import CookieBanner from '@/components/CookieBanner';
+import SplashScreen from '@/components/SplashScreen';
 
 export default function Home() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function Home() {
   const [legalNoticeModal, setLegalNoticeModal] = useState(false);
   const [rentalConditionsModal, setRentalConditionsModal] = useState(false);
   const [selectedPackId, setSelectedPackId] = useState<number | undefined>(undefined);
+  const [showContent, setShowContent] = useState(false);
 
   const handleReservePack = (packId: number) => {
     setSelectedPackId(packId);
@@ -136,11 +138,17 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
-      <Header 
-        language={language} 
-        onLanguageChange={setLanguage}
-      />
+    <>
+      {/* Splash Screen - affiché en premier, bloque le rendu */}
+      <SplashScreen onComplete={() => setShowContent(true)} />
+      
+      {/* Contenu principal - affiché seulement après le splash */}
+      {showContent && (
+        <div className="min-h-screen bg-white">
+          <Header 
+            language={language} 
+            onLanguageChange={setLanguage}
+          />
       
       <main className="pt-[112px]">
         <HeroSection 
@@ -198,33 +206,33 @@ export default function Home() {
         </SectionAnimation>
       </main>
 
-      <Footer 
-        language={language} 
-        onLegalNoticeClick={() => setLegalNoticeModal(true)}
-        onRentalConditionsClick={() => setRentalConditionsModal(true)}
-      />
+          <Footer 
+            language={language} 
+            onLegalNoticeClick={() => setLegalNoticeModal(true)}
+            onRentalConditionsClick={() => setRentalConditionsModal(true)}
+          />
 
-      {/* Modals */}
-      <ReservationModal 
-        isOpen={reservationModal} 
-        onClose={handleCloseReservationModal}
-        language={language}
-        preselectedPackId={selectedPackId}
-      />
-      
-      <LegalNoticeModal 
-        isOpen={legalNoticeModal} 
-        onClose={() => setLegalNoticeModal(false)}
-        language={language}
-      />
-      
-      <RentalConditionsModal 
-        isOpen={rentalConditionsModal} 
-        onClose={() => setRentalConditionsModal(false)}
-        language={language}
-      />
-
-
-    </div>
+          {/* Modals */}
+          <ReservationModal 
+            isOpen={reservationModal} 
+            onClose={handleCloseReservationModal}
+            language={language}
+            preselectedPackId={selectedPackId}
+          />
+          
+          <LegalNoticeModal 
+            isOpen={legalNoticeModal} 
+            onClose={() => setLegalNoticeModal(false)}
+            language={language}
+          />
+          
+          <RentalConditionsModal 
+            isOpen={rentalConditionsModal} 
+            onClose={() => setRentalConditionsModal(false)}
+            language={language}
+          />
+        </div>
+      )}
+    </>
   );
 }
