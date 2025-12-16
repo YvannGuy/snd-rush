@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Music, MapPin, Zap, Users, Wrench } from 'lucide-react';
 
 interface GuaranteesBannerProps {
@@ -13,27 +14,32 @@ export default function GuaranteesBanner({ language }: GuaranteesBannerProps) {
         {
           icon: Music,
           title: 'Matériel professionnel',
-          description: 'Équipements haut de gamme'
+          description: 'Équipements haut de gamme',
+          slug: 'materiel-professionnel'
         },
         {
           icon: MapPin,
           title: 'Paris & Île-de-France',
-          description: 'Intervention rapide'
+          description: 'Intervention rapide',
+          slug: 'paris-ile-de-france'
         },
         {
           icon: Zap,
           title: 'Urgence 24/7',
-          description: 'Intervention en 30-60 min'
+          description: 'Intervention en 30-60 min',
+          slug: 'urgence-24-7'
         },
         {
           icon: Users,
           title: 'Équipe dédiée',
-          description: 'Disponible 24h/24 - 7j/7'
+          description: 'Disponible 24h/24 - 7j/7',
+          slug: 'equipe-dediee'
         },
         {
           icon: Wrench,
           title: 'Service clé en main',
-          description: 'Installation disponible'
+          description: 'Installation disponible',
+          slug: 'service-cle-en-main'
         }
       ]
     },
@@ -42,27 +48,32 @@ export default function GuaranteesBanner({ language }: GuaranteesBannerProps) {
         {
           icon: Music,
           title: 'Professional equipment',
-          description: 'High-end gear'
+          description: 'High-end gear',
+          slug: 'materiel-professionnel'
         },
         {
           icon: MapPin,
           title: 'Paris & Île-de-France',
-          description: 'Fast intervention'
+          description: 'Fast intervention',
+          slug: 'paris-ile-de-france'
         },
         {
           icon: Zap,
           title: 'Emergency 24/7',
-          description: '30-60 min response'
+          description: '30-60 min response',
+          slug: 'urgence-24-7'
         },
         {
           icon: Users,
           title: 'Dedicated team',
-          description: 'Available 24/7'
+          description: 'Available 24/7',
+          slug: 'equipe-dediee'
         },
         {
           icon: Wrench,
           title: 'Turnkey service',
-          description: 'Installation available'
+          description: 'Installation available',
+          slug: 'service-cle-en-main'
         }
       ]
     }
@@ -82,9 +93,10 @@ export default function GuaranteesBanner({ language }: GuaranteesBannerProps) {
             {duplicatedItems.map((item, index) => {
               const Icon = item.icon;
               return (
-                <div
+                <Link
                   key={index}
-                  className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0"
+                  href={`/${item.slug}`}
+                  className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 hover:opacity-80 transition-all cursor-pointer group"
                 >
                   {/* Hexagon Icon */}
                   <div className="relative flex-shrink-0">
@@ -92,26 +104,26 @@ export default function GuaranteesBanner({ language }: GuaranteesBannerProps) {
                       width="28"
                       height="28"
                       viewBox="0 0 48 48"
-                      className="text-gray-700 sm:w-9 sm:h-9"
+                      className="text-gray-700 sm:w-9 sm:h-9 group-hover:text-[#F2431E] transition-colors"
                       fill="currentColor"
                     >
                       <path d="M24 2L42 12V36L24 46L6 36V12L24 2Z" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                      <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white group-hover:text-[#F2431E] transition-colors" />
                     </div>
                   </div>
 
                   {/* Text */}
                   <div className="text-white whitespace-nowrap">
-                    <p className="font-semibold text-[9px] sm:text-[10px] leading-tight">
+                    <p className="font-semibold text-[9px] sm:text-[10px] leading-tight group-hover:text-[#F2431E] transition-colors">
                       {item.title}
                     </p>
-                    <p className="text-[8px] sm:text-[9px] text-gray-300 leading-tight">
+                    <p className="text-[8px] sm:text-[9px] text-gray-300 leading-tight group-hover:text-orange-200 transition-colors">
                       {item.description}
                     </p>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
@@ -122,9 +134,10 @@ export default function GuaranteesBanner({ language }: GuaranteesBannerProps) {
           {currentTexts.items.map((item, index) => {
             const Icon = item.icon;
             return (
-              <div
+              <Link
                 key={index}
-                className="flex items-center gap-2 flex-shrink-0"
+                href={`/${item.slug}`}
+                className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-all cursor-pointer group"
               >
                 {/* Hexagon Icon */}
                 <div className="relative flex-shrink-0">
@@ -132,26 +145,26 @@ export default function GuaranteesBanner({ language }: GuaranteesBannerProps) {
                     width="40"
                     height="40"
                     viewBox="0 0 48 48"
-                    className="text-gray-700 md:w-10 md:h-10"
+                    className="text-gray-700 md:w-10 md:h-10 group-hover:text-[#F2431E] transition-colors"
                     fill="currentColor"
                   >
                     <path d="M24 2L42 12V36L24 46L6 36V12L24 2Z" />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-white" />
+                    <Icon className="w-5 h-5 text-white group-hover:text-[#F2431E] transition-colors" />
                   </div>
                 </div>
 
                 {/* Text */}
                 <div className="text-white whitespace-nowrap">
-                  <p className="font-semibold text-xs lg:text-sm leading-tight">
+                  <p className="font-semibold text-xs lg:text-sm leading-tight group-hover:text-[#F2431E] transition-colors">
                     {item.title}
                   </p>
-                  <p className="text-[10px] lg:text-xs text-gray-300 leading-tight">
+                  <p className="text-[10px] lg:text-xs text-gray-300 leading-tight group-hover:text-orange-200 transition-colors">
                     {item.description}
                   </p>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

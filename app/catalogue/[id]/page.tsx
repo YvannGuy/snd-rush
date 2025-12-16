@@ -1501,6 +1501,45 @@ export default function ProductDetailPage() {
                       </div>
                     );
                   }
+                } else if (product.category === 'dj' || product.specs?.controle_dj) {
+                  // Pour les produits DJ : ⚡ Contrôle DJ, 🔌 Connectiques, 👥 Usage
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="flex items-start gap-4">
+                        <div className="text-4xl">⚡</div>
+                        <div>
+                          <h3 className="font-bold text-black mb-1">
+                            {language === 'fr' ? 'Contrôle DJ' : 'DJ Control'}
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            {product.specs?.controle_dj || (language === 'fr' ? 'Console 2 voies compatible Rekordbox' : '2-channel console compatible with Rekordbox')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-4">
+                        <div className="text-4xl">🔌</div>
+                        <div>
+                          <h3 className="font-bold text-black mb-1">
+                            {language === 'fr' ? 'Connectiques' : 'Connectivity'}
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            {product.specs?.connectiques || product.specs?.connectivity || (language === 'fr' ? 'USB, RCA, sortie casque' : 'USB, RCA, headphone output')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-4">
+                        <div className="text-4xl">👥</div>
+                        <div>
+                          <h3 className="font-bold text-black mb-1">
+                            {language === 'fr' ? 'Usage' : 'Usage'}
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            {product.specs?.usage || (language === 'fr' ? 'Parfaite pour soirées privées, anniversaires, DJ sets' : 'Perfect for private parties, birthdays, DJ sets')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
                 } else {
                   // Pour les autres produits : ⚡ Puissance, 🔌 Connectiques, 👥 Capacité
                   return (

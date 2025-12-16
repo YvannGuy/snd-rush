@@ -145,13 +145,12 @@ export default function ShareProductButton({
     <div className={`share-menu-container relative ${className}`}>
       <button
         onClick={canUseWebShare ? handleWebShare : () => setShowMenu(!showMenu)}
-        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-[#F2431E] transition-colors border border-gray-200 rounded-lg hover:border-[#F2431E] bg-white hover:bg-orange-50"
+        className="flex items-center justify-center p-2 text-gray-600 hover:text-[#F2431E] transition-colors border border-gray-200 rounded-lg hover:border-[#F2431E] bg-white hover:bg-orange-50"
         aria-label={buttonLabel}
         aria-expanded={showMenu}
         aria-haspopup="true"
       >
         <Share2 className="w-4 h-4" />
-        <span>{buttonLabel}</span>
       </button>
 
       {/* Menu de partage personnalisé */}
