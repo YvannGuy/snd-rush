@@ -1623,6 +1623,13 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       if (content.includes('extérieur')) knownContext.indoorOutdoor = 'extérieur';
     });
     
+    // Normalisation de indoorOutdoor
+    if (knownContext.indoorOutdoor) {
+      knownContext.indoorOutdoor = knownContext.indoorOutdoor.toLowerCase().includes('ext')
+        ? 'extérieur'
+        : 'intérieur';
+    }
+    
     // Essayer de construire une réponse spécifique pour le scénario ou la salutation
     const scenarioReply = buildAssistantReply({
       scenarioId: scenarioId || null,
@@ -1641,106 +1648,74 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       });
     }
 
-    // Convertir les messages au format OpenAI (sans les messages idle)
-    const openaiMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: 'system', content: systemPromptWithCatalog },
-      ...filteredMessages
-        .filter((msg: ChatMessage) => msg.kind === 'normal' || msg.kind === 'welcome')
-        .map((msg: ChatMessage): OpenAI.Chat.Completions.ChatCompletionUserMessageParam | OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam => ({
-          role: msg.role === 'user' ? 'user' : 'assistant',
-          content: msg.content,
-        })),
-    ];
-
-    // Détecter si une conversation est déjà engagée
+    // Détecter si une conversation est déjà engagée (AVANT de construire openaiMessages)
     const conversationEngaged = isConversationEngaged(filteredMessages, scenarioId, productContext);
-    
+
     // Vérifier si un accueil a déjà été fait dans l'historique
     const hasGreetingBeenDone = filteredMessages.some((msg: ChatMessage) => {
-      if (msg.role === 'assistant') {
-        const content = msg.content.toLowerCase();
-        return content.includes('salut') || 
-               content.includes('bonjour') || 
-               content.includes('bienvenue') ||
-               content.includes('dis-moi ce que tu organises') ||
-               content.includes('quel type d\'événement');
-      }
-      return false;
+      if (msg.role !== 'assistant') return false;
+      const content = (msg.content || '').toLowerCase();
+      return (
+        content.includes('salut') ||
+        content.includes('bonjour') ||
+        content.includes('bienvenue') ||
+        content.includes('dis-moi ce que tu organises') ||
+        content.includes("quel type d'événement")
+      );
     });
 
-    // INSTRUCTION CRITIQUE : Empêcher les resets si conversation engagée
+    // 1) Protection anti-reset : PRÉFIXER le prompt AVANT openaiMessages
     if (conversationEngaged) {
-      const noResetInstruction = `🚨 RÈGLE ABSOLUE — CONVERSATION DÉJÀ ENGAGÉE
+      const noResetInstruction = `RÈGLE ABSOLUE — CONVERSATION DÉJÀ ENGAGÉE
 
-Une conversation est DÉJÀ en cours. Tu as déjà :
-- un scénario actif OU
-- posé des questions OU
-- reçu des informations de l'utilisateur
+Une conversation est déjà en cours (scénario actif, contexte produit, question posée ou info utile reçue).
 
-TU NE DOIS JAMAIS :
-❌ Réafficher un message d'accueil ("Salut 👋", "Bonjour", "Dis-moi ce que tu organises")
-❌ Repartir de zéro
-❌ Redemander des informations déjà fournies
-❌ Répéter exactement les mêmes questions
+Interdictions :
+- Ne refais jamais un message d'accueil (salut/bonjour/bienvenue, "dis-moi ce que tu organises", etc.)
+- Ne repars jamais de zéro
+- Ne redemande pas une info déjà donnée
+- Ne répète pas exactement la même question
 
-TU DOIS :
-✅ Continuer le raisonnement en cours
-✅ Utiliser les informations déjà collectées
-✅ Poser la PROCHAINE question logique (pas une question déjà posée)
-✅ Faire progresser la conversation vers une recommandation
+Obligation :
+- Continue avec la prochaine question logique manquante, ou avance vers la recommandation.`;
 
-Exemple CORRECT :
-- Si l'utilisateur vient de dire "environ 50" → Tu continues avec "Parfait, merci 👌 Pour 50 personnes, c'est en intérieur ou extérieur ?"
-- Si l'utilisateur vient de dire "un anniversaire" → Tu continues avec "Top 🎉 Pour un anniversaire, combien de personnes environ ?"
-
-Exemple INTERDIT :
-- ❌ "Salut 👋 Dis-moi ce que tu organises" (reset interdit)
-- ❌ "Bonjour ! Je suis là pour t'aider..." (accueil répété interdit)
-
-Toute information fournie = progression obligatoire, jamais recul.`;
-
-      // Préprendre cette instruction au début du prompt système
       systemPromptWithCatalog = `${noResetInstruction}\n\n${systemPromptWithCatalog}`;
       console.log('[API/CHAT] Conversation engagée détectée - Protection anti-reset activée');
     }
 
-    // Si c'est une salutation, ajouter une instruction spéciale dans le système
+    // 2) Gestion salutation : toujours AVANT openaiMessages
     if (lastUserMessage && detectGreeting(lastUserMessage.content)) {
-      if (hasGreetingBeenDone) {
-        // L'accueil a déjà été fait, ne pas le répéter
-        const noRepeatGreetingInstruction = `L'utilisateur vient de te saluer ou de faire une conversation informelle, MAIS tu as déjà fait l'accueil précédemment dans cette conversation.
+      if (hasGreetingBeenDone || conversationEngaged) {
+        const noRepeatGreetingInstruction = `L'utilisateur vient de saluer, mais la conversation est déjà engagée ou l'accueil a déjà été fait.
 
-NE REPÈTE PAS l'accueil. Tu es déjà en phase de clarification.
+Tu réponds en 1 ligne maximum, sans refaire d'accueil, puis tu poses UNE question concrète pour continuer (pas une question déjà posée).`;
 
-Réponds brièvement (1-2 lignes) pour montrer que tu es présent, puis pose UNE question concrète et différente pour faire progresser la conversation.
-
-Exemples attendus :
-- "Oui je suis là 👋 On continue. C'est pour combien de personnes environ ?"
-- "Pas de souci, on avance. Tu as une idée du type d'événement ?"
-- "Ok, on y va étape par étape. C'est en intérieur ou extérieur ?"
-
-NE JAMAIS répéter "Salut", "Bonjour", "Bienvenue" ou "Dis-moi ce que tu organises" si tu l'as déjà dit.`;
-        
-        openaiMessages[0] = {
-          role: 'system',
-          content: `${noRepeatGreetingInstruction}\n\n${systemPromptWithCatalog}`
-        };
+        systemPromptWithCatalog = `${noRepeatGreetingInstruction}\n\n${systemPromptWithCatalog}`;
       } else {
-        // Premier accueil de la conversation
-        const greetingInstruction = `L'utilisateur vient de te saluer ou de faire une conversation informelle. 
-Réponds de manière chaleureuse et humaine (2-4 lignes), reconnais sa salutation, puis pose UNE question douce pour comprendre son événement.
-Exemples de réponses :
-- "Bonjour ! Je suis là pour t'aider à trouver le matériel parfait pour ton événement. Dis-moi, c'est pour quel type d'événement ?"
-- "Salut ! Ça va bien, merci. Je peux t'aider à préparer ton événement. C'est pour quel type d'occasion ?"
-- "Hello ! Parfait, je suis là pour t'accompagner. Dis-moi simplement quel type d'événement tu organises ?"
-NE JAMAIS répondre avec "Bien sûr, que cherchez-vous ?" ou des phrases robotiques similaires.`;
-        
-        openaiMessages[0] = {
-          role: 'system',
-          content: `${greetingInstruction}\n\n${systemPromptWithCatalog}`
-        };
+        const greetingInstruction = `L'utilisateur vient de saluer et la conversation n'a pas encore commencé.
+
+Tu peux saluer brièvement (2-3 lignes max), puis poser UNE seule question pour démarrer (type d'événement). Pas de blabla.`;
+
+        systemPromptWithCatalog = `${greetingInstruction}\n\n${systemPromptWithCatalog}`;
       }
     }
+
+    // 3) Construire openaiMessages APRÈS avoir finalisé systemPromptWithCatalog
+    const openaiMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      { role: 'system', content: systemPromptWithCatalog },
+      ...filteredMessages
+        .filter((msg: ChatMessage) => msg.kind === 'normal' || msg.kind === 'welcome')
+        .map(
+          (
+            msg: ChatMessage
+          ):
+            | OpenAI.Chat.Completions.ChatCompletionUserMessageParam
+            | OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam => ({
+            role: msg.role === 'user' ? 'user' : 'assistant',
+            content: msg.content,
+          })
+        ),
+    ];
 
     // Appel OpenAI
     console.log('[API/CHAT] Appel OpenAI avec', openaiMessages.length, 'messages');
@@ -1787,28 +1762,36 @@ NE JAMAIS répondre avec "Bien sûr, que cherchez-vous ?" ou des phrases robotiq
     
     // 🛡️ GARDE-FOU POST-OPENAI : Empêcher les resets si conversation engagée
     if (conversationEngaged) {
-      const cleanReplyLower = cleanReply.toLowerCase();
-      const startsWithGreeting = cleanReplyLower.startsWith('salut') || 
-                                  cleanReplyLower.startsWith('bonjour') || 
-                                  cleanReplyLower.startsWith('bienvenue');
-      const containsResetPhrase = cleanReplyLower.includes('dis-moi ce que tu organises') ||
-                                   cleanReplyLower.includes('quel type d\'événement') && !knownContext.eventType;
-      
-      if (startsWithGreeting || containsResetPhrase) {
+      const reply = (cleanReply || '').trim();
+      const replyLower = reply.toLowerCase();
+
+      // Détection large des resets (salutations + phrases de restart)
+      const resetRegexes: RegExp[] = [
+        /^(salut|bonjour|bienvenue)\b/i,
+        /\b(dis[- ]?moi|dit[- ]?moi)\b.*\b(ce que tu organises|ton événement|ton evenement)\b/i,
+        /\btu es au bon endroit\b/i,
+        /\bje (suis|reste) là pour t['']aider\b/i,
+        /\bje peux t['']aider\b/i,
+        /\bdis[- ]?moi\b.*\b(type d['']événement|type d['']evenement|quel type d['']événement|quel type d['']evenement)\b/i,
+      ];
+
+      const looksLikeReset = resetRegexes.some((r) => r.test(replyLower));
+
+      if (looksLikeReset) {
         console.log('[API/CHAT] 🛡️ Garde-fou activé : Reset détecté et corrigé');
-        
-        // Construire une phrase de continuité avec la prochaine question logique
+
         let continuationQuestion = '';
-        if (!knownContext.eventType) {
+        if (!knownContext?.eventType) {
           continuationQuestion = "C'est pour quel type d'événement ?";
-        } else if (!knownContext.peopleCount) {
-          continuationQuestion = "Combien de personnes environ ?";
-        } else if (!knownContext.indoorOutdoor) {
+        } else if (!knownContext?.peopleCount) {
+          continuationQuestion = 'Combien de personnes environ ?';
+        } else if (!knownContext?.indoorOutdoor) {
           continuationQuestion = "C'est en intérieur ou extérieur ?";
         } else {
-          continuationQuestion = "Quel type d'ambiance souhaites-tu ? Musique d'ambiance ou DJ avec son fort ?";
+          continuationQuestion =
+            "Tu veux plutôt musique d'ambiance, des discours, ou une vraie soirée DJ (son fort) ?";
         }
-        
+
         cleanReply = `Ok je suis là 🙂 On continue. ${continuationQuestion}`;
       }
     }

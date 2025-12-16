@@ -77,10 +77,11 @@ export default function ProductDetailPage() {
           .in('category', targetCategories)
           .limit(20); // Charger plus pour avoir un meilleur choix
 
-        // Exclure Pioneer XDJ des produits recommandés
-        const filteredByPioneer = allProducts?.filter(p => 
-          !p.name.toLowerCase().includes('pioneer') && !p.name.toLowerCase().includes('xdj')
-        ) || [];
+        // Exclure uniquement les produits XDJ des produits recommandés (mais permettre DDJ-400)
+        const filteredByPioneer = allProducts?.filter(p => {
+          const nameLower = p.name.toLowerCase();
+          return !nameLower.includes('xdj');
+        }) || [];
 
         if (error) {
           console.error('Erreur chargement produits recommandés:', error);

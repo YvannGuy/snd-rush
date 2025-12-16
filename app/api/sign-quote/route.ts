@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
           
           <div class="footer">
             <p>SND Rush - Location Sono & Événementiel Paris</p>
-            <p>Urgence 24/7 • Livraison & Installation incluses</p>
+            <p>Urgence 24/7 • Livraison incluse, installation disponible</p>
           </div>
         </body>
         </html>

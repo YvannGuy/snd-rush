@@ -33,7 +33,7 @@ export default function GuaranteesBanner({ language }: GuaranteesBannerProps) {
         {
           icon: Wrench,
           title: 'Service clé en main',
-          description: 'Installation incluse'
+          description: 'Installation disponible'
         }
       ]
     },
@@ -62,7 +62,7 @@ export default function GuaranteesBanner({ language }: GuaranteesBannerProps) {
         {
           icon: Wrench,
           title: 'Turnkey service',
-          description: 'Installation included'
+          description: 'Installation available'
         }
       ]
     }

@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
             </div>
             <div style="margin: 20px 0; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">
               <strong>🚀 Service Express 24/7</strong><br/>
-              <span style="font-size: 13px; opacity: 0.9;">Livraison & Installation incluses • Urgence garantie</span>
+              <span style="font-size: 13px; opacity: 0.9;">Livraison incluse, installation disponible • Urgence garantie</span>
             </div>
             <div class="social-links">
               <a href="https://www.sndrush.com">Site Web</a> • 

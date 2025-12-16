@@ -2,7 +2,7 @@ export default function CROUSP() {
   const items = [
     {
       title: 'Clé en main',
-      text: 'Livraison & installation incluses',
+      text: 'Livraison incluse, installation disponible',
       icon: '✅',
     },
     {

@@ -12,7 +12,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "SoundRush Paris - Location Sono Urgence 24/7 & Événementiel | Paris & Île-de-France",
   description:
-    "SoundRush Paris : location sono urgence 24h/24 et 7j/7 à Paris et Île-de-France. Sonorisation professionnelle, packs clé en main pour mariages, anniversaires, événements corporate. Livraison et installation incluses. Intervention rapide garantie.",
+    "SoundRush Paris : location sono urgence 24h/24 et 7j/7 à Paris et Île-de-France. Sonorisation professionnelle, packs clé en main pour mariages, anniversaires, événements corporate. Livraison incluse, installation disponible. Intervention rapide garantie.",
   keywords: [
     // Urgence
     "location sono urgence Paris",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     siteName: "SoundRush Paris",
     title: "SoundRush Paris - Location Sono Urgence 24/7 & Événementiel | Paris & Île-de-France",
     description:
-      "Location sono urgence Paris 24h/24 et 7j/7. Packs clé en main pour mariages, anniversaires, événements corporate. Livraison et installation incluses. Intervention rapide garantie.",
+      "Location sono urgence Paris 24h/24 et 7j/7. Packs clé en main pour mariages, anniversaires, événements corporate. Livraison incluse, installation disponible. Intervention rapide garantie.",
     images: [
       {
         url: "https://www.sndrush.com/og-image.jpg",

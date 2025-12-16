@@ -70,7 +70,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         duration: "/jour",
         popular: false,
         image: "/packM.png",
-        features: ["2 enceintes 800W + caisson", "Table de mixage 6 voies", "2 micros sans fil", "Éclairage LED inclus", "Installation incluse"],
+        features: ["2 enceintes 800W + caisson", "Table de mixage 6 voies", "2 micros sans fil", "Éclairage LED inclus", "Installation disponible"],
         highlight: "Qualité Pro",
         ideal: "Idéal pour 100-200 personnes"
       },

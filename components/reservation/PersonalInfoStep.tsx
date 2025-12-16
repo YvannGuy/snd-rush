@@ -718,7 +718,7 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
                         <div className="mt-3 pt-2 border-t border-gray-100">
                           <div className="text-xs text-gray-500">
                             {language === 'fr' 
-                              ? '* Tarifs TTC, livraison et installation incluses'
+                              ? '* Tarifs TTC, livraison incluse, installation disponible'
                               : '* All prices include tax, delivery and installation'
                             }
                           </div>
