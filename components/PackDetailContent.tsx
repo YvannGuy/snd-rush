@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/CartContext';
 import { AvailabilityResponse, CalendarDisabledRange, ProductAddon, CartItem, Product } from '@/types/db';
 import { supabase } from '@/lib/supabase';
 import { getDeliveryPrice, DELIVERY_AR } from '@/lib/zone-detection';
+import ShareProductButton from '@/components/ShareProductButton';
 
 interface PackDetailContentProps {
   packId: string;
@@ -712,10 +713,18 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
               ) : null;
             })()}
 
-            {/* Titre */}
-            <h1 className="text-4xl md:text-5xl font-bold text-black mb-4 leading-tight">
-              Pack {pack.name}
-            </h1>
+            {/* Titre avec bouton partage */}
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <h1 className="text-4xl md:text-5xl font-bold text-black leading-tight flex-1">
+                Pack {pack.name}
+              </h1>
+              <ShareProductButton
+                productName={`Pack ${pack.name}`}
+                productUrl={`/packs/${pack.id}`}
+                language={language}
+                className="flex-shrink-0"
+              />
+            </div>
 
             {/* Description courte */}
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">

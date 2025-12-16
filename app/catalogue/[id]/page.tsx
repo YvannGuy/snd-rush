@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import QuantityStepper from '@/components/products/QuantityStepper';
 import ProductAddons from '@/components/products/ProductAddons';
 import ProductNavigation from '@/components/products/ProductNavigation';
+import ShareProductButton from '@/components/ShareProductButton';
 import { supabase } from '@/lib/supabase';
 import { Product, AvailabilityResponse, CalendarDisabledRange, ProductAddon, CartItem } from '@/types/db';
 import { useCart } from '@/contexts/CartContext';
@@ -788,9 +789,17 @@ export default function ProductDetailPage() {
               })()}
 
               {/* Titre */}
-              <h1 className="text-4xl md:text-5xl font-bold text-black mb-4 leading-tight">
-                {product.name}
-              </h1>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <h1 className="text-4xl md:text-5xl font-bold text-black leading-tight flex-1">
+                  {product.name}
+                </h1>
+                <ShareProductButton
+                  productName={product.name}
+                  productUrl={`/catalogue/${product.slug || product.id}`}
+                  language={language}
+                  className="flex-shrink-0"
+                />
+              </div>
 
               {/* Description courte */}
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
