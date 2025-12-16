@@ -113,10 +113,21 @@ export default function ProductNavigation({ currentProduct, language }: ProductN
         }
 
         // Filtrer uniquement Pioneer XDJ (mais permettre DDJ-400)
-        const filtered = (data || []).filter(p => {
+        let filtered = (data || []).filter(p => {
           const nameLower = p.name.toLowerCase();
           return !nameLower.includes('xdj');
         });
+
+        // Si on est dans la catégorie DJ, ajouter les packs DJ définis dans le code
+        if (selectedCategory === 'dj') {
+          const djPacks = [
+            { id: 'pack-6', name: 'Pack DJ Essentiel', slug: 'pack-6', category: 'dj' },
+            { id: 'pack-7', name: 'Pack DJ Performance', slug: 'pack-7', category: 'dj' },
+            { id: 'pack-8', name: 'Pack DJ Premium', slug: 'pack-8', category: 'dj' },
+          ];
+          // Ajouter les packs DJ et trier par nom
+          filtered = [...filtered, ...djPacks].sort((a, b) => a.name.localeCompare(b.name));
+        }
 
         setProductsInCategory(filtered);
       } catch (err) {
@@ -131,13 +142,16 @@ export default function ProductNavigation({ currentProduct, language }: ProductN
 
   // Trouver l'index du produit actuel
   const currentIndex = productsInCategory.findIndex(
-    p => p.id.toString() === currentProduct.id.toString() || p.slug === currentProduct.slug
+    p => p.id.toString() === currentProduct.id.toString() || 
+        p.slug === currentProduct.slug || 
+        (currentProduct.id.toString().startsWith('pack-') && p.id.toString() === currentProduct.id.toString())
   );
 
   const previousProduct = currentIndex > 0 ? productsInCategory[currentIndex - 1] : null;
   const nextProduct = currentIndex < productsInCategory.length - 1 ? productsInCategory[currentIndex + 1] : null;
 
   const getProductUrl = (product: Product) => {
+    // Dans le contexte du catalogue, tous les produits (y compris packs DJ) pointent vers /catalogue
     return `/catalogue/${product.slug || product.id}`;
   };
 
@@ -164,10 +178,20 @@ export default function ProductNavigation({ currentProduct, language }: ProductN
         }
 
         // Filtrer uniquement Pioneer XDJ (mais permettre DDJ-400)
-        const filtered = (data || []).filter(p => {
+        let filtered = (data || []).filter(p => {
           const nameLower = p.name.toLowerCase();
           return !nameLower.includes('xdj');
         });
+
+        // Si on change vers la catégorie DJ, ajouter les packs DJ définis dans le code
+        if (category === 'dj') {
+          const djPacks = [
+            { id: 'pack-6', name: 'Pack DJ Essentiel', slug: 'pack-6', category: 'dj' },
+            { id: 'pack-7', name: 'Pack DJ Performance', slug: 'pack-7', category: 'dj' },
+            { id: 'pack-8', name: 'Pack DJ Premium', slug: 'pack-8', category: 'dj' },
+          ];
+          filtered = [...filtered, ...djPacks].sort((a, b) => a.name.localeCompare(b.name));
+        }
 
         // Rediriger vers le premier produit de la nouvelle catégorie
         if (filtered.length > 0) {

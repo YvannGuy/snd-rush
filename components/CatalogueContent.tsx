@@ -625,7 +625,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                     {/* Ne pas afficher "Voir le produit" pour le pack XL sur mesure */}
                     {!(product.id === 'pack-5' || product.name.toLowerCase().includes('pack xl') || product.name.toLowerCase().includes('sur mesure')) && (
                       <Link
-                        href={product.category === 'packs' || (product.category === 'dj' && product.id.toString().startsWith('pack-'))
+                        href={product.category === 'packs'
                           ? `/packs/${product.id.toString().replace('pack-', '')}` 
                           : `/catalogue/${product.slug || product.id}`}
                         className="w-full border-2 border-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center min-h-[44px] flex items-center justify-center"

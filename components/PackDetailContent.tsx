@@ -1212,6 +1212,9 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                 {pack.id === 2 && (language === 'fr' ? 'Enceintes: 2×15,2 kg + Console' : 'Speakers: 2×15.2 kg + Console')}
                 {pack.id === 3 && (language === 'fr' ? 'Enceintes: 2×24 kg, Caisson: ~38 kg' : 'Speakers: 2×24 kg, Sub: ~38 kg')}
                 {pack.id === 4 && '—'}
+                {pack.id === 6 && (language === 'fr' ? 'Enceinte: 15,2 kg + Console DJ: 2,8 kg' : 'Speaker: 15.2 kg + DJ Console: 2.8 kg')}
+                {pack.id === 7 && (language === 'fr' ? 'Enceintes: 2×24 kg + Console DJ: 2,8 kg' : 'Speakers: 2×24 kg + DJ Console: 2.8 kg')}
+                {pack.id === 8 && (language === 'fr' ? 'Enceintes: 2×24 kg, Caisson: ~38 kg, Console DJ: 2,8 kg' : 'Speakers: 2×24 kg, Sub: ~38 kg, DJ Console: 2.8 kg')}
               </p>
             </div>
             <div className="bg-white rounded-xl p-4 text-center">
@@ -1222,6 +1225,9 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                 {pack.id === 2 && (language === 'fr' ? 'Enceintes: 2×15" + Console HPA Promix 8' : 'Speakers: 2×15" + HPA Promix 8 console')}
                 {pack.id === 3 && (language === 'fr' ? 'Enceintes: 2×15", Caisson: 18", Console: HPA Promix 16' : 'Speakers: 2×15", Sub: 18", Console: HPA Promix 16')}
                 {pack.id === 4 && '—'}
+                {pack.id === 6 && (language === 'fr' ? 'Enceinte: 15" + Console DJ: 320×230×85 mm' : 'Speaker: 15" + DJ Console: 320×230×85 mm')}
+                {pack.id === 7 && (language === 'fr' ? 'Enceintes: 2×15" + Console DJ: 320×230×85 mm' : 'Speakers: 2×15" + DJ Console: 320×230×85 mm')}
+                {pack.id === 8 && (language === 'fr' ? 'Enceintes: 2×15", Caisson: 18", Console DJ: 320×230×85 mm' : 'Speakers: 2×15", Sub: 18", DJ Console: 320×230×85 mm')}
               </p>
             </div>
             <div className="bg-white rounded-xl p-4 text-center">
@@ -1232,6 +1238,9 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                 {pack.id === 2 && (language === 'fr' ? 'Oui (enceintes + console)' : 'Yes (speakers + console)')}
                 {pack.id === 3 && (language === 'fr' ? 'Oui (console)' : 'Yes (console)')}
                 {pack.id === 4 && (language === 'fr' ? 'Selon configuration' : 'According to config')}
+                {pack.id === 6 && (language === 'fr' ? 'Oui (enceinte)' : 'Yes (speaker)')}
+                {pack.id === 7 && (language === 'fr' ? 'Non' : 'No')}
+                {pack.id === 8 && (language === 'fr' ? 'Non' : 'No')}
               </p>
             </div>
           </div>

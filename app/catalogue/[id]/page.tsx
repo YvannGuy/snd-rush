@@ -49,6 +49,12 @@ export default function ProductDetailPage() {
       if (!product || !supabase) return;
 
       try {
+        // Ne pas charger de produits recommandés pour les packs (ils ont leur propre logique)
+        if (product.category === 'packs' || product.id.toString().startsWith('pack-')) {
+          setRecommendedProducts([]);
+          return;
+        }
+
         // Définir les catégories recommandées selon le produit actuel
         let targetCategories: string[] = [];
         
@@ -64,6 +70,9 @@ export default function ProductDetailPage() {
         } else if (product.category === 'accessoires') {
           // Pour les accessoires : recommander produits principaux
           targetCategories = ['sonorisation', 'micros', 'lumieres'];
+        } else if (product.category === 'dj') {
+          // Pour les produits DJ : recommander autres produits DJ et accessoires
+          targetCategories = ['dj', 'accessoires'];
         } else {
           // Par défaut : recommander produits de différentes catégories
           targetCategories = ['sonorisation', 'micros', 'accessoires', 'lumieres'];
@@ -73,20 +82,21 @@ export default function ProductDetailPage() {
         const { data: allProducts, error } = await supabase
           .from('products')
           .select('*')
-          .neq('id', product.id) // Exclure le produit actuel
+          .neq('id', product.id.toString()) // Exclure le produit actuel (convertir en string pour comparaison)
           .in('category', targetCategories)
           .limit(20); // Charger plus pour avoir un meilleur choix
 
-        // Exclure uniquement les produits XDJ des produits recommandés (mais permettre DDJ-400)
-        const filteredByPioneer = allProducts?.filter(p => {
-          const nameLower = p.name.toLowerCase();
-          return !nameLower.includes('xdj');
-        }) || [];
-
         if (error) {
           console.error('Erreur chargement produits recommandés:', error);
+          setRecommendedProducts([]);
           return;
         }
+
+        // Exclure uniquement les produits XDJ des produits recommandés (mais permettre DDJ-400)
+        const filteredByPioneer = (allProducts || []).filter(p => {
+          const nameLower = p.name.toLowerCase();
+          return !nameLower.includes('xdj');
+        });
 
         if (filteredByPioneer && filteredByPioneer.length > 0) {
           // Trier et sélectionner les produits les plus pertinents
@@ -167,6 +177,74 @@ export default function ProductDetailPage() {
     async function loadProduct() {
       if (supabase && productId) {
         try {
+          // Si c'est un pack (commence par pack-), utiliser getCatalogItemById
+          if (productId.startsWith('pack-')) {
+            const { getCatalogItemById } = await import('@/lib/catalog');
+            const catalogItem = await getCatalogItemById(productId);
+            
+            if (catalogItem) {
+              // Mapping des images des packs DJ
+              const packImages: Record<string, string> = {
+                'pack-6': '/packdjs.png',
+                'pack-7': '/packdjM.png',
+                'pack-8': '/packdjL.png',
+              };
+
+              // Mapping des specs pour les packs DJ
+              const packSpecs: Record<string, Record<string, any>> = {
+                'pack-6': {
+                  puissance: '500W RMS',
+                  poids: 'Enceinte: 15,2 kg + Console DJ: 2,8 kg',
+                  dimensions: 'Enceinte: 15" + Console DJ: 320×230×85 mm',
+                  bluetooth: true,
+                  controle_dj: 'Console 2 voies compatible Rekordbox',
+                  connectiques: 'USB, RCA, sortie casque',
+                  usage: 'Parfaite pour soirées privées, anniversaires, DJ sets',
+                },
+                'pack-7': {
+                  puissance: 'Puissance adaptée',
+                  poids: 'Enceintes: 2×24 kg + Console DJ: 2,8 kg',
+                  dimensions: 'Enceintes: 2×15" + Console DJ: 320×230×85 mm',
+                  bluetooth: false,
+                  controle_dj: 'Console 2 voies compatible Rekordbox',
+                  connectiques: 'XLR, RCA, USB (console DJ Pioneer)',
+                  usage: 'Idéal pour mariages, soirées privées, événements associatifs',
+                },
+                'pack-8': {
+                  puissance: 'Son puissant + basses',
+                  poids: 'Enceintes: 2×24 kg, Caisson: ~38 kg, Console DJ: 2,8 kg',
+                  dimensions: 'Enceintes: 2×15", Caisson: 18", Console DJ: 320×230×85 mm',
+                  bluetooth: false,
+                  controle_dj: 'Console 2 voies compatible Rekordbox',
+                  connectiques: 'XLR, RCA, USB (console DJ Pioneer)',
+                  usage: 'Idéal pour soirées dansantes, mariages, événements festifs',
+                },
+              };
+
+              // Convertir CatalogItem en Product avec images et specs
+              const convertedProduct: Product = {
+                id: catalogItem.id,
+                name: catalogItem.name,
+                slug: catalogItem.slug || catalogItem.id,
+                description: catalogItem.description || '',
+                long_description: null,
+                daily_price_ttc: catalogItem.unitPriceEur || 0,
+                deposit: catalogItem.deposit || 0,
+                quantity: 1,
+                category: catalogItem.category || 'packs',
+                tags: null,
+                images: packImages[productId] ? [packImages[productId]] : null,
+                specs: packSpecs[productId] || null,
+                features: null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              };
+              setProduct(convertedProduct);
+              setLoading(false);
+              return;
+            }
+          }
+
           // D'abord, essayer de chercher par ID (si c'est un nombre)
           const numericId = parseInt(productId, 10);
           if (!isNaN(numericId)) {
@@ -706,8 +784,8 @@ export default function ProductDetailPage() {
                 <span className="text-gray-900 font-medium">{product.name}</span>
               </nav>
 
-              {/* Navigation entre produits */}
-              {product && <ProductNavigation currentProduct={product} language={language} />}
+              {/* Navigation entre produits - uniquement pour les produits (pas pour les packs non-DJ) */}
+              {product && product.category !== 'packs' && <ProductNavigation currentProduct={product} language={language} />}
 
               {/* Tags */}
               {(() => {
@@ -1599,10 +1677,12 @@ export default function ProductDetailPage() {
                 <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.specs}</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white rounded-xl p-4 text-center">
-                    <div className="text-3xl mb-2">🔊</div>
-                    <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Puissance RMS' : 'RMS Power'}</p>
+                    <div className="text-3xl mb-2">🎛️</div>
+                    <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Voies' : 'Channels'}</p>
                     <p className="text-lg font-bold text-black">
-                      {product.specs?.puissance || product.specs?.power_rms || product.specs?.power || '—'}
+                      {product.specs?.voies 
+                        ? `${product.specs.voies} ${language === 'fr' ? 'voies' : 'channels'}`
+                        : product.specs?.puissance || product.specs?.power_rms || product.specs?.power || '—'}
                     </p>
                   </div>
                   <div className="bg-white rounded-xl p-4 text-center">

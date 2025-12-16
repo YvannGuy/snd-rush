@@ -45,14 +45,14 @@ export async function getCatalogItemById(id: string): Promise<CatalogItem | null
         const category = pack.id.includes('dj') ? 'dj' : 'packs';
         
         return {
-          id: pack.id,
+          id: id, // Utiliser l'ID original du catalogue (pack-6, pack-7, etc.) pour la navigation
           name: pack.name,
           unitPriceEur: pack.basePrice || 0,
           billingUnit: 'event',
           category: category,
           description: `Pack pour ${pack.capacity.min}-${pack.capacity.max} personnes. Composition: ${pack.composition.join(', ')}`,
           deposit: pack.deposit || 0, // Caution du pack
-          slug: pack.id,
+          slug: id, // Utiliser l'ID original pour le slug aussi
         };
       }
     }
