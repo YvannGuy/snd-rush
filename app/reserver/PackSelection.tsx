@@ -47,7 +47,7 @@ export default function PackSelection({ language, onPackSelect }: PackSelectionP
         price: "À partir de 550€",
         duration: "Clé en main",
         popular: true,
-        image: "/pack2c.jpg",
+        image: "/packs.png",
         features: [
           "Sonorisation pour 150 pers",
           "1 micro filaire",
@@ -66,7 +66,7 @@ export default function PackSelection({ language, onPackSelect }: PackSelectionP
         price: "À partir de 700€",
         duration: "Clé en main",
         popular: false,
-        image: "/pack2cc.jpg",
+        image: "/packM.png",
         features: [
           "Sonorisation 250 pers",
           "2 micros filaires",
@@ -85,7 +85,7 @@ export default function PackSelection({ language, onPackSelect }: PackSelectionP
         price: "À partir de 1 100€",
         duration: "Clé en main",
         popular: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: [
           "Sonorisation pro 500 pers",
           "Micros sans fil & accessoires",
@@ -107,7 +107,7 @@ export default function PackSelection({ language, onPackSelect }: PackSelectionP
         price: "From 550€",
         duration: "Turnkey",
         popular: true,
-        image: "/pack2c.jpg",
+        image: "/packs.png",
         features: [
           "Sound system for 150 people",
           "1 wired microphone",
@@ -126,7 +126,7 @@ export default function PackSelection({ language, onPackSelect }: PackSelectionP
         price: "From 700€",
         duration: "Turnkey",
         popular: false,
-        image: "/pack2cc.jpg",
+        image: "/packM.png",
         features: [
           "Sound system for 250 people",
           "2 wired microphones",
@@ -145,7 +145,7 @@ export default function PackSelection({ language, onPackSelect }: PackSelectionP
         price: "From 1 100€",
         duration: "Turnkey",
         popular: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: [
           "Professional sound system for 500 people",
           "Wireless microphones & accessories",

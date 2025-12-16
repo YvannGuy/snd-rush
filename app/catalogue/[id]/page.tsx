@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import QuantityStepper from '@/components/products/QuantityStepper';
 import ProductAddons from '@/components/products/ProductAddons';
+import ProductNavigation from '@/components/products/ProductNavigation';
 import { supabase } from '@/lib/supabase';
 import { Product, AvailabilityResponse, CalendarDisabledRange, ProductAddon, CartItem } from '@/types/db';
 import { useCart } from '@/contexts/CartContext';
@@ -270,7 +271,7 @@ export default function ProductDetailPage() {
         category: 'packs',
         description: '2 enceintes + micro + table, 50-150 pers.',
         price: '180€/jour',
-        image: '/pack2c.jpg',
+        image: '/packs.png',
       },
       {
         id: 6,
@@ -278,7 +279,7 @@ export default function ProductDetailPage() {
         category: 'sonorisation',
         description: '150-500 pers',
         price: '95€/jour',
-        image: '/pack4cc.jpg',
+        image: '/packL.png',
       },
       {
         id: 7,
@@ -702,6 +703,9 @@ export default function ProductDetailPage() {
                 <span className="text-gray-900 font-medium">{product.name}</span>
               </nav>
 
+              {/* Navigation entre produits */}
+              {product && <ProductNavigation currentProduct={product} language={language} />}
+
               {/* Tags */}
               {(() => {
                 // Fonction pour générer les tags selon le produit
@@ -928,24 +932,6 @@ export default function ProductDetailPage() {
                 </button>
               )}
 
-              {/* Bouton Ajouter à installation - Masqué pour les accessoires et lumières */}
-              {product.category !== 'accessoires' && !isLightProduct() && getInstallationPrice() !== null && (
-                <button
-                  onClick={handleAddInstallation}
-                  disabled={!startDate || !endDate}
-                  className={`
-                    w-full py-3 rounded-lg font-semibold text-sm transition-all shadow-md mb-3 flex items-center justify-center gap-2
-                    ${startDate && endDate
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }
-                  `}
-                >
-                  <span>🔧</span>
-                  {language === 'fr' ? 'Ajouter à installation' : 'Add to installation'}
-                </button>
-              )}
-
               {/* Carte Installation - Masquée pour les accessoires et lumières */}
               {product.category !== 'accessoires' && !isLightProduct() && (() => {
                 const installationPrice = getInstallationPrice();
@@ -1001,7 +987,7 @@ export default function ProductDetailPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                       </svg>
                     </div>
-                    <h3 className="font-semibold text-sm text-gray-900">{language === 'fr' ? 'Livraison' : 'Delivery'}</h3>
+                    <h3 className="font-semibold text-sm text-gray-900">{language === 'fr' ? 'Livraison et récupération' : 'Delivery and pickup'}</h3>
                   </div>
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs text-gray-600">
@@ -1014,7 +1000,9 @@ export default function ProductDetailPage() {
                     </span>
                   </div>
                   <div className="space-y-2">
-                    {Object.entries(DELIVERY_AR).map(([zone, price]) => {
+                    {Object.entries(DELIVERY_AR)
+                      .filter(([zone]) => zone !== 'retrait') // Exclure retrait sur place
+                      .map(([zone, price]) => {
                       const zoneLabels: Record<string, string> = {
                         'paris': language === 'fr' ? 'Paris (75)' : 'Paris (75)',
                         'petite': language === 'fr' ? 'Petite couronne (92, 93, 94)' : 'Inner suburbs (92, 93, 94)',

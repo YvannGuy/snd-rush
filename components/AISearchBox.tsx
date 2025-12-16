@@ -125,21 +125,21 @@ export default function AISearchBox({ language, onPackSelected }: AISearchBoxPro
   const getPackDetails = (packId: number): { image: string; price: string; description: string } => {
     const packDetails = {
       2: { // Pack STANDARD - Clé en main
-        image: '/pack2c.jpg',
+        image: '/packs.png',
         price: 'À partir de 550 € TTC',
         description: language === 'fr'
           ? 'Pack STANDARD parfait pour événements jusqu\'à 150 personnes avec sonorisation professionnelle clé en main.'
           : 'STANDARD pack perfect for events up to 150 people with professional turnkey sound.'
       },
       3: { // Pack PREMIUM - Clé en main
-        image: '/pack2cc.jpg',
+        image: '/packM.png',
         price: 'À partir de 700 € TTC',
         description: language === 'fr'
           ? 'Pack PREMIUM avec équipement haut de gamme pour événements jusqu\'à 250 personnes clé en main.'
           : 'PREMIUM pack with high-end equipment for events up to 250 people turnkey.'
       },
       5: { // Pack PRESTIGE - Clé en main
-        image: '/pack4cc.jpg',
+        image: '/packL.png',
         price: 'À partir de 1 100 € TTC',
         description: language === 'fr'
           ? 'Pack PRESTIGE avec matériel d\'exception pour événements jusqu\'à 500 personnes clé en main.'

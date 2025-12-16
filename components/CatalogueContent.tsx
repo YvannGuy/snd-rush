@@ -310,7 +310,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         category: 'packs',
         description: 'Pour 30 à 70 personnes. 1 enceinte Mac Mah AS 115, 1 console de mixage',
         price: '109€/jour',
-        image: '/pack2c.jpg',
+        image: '/packs.png',
         capacity: '30-70',
         usageType: 'event'
       },
@@ -320,7 +320,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         category: 'packs',
         description: 'Pour 70 à 150 personnes. 2 enceintes Mac Mah AS 115, 1 console HPA Promix 8',
         price: '129€/jour',
-        image: '/pack2cc.jpg',
+        image: '/packM.png',
         capacity: '70-150',
         usageType: 'event'
       },
@@ -330,7 +330,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         category: 'packs',
         description: 'Pour 150 à 250 personnes. 2 enceintes FBT X-Lite 115A, 1 caisson, 1 console HPA Promix 16',
         price: '179€/jour',
-        image: '/pack4cc.jpg',
+        image: '/packL.png',
         capacity: '150-250',
         usageType: 'event'
       },

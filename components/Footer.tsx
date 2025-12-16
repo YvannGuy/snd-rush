@@ -72,8 +72,7 @@ export default function Footer({ language }: FooterProps) {
       birthday: 'Anniversaire',
       privateParty: 'Soirée privée',
       conference: 'Conférence',
-      shortTerm: 'Location courte durée',
-      longTerm: 'Location longue durée',
+      shortTerm: 'Location courte et longue durée',
       catalogue: 'Catalogue',
       micros: 'Micros',
       speakers: 'Enceintes',
@@ -90,8 +89,7 @@ export default function Footer({ language }: FooterProps) {
       birthday: 'Birthday',
       privateParty: 'Private party',
       conference: 'Conference',
-      shortTerm: 'Short-term rental',
-      longTerm: 'Long-term rental',
+      shortTerm: 'Short and long-term rental',
       catalogue: 'Catalogue',
       micros: 'Microphones',
       speakers: 'Speakers',
@@ -153,9 +151,6 @@ export default function Footer({ language }: FooterProps) {
                 </span>
                 <span className="text-gray-300 text-sm">
                   {currentFooterTexts.shortTerm}
-                </span>
-                <span className="text-gray-300 text-sm">
-                  {currentFooterTexts.longTerm}
                 </span>
               </nav>
             </div>

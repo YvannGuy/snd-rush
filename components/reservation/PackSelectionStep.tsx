@@ -55,7 +55,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/jour",
         popular: true,
-        image: "/pack2c.jpg",
+        image: "/packs.png",
         features: ["2 enceintes 500W", "Table de mixage 4 voies", "1 micro sans fil", "Pieds + câbles inclus", "Égaliseur intégré"],
         highlight: "Le + demandé",
         ideal: "Idéal pour 50-100 personnes"
@@ -69,7 +69,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/jour",
         popular: false,
-        image: "/pack2cc.jpg",
+        image: "/packM.png",
         features: ["2 enceintes 800W + caisson", "Table de mixage 6 voies", "2 micros sans fil", "Éclairage LED inclus", "Installation incluse"],
         highlight: "Qualité Pro",
         ideal: "Idéal pour 100-200 personnes"
@@ -97,7 +97,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/jour",
         popular: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: ["Système line array 1500W", "Console numérique", "4 micros sans fil premium", "Éclairage scénique", "Ingénieur du son", "Enregistrement HD"],
         highlight: "Haut de gamme",
         ideal: "Idéal pour 250-500 personnes"
@@ -128,7 +128,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/day",
         popular: true,
-        image: "/pack2c.jpg",
+        image: "/packs.png",
         features: ["2 speakers 500W", "4-channel mixing table", "1 wireless microphone", "Stands + cables included", "Integrated equalizer"],
         highlight: "Most requested",
         ideal: "Ideal for 50-100 people"
@@ -142,7 +142,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/day",
         popular: false,
-        image: "/pack2cc.jpg",
+        image: "/packM.png",
         features: ["2 speakers 800W + subwoofer", "6-channel mixing table", "2 wireless microphones", "LED lighting included", "Installation included"],
         highlight: "Pro Quality",
         ideal: "Ideal for 100-200 people"
@@ -170,7 +170,7 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
         originalPrice: "",
         duration: "/day",
         popular: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: ["Line array system 1500W", "Digital console", "4 premium wireless mics", "Stage lighting", "Sound engineer", "HD recording"],
         highlight: "High-end",
         ideal: "Ideal for 250-500 people"

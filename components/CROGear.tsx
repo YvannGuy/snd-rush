@@ -20,7 +20,7 @@ const cards: Card[] = [
     title: "Caissons de basses",
     subtitle: "Impact & profondeur",
     bullets: ["Grave précis", "Punch en soirée", "Intégration facile"],
-    images: ["/pack4cc.jpg", "/pack2cc.jpg", "/pack2c.jpg"],
+    images: ["/packL.png", "/packM.png", "/packs.png"],
   },
   {
     title: "Micros",
@@ -32,7 +32,7 @@ const cards: Card[] = [
     title: "Consoles de mixage",
     subtitle: "Contrôle & fluidité",
     bullets: ["Réglages rapides", "Qualité audio pro", "Routing flexible"],
-    images: ["/enceintebt.jpg", "/pack2c.jpg", "/pack2cc.jpg"],
+    images: ["/enceintebt.jpg", "/packs.png", "/packM.png"],
   },
 ];
 

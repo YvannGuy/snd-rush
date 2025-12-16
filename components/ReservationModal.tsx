@@ -57,7 +57,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "Paris intra-muros",
         popular: true,
-        image: "/pack2c.jpg",
+        image: "/packs.png",
         features: [
           "Sonorisation pour 150 pers",
           "1 micro filaire",
@@ -77,7 +77,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "Paris intra-muros",
         popular: false,
-        image: "/pack2cc.jpg",
+        image: "/packM.png",
         features: [
           "Sonorisation 250 pers",
           "2 micros filaires",
@@ -111,7 +111,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "Paris intra-muros",
         popular: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: [
           "Sonorisation pro 500 pers",
           "2 micros sans fil",
@@ -132,7 +132,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/pack2c.jpg",
+        image: "/packs.png",
         features: ["1x Contrôleur Pioneer XDJ-RR (tout-en-un)", "Équipement professionnel", "Câblage inclus", "Prêt à l'emploi"],
         highlight: "Compact",
         ideal: "Idéal pour débuter"
@@ -146,7 +146,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: ["1x Contrôleur Pioneer XDJ-RR (platines + table intégrée)", "1x DJ Booth (stand pro) – structure stable et esthétique", "Câblage inclus"],
         highlight: "Booth",
         ideal: "Idéal pour événements"
@@ -160,7 +160,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: true,
-        image: "/pack2cc.jpg",
+        image: "/packM.png",
         features: ["1x Pioneer XDJ-RR", "2x Enceintes actives (1000W chacune)", "Pieds + câblage inclus", "Système complet"],
         highlight: "Standard",
         ideal: "Idéal pour événements"
@@ -174,7 +174,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: ["1x Pioneer XDJ-RR", "2x Enceintes actives (1000W chacune)", "1x Caisson de basses (1500W)", "Pieds + câblage inclus"],
         highlight: "Premium",
         ideal: "Professionnels confirmés"
@@ -204,7 +204,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "Paris intra-muros",
         popular: true,
-        image: "/pack2c.jpg",
+        image: "/packs.png",
         features: [
           "Sound system for 150 people",
           "1 wired microphone",
@@ -224,7 +224,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "Paris intra-muros",
         popular: false,
-        image: "/pack2cc.jpg",
+        image: "/packM.png",
         features: [
           "Sound system for 250 people",
           "2 wired microphones",
@@ -258,7 +258,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: "Paris intra-muros",
         popular: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: [
           "Professional sound system for 500 people",
           "2 wireless microphones",
@@ -279,7 +279,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/pack2c.jpg",
+        image: "/packs.png",
         features: ["1x Pioneer XDJ-RR controller (all-in-one)", "Professional equipment", "Cabling included", "Ready to use"],
         highlight: "Compact",
         ideal: "Perfect for beginners"
@@ -293,7 +293,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: ["1x Pioneer XDJ-RR controller (turntables + integrated table)", "1x DJ Booth (pro stand) – stable and aesthetic structure", "Cabling included"],
         highlight: "Booth",
         ideal: "Perfect for events"
@@ -307,7 +307,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: true,
-        image: "/pack2cc.jpg",
+        image: "/packM.png",
         features: ["1x Pioneer XDJ-RR", "2x Active speakers (1000W each)", "Stands + cabling included", "Complete system"],
         highlight: "Standard",
         ideal: "Perfect for events"
@@ -321,7 +321,7 @@ export default function ReservationModal({ isOpen, onClose, language, preselecte
         originalPrice: "",
         duration: " TTC",
         popular: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: ["1x Pioneer XDJ-RR", "2x Active speakers (1000W each)", "1x Subwoofer (1500W)", "Stands + cabling included"],
         highlight: "Premium",
         ideal: "Confirmed professionals"

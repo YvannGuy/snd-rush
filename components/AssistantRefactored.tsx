@@ -876,13 +876,13 @@ export default function AssistantRefactored({
 
     // Mapper le pack ID avec les images correspondantes
     const packIdMapping: Record<string, { id: number; image: string; deposit: number }> = {
-      'pack_petit': { id: 1, image: '/pack2c.jpg', deposit: 700 },
-      'pack_confort': { id: 2, image: '/pack2cc.jpg', deposit: 1100 },
-      'pack_grand': { id: 3, image: '/pack4cc.jpg', deposit: 1600 },
+      'pack_petit': { id: 1, image: '/packs.png', deposit: 700 },
+      'pack_confort': { id: 2, image: '/packM.png', deposit: 1100 },
+      'pack_grand': { id: 3, image: '/packL.png', deposit: 1600 },
       'pack_maxi': { id: 5, image: '/concert.jpg', deposit: 500 },
     };
     
-    const packInfo = packIdMapping[recommendation.pack.id] || { id: 2, image: '/pack2cc.jpg', deposit: 1100 };
+    const packInfo = packIdMapping[recommendation.pack.id] || { id: 2, image: '/packM.png', deposit: 1100 };
 
     // Convertir les extras en addons pour le panier
     const addons: ProductAddon[] = [];

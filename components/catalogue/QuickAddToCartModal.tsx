@@ -107,9 +107,9 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
       if (productId !== 'pack_maxi') {
         // Mapping des images des packs
         const packImages: Record<string, string> = {
-          'pack_petit': '/pack2c.jpg',
-          'pack_confort': '/pack2cc.jpg',
-          'pack_grand': '/pack4cc.jpg',
+          'pack_petit': '/packs.png',
+          'pack_confort': '/packM.png',
+          'pack_grand': '/packL.png',
         };
         
         const cartItem: CartItem = {

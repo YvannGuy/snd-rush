@@ -16,7 +16,7 @@ const articles = {
     fr: {
       title: 'Guide complet : Installation d\'un Pack S pour petit événement',
       category: 'Installation',
-      image: '/pack2c.jpg',
+      image: '/packs.png',
       author: 'Équipe SoundRush',
       date: '2024',
       readTime: '8 min',
@@ -85,7 +85,7 @@ const articles = {
     en: {
       title: 'Complete guide: Installing a Pack S for small events',
       category: 'Installation',
-      image: '/pack2c.jpg',
+      image: '/packs.png',
       author: 'SoundRush Team',
       date: '2024',
       readTime: '8 min',

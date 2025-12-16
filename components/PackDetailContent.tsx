@@ -55,7 +55,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         priceParis: "109 € /jour TTC",
         priceHorsParis: "109 € /jour TTC",
         featured: false,
-        image: "/pack2c.jpg",
+        image: "/packs.png",
         features: [
           "1 enceinte Mac Mah AS 115",
           "1 console de mixage",
@@ -73,7 +73,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         priceParis: "129 € /jour TTC",
         priceHorsParis: "129 € /jour TTC",
         featured: true,
-        image: "/pack2cc.jpg",
+        image: "/packM.png",
         features: [
           "2 enceintes Mac Mah AS 115",
           "1 console HPA Promix 8",
@@ -91,7 +91,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         priceParis: "179 € /jour TTC",
         priceHorsParis: "179 € /jour TTC",
         featured: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: [
           "2 enceintes FBT X-Lite 115A",
           "1 caisson X-Sub 118SA",
@@ -110,7 +110,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         priceParis: "Sur devis",
         priceHorsParis: "Sur devis",
         featured: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: [
           "Sonorisation pro",
           "Micros HF & instruments",
@@ -131,7 +131,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         priceParis: "109 € /jour TTC",
         priceHorsParis: "109 € /jour TTC",
         featured: false,
-        image: "/pack2c.jpg",
+        image: "/packs.png",
         features: [
           "1 Mac Mah AS 115 speaker",
           "1 mixing console",
@@ -149,7 +149,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         priceParis: "129 € /jour TTC",
         priceHorsParis: "129 € /jour TTC",
         featured: true,
-        image: "/pack2cc.jpg",
+        image: "/packM.png",
         features: [
           "2 Mac Mah AS 115 speakers",
           "1 HPA Promix 8 console",
@@ -167,7 +167,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         priceParis: "179 € /jour TTC",
         priceHorsParis: "179 € /jour TTC",
         featured: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: [
           "2 FBT X-Lite 115A speakers",
           "1 X-Sub 118SA subwoofer",
@@ -186,7 +186,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         priceParis: "On quote",
         priceHorsParis: "On quote",
         featured: false,
-        image: "/pack4cc.jpg",
+        image: "/packL.png",
         features: [
           "Pro sound system",
           "HF mics & instruments",
@@ -855,24 +855,6 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
               }
             </button>
 
-            {/* Bouton Ajouter à installation */}
-            {getInstallationPrice() !== null && (
-              <button
-                onClick={handleAddInstallation}
-                disabled={!startDate || !endDate}
-                className={`
-                  w-full py-3 rounded-lg font-semibold text-sm transition-all shadow-md mb-3 flex items-center justify-center gap-2
-                  ${startDate && endDate
-                    ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }
-                `}
-              >
-                <span>🔧</span>
-                {language === 'fr' ? 'Ajouter à installation' : 'Add to installation'}
-              </button>
-            )}
-
             {/* Carte Installation */}
             {(() => {
               const installationPrice = getInstallationPrice();
@@ -927,7 +909,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                 </div>
-                <h3 className="font-semibold text-sm text-gray-900">{language === 'fr' ? 'Livraison' : 'Delivery'}</h3>
+                <h3 className="font-semibold text-sm text-gray-900">{language === 'fr' ? 'Livraison et récupération' : 'Delivery and pickup'}</h3>
               </div>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs text-gray-600">
@@ -940,7 +922,9 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                 </span>
               </div>
               <div className="space-y-2">
-                {Object.entries(DELIVERY_AR).map(([zone, price]) => {
+                {Object.entries(DELIVERY_AR)
+                  .filter(([zone]) => zone !== 'retrait') // Exclure retrait sur place
+                  .map(([zone, price]) => {
                   const zoneLabels: Record<string, string> = {
                     'paris': language === 'fr' ? 'Paris (75)' : 'Paris (75)',
                     'petite': language === 'fr' ? 'Petite couronne (92, 93, 94)' : 'Inner suburbs (92, 93, 94)',

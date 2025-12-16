@@ -59,9 +59,9 @@ export async function applyFinalConfigToCart(
         
         // Mapping des images des packs (GARANTI - toujours une image)
         const packImages: Record<string, string> = {
-          'pack_petit': '/pack2c.jpg',
-          'pack_confort': '/pack2cc.jpg',
-          'pack_grand': '/pack4cc.jpg',
+          'pack_petit': '/packs.png',
+          'pack_confort': '/packM.png',
+          'pack_grand': '/packL.png',
         };
         
         const packImage = packImages[selection.catalogId] || '/logo.svg'; // Fallback si pack non mappé

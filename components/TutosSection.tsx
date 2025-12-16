@@ -19,7 +19,7 @@ export default function TutosSection({ language }: TutosSectionProps) {
           slug: 'installation-pack-s',
           title: 'Guide complet : Installation d\'un Pack S pour petit événement',
           description: 'Découvrez comment installer et configurer un Pack S SoundRush pour vos événements de 30 à 70 personnes. Guide étape par étape avec nos experts.',
-          image: '/pack2c.jpg',
+          image: '/packs.png',
           category: 'Installation'
         },
         {
@@ -57,7 +57,7 @@ export default function TutosSection({ language }: TutosSectionProps) {
           slug: 'installation-pack-s',
           title: 'Complete guide: Installing a Pack S for small events',
           description: 'Learn how to install and configure a SoundRush Pack S for your events with 30 to 70 people. Step-by-step guide with our experts.',
-          image: '/pack2c.jpg',
+          image: '/packs.png',
           category: 'Installation'
         },
         {

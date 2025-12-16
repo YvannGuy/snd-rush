@@ -39,7 +39,7 @@ export default function AllPacksPage() {
             '1 console de mixage',
             'Options : micros, câbles, installation, livraison'
           ],
-          image: '/pack2c.jpg'
+          image: '/packs.png'
         },
         {
           id: 2,
@@ -51,7 +51,7 @@ export default function AllPacksPage() {
             '1 console HPA Promix 8',
             'Options : micros, câbles, installation, livraison'
           ],
-          image: '/pack2cc.jpg'
+          image: '/packM.png'
         },
         {
           id: 3,
@@ -64,7 +64,7 @@ export default function AllPacksPage() {
             '1 console HPA Promix 16',
             'Options : micros, câbles, installation, livraison'
           ],
-          image: '/pack4cc.jpg'
+          image: '/packL.png'
         },
         {
           id: 5,
@@ -100,7 +100,7 @@ export default function AllPacksPage() {
             '1 mixing console',
             'Options: mics, cables, installation, delivery'
           ],
-          image: '/pack2c.jpg'
+          image: '/packs.png'
         },
         {
           id: 2,
@@ -112,7 +112,7 @@ export default function AllPacksPage() {
             '1 HPA Promix 8 console',
             'Options: mics, cables, installation, delivery'
           ],
-          image: '/pack2cc.jpg'
+          image: '/packM.png'
         },
         {
           id: 3,
@@ -125,7 +125,7 @@ export default function AllPacksPage() {
             '1 HPA Promix 16 console',
             'Options: mics, cables, installation, delivery'
           ],
-          image: '/pack4cc.jpg'
+          image: '/packL.png'
         },
         {
           id: 5,
