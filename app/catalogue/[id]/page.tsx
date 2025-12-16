@@ -9,6 +9,7 @@ import QuantityStepper from '@/components/products/QuantityStepper';
 import ProductAddons from '@/components/products/ProductAddons';
 import ProductNavigation from '@/components/products/ProductNavigation';
 import ShareProductButton from '@/components/ShareProductButton';
+import AskAssistantButton from '@/components/AskAssistantButton';
 import { supabase } from '@/lib/supabase';
 import { Product, AvailabilityResponse, CalendarDisabledRange, ProductAddon, CartItem } from '@/types/db';
 import { useCart } from '@/contexts/CartContext';
@@ -939,6 +940,17 @@ export default function ProductDetailPage() {
                     : currentTexts.addToCart
                   }
                 </button>
+              )}
+
+              {/* Bouton Demander à l'assistant */}
+              {product && (
+                <AskAssistantButton
+                  productId={product.id.toString()}
+                  productName={product.name}
+                  productType="product"
+                  productUrl={`/catalogue/${product.slug || product.id}`}
+                  language={language}
+                />
               )}
 
               {/* Carte Installation - Masquée pour les accessoires et lumières */}

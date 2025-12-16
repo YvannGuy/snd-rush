@@ -8,6 +8,7 @@ import { AvailabilityResponse, CalendarDisabledRange, ProductAddon, CartItem, Pr
 import { supabase } from '@/lib/supabase';
 import { getDeliveryPrice, DELIVERY_AR } from '@/lib/zone-detection';
 import ShareProductButton from '@/components/ShareProductButton';
+import AskAssistantButton from '@/components/AskAssistantButton';
 
 interface PackDetailContentProps {
   packId: string;
@@ -863,6 +864,17 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                 : currentTexts.addToCart
               }
             </button>
+
+            {/* Bouton Demander à l'assistant */}
+            {pack && (
+              <AskAssistantButton
+                productId={pack.id.toString()}
+                productName={`Pack ${pack.name}`}
+                productType="pack"
+                productUrl={`/packs/${pack.id}`}
+                language={language}
+              />
+            )}
 
             {/* Carte Installation */}
             {(() => {

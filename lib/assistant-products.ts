@@ -21,6 +21,7 @@ export interface PackInfo {
   basePrice: number | null;
   composition: string[];
   capacity: { min: number; max: number };
+  deposit: number; // Caution en euros
 }
 
 /**
@@ -258,6 +259,7 @@ export function getPacksInfo(): PackInfo[] {
         '1 console de mixage',
       ],
       capacity: { min: 30, max: 70 },
+      deposit: 700, // Caution Pack S
     },
     {
       id: 'pack_confort',
@@ -268,6 +270,7 @@ export function getPacksInfo(): PackInfo[] {
         '1 console HPA Promix 8',
       ],
       capacity: { min: 70, max: 150 },
+      deposit: 1100, // Caution Pack M
     },
     {
       id: 'pack_grand',
@@ -279,6 +282,7 @@ export function getPacksInfo(): PackInfo[] {
         '1 console HPA Promix 16',
       ],
       capacity: { min: 150, max: 250 },
+      deposit: 1600, // Caution Pack L
     },
     {
       id: 'pack_maxi',
@@ -291,6 +295,7 @@ export function getPacksInfo(): PackInfo[] {
         'Logistique complète',
       ],
       capacity: { min: 300, max: 999 },
+      deposit: 0, // Caution selon devis pour Pack XL
     },
   ];
 }

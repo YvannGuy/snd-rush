@@ -13,7 +13,6 @@ import AboutSection from '@/components/AboutSection';
 import GallerySection from '@/components/GallerySection';
 import TrustedBySection from '@/components/TrustedBySection';
 import TrustindexReviews from '@/components/TrustindexReviews';
-import FaqInteractive from '@/components/FaqInteractive';
 import TutosSection from '@/components/TutosSection';
 import Footer from '@/components/Footer';
 import SectionAnimation from '@/components/SectionAnimation';
@@ -22,6 +21,7 @@ import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
 import CookieBanner from '@/components/CookieBanner';
 import SplashScreen from '@/components/SplashScreen';
+import ScenarioFAQSection from '@/components/ScenarioFAQSection';
 
 export default function Home() {
   const router = useRouter();
@@ -198,12 +198,19 @@ export default function Home() {
           <TutosSection language={language} />
         </SectionAnimation>
 
-        {/* Section Questions Fréquentes */}
-        <SectionAnimation delay={0.6}>
-          <FaqInteractive onOpenAssistant={() => {
-          window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
-        }} />
+        {/* Section FAQ Scénarios */}
+        <SectionAnimation delay={0.58}>
+          <ScenarioFAQSection 
+            language={language}
+            onScenarioClick={(scenarioId) => {
+              // Ouvrir l'assistant avec le scénario sélectionné
+              window.dispatchEvent(new CustomEvent('openChatWithDraft', { 
+                detail: { message: scenarioId } 
+              }));
+            }}
+          />
         </SectionAnimation>
+
       </main>
 
           <Footer 

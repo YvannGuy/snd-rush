@@ -33,6 +33,7 @@ export function useChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [draftConfig, setDraftConfig] = useState<DraftFinalConfig | null>(null);
+  const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
 
   // Refs pour éviter les doublons
   const welcomeAddedRef = useRef(false);
@@ -295,11 +296,17 @@ export function useChat() {
   }, []);
 
   /**
-   * Ouvrir le chat avec un message draft (depuis Hero)
+   * Ouvrir le chat avec un message draft (depuis Hero ou ScenarioFAQSection)
    * Le Hero ne doit QUE passer le texte, le chat gère l'ajout et l'envoi
    */
-  const openChatWithDraft = useCallback((draftText?: string) => {
+  const openChatWithDraft = useCallback((draftText?: string, scenarioId?: string) => {
     setIsOpen(true);
+    
+    // Stocker le scenarioId si fourni (persiste pour toute la conversation)
+    if (scenarioId) {
+      setActiveScenarioId(scenarioId);
+      console.log('[CHAT] ScenarioId défini:', scenarioId);
+    }
     
     // Si un message draft arrive, SUPPRIMER le welcome s'il existe
     // Le message user sera ajouté et l'assistant répondra directement
@@ -321,7 +328,12 @@ export function useChat() {
       // Dispatcher un événement pour que le chat gère l'ajout + envoi
       // Délai pour s'assurer que le chat est ouvert et que le welcome est supprimé
       setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('chatDraftMessage', { detail: { message: draftText.trim() } }));
+        window.dispatchEvent(new CustomEvent('chatDraftMessage', { 
+          detail: { 
+            message: draftText.trim(),
+            scenarioId: scenarioId 
+          } 
+        }));
       }, 100); // Réduire le délai car on n'a plus besoin d'attendre l'injection du welcome
     } else {
       // Pas de message draft → injecter le welcome normalement
@@ -380,6 +392,7 @@ export function useChat() {
     
     // 3. Vider le state
     setDraftConfig(null);
+    setActiveScenarioId(null); // Réinitialiser le scenarioId
     
     // 4. Vider localStorage
     localStorage.removeItem(STORAGE_KEY);
@@ -420,6 +433,7 @@ export function useChat() {
     isOpen,
     isLoading,
     draftConfig,
+    activeScenarioId,
     setIsLoading,
     setDraftConfig,
     addUserMessage,

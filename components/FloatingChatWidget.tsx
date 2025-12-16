@@ -21,6 +21,7 @@ export default function FloatingChatWidget() {
     isOpen,
     isLoading,
     draftConfig,
+    activeScenarioId,
     setIsLoading,
     setDraftConfig,
     addUserMessage,
@@ -101,6 +102,21 @@ export default function FloatingChatWidget() {
   const isSendingRef = useRef(false);
   // Flag pour éviter double traitement du draft message
   const draftProcessedRef = useRef<string>('');
+  // Ref pour stocker le scenarioId actif (persiste entre les messages)
+  // Synchroniser avec activeScenarioId depuis useChat
+  const scenarioIdRef = useRef<string | null>(null);
+  // Ref pour stocker le contexte produit actif
+  const productContextRef = useRef<{
+    productType?: string;
+    productId?: string;
+    productName?: string;
+    productUrl?: string;
+  } | null>(null);
+  
+  // Synchroniser scenarioIdRef avec activeScenarioId
+  useEffect(() => {
+    scenarioIdRef.current = activeScenarioId;
+  }, [activeScenarioId]);
 
   /**
    * Fonction unique pour envoyer un message
@@ -178,11 +194,17 @@ export default function FloatingChatWidget() {
     try {
 
       // Appel API avec le tableau nextMessages construit AVANT
+      // Utiliser scenarioIdRef.current (persiste entre les messages) ou activeScenarioId (depuis useChat)
+      const currentScenarioId = scenarioIdRef.current || activeScenarioId;
+      const currentProductContext = productContextRef.current;
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: apiMessages, // Utiliser le tableau construit AVANT setMessages
+          scenarioId: currentScenarioId, // Inclure le scenarioId si présent
+          productContext: currentProductContext, // Inclure le contexte produit si présent
         }),
       });
 
@@ -330,16 +352,28 @@ export default function FloatingChatWidget() {
     messagesRef.current = messages;
   }, [messages]);
 
-  // Écouter l'ouverture du chat avec draft depuis HeroInput
+  // Synchroniser productContextRef avec les événements
   useEffect(() => {
     const handleOpenChatWithDraft = (event: CustomEvent) => {
       const message = event.detail?.message;
-      console.log('[CHAT] Événement openChatWithDraft reçu:', message);
-      openChatWithDraft(message);
+      const scenarioId = event.detail?.scenarioId;
+      const productContext = event.detail?.productContext;
+      
+      console.log('[CHAT] Événement openChatWithDraft reçu:', { message, scenarioId, productContext });
+      
+      // Stocker le contexte produit si fourni
+      if (productContext) {
+        productContextRef.current = productContext;
+      }
+      
+      openChatWithDraft(message, scenarioId);
     };
 
     const handleChatDraftMessage = async (event: CustomEvent) => {
       const message = event.detail?.message;
+      const scenarioId = event.detail?.scenarioId;
+      const productContext = event.detail?.productContext;
+      
       if (message && message.trim() && isOpen && !isSendingRef.current) {
         const trimmedMessage = message.trim();
         
@@ -347,6 +381,18 @@ export default function FloatingChatWidget() {
         if (draftProcessedRef.current === trimmedMessage) {
           console.log('[CHAT] Draft message déjà traité, ignoré');
           return;
+        }
+        
+        // Si scenarioId fourni, le stocker dans la ref ET synchroniser avec useChat
+        if (scenarioId) {
+          scenarioIdRef.current = scenarioId;
+          console.log('[CHAT] ScenarioId stocké:', scenarioId);
+        }
+        
+        // Si productContext fourni, le stocker dans la ref
+        if (productContext) {
+          productContextRef.current = productContext;
+          console.log('[CHAT] ProductContext stocké:', productContext);
         }
         
         console.log('[CHAT] Traitement draft message:', trimmedMessage);
@@ -365,7 +411,7 @@ export default function FloatingChatWidget() {
       window.removeEventListener('openChatWithDraft', handleOpenChatWithDraft as EventListener);
       window.removeEventListener('chatDraftMessage', handleChatDraftMessage as EventListener);
     };
-  }, [openChatWithDraft, isOpen, sendMessage]);
+  }, [openChatWithDraft, isOpen, sendMessage, activeScenarioId]);
 
   // Bouton flottant (fermé) - Style Apple
   if (!isOpen) {

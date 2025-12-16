@@ -52,7 +52,7 @@ export async function applyFinalConfigToCart(
           };
         }
         
-        // Récupérer les infos du pack pour l'image
+        // Récupérer les infos du pack pour l'image et la caution
         const { getPacksInfo } = await import('./assistant-products');
         const packs = getPacksInfo();
         const packInfo = packs.find(p => p.id === selection.catalogId);
@@ -66,6 +66,9 @@ export async function applyFinalConfigToCart(
         
         const packImage = packImages[selection.catalogId] || '/logo.svg'; // Fallback si pack non mappé
         
+        // Récupérer la caution du pack
+        const packDeposit = packInfo?.deposit || catalogItem.deposit || 0;
+        
         // Ajouter le pack comme un item unique (pas décomposé)
         items.push({
           productId: selection.catalogId,
@@ -76,7 +79,7 @@ export async function applyFinalConfigToCart(
           startDate: startISO.split('T')[0],
           endDate: endISO.split('T')[0],
           dailyPrice: catalogItem.unitPriceEur,
-          deposit: 0, // La caution sera calculée sur les produits du pack
+          deposit: packDeposit, // Caution du pack
           addons: [],
           images: [packImage], // Toujours une image garantie
           eventType: config.event ? 'event' : undefined,

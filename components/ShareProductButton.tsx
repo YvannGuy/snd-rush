@@ -19,30 +19,36 @@ export default function ShareProductButton({
   const [showMenu, setShowMenu] = useState(false);
   const [copied, setCopied] = useState(false);
   const [canUseWebShare, setCanUseWebShare] = useState(false);
+  const [fullUrl, setFullUrl] = useState<string>('');
 
-  // Détecter si Web Share API est disponible
+  // Détecter si Web Share API est disponible et construire l'URL complète
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'navigator' in window && 'share' in navigator) {
-      setCanUseWebShare(true);
+    if (typeof window !== 'undefined') {
+      // Détecter Web Share API
+      if ('navigator' in window && 'share' in navigator) {
+        setCanUseWebShare(true);
+      }
+      
+      // Construire l'URL complète
+      if (productUrl) {
+        const url = productUrl.startsWith('http') ? productUrl : `${window.location.origin}${productUrl}`;
+        setFullUrl(url);
+      } else {
+        setFullUrl(window.location.href);
+      }
     }
-  }, []);
+  }, [productUrl]);
 
-  // Obtenir l'URL complète
-  const getFullUrl = (): string => {
-    if (productUrl) {
-      return productUrl.startsWith('http') ? productUrl : `${window.location.origin}${productUrl}`;
-    }
-    return window.location.href;
-  };
-
-  // Message de partage
-  const shareText = language === 'fr'
-    ? `Regarde ce matériel pour notre événement 👇\n\n${productName}\n\n${getFullUrl()}`
-    : `Check out this equipment for our event 👇\n\n${productName}\n\n${getFullUrl()}`;
+  // Message de partage (construit uniquement côté client via useMemo pour éviter recalculs)
+  const shareText = fullUrl
+    ? (language === 'fr'
+        ? `Regarde ce matériel pour notre événement 👇\n\n${productName}\n\n${fullUrl}`
+        : `Check out this equipment for our event 👇\n\n${productName}\n\n${fullUrl}`)
+    : '';
 
   // Utiliser Web Share API (mobile)
   const handleWebShare = async () => {
-    if (!canUseWebShare) {
+    if (!canUseWebShare || !fullUrl) {
       setShowMenu(true);
       return;
     }
@@ -51,7 +57,7 @@ export default function ShareProductButton({
       await navigator.share({
         title: productName,
         text: shareText,
-        url: getFullUrl(),
+        url: fullUrl,
       });
       setShowMenu(false);
     } catch (error) {
@@ -66,6 +72,7 @@ export default function ShareProductButton({
 
   // Partager sur WhatsApp
   const handleWhatsAppShare = () => {
+    if (!shareText || typeof window === 'undefined') return;
     const encodedText = encodeURIComponent(shareText);
     const whatsappUrl = `https://wa.me/?text=${encodedText}`;
     window.open(whatsappUrl, '_blank');
@@ -74,9 +81,10 @@ export default function ShareProductButton({
 
   // Partager sur Facebook Messenger
   const handleMessengerShare = () => {
+    if (!fullUrl || !shareText || typeof window === 'undefined') return;
     // Messenger nécessite un app_id, donc on utilise le partage Facebook standard
     // ou on copie simplement le lien pour que l'utilisateur le colle dans Messenger
-    const encodedUrl = encodeURIComponent(getFullUrl());
+    const encodedUrl = encodeURIComponent(fullUrl);
     const encodedText = encodeURIComponent(shareText);
     // Utiliser le partage Facebook standard
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
@@ -86,8 +94,10 @@ export default function ShareProductButton({
 
   // Copier le lien
   const handleCopyLink = async () => {
+    if (!fullUrl || typeof window === 'undefined') return;
+    
     try {
-      await navigator.clipboard.writeText(getFullUrl());
+      await navigator.clipboard.writeText(fullUrl);
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
@@ -96,17 +106,19 @@ export default function ShareProductButton({
     } catch (error) {
       console.error('Erreur copie:', error);
       // Fallback pour navigateurs plus anciens
-      const textArea = document.createElement('textarea');
-      textArea.value = getFullUrl();
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      setCopied(true);
-      setTimeout(() => {
-        setCopied(false);
-        setShowMenu(false);
-      }, 2000);
+      if (typeof document !== 'undefined') {
+        const textArea = document.createElement('textarea');
+        textArea.value = fullUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopied(true);
+        setTimeout(() => {
+          setCopied(false);
+          setShowMenu(false);
+        }, 2000);
+      }
     }
   };
 

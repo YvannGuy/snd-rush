@@ -35,7 +35,7 @@ export async function getCatalogItemById(id: string): Promise<CatalogItem | null
           billingUnit: 'event',
           category: 'packs',
           description: `Pack pour ${pack.capacity.min}-${pack.capacity.max} personnes. Composition: ${pack.composition.join(', ')}`,
-          deposit: 0, // Les packs n'ont pas de caution individuelle, elle est calculée sur les produits
+          deposit: pack.deposit || 0, // Caution du pack
           slug: pack.id,
         };
       }
