@@ -183,6 +183,42 @@ export default function Footer({ language }: FooterProps) {
                   </div>
                   <span className="text-gray-300 text-sm">{texts[language].parisAddress}</span>
                 </div>
+                {/* Social Media Icons */}
+                <div className="flex items-center space-x-3 pt-2">
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    <a 
+                      href="https://www.facebook.com/sndrush/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[#F2431E] hover:text-[#E63A1A] transition-colors"
+                      aria-label="Facebook"
+                    >
+                      <i className="ri-facebook-line"></i>
+                    </a>
+                  </div>
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    <a 
+                      href="https://www.instagram.com/sndrush/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[#F2431E] hover:text-[#E63A1A] transition-colors"
+                      aria-label="Instagram"
+                    >
+                      <i className="ri-instagram-line"></i>
+                    </a>
+                  </div>
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    <a 
+                      href="https://www.tiktok.com/@snd.rush" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[#F2431E] hover:text-[#E63A1A] transition-colors"
+                      aria-label="TikTok"
+                    >
+                      <i className="ri-tiktok-line"></i>
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

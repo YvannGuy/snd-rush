@@ -92,7 +92,7 @@ export default function PacksSection({ language }: PacksSectionProps) {
         priceParis: "129 € TTC",
         priceHorsParis: "129 € TTC",
         featured: true,
-        image: "/conference.jpg",
+        image: "/packM.png",
         features: [
           "2 enceintes Mac Mah AS 115",
           "1 console HPA Promix 8",
@@ -110,7 +110,7 @@ export default function PacksSection({ language }: PacksSectionProps) {
         priceParis: "179 € TTC",
         priceHorsParis: "179 € TTC",
         featured: false,
-        image: "/mariage.jpg",
+        image: "/packL.png",
         features: [
           "2 enceintes FBT X-Lite 115A",
           "1 caisson X-Sub 118SA",
@@ -148,7 +148,7 @@ export default function PacksSection({ language }: PacksSectionProps) {
         priceParis: "109 € TTC",
         priceHorsParis: "109 € TTC",
         featured: false,
-        image: "/dance.jpg",
+        image: "/packs.png",
         features: [
           "1 enceinte Mac Mah AS 115",
           "1 console de mixage",
@@ -168,7 +168,7 @@ export default function PacksSection({ language }: PacksSectionProps) {
         priceParis: "129 € TTC",
         priceHorsParis: "129 € TTC",
         featured: true,
-        image: "/conference.jpg",
+        image: "/packM.png",
         features: [
           "2 Mac Mah AS 115 speakers",
           "1 HPA Promix 8 console",
@@ -186,7 +186,7 @@ export default function PacksSection({ language }: PacksSectionProps) {
         priceParis: "179 € TTC",
         priceHorsParis: "179 € TTC",
         featured: false,
-        image: "/mariage.jpg",
+        image: "/packL.png",
         features: [
           "2 FBT X-Lite 115A speakers",
           "1 X-Sub 118SA subwoofer",
@@ -224,7 +224,7 @@ export default function PacksSection({ language }: PacksSectionProps) {
         priceParis: "À partir de 450 € TTC",
         priceHorsParis: "530 € TTC",
         featured: false,
-        image: "/dance.jpg",
+        image: "/packs.png",
         features: [
           "Festive and energetic sound system",
           "Ambient music and DJ",
@@ -314,6 +314,14 @@ export default function PacksSection({ language }: PacksSectionProps) {
 
           <div ref={listRef} className="flex gap-6 sm:gap-8 lg:gap-12 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 scrollbar-hide" style={{ scrollBehavior: 'smooth', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {(() => {
+              // Mapping des images par ID de pack pour correspondre à la page pack
+              const packImageMap: Record<number, string> = {
+                1: '/packs.png',    // Pack S Petit
+                2: '/packM.png',    // Pack M Confort
+                3: '/packL.png',    // Pack L Grand
+                5: '/concert.jpg',   // Pack Custom/XL Maxi
+              };
+
               // Si on charge depuis Supabase et qu'on a des données, les utiliser
               if (!loadingPacks && packsFromSupabase.length > 0) {
                 return packsFromSupabase.map((pack: any) => {
@@ -337,7 +345,7 @@ export default function PacksSection({ language }: PacksSectionProps) {
                     priceParis: pack.prix_base_ttc ? `${pack.prix_base_ttc} € TTC` : 'Sur devis',
                     priceHorsParis: pack.prix_base_ttc ? `${pack.prix_base_ttc} € TTC` : 'Sur devis',
                     featured: pack.featured || false,
-                    image: pack.image_url || pack.image || '/conference.jpg',
+                    image: packImageMap[pack.id] || pack.image_url || pack.image || '/conference.jpg',
                     features: features.length > 0 ? features : [pack.description_courte || ''],
                     highlight: pack.caution ? `Caution : ${pack.caution} €` : '',
                     ideal: pack.capacite || pack.ideal || '',

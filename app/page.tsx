@@ -15,7 +15,6 @@ import TrustedBySection from '@/components/TrustedBySection';
 import TrustindexReviews from '@/components/TrustindexReviews';
 import FaqInteractive from '@/components/FaqInteractive';
 import TutosSection from '@/components/TutosSection';
-import NewsletterBanner from '@/components/NewsletterBanner';
 import Footer from '@/components/Footer';
 import SectionAnimation from '@/components/SectionAnimation';
 import ReservationModal from '@/components/ReservationModal';
@@ -190,9 +189,6 @@ export default function Home() {
         <SectionAnimation delay={0.55}>
           <TutosSection language={language} />
         </SectionAnimation>
-
-        {/* Bandeau Newsletter */}
-        <NewsletterBanner language={language} />
 
         {/* Section Questions Fréquentes */}
         <SectionAnimation delay={0.6}>
