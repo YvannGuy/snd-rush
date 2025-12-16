@@ -1592,6 +1592,49 @@ export default function ProductDetailPage() {
             </div>
           )}
 
+          {/* Caractéristiques techniques pour produits DJ */}
+          {product && (product.category === 'dj' || product.specs?.controle_dj) && (
+            <div className="bg-gray-50 py-12">
+              <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.specs}</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-xl p-4 text-center">
+                    <div className="text-3xl mb-2">🔊</div>
+                    <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Puissance RMS' : 'RMS Power'}</p>
+                    <p className="text-lg font-bold text-black">
+                      {product.specs?.puissance || product.specs?.power_rms || product.specs?.power || '—'}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 text-center">
+                    <div className="text-3xl mb-2">📦</div>
+                    <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Poids' : 'Weight'}</p>
+                    <p className="text-lg font-bold text-black">
+                      {product.specs?.poids || product.specs?.weight || '—'}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 text-center">
+                    <div className="text-3xl mb-2">📐</div>
+                    <p className="text-sm font-semibold text-gray-700">{language === 'fr' ? 'Dimensions' : 'Dimensions'}</p>
+                    <p className="text-lg font-bold text-black">
+                      {product.specs?.dimensions || product.specs?.size || '—'}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 text-center">
+                    <div className="text-3xl mb-2">📶</div>
+                    <p className="text-sm font-semibold text-gray-700">Bluetooth</p>
+                    <p className="text-lg font-bold text-black">
+                      {product.specs?.bluetooth === true || product.specs?.bluetooth === 'true' 
+                        ? (language === 'fr' ? 'Oui' : 'Yes')
+                        : product.specs?.bluetooth === false || product.specs?.bluetooth === 'false'
+                        ? (language === 'fr' ? 'Non' : 'No')
+                        : '—'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Vous pourriez en avoir besoin */}
           {recommendedProducts.length > 0 && (
             <div className="bg-white py-12">

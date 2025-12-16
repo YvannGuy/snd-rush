@@ -259,7 +259,7 @@ export function getPacksInfo(): PackInfo[] {
         '1 console de mixage',
       ],
       capacity: { min: 30, max: 70 },
-      deposit: 700, // Caution Pack S
+      deposit: 900, // Caution Pack S
     },
     {
       id: 'pack_confort',
@@ -270,7 +270,7 @@ export function getPacksInfo(): PackInfo[] {
         '1 console HPA Promix 8',
       ],
       capacity: { min: 70, max: 150 },
-      deposit: 1100, // Caution Pack M
+      deposit: 1300, // Caution Pack M
     },
     {
       id: 'pack_grand',
@@ -282,7 +282,7 @@ export function getPacksInfo(): PackInfo[] {
         '1 console HPA Promix 16',
       ],
       capacity: { min: 150, max: 250 },
-      deposit: 1600, // Caution Pack L
+      deposit: 2200, // Caution Pack L
     },
     {
       id: 'pack_maxi',
@@ -296,6 +296,41 @@ export function getPacksInfo(): PackInfo[] {
       ],
       capacity: { min: 300, max: 999 },
       deposit: 0, // Caution selon devis pour Pack XL
+    },
+    {
+      id: 'pack_dj_essentiel',
+      name: 'Pack DJ Essentiel',
+      basePrice: 109,
+      composition: [
+        '1 enceinte Mac Mah AS 115',
+        '1 console de mixage',
+        '1 console DJ Pioneer',
+      ],
+      capacity: { min: 30, max: 70 },
+      deposit: 700, // Caution Pack DJ Essentiel
+    },
+    {
+      id: 'pack_dj_performance',
+      name: 'Pack DJ Performance',
+      basePrice: 159,
+      composition: [
+        '2 enceintes FBT sur pied',
+        '1 console DJ Pioneer',
+      ],
+      capacity: { min: 50, max: 100 },
+      deposit: 1100, // Caution Pack DJ Performance
+    },
+    {
+      id: 'pack_dj_premium',
+      name: 'Pack DJ Premium',
+      basePrice: 219,
+      composition: [
+        '2 enceintes FBT sur pied',
+        '1 caisson de basses',
+        '1 console DJ Pioneer',
+      ],
+      capacity: { min: 80, max: 150 },
+      deposit: 1600, // Caution Pack DJ Premium
     },
   ];
 }

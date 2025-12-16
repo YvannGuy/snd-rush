@@ -68,16 +68,54 @@ export default function AllPacksPage() {
         },
         {
           id: 5,
-          name: 'Pack XL Maxi / Sur mesure',
-          price: 'Sur devis',
-          capacity: 'Plus de 300 personnes',
+          name: 'Pack Custom',
+          price: 'Sur mesure',
+          capacity: 'Composez votre pack sur mesure',
           includes: [
-            'Sonorisation pro',
-            'Micros HF & instruments',
-            'Technicien & régie',
-            'Logistique complète'
+            'Sélectionnez uniquement ce dont vous avez besoin',
+            'Matériel adapté à votre événement',
+            'Devis personnalisé selon vos besoins',
+            'Accompagnement de A à Z'
           ],
           image: '/concert.jpg'
+        },
+        {
+          id: 6,
+          name: 'Pack DJ Essentiel',
+          price: '109€ /jour',
+          capacity: 'Pour 30 à 70 personnes',
+          includes: [
+            '1 enceinte Mac Mah AS 115',
+            '1 console de mixage',
+            '1 console DJ Pioneer',
+            'Options : micros, câbles, installation, livraison'
+          ],
+          image: '/packdjs.png'
+        },
+        {
+          id: 7,
+          name: 'Pack DJ Performance',
+          price: '159€ /jour',
+          capacity: 'Pour 50 à 100 personnes',
+          includes: [
+            '2 enceintes FBT sur pied',
+            '1 console DJ Pioneer',
+            'Options : micros, câbles, installation, livraison'
+          ],
+          image: '/packdjM.png'
+        },
+        {
+          id: 8,
+          name: 'Pack DJ Premium',
+          price: '219€ /jour',
+          capacity: 'Pour 80 à 150 personnes',
+          includes: [
+            '2 enceintes FBT sur pied',
+            '1 caisson de basses',
+            '1 console DJ Pioneer',
+            'Options : micros, câbles, installation, livraison'
+          ],
+          image: '/packdjL.png'
         }
       ],
       viewPack: 'Voir ce pack',
@@ -129,16 +167,54 @@ export default function AllPacksPage() {
         },
         {
           id: 5,
-          name: 'Pack XL Maxi / Custom',
-          price: 'On quote',
-          capacity: 'More than 300 people',
+          name: 'Pack Custom',
+          price: 'Custom',
+          capacity: 'Compose your custom pack',
           includes: [
-            'Pro sound system',
-            'Wireless mics & instruments',
-            'Technician & control room',
-            'Complete logistics'
+            'Select only what you need',
+            'Equipment adapted to your event',
+            'Personalized quote according to your needs',
+            'Full support from A to Z'
           ],
           image: '/concert.jpg'
+        },
+        {
+          id: 6,
+          name: 'Pack DJ Essential',
+          price: '109€ /day',
+          capacity: 'For 30 to 70 people',
+          includes: [
+            '1 Mac Mah AS 115 speaker',
+            '1 mixing console',
+            '1 Pioneer DJ console',
+            'Options: mics, cables, installation, delivery'
+          ],
+          image: '/packdjs.png'
+        },
+        {
+          id: 7,
+          name: 'Pack DJ Performance',
+          price: '159€ /day',
+          capacity: 'For 50 to 100 people',
+          includes: [
+            '2 FBT speakers on stands',
+            '1 Pioneer DJ console',
+            'Options: mics, cables, installation, delivery'
+          ],
+          image: '/packdjM.png'
+        },
+        {
+          id: 8,
+          name: 'Pack DJ Premium',
+          price: '219€ /day',
+          capacity: 'For 80 to 150 people',
+          includes: [
+            '2 FBT speakers on stands',
+            '1 subwoofer',
+            '1 Pioneer DJ console',
+            'Options: mics, cables, installation, delivery'
+          ],
+          image: '/packdjL.png'
         }
       ],
       viewPack: 'View this pack',
@@ -219,7 +295,14 @@ export default function AllPacksPage() {
                     </div>
 
                     {/* Button */}
-                    {pack.price === 'Sur devis' || pack.price === 'On quote' ? (
+                    {pack.id === 5 ? (
+                      <Link
+                        href="/catalogue"
+                        className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors text-center mt-auto"
+                      >
+                        {language === 'fr' ? 'Composez votre pack' : 'Compose your pack'}
+                      </Link>
+                    ) : pack.price === 'Sur devis' || pack.price === 'On quote' ? (
                       <button
                         onClick={() => {
                           window.dispatchEvent(new CustomEvent('openAssistantModal'));

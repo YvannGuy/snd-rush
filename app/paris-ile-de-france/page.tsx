@@ -36,7 +36,7 @@ export default function ParisIleDeFrancePage() {
         }
       ],
       cta: 'Réserver maintenant',
-      ctaLink: '/reserver'
+      ctaLink: '/catalogue'
     },
     en: {
       title: 'Paris & Île-de-France',
@@ -65,7 +65,7 @@ export default function ParisIleDeFrancePage() {
         }
       ],
       cta: 'Book now',
-      ctaLink: '/reserver'
+      ctaLink: '/catalogue'
     }
   };
 

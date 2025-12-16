@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { getDeliveryPrice, DELIVERY_AR } from '@/lib/zone-detection';
 import ShareProductButton from '@/components/ShareProductButton';
 import AskAssistantButton from '@/components/AskAssistantButton';
+import PackNavigation from '@/components/packs/PackNavigation';
 
 interface PackDetailContentProps {
   packId: string;
@@ -81,7 +82,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
           "1 console HPA Promix 8",
           "Options : micros, câbles, installation, livraison"
         ],
-        highlight: "Caution : 1100 €",
+        highlight: "Caution : 1300 €",
         ideal: "70 à 150 personnes",
         note: "Parfait pour conférences, fêtes, DJ sets."
       },
@@ -100,28 +101,84 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
           "1 console HPA Promix 16",
           "Options : micros, câbles, installation, livraison"
         ],
-        highlight: "Caution : 1600 €",
+        highlight: "Caution : 2200 €",
         ideal: "150 à 250 personnes",
         note: "Idéal pour concerts, DJ sets, grandes conférences."
       },
       {
         id: 4,
-        name: "Pack XL Maxi / Sur mesure",
-        tagline: "Solution sur mesure pour très grands événements",
-        description: "Pack XL avec sonorisation professionnelle complète pour événements de plus de 300 personnes.",
-        priceParis: "Sur devis",
-        priceHorsParis: "Sur devis",
+        name: "Pack Custom",
+        tagline: "Sur mesure",
+        description: "Composez votre pack sur mesure. Sélectionnez uniquement ce dont vous avez besoin, matériel adapté à votre événement, devis personnalisé.",
+        priceParis: "Sur mesure",
+        priceHorsParis: "Sur mesure",
         featured: false,
-        image: "/packL.png",
+        image: "/concert.jpg",
         features: [
-          "Sonorisation pro",
-          "Micros HF & instruments",
-          "Technicien & régie",
-          "Logistique complète"
+          "Sélectionnez uniquement ce dont vous avez besoin",
+          "Matériel adapté à votre événement",
+          "Devis personnalisé selon vos besoins",
+          "Accompagnement de A à Z"
         ],
         highlight: "Caution : selon devis",
-        ideal: "Plus de 300 personnes",
-        note: "Parfait pour très grands événements, festivals, concerts, événements corporate."
+        ideal: "Composez votre pack sur mesure",
+        note: "Parfait pour tous vos besoins spécifiques."
+      },
+      {
+        id: 6,
+        name: "Pack DJ Essentiel",
+        tagline: "Solution DJ compacte pour petits événements",
+        description: "Pack DJ Essentiel parfait pour les petits événements jusqu'à 70 personnes, avec 1 enceinte Mac Mah AS 115 et console DJ Pioneer.",
+        priceParis: "109 € /jour TTC",
+        priceHorsParis: "109 € /jour TTC",
+        featured: false,
+        image: "/packdjs.png",
+        features: [
+          "1 enceinte Mac Mah AS 115",
+          "1 console de mixage",
+          "1 console DJ Pioneer",
+          "Options : micros, câbles, installation, livraison"
+        ],
+        highlight: "Caution : selon devis",
+        ideal: "30 à 70 personnes",
+        note: "Idéal pour conférences, anniversaires, DJ sets."
+      },
+      {
+        id: 7,
+        name: "Pack DJ Performance",
+        tagline: "Solution DJ complète pour événements moyens",
+        description: "Pack DJ Performance pour événements moyens jusqu'à 100 personnes, avec 2 enceintes FBT sur pied et console DJ Pioneer.",
+        priceParis: "159 € /jour TTC",
+        priceHorsParis: "159 € /jour TTC",
+        featured: false,
+        image: "/packdjM.png",
+        features: [
+          "2 enceintes FBT sur pied",
+          "1 console DJ Pioneer",
+          "Options : micros, câbles, installation, livraison"
+        ],
+        highlight: "Caution : selon devis",
+        ideal: "50 à 100 personnes",
+        note: "Idéal pour mariages, soirées privées, événements associatifs."
+      },
+      {
+        id: 8,
+        name: "Pack DJ Premium",
+        tagline: "Solution DJ professionnelle avec basses renforcées",
+        description: "Pack DJ Premium idéal pour événements jusqu'à 150 personnes, avec 2 enceintes FBT sur pied, 1 caisson de basses et console DJ Pioneer.",
+        priceParis: "219 € /jour TTC",
+        priceHorsParis: "219 € /jour TTC",
+        featured: false,
+        image: "/packdjL.png",
+        features: [
+          "2 enceintes FBT sur pied",
+          "1 caisson de basses",
+          "1 console DJ Pioneer",
+          "Options : micros, câbles, installation, livraison"
+        ],
+        highlight: "Caution : selon devis",
+        ideal: "80 à 150 personnes",
+        note: "Idéal pour soirées dansantes, mariages, événements festifs."
       }
     ],
     en: [
@@ -139,7 +196,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
           "1 mixing console",
           "Options: mics, cables, installation, delivery"
         ],
-        highlight: "Deposit: 700 €",
+        highlight: "Deposit: 900 €",
         ideal: "30 to 70 people",
         note: "Ideal for conferences, weddings, DJ sets."
       },
@@ -157,7 +214,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
           "1 HPA Promix 8 console",
           "Options: mics, cables, installation, delivery"
         ],
-        highlight: "Deposit: 1100 €",
+        highlight: "Deposit: 1300 €",
         ideal: "70 to 150 people",
         note: "Perfect for conferences, parties, DJ sets."
       },
@@ -176,28 +233,84 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
           "1 HPA Promix 16 console",
           "Options: mics, cables, installation, delivery"
         ],
-        highlight: "Deposit: 1600 €",
+        highlight: "Deposit: 2200 €",
         ideal: "150 to 250 people",
         note: "Ideal for concerts, DJ sets, large conferences."
       },
       {
         id: 4,
-        name: "Pack XL Maxi / Custom",
-        tagline: "Custom solution for very large events",
-        description: "Pack XL with complete professional sound system for events with more than 300 people.",
-        priceParis: "On quote",
-        priceHorsParis: "On quote",
+        name: "Pack Custom",
+        tagline: "Custom",
+        description: "Compose your custom pack. Select only what you need, equipment adapted to your event, personalized quote.",
+        priceParis: "Custom",
+        priceHorsParis: "Custom",
         featured: false,
-        image: "/packL.png",
+        image: "/concert.jpg",
         features: [
-          "Pro sound system",
-          "HF mics & instruments",
-          "Technician & control room",
-          "Complete logistics"
+          "Select only what you need",
+          "Equipment adapted to your event",
+          "Personalized quote according to your needs",
+          "Full support from A to Z"
         ],
         highlight: "Deposit: on quote",
-        ideal: "More than 300 people",
-        note: "Perfect for very large events, festivals, concerts, corporate events."
+        ideal: "Compose your custom pack",
+        note: "Perfect for all your specific needs."
+      },
+      {
+        id: 6,
+        name: "Pack DJ Essential",
+        tagline: "Compact DJ solution for small events",
+        description: "Pack DJ Essential perfect for small events up to 70 people, with 1 Mac Mah AS 115 speaker and Pioneer DJ console.",
+        priceParis: "109 € /day TTC",
+        priceHorsParis: "109 € /day TTC",
+        featured: false,
+        image: "/packdjs.png",
+        features: [
+          "1 Mac Mah AS 115 speaker",
+          "1 mixing console",
+          "1 Pioneer DJ console",
+          "Options: mics, cables, installation, delivery"
+        ],
+        highlight: "Deposit: 700 €",
+        ideal: "30 to 70 people",
+        note: "Ideal for conferences, birthdays, DJ sets."
+      },
+      {
+        id: 7,
+        name: "Pack DJ Performance",
+        tagline: "Complete DJ solution for medium events",
+        description: "Pack DJ Performance for medium events up to 100 people, with 2 FBT speakers on stands and Pioneer DJ console.",
+        priceParis: "159 € /day TTC",
+        priceHorsParis: "159 € /day TTC",
+        featured: false,
+        image: "/packdjM.png",
+        features: [
+          "2 FBT speakers on stands",
+          "1 Pioneer DJ console",
+          "Options: mics, cables, installation, delivery"
+        ],
+        highlight: "Deposit: 1100 €",
+        ideal: "50 to 100 people",
+        note: "Ideal for weddings, private parties, association events."
+      },
+      {
+        id: 8,
+        name: "Pack DJ Premium",
+        tagline: "Professional DJ solution with reinforced bass",
+        description: "Pack DJ Premium ideal for events up to 150 people, with 2 FBT speakers on stands, 1 subwoofer and Pioneer DJ console.",
+        priceParis: "219 € /day TTC",
+        priceHorsParis: "219 € /day TTC",
+        featured: false,
+        image: "/packdjL.png",
+        features: [
+          "2 FBT speakers on stands",
+          "1 subwoofer",
+          "1 Pioneer DJ console",
+          "Options: mics, cables, installation, delivery"
+        ],
+        highlight: "Deposit: 1600 €",
+        ideal: "80 to 150 people",
+        note: "Ideal for dance parties, weddings, festive events."
       }
     ]
   };
@@ -670,6 +783,9 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
               <span className="text-gray-900 font-medium">Pack {pack.name}</span>
             </nav>
 
+            {/* Navigation entre packs */}
+            <PackNavigation currentPackId={packId} language={language} />
+
             {/* Tags */}
             {(() => {
               // Fonction pour générer les tags selon le pack
@@ -696,6 +812,21 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                   tags.push({ text: language === 'fr' ? 'Sur mesure' : 'Custom', color: 'bg-purple-100 text-purple-800' });
                   tags.push({ text: language === 'fr' ? '300+ personnes' : '300+ people', color: 'bg-green-100 text-green-800' });
                   tags.push({ text: language === 'fr' ? 'Technicien inclus' : 'Technician included', color: 'bg-blue-100 text-blue-800' });
+                } else if (packId === 6) {
+                  // Pack DJ Essentiel
+                  tags.push({ text: language === 'fr' ? 'DJ' : 'DJ', color: 'bg-blue-100 text-blue-800' });
+                  tags.push({ text: language === 'fr' ? '30-70 personnes' : '30-70 people', color: 'bg-green-100 text-green-800' });
+                  tags.push({ text: language === 'fr' ? 'Essentiel' : 'Essential', color: 'bg-purple-100 text-purple-800' });
+                } else if (packId === 7) {
+                  // Pack DJ Performance
+                  tags.push({ text: language === 'fr' ? 'DJ' : 'DJ', color: 'bg-blue-100 text-blue-800' });
+                  tags.push({ text: language === 'fr' ? '50-100 personnes' : '50-100 people', color: 'bg-green-100 text-green-800' });
+                  tags.push({ text: language === 'fr' ? 'Performance' : 'Performance', color: 'bg-purple-100 text-purple-800' });
+                } else if (packId === 8) {
+                  // Pack DJ Premium
+                  tags.push({ text: language === 'fr' ? 'DJ' : 'DJ', color: 'bg-blue-100 text-blue-800' });
+                  tags.push({ text: language === 'fr' ? '80-150 personnes' : '80-150 people', color: 'bg-green-100 text-green-800' });
+                  tags.push({ text: language === 'fr' ? 'Premium' : 'Premium', color: 'bg-purple-100 text-purple-800' });
                 }
                 
                 return tags;
@@ -1016,6 +1147,9 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                   {pack.id === 2 && (language === 'fr' ? '2× Enceintes Mac Mah AS 115 : 2× 500W RMS (1000W total)' : '2× Mac Mah AS 115 Speakers: 2× 500W RMS (1000W total)')}
                   {pack.id === 3 && (language === 'fr' ? '2× Enceintes FBT X-Lite 115A : 2× (1200W LF + 300W HF). 1× Caisson de basse : 1200W' : '2× FBT X-Lite 115A Speakers: 2× (1200W LF + 300W HF). 1× Subwoofer: 1200W')}
                   {pack.id === 4 && (language === 'fr' ? 'Puissance professionnelle adaptée à vos besoins' : 'Professional power adapted to your needs')}
+                  {pack.id === 6 && (language === 'fr' ? '1 enceinte Mac Mah AS 115 : 500W RMS' : '1 Mac Mah AS 115 speaker: 500W RMS')}
+                  {pack.id === 7 && (language === 'fr' ? '2 enceintes FBT actives : puissance adaptée événements moyens' : '2 active FBT speakers: power adapted for medium events')}
+                  {pack.id === 8 && (language === 'fr' ? '2 enceintes FBT + 1 caisson de basses : son puissant et basses renforcées' : '2 FBT speakers + 1 subwoofer: powerful sound and reinforced bass')}
                 </p>
               </div>
             </div>
@@ -1026,7 +1160,9 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                   {language === 'fr' ? 'Connectiques pro' : 'Pro Connectivity'}
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  {language === 'fr' ? 'XLR, Jack, Bluetooth intégré' : 'XLR, Jack, Integrated Bluetooth'}
+                  {(pack.id === 1 || pack.id === 2 || pack.id === 3 || pack.id === 4) && (language === 'fr' ? 'XLR, Jack, Bluetooth intégré' : 'XLR, Jack, Integrated Bluetooth')}
+                  {pack.id === 6 && (language === 'fr' ? 'XLR, Jack, Bluetooth intégré' : 'XLR, Jack, Integrated Bluetooth')}
+                  {(pack.id === 7 || pack.id === 8) && (language === 'fr' ? 'XLR, RCA, USB (console DJ Pioneer)' : 'XLR, RCA, USB (Pioneer DJ console)')}
                 </p>
               </div>
             </div>
@@ -1039,6 +1175,9 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                     {pack.id === 1 && (language === 'fr' ? 'Idéal pour conférences, mariages, DJ sets' : 'Ideal for conferences, weddings, DJ sets')}
                     {pack.id === 2 && (language === 'fr' ? 'Parfait pour conférences, fêtes, DJ sets' : 'Perfect for conferences, parties, DJ sets')}
                     {pack.id === 3 && (language === 'fr' ? 'Idéal pour concerts, DJ sets, grandes conférences' : 'Ideal for concerts, DJ sets, large conferences')}
+                    {pack.id === 6 && (language === 'fr' ? 'Idéal pour conférences, anniversaires, DJ sets' : 'Ideal for conferences, birthdays, DJ sets')}
+                    {pack.id === 7 && (language === 'fr' ? 'Idéal pour mariages, soirées privées, événements associatifs' : 'Ideal for weddings, private parties, association events')}
+                    {pack.id === 8 && (language === 'fr' ? 'Idéal pour soirées dansantes, mariages, événements festifs' : 'Ideal for dance parties, weddings, festive events')}
                   </p>
                 </div>
               </div>
@@ -1060,6 +1199,9 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                 {pack.id === 2 && '2× 500W RMS'}
                 {pack.id === 3 && (language === 'fr' ? 'Enceintes: 2× (1200W LF + 300W HF). Caisson: 1200W' : 'Speakers: 2× (1200W LF + 300W HF). Sub: 1200W')}
                 {pack.id === 4 && '—'}
+                {pack.id === 6 && '500W RMS'}
+                {pack.id === 7 && (language === 'fr' ? 'Puissance adaptée' : 'Adapted power')}
+                {pack.id === 8 && (language === 'fr' ? 'Son puissant + basses' : 'Powerful sound + bass')}
               </p>
                 </div>
             <div className="bg-white rounded-xl p-4 text-center">

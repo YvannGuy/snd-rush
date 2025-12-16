@@ -112,11 +112,11 @@ export default function ProductNavigation({ currentProduct, language }: ProductN
           return;
         }
 
-        // Filtrer Pioneer XDJ
-        const filtered = (data || []).filter(p => 
-          !p.name.toLowerCase().includes('pioneer') && 
-          !p.name.toLowerCase().includes('xdj')
-        );
+        // Filtrer uniquement Pioneer XDJ (mais permettre DDJ-400)
+        const filtered = (data || []).filter(p => {
+          const nameLower = p.name.toLowerCase();
+          return !nameLower.includes('xdj');
+        });
 
         setProductsInCategory(filtered);
       } catch (err) {
@@ -163,11 +163,11 @@ export default function ProductNavigation({ currentProduct, language }: ProductN
           return;
         }
 
-        // Filtrer Pioneer XDJ
-        const filtered = (data || []).filter(p => 
-          !p.name.toLowerCase().includes('pioneer') && 
-          !p.name.toLowerCase().includes('xdj')
-        );
+        // Filtrer uniquement Pioneer XDJ (mais permettre DDJ-400)
+        const filtered = (data || []).filter(p => {
+          const nameLower = p.name.toLowerCase();
+          return !nameLower.includes('xdj');
+        });
 
         // Rediriger vers le premier produit de la nouvelle catégorie
         if (filtered.length > 0) {

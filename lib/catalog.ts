@@ -22,18 +22,34 @@ export interface CatalogItem {
  */
 export async function getCatalogItemById(id: string): Promise<CatalogItem | null> {
   try {
-    // Si c'est un pack (commence par pack_), chercher dans getPacksInfo() d'abord
-    if (id.startsWith('pack_')) {
+    // Mapping des IDs de packs du catalogue vers les IDs dans getPacksInfo()
+    const packIdMapping: Record<string, string> = {
+      'pack-1': 'pack_petit',
+      'pack-2': 'pack_confort',
+      'pack-3': 'pack_grand',
+      'pack-5': 'pack_maxi',
+      'pack-6': 'pack_dj_essentiel',
+      'pack-7': 'pack_dj_performance',
+      'pack-8': 'pack_dj_premium',
+    };
+    
+    // Si c'est un pack (commence par pack- ou pack_), chercher dans getPacksInfo() d'abord
+    if (id.startsWith('pack-') || id.startsWith('pack_')) {
       const packs = getPacksInfo();
-      const pack = packs.find(p => p.id === id);
+      // Convertir l'ID du catalogue vers l'ID dans getPacksInfo()
+      const mappedId = packIdMapping[id] || id.replace('pack-', 'pack_');
+      const pack = packs.find(p => p.id === mappedId);
       
       if (pack) {
+        // Déterminer la catégorie selon le type de pack
+        const category = pack.id.includes('dj') ? 'dj' : 'packs';
+        
         return {
           id: pack.id,
           name: pack.name,
           unitPriceEur: pack.basePrice || 0,
           billingUnit: 'event',
-          category: 'packs',
+          category: category,
           description: `Pack pour ${pack.capacity.min}-${pack.capacity.max} personnes. Composition: ${pack.composition.join(', ')}`,
           deposit: pack.deposit || 0, // Caution du pack
           slug: pack.id,

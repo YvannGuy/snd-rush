@@ -55,16 +55,32 @@ export async function applyFinalConfigToCart(
         // Récupérer les infos du pack pour l'image et la caution
         const { getPacksInfo } = await import('./assistant-products');
         const packs = getPacksInfo();
-        const packInfo = packs.find(p => p.id === selection.catalogId);
+        
+        // Mapping des IDs de packs du catalogue vers les IDs dans getPacksInfo()
+        const packIdMapping: Record<string, string> = {
+          'pack-1': 'pack_petit',
+          'pack-2': 'pack_confort',
+          'pack-3': 'pack_grand',
+          'pack-5': 'pack_maxi',
+          'pack-6': 'pack_dj_essentiel',
+          'pack-7': 'pack_dj_performance',
+          'pack-8': 'pack_dj_premium',
+        };
+        
+        const mappedPackId = packIdMapping[selection.catalogId] || selection.catalogId.replace('pack-', 'pack_');
+        const packInfo = packs.find(p => p.id === mappedPackId);
         
         // Mapping des images des packs (GARANTI - toujours une image)
         const packImages: Record<string, string> = {
           'pack_petit': '/packs.png',
           'pack_confort': '/packM.png',
           'pack_grand': '/packL.png',
+          'pack_dj_essentiel': '/packdjs.png',
+          'pack_dj_performance': '/packdjM.png',
+          'pack_dj_premium': '/packdjL.png',
         };
         
-        const packImage = packImages[selection.catalogId] || '/logo.svg'; // Fallback si pack non mappé
+        const packImage = packImages[mappedPackId] || packImages[selection.catalogId] || '/logo.svg'; // Fallback si pack non mappé
         
         // Récupérer la caution du pack
         const packDeposit = packInfo?.deposit || catalogItem.deposit || 0;

@@ -100,6 +100,11 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
         'pack-2': 'pack_confort',
         'pack-3': 'pack_grand',
         'pack-5': 'pack_maxi',
+        'pack-6': 'pack_dj_essentiel',
+        'pack-7': 'pack_dj_performance',
+        'pack-8': 'pack_dj_premium',
+        'pack-3': 'pack_grand',
+        'pack-5': 'pack_maxi',
       };
       productId = packMapping[productId] || productId;
       
@@ -110,7 +115,21 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
           'pack_petit': '/packs.png',
           'pack_confort': '/packM.png',
           'pack_grand': '/packL.png',
+          'pack_dj_essentiel': '/packdjs.png',
+          'pack_dj_performance': '/packdjM.png',
+          'pack_dj_premium': '/packdjL.png',
         };
+        
+        // Récupérer la caution depuis getPacksInfo()
+        let packDeposit = 0;
+        try {
+          const { getPacksInfo } = await import('@/lib/assistant-products');
+          const packs = getPacksInfo();
+          const packInfo = packs.find(p => p.id === productId);
+          packDeposit = packInfo?.deposit || 0;
+        } catch (e) {
+          console.error('Erreur récupération caution pack:', e);
+        }
         
         const cartItem: CartItem = {
           productId,
@@ -121,7 +140,7 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
           startDate,
           endDate,
           dailyPrice,
-          deposit: 0, // La caution sera calculée sur les produits du pack
+          deposit: packDeposit,
           addons: [],
           images: packImages[productId] ? [packImages[productId]] : [product.image],
           eventType: 'event',

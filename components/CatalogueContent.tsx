@@ -345,6 +345,36 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         image: '/concert.jpg',
         capacity: '300+',
         usageType: 'event'
+      },
+      {
+        id: 'pack-6',
+        name: 'Pack DJ Essentiel',
+        category: 'dj',
+        description: 'Pour 30 à 70 personnes. 1 enceinte Mac Mah AS 115, 1 console de mixage, 1 console DJ Pioneer',
+        price: '109€/jour',
+        image: '/packdjs.png',
+        capacity: '30-70',
+        usageType: 'dj'
+      },
+      {
+        id: 'pack-7',
+        name: 'Pack DJ Performance',
+        category: 'dj',
+        description: 'Pour 50 à 100 personnes. 2 enceintes FBT sur pied, 1 console DJ Pioneer',
+        price: '159€/jour',
+        image: '/packdjM.png',
+        capacity: '50-100',
+        usageType: 'dj'
+      },
+      {
+        id: 'pack-8',
+        name: 'Pack DJ Premium',
+        category: 'dj',
+        description: 'Pour 80 à 150 personnes. 2 enceintes FBT sur pied, 1 caisson de basses, 1 console DJ Pioneer',
+        price: '219€/jour',
+        image: '/packdjL.png',
+        capacity: '80-150',
+        usageType: 'dj'
       }
     ];
   }
@@ -595,7 +625,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                     {/* Ne pas afficher "Voir le produit" pour le pack XL sur mesure */}
                     {!(product.id === 'pack-5' || product.name.toLowerCase().includes('pack xl') || product.name.toLowerCase().includes('sur mesure')) && (
                       <Link
-                        href={product.category === 'packs' 
+                        href={product.category === 'packs' || (product.category === 'dj' && product.id.toString().startsWith('pack-'))
                           ? `/packs/${product.id.toString().replace('pack-', '')}` 
                           : `/catalogue/${product.slug || product.id}`}
                         className="w-full border-2 border-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center min-h-[44px] flex items-center justify-center"
