@@ -151,8 +151,16 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
           ) : (
             <div className="space-y-3">
               {cart.items.map((item, index) => {
-                const itemTotal = item.dailyPrice * item.quantity * item.rentalDays + 
-                  item.addons.reduce((sum, addon) => sum + addon.price, 0);
+                const addonsTotal = (item.addons && Array.isArray(item.addons))
+                  ? item.addons.reduce((sum, addon) => {
+                      const addonPrice = typeof addon.price === 'number' ? addon.price : 0;
+                      return sum + addonPrice;
+                    }, 0)
+                  : 0;
+                const dailyPrice = typeof item.dailyPrice === 'number' ? item.dailyPrice : 0;
+                const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+                const rentalDays = typeof item.rentalDays === 'number' ? item.rentalDays : 1;
+                const itemTotal = dailyPrice * quantity * rentalDays + addonsTotal;
                 
                 return (
                   <div
@@ -189,7 +197,7 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
                               −
                             </button>
                             <span className="px-2 py-0.5 min-w-[1.5rem] text-center font-semibold text-gray-900">
-                              {item.quantity}
+                              {quantity}
                             </span>
                             <button
                               onClick={() => increaseQuantity(item.productId, item.startDate, item.endDate)}
@@ -200,14 +208,14 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
                             </button>
                           </div>
                         </div>
-                        <p>{item.rentalDays} {language === 'fr' ? 'jours' : 'days'}</p>
-                        {item.addons.length > 0 && (
+                        <p>{rentalDays} {language === 'fr' ? 'jours' : 'days'}</p>
+                        {item.addons && Array.isArray(item.addons) && item.addons.length > 0 && (
                           <p className="text-[#F2431E]">+{item.addons.length} {language === 'fr' ? 'option(s)' : 'option(s)'}</p>
                         )}
                       </div>
                       <div className="mt-1.5 flex items-center justify-between">
                         <span className="font-bold text-black text-xs">
-                          {itemTotal.toFixed(2)}€
+                          {isNaN(itemTotal) ? '0.00' : itemTotal.toFixed(2)}€
                         </span>
                         <button
                           onClick={() => removeFromCart(item.productId, item.startDate, item.endDate)}
@@ -229,7 +237,9 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
           <div className="border-t border-gray-200 p-4 space-y-3 flex-shrink-0">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-gray-700 text-sm">{currentTexts.subtotal}</span>
-              <span className="text-lg font-bold text-black">{cart.total.toFixed(2)}€</span>
+              <span className="text-lg font-bold text-black">
+                {isNaN(cart.total) ? '0.00' : cart.total.toFixed(2)}€
+              </span>
             </div>
             
             <div className="space-y-2">

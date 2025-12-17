@@ -457,7 +457,9 @@ export default function CartPage() {
       // Préparer les items pour Stripe (format requis)
       const items = cart.items.map(item => {
         const itemTotal = item.dailyPrice * item.quantity * item.rentalDays;
-        const addonsTotal = item.addons.reduce((sum, addon) => sum + addon.price, 0);
+        const addonsTotal = (item.addons && Array.isArray(item.addons))
+          ? item.addons.reduce((sum, addon) => sum + addon.price, 0)
+          : 0;
         // La majoration d'urgence devrait être incluse dans dailyPrice, mais on ajoute pour compatibilité
         const urgencySurcharge = item.metadata?.urgencySurcharge || 0;
         return {
@@ -654,7 +656,9 @@ export default function CartPage() {
               {cart.items.map((item, index) => {
                 // Calculer le total de l'item avec majoration d'urgence si présente
                 const baseItemTotal = item.dailyPrice * item.quantity * item.rentalDays;
-                const addonsTotal = item.addons.reduce((sum, addon) => sum + addon.price, 0);
+                const addonsTotal = (item.addons && Array.isArray(item.addons))
+                  ? item.addons.reduce((sum, addon) => sum + addon.price, 0)
+                  : 0;
                 // La majoration d'urgence devrait être incluse dans dailyPrice, mais on ajoute pour compatibilité
                 const urgencySurcharge = item.metadata?.urgencySurcharge || 0;
                 const itemTotal = baseItemTotal + addonsTotal + urgencySurcharge;
@@ -777,7 +781,7 @@ export default function CartPage() {
                             </div>
                           </div>
                           
-                          {item.addons.length > 0 && (
+                          {item.addons && Array.isArray(item.addons) && item.addons.length > 0 && (
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-sm text-gray-600">{currentTexts.options}:</span>
                                 {item.addons.map((addon) => (
@@ -1035,7 +1039,9 @@ export default function CartPage() {
                     );
                     const materialTotal = materialItems.reduce((sum, item) => {
                       const itemTotal = item.dailyPrice * item.quantity * item.rentalDays;
-                      const addonsTotal = item.addons.reduce((addonSum, addon) => addonSum + addon.price, 0);
+                      const addonsTotal = (item.addons && Array.isArray(item.addons))
+                        ? item.addons.reduce((addonSum, addon) => addonSum + addon.price, 0)
+                        : 0;
                       const urgencySurcharge = item.metadata?.urgencySurcharge || 0;
                       return sum + itemTotal + addonsTotal + urgencySurcharge;
                     }, 0);

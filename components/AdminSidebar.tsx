@@ -22,6 +22,7 @@ interface AdminSidebarProps {
     deliveriesInProgress?: number;
     pendingCancellations?: number;
     pendingModifications?: number;
+    pendingProRequests?: number;
   };
 }
 
@@ -37,6 +38,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
     deliveriesInProgress: 0,
     pendingCancellations: 0,
     pendingModifications: 0,
+    pendingProRequests: 0,
   });
 
   const texts = {
@@ -48,6 +50,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
       packs: 'Packs',
       planning: 'Planning & Disponibilités',
       clients: 'Clients',
+      proAccess: 'Accès Pro',
       invoices: 'Factures',
       contracts: 'Contrats',
       deliveries: 'Livraisons',
@@ -65,6 +68,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
       packs: 'Packs',
       planning: 'Planning & Availabilities',
       clients: 'Clients',
+      proAccess: 'Pro Access',
       invoices: 'Invoices',
       contracts: 'Contracts',
       deliveries: 'Deliveries',
@@ -195,6 +199,18 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           (r) => !viewedModifications.includes(r.id)
         ).length;
 
+        // Charger le nombre de demandes pro en attente
+        let pendingProRequests = 0;
+        try {
+          const response = await fetch('/api/admin/pro-requests');
+          if (response.ok) {
+            const data = await response.json();
+            pendingProRequests = (data.requests || []).filter((r: any) => r.pro_status === 'pending').length;
+          }
+        } catch (error) {
+          // Erreur silencieuse
+        }
+
         setLocalPendingActions({
           pendingReservations,
           contractsToSign,
@@ -202,6 +218,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           deliveriesInProgress,
           pendingCancellations,
           pendingModifications,
+          pendingProRequests,
         });
       } catch (error) {
         // Erreur silencieuse
@@ -400,6 +417,33 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           {!isCollapsed && <span>{currentTexts.clients}</span>}
+        </Link>
+        <Link
+          href="/admin/pro"
+          onClick={onClose}
+          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
+            isActive('/admin/pro')
+              ? 'bg-[#F2431E] text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+          title={isCollapsed ? currentTexts.proAccess : undefined}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.proAccess}</span>
+          )}
+          {((localPendingActions.pendingProRequests ?? 0) + (propsPendingActions?.pendingProRequests ?? 0)) > 0 && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {(localPendingActions.pendingProRequests ?? 0) + (propsPendingActions?.pendingProRequests ?? 0)}
+            </span>
+          )}
+          {isCollapsed && (
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              {currentTexts.proAccess}
+            </div>
+          )}
         </Link>
         <Link
           href="/admin/factures"

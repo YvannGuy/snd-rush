@@ -312,18 +312,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const calculateTotals = (items: CartItem[]): { total: number; depositTotal: number } => {
     const total = items.reduce((sum, item) => {
-      const itemTotal = item.dailyPrice * item.quantity * item.rentalDays;
-      const addonsTotal = item.addons.reduce((addonSum, addon) => addonSum + addon.price, 0);
+      const dailyPrice = typeof item.dailyPrice === 'number' ? item.dailyPrice : 0;
+      const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+      const rentalDays = typeof item.rentalDays === 'number' ? item.rentalDays : 1;
+      const itemTotal = dailyPrice * quantity * rentalDays;
+      
+      const addonsTotal = (item.addons && Array.isArray(item.addons))
+        ? item.addons.reduce((addonSum, addon) => {
+            const addonPrice = typeof addon.price === 'number' ? addon.price : 0;
+            return addonSum + addonPrice;
+          }, 0)
+        : 0;
       
       // Ajouter la majoration d'urgence si présente (pour compatibilité avec anciens items)
       // Note: La majoration devrait maintenant être incluse dans dailyPrice, mais on garde cette logique pour les anciens items
-      const urgencySurcharge = item.metadata?.urgencySurcharge || 0;
+      const urgencySurcharge = typeof item.metadata?.urgencySurcharge === 'number' 
+        ? item.metadata.urgencySurcharge 
+        : 0;
       
       return sum + itemTotal + addonsTotal + urgencySurcharge;
     }, 0);
 
     const depositTotal = items.reduce((sum, item) => {
-      return sum + item.deposit * item.quantity;
+      const deposit = typeof item.deposit === 'number' ? item.deposit : 0;
+      const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+      return sum + deposit * quantity;
     }, 0);
 
     return { total, depositTotal };
@@ -336,10 +349,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
       cartClearedRef.current = false;
     }
 
+    // Normaliser les valeurs pour éviter NaN
+    const normalizedItem: CartItem = {
+      ...item,
+      dailyPrice: typeof item.dailyPrice === 'number' && !isNaN(item.dailyPrice) ? item.dailyPrice : 0,
+      quantity: typeof item.quantity === 'number' && !isNaN(item.quantity) && item.quantity > 0 ? item.quantity : 1,
+      rentalDays: typeof item.rentalDays === 'number' && !isNaN(item.rentalDays) && item.rentalDays > 0 ? item.rentalDays : 1,
+      deposit: typeof item.deposit === 'number' && !isNaN(item.deposit) ? item.deposit : 0,
+      addons: Array.isArray(item.addons) ? item.addons.map(addon => ({
+        ...addon,
+        price: typeof addon.price === 'number' && !isNaN(addon.price) ? addon.price : 0,
+      })) : [],
+    };
+
     setCart((prevCart) => {
       // Vérifier si le produit existe déjà dans le panier
       const existingIndex = prevCart.items.findIndex(
-        (i) => i.productId === item.productId && i.startDate === item.startDate && i.endDate === item.endDate
+        (i) => i.productId === normalizedItem.productId && i.startDate === normalizedItem.startDate && i.endDate === normalizedItem.endDate
       );
 
       let newItems: CartItem[];
@@ -348,13 +374,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existingIndex >= 0) {
         // Mettre à jour la quantité si le produit existe déjà
         newItems = [...prevCart.items];
+        const existingQuantity = typeof newItems[existingIndex].quantity === 'number' && !isNaN(newItems[existingIndex].quantity) 
+          ? newItems[existingIndex].quantity 
+          : 1;
         newItems[existingIndex] = {
           ...newItems[existingIndex],
-          quantity: newItems[existingIndex].quantity + item.quantity,
+          quantity: existingQuantity + normalizedItem.quantity,
         };
       } else {
         // Ajouter un nouvel item
-        newItems = [...prevCart.items, item];
+        newItems = [...prevCart.items, normalizedItem];
       }
 
       const { total, depositTotal } = calculateTotals(newItems);

@@ -8,6 +8,7 @@ import { useCart } from '@/contexts/CartContext';
 import MiniCart from '@/components/cart/MiniCart';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
+import { usePro } from '@/hooks/usePro';
 import SignModal from '@/components/auth/SignModal';
 import UserIconWithName from '@/components/UserIconWithName';
 import { supabase } from '@/lib/supabase';
@@ -44,8 +45,15 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   const [cartCount, setCartCount] = useState(0);
   const { user } = useUser();
   const { signOut } = useAuth();
+  const { isPro } = usePro();
   const [userFirstName, setUserFirstName] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  
+  // Vérifier si on est dans l'espace pro
+  const isProPage = pathname?.startsWith('/pro');
+  
+  // Afficher le minicart uniquement si pro active ET dans /pro/*
+  const shouldShowMiniCart = isPro && isProPage;
 
   // Synchroniser le compteur avec le panier en temps réel
   useEffect(() => {
@@ -325,6 +333,22 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               >
                 {texts[language].commentCaMarche}
               </Link>
+              {/* Lien Catalogue Pro - Affiché uniquement si pro active */}
+              {isPro ? (
+                <Link 
+                  href="/pro/catalogue"
+                  className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
+                >
+                  {texts[language].cataloguePro}
+                </Link>
+              ) : (
+                <Link 
+                  href="/pro"
+                  className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
+                >
+                  Pro
+                </Link>
+              )}
             </nav>
 
             {/* CTA Buttons */}
@@ -435,7 +459,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                     aria-label="Se connecter"
                   >
                     <User className="h-5 w-5" />
-                    <span className="font-semibold text-sm">Pro</span>
+                    <span className="font-semibold text-sm">{language === 'fr' ? 'Connexion' : 'Sign in'}</span>
                   </Button>
                 )}
               </div>
@@ -443,27 +467,31 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               {/* Séparateur vertical */}
               <div className="hidden lg:block w-px h-6 bg-white/20" />
 
-              {/* Panier - Desktop only */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMiniCartOpen(true)}
-                className="hidden lg:flex relative text-white hover:text-[#F2431E] hover:bg-white/10"
-                aria-label="Panier"
-              >
-                <ShoppingCart className="h-6 w-6" />
-                {cartCount > 0 && (
-                  <Badge 
-                    variant="default" 
-                    className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center p-0 animate-pulse"
+              {/* Panier - Desktop only - Affiché uniquement si pro active ET dans /pro/* */}
+              {shouldShowMiniCart && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsMiniCartOpen(true)}
+                    className="hidden lg:flex relative text-white hover:text-[#F2431E] hover:bg-white/10"
+                    aria-label="Panier"
                   >
-                    {cartCount > 9 ? '9+' : cartCount}
-                  </Badge>
-                )}
-              </Button>
-              
-              {/* Séparateur vertical */}
-              <div className="hidden lg:block w-px h-6 bg-white/20" />
+                    <ShoppingCart className="h-6 w-6" />
+                    {cartCount > 0 && (
+                      <Badge 
+                        variant="default" 
+                        className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center p-0 animate-pulse"
+                      >
+                        {cartCount > 9 ? '9+' : cartCount}
+                      </Badge>
+                    )}
+                  </Button>
+                  
+                  {/* Séparateur vertical */}
+                  <div className="hidden lg:block w-px h-6 bg-white/20" />
+                </>
+              )}
               
               {/* Language switcher - Desktop only */}
               <DropdownMenu>
@@ -519,27 +547,31 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 {/* Séparateur vertical mobile */}
                 <div className="w-px h-6 bg-white/20 mx-1" />
                 
-                {/* Panier Mobile */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsMiniCartOpen(true)}
-                  className="relative text-white flex-shrink-0"
-                  aria-label="Panier"
-                >
-                  <ShoppingCart className="h-6 w-6" />
-                  {cartCount > 0 && (
-                    <Badge 
-                      variant="default" 
-                      className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center p-0"
+                {/* Panier Mobile - Affiché uniquement si pro active ET dans /pro/* */}
+                {shouldShowMiniCart && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsMiniCartOpen(true)}
+                      className="relative text-white flex-shrink-0"
+                      aria-label="Panier"
                     >
-                      {cartCount > 9 ? '9+' : cartCount}
-                    </Badge>
-                  )}
-                </Button>
-                
-                {/* Séparateur vertical mobile */}
-                <div className="w-px h-6 bg-white/20 mx-1" />
+                      <ShoppingCart className="h-6 w-6" />
+                      {cartCount > 0 && (
+                        <Badge 
+                          variant="default" 
+                          className="absolute -top-1 -right-1 bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center p-0"
+                        >
+                          {cartCount > 9 ? '9+' : cartCount}
+                        </Badge>
+                      )}
+                    </Button>
+                    
+                    {/* Séparateur vertical mobile */}
+                    <div className="w-px h-6 bg-white/20 mx-1" />
+                  </>
+                )}
                 
                 {/* Auth Icon - Mobile - Version compacte */}
                 {user ? (
@@ -731,6 +763,24 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               >
                 {texts[language].commentCaMarche}
               </Link>
+              {/* Lien Catalogue Pro - Affiché uniquement si pro active */}
+              {isPro ? (
+                <Link 
+                  href="/pro/catalogue"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
+                >
+                  {texts[language].cataloguePro}
+                </Link>
+              ) : (
+                <Link 
+                  href="/pro"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
+                >
+                  Pro
+                </Link>
+              )}
             </div>
 
             {/* Language switcher for mobile */}
@@ -771,12 +821,14 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       </div>
 
 
-      {/* Mini Cart */}
-      <MiniCart
-        isOpen={isMiniCartOpen}
-        onClose={() => setIsMiniCartOpen(false)}
-        language={language}
-      />
+      {/* Mini Cart - Affiché uniquement si pro active ET dans /pro/* */}
+      {shouldShowMiniCart && (
+        <MiniCart
+          isOpen={isMiniCartOpen}
+          onClose={() => setIsMiniCartOpen(false)}
+          language={language}
+        />
+      )}
 
       {/* Sign Modal */}
       <SignModal
