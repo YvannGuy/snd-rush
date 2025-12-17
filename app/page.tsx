@@ -201,7 +201,7 @@ export default function Home() {
 
         {/* Section Témoignages Clients */}
         <SectionAnimation delay={0.5}>
-          <TrustindexReviews />
+          <TrustindexReviews language={language} />
         </SectionAnimation>
 
         {/* Section FAQ Scénarios */}

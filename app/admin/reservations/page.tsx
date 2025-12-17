@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { getReservationStatusUI } from '@/lib/reservationStatus';
-import { CheckCircle2, XCircle, AlertCircle, Calendar, MapPin, ChevronRight, Search, X } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Calendar, MapPin, ChevronRight, Search, X, Clock } from 'lucide-react';
 
 export default function AdminReservationsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -489,6 +489,24 @@ useEffect(() => {
                                   <div className="flex items-center gap-2 text-gray-600 mb-2">
                                     <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                     <span className="text-sm truncate">{reservation.address}</span>
+                                  </div>
+                                )}
+                                
+                                {/* Heures de retrait et retour (si retrait sur place) */}
+                                {reservation.pickup_time && reservation.return_time && (
+                                  <div className="flex items-center gap-4 text-gray-600 mb-2 text-sm">
+                                    <div className="flex items-center gap-1.5">
+                                      <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                      <span className="text-gray-600">
+                                        {language === 'fr' ? 'Retrait' : 'Pickup'}: <span className="font-semibold text-gray-900">{reservation.pickup_time}</span>
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                      <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                      <span className="text-gray-600">
+                                        {language === 'fr' ? 'Retour' : 'Return'}: <span className="font-semibold text-gray-900">{reservation.return_time}</span>
+                                      </span>
+                                    </div>
                                   </div>
                                 )}
                                 

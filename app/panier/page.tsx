@@ -521,7 +521,9 @@ export default function CartPage() {
       }
     } catch (error: any) {
       console.error('Erreur checkout:', error);
-      const errorMessage = error.message || (language === 'fr' 
+      
+      // Message d'erreur plus clair pour l'utilisateur
+      let errorMessage = error.message || (language === 'fr' 
         ? 'Erreur lors du paiement. Veuillez réessayer.' 
         : 'Payment error. Please try again.');
       alert(errorMessage);

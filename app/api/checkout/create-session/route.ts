@@ -17,8 +17,19 @@ export async function POST(req: NextRequest) {
   try {
     // Vérifier les variables d'environnement
     if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('❌ STRIPE_SECRET_KEY manquante dans les variables d\'environnement');
       return NextResponse.json(
-        { success: false, error: 'Configuration Stripe manquante' },
+        { success: false, error: 'Configuration Stripe manquante. Veuillez contacter le support.' },
+        { status: 500 }
+      );
+    }
+
+    // Vérifier que la clé Stripe est valide (commence par sk_test_ ou sk_live_)
+    const stripeKey = process.env.STRIPE_SECRET_KEY.trim();
+    if (!stripeKey.startsWith('sk_test_') && !stripeKey.startsWith('sk_live_')) {
+      console.error('❌ STRIPE_SECRET_KEY invalide (doit commencer par sk_test_ ou sk_live_)');
+      return NextResponse.json(
+        { success: false, error: 'Configuration Stripe invalide. Veuillez contacter le support.' },
         { status: 500 }
       );
     }
@@ -271,6 +282,19 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Erreur création session Stripe:', error);
+    
+    // Gérer spécifiquement les erreurs de clé API Stripe invalide
+    if (error.message?.includes('Invalid API Key') || error.message?.includes('Invalid API key')) {
+      console.error('❌ Clé API Stripe invalide. Vérifiez STRIPE_SECRET_KEY dans les variables d\'environnement.');
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Erreur de configuration du paiement. Veuillez contacter le support technique.' 
+        },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
       { success: false, error: error.message || 'Erreur serveur' },
       { status: 500 }

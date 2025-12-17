@@ -26,7 +26,7 @@ export default function AdminDashboardPage() {
   
   // Stats
   const [stats, setStats] = useState({
-    reservationsToday: 0,
+    upcomingReservations: 0,
     revenueThisMonth: 0,
     equipmentOut: 0,
     totalEquipment: 45,
@@ -34,7 +34,7 @@ export default function AdminDashboardPage() {
   });
 
   // Données
-  const [todayReservations, setTodayReservations] = useState<any[]>([]);
+  const [upcomingReservations, setUpcomingReservations] = useState<any[]>([]);
   const [equipmentStatus, setEquipmentStatus] = useState<any[]>([]);
   const [recentClients, setRecentClients] = useState<any[]>([]);
   const [calendarData, setCalendarData] = useState<any[]>([]);
@@ -61,7 +61,18 @@ export default function AdminDashboardPage() {
   }, [isAdmin, checkingAdmin, user, router]);
 
   useEffect(() => {
-    if (!user || !supabase || !isAdmin) return;
+    if (!user || !supabase) return;
+    // Attendre que la vérification admin soit terminée avant de charger les données
+    if (checkingAdmin) {
+      console.log('⏳ Vérification admin en cours, attente...');
+      return;
+    }
+    
+    // Si l'utilisateur n'est pas admin après vérification, ne pas charger les données
+    if (!isAdmin) {
+      console.log('⚠️ Utilisateur non admin, arrêt du chargement');
+      return;
+    }
 
     const loadAdminData = async () => {
       const supabaseClient = supabase;
@@ -72,19 +83,33 @@ export default function AdminDashboardPage() {
         today.setHours(0, 0, 0, 0);
         const todayStr = today.toISOString().split('T')[0];
 
-        // Calculer le début du mois (1er du mois)
+        // Calculer le début du mois (1er du mois) pour les statistiques de CA
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         startOfMonth.setHours(0, 0, 0, 0);
         const startOfMonthStr = startOfMonth.toISOString().split('T')[0];
+        
+        // Calculer la date dans 30 jours pour les réservations à venir
+        const endDate = new Date(today);
+        endDate.setDate(endDate.getDate() + 30);
+        const endDateStr = endDate.toISOString().split('T')[0];
+
+        console.log('📅 Chargement réservations à venir:', {
+          todayStr,
+          endDateStr,
+          checkingAdmin,
+          isAdmin
+        });
 
         // OPTIMISATION: Exécuter les requêtes en parallèle avec Promise.all
         // OPTIMISATION CRITIQUE: Ne sélectionner QUE les colonnes nécessaires au lieu de '*'
-        // 1. Réservations du mois (limitées à 50 pour les performances)
+        // 1. Réservations à venir (prochaines 30 jours, limitées à 50 pour les performances)
+        // Note: Utiliser start_date pour filtrer les réservations qui commencent dans les prochains 30 jours
         const reservationsPromise = supabaseClient
           .from('reservations')
-          .select('id, status, start_date, end_date, created_at, total_price, customer_name, customer_email, customer_phone, delivery_status, client_signature')
-          .gte('created_at', startOfMonthStr)
-          .order('created_at', { ascending: false })
+          .select('id, status, start_date, end_date, created_at, total_price, customer_name, customer_email, customer_phone, delivery_status, client_signature, pickup_time, return_time, pack_id, notes, user_id')
+          .gte('start_date', todayStr)
+          .lte('start_date', endDateStr)
+          .order('start_date', { ascending: true })
           .limit(50);
 
         // 2. Orders récents uniquement (limité à 100 pour les performances)
@@ -94,11 +119,12 @@ export default function AdminDashboardPage() {
           .order('created_at', { ascending: false })
           .limit(100);
 
-        // 3. Statistiques - Réservations du mois (count uniquement)
+        // 3. Statistiques - Réservations à venir (count uniquement)
         const reservationsCountPromise = supabaseClient
           .from('reservations')
           .select('*', { count: 'exact', head: true })
-          .gte('created_at', startOfMonthStr);
+          .gte('start_date', todayStr)
+          .lte('start_date', endDateStr);
 
         // 4. Statistiques - CA ce mois
         const reservationsRevenuePromise = supabaseClient
@@ -148,14 +174,14 @@ export default function AdminDashboardPage() {
         // Exécuter toutes les requêtes en parallèle
         const [
           { data: reservationsData, error: reservationsError },
-          { data: allOrdersForReservations },
-          { count: reservationsThisMonthCount },
-          { data: reservationsThisMonth },
-          { data: reservationsStartedThisMonth },
-          { data: lateReturns },
-          { data: recentOrders },
-          { data: equipmentData },
-          { data: calendarReservations }
+          { data: allOrdersForReservations, error: ordersError },
+          { count: reservationsThisMonthCount, error: countError },
+          { data: reservationsThisMonth, error: revenueError },
+          { data: reservationsStartedThisMonth, error: equipmentError },
+          { data: lateReturns, error: lateReturnsError },
+          { data: recentOrders, error: recentOrdersError },
+          { data: equipmentData, error: equipmentDataError },
+          { data: calendarReservations, error: calendarError }
         ] = await Promise.all([
           reservationsPromise,
           ordersPromise,
@@ -167,6 +193,14 @@ export default function AdminDashboardPage() {
           equipmentDataPromise,
           calendarReservationsPromise
         ]);
+
+        // Log des erreurs pour débogage
+        if (reservationsError) {
+          console.error('❌ Erreur réservations du mois:', reservationsError);
+        }
+        if (countError) {
+          console.error('❌ Erreur count réservations:', countError);
+        }
 
         // Traitement des données récupérées
         // 1. Associer les orders aux réservations via sessionId dans notes
@@ -205,9 +239,17 @@ export default function AdminDashboardPage() {
         }
 
         if (reservationsError) {
-          console.error('Erreur chargement réservations:', reservationsError);
+          console.error('❌ Erreur chargement réservations:', reservationsError);
         } else {
-          setTodayReservations(reservationsWithOrders || []);
+          console.log('✅ Réservations à venir récupérées:', {
+            count: reservationsWithOrders?.length || 0,
+            reservations: reservationsWithOrders?.slice(0, 3).map(r => ({
+              id: r.id,
+              start_date: r.start_date,
+              status: r.status
+            }))
+          });
+          setUpcomingReservations(reservationsWithOrders || []);
         }
 
         // 2. Calculer le CA du mois
@@ -274,7 +316,7 @@ export default function AdminDashboardPage() {
 
         // Mettre à jour tous les états en une seule fois
         setStats({
-          reservationsToday: reservationsThisMonthCount || 0,
+          upcomingReservations: reservationsThisMonthCount || 0,
           revenueThisMonth: revenueThisMonth,
           equipmentOut: equipmentOut,
           totalEquipment: 45, // Valeur fixe pour l'instant
@@ -291,15 +333,15 @@ export default function AdminDashboardPage() {
     };
 
     loadAdminData();
-  }, [user]);
+  }, [user, checkingAdmin]);
 
   const texts = {
     fr: {
-      reservationsToday: 'Réservations du mois',
+      upcomingReservations: 'Réservations à venir',
       revenueThisMonth: 'CA ce mois',
       equipmentOut: 'Matériel sorti',
       lateReturns: 'Retours en retard',
-      reservationsOfDay: 'Réservations du mois',
+      upcomingReservationsList: 'Prochaines réservations',
       viewAll: 'Voir toutes',
       delivery: 'Livraison',
       installation: 'Installation',
@@ -329,11 +371,11 @@ export default function AdminDashboardPage() {
       signIn: 'Se connecter',
     },
     en: {
-      reservationsToday: 'Reservations this month',
+      upcomingReservations: 'Upcoming reservations',
       revenueThisMonth: 'Revenue this month',
       equipmentOut: 'Equipment out',
       lateReturns: 'Late returns',
-      reservationsOfDay: 'Reservations of the month',
+      upcomingReservationsList: 'Upcoming reservations',
       viewAll: 'View all',
       delivery: 'Delivery',
       installation: 'Installation',
@@ -592,8 +634,8 @@ export default function AdminDashboardPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats.reservationsToday}</div>
-                  <div className="text-sm sm:text-base text-gray-600">{currentTexts.reservationsToday}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats.upcomingReservations}</div>
+                  <div className="text-sm sm:text-base text-gray-600">{currentTexts.upcomingReservations}</div>
                 </div>
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-3 sm:mb-4">
@@ -625,19 +667,23 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-                {/* Réservations du jour */}
+                {/* Réservations à venir */}
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">{currentTexts.reservationsOfDay}</h2>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">{currentTexts.upcomingReservationsList}</h2>
                     <Link href="/admin/reservations" className="text-[#F2431E] font-semibold hover:underline text-xs sm:text-sm">
                       {currentTexts.viewAll}
                     </Link>
                   </div>
                   <div className="space-y-4">
-                    {todayReservations.length === 0 ? (
-                      <p className="text-gray-500 text-center py-8">Aucune réservation aujourd'hui</p>
+                    {upcomingReservations.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">
+                        {language === 'fr' 
+                          ? 'Aucune réservation à venir' 
+                          : 'No upcoming reservations'}
+                      </p>
                     ) : (
-                      todayReservations.slice(0, 3).map((reservation) => {
+                      upcomingReservations.slice(0, 3).map((reservation) => {
                         const order = reservation.order || {};
                         const statusInfo = getStatusText(reservation.status, reservation.end_date);
                         return (
@@ -655,6 +701,12 @@ export default function AdminDashboardPage() {
                               <p className="text-sm text-gray-600">
                                 {currentTexts.delivery} {formatTime(reservation.start_date)} - Paris 11ème
                               </p>
+                              {/* Heures de retrait et retour si retrait sur place */}
+                              {reservation.pickup_time && reservation.return_time && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {language === 'fr' ? 'Retrait' : 'Pickup'}: {reservation.pickup_time} | {language === 'fr' ? 'Retour' : 'Return'}: {reservation.return_time}
+                                </p>
+                              )}
                               <p className="text-sm font-semibold text-gray-900 mt-1">
                                 {order.total || reservation.total_price || 0}€
                               </p>

@@ -38,13 +38,18 @@ export default function AdminPacksPage() {
 useEffect(() => {
     if (!user) return;
 
-    // Utiliser les packs de la homepage (même source que PacksSection)
+    // Utiliser les packs de la homepage (même source que PacksSection et SolutionsSection)
     // Ces packs correspondent à ceux affichés sur la homepage
     const homepagePacks = [
+      // Packs de PacksSection
       { id: 1, nom_pack: 'Pack S Petit', prix_base_ttc: 109, description_courte: 'Solution basique pour petits événements' },
       { id: 2, nom_pack: 'Pack M Confort', prix_base_ttc: 129, description_courte: 'Solution complète pour événements moyens' },
       { id: 3, nom_pack: 'Pack L Grand', prix_base_ttc: 179, description_courte: 'Solution professionnelle pour grands événements' },
-      { id: 5, nom_pack: 'Pack XL Maxi / Sur mesure', prix_base_ttc: null, description_courte: 'Solution sur mesure pour très grands événements' }
+      { id: 5, nom_pack: 'Pack XL Maxi / Sur mesure', prix_base_ttc: null, description_courte: 'Solution sur mesure pour très grands événements' },
+      // Packs de SolutionsSection (clé en main)
+      { id: 101, nom_pack: 'Pack Conférence', prix_base_ttc: 279, description_courte: 'Pour réunions, conférences, prises de parole, cultes et événements institutionnels. Solution clé en main.' },
+      { id: 102, nom_pack: 'Pack Soirée', prix_base_ttc: 329, description_courte: 'Pour soirées privées, anniversaires et événements festifs. Solution clé en main.' },
+      { id: 103, nom_pack: 'Pack Mariage', prix_base_ttc: 449, description_courte: 'Pour mariages, soirées DJ et événements à fort enjeu. Solution clé en main.' }
     ];
 
     // Optionnellement, enrichir avec les données de Supabase si disponibles
