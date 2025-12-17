@@ -216,6 +216,8 @@ export function useAuth() {
 
     try {
       const baseUrl = getBaseUrl();
+      // Rediriger directement vers la page de réinitialisation
+      // La page gérera le hash avec les tokens directement
       const redirectUrl = `${baseUrl}/reinitialiser-mot-de-passe`;
       
       console.log('🔐 Tentative de réinitialisation de mot de passe pour:', email);

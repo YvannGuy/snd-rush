@@ -72,24 +72,33 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Récupérer les notes existantes de la réservation
+    // Récupérer les notes existantes et les heures de retrait/retour de la réservation
     let existingNotes = {};
+    let existingPickupTime = null;
+    let existingReturnTime = null;
     try {
       const { data: existingReservation } = await supabaseAdmin
         .from('reservations')
-        .select('notes')
+        .select('notes, pickup_time, return_time')
         .eq('id', reservationId)
         .single();
       
       if (existingReservation?.notes) {
         existingNotes = JSON.parse(existingReservation.notes);
       }
+      if (existingReservation?.pickup_time) {
+        existingPickupTime = existingReservation.pickup_time;
+      }
+      if (existingReservation?.return_time) {
+        existingReturnTime = existingReservation.return_time;
+      }
     } catch (e) {
-      console.warn('⚠️ Impossible de récupérer les notes existantes:', e);
+      console.warn('⚠️ Impossible de récupérer les données existantes:', e);
     }
 
     // Mettre à jour la réservation pour indiquer que la caution a été autorisée
     // Stocker les infos de caution dans notes (pas de colonnes dédiées)
+    // Préserver les heures de retrait et de retour si elles existent
     const { data: updatedReservation, error: updateError } = await supabaseAdmin
       .from('reservations')
       .update({
@@ -102,6 +111,8 @@ export async function POST(req: NextRequest) {
           depositAuthorizedAt: new Date().toISOString(),
           confirmedViaApi: true, // Indique que la confirmation vient de l'API et non du webhook
         }),
+        pickup_time: existingPickupTime,
+        return_time: existingReturnTime,
       })
       .eq('id', reservationId)
       .select()

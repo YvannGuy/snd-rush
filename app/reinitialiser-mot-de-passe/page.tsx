@@ -17,39 +17,69 @@ function ResetPasswordContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Vérifier si on a un token de réinitialisation dans l'URL
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    const type = hashParams.get('type');
+    // Fonction pour traiter le hash de l'URL
+    const processHash = () => {
+      if (typeof window === 'undefined' || !supabase) return;
 
-    if (accessToken && type === 'recovery') {
-      // Échanger le token pour une session
-      if (supabase) {
-        supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: hashParams.get('refresh_token') || '',
-        }).then(() => {
-          setIsValidToken(true);
-          // Nettoyer le hash de l'URL
-          window.history.replaceState(null, '', window.location.pathname);
-        }).catch((err) => {
-          console.error('Erreur lors de la validation du token:', err);
-          setError('Lien de réinitialisation invalide ou expiré. Veuillez demander un nouveau lien.');
-        });
-      }
-    } else {
-      // Vérifier si l'utilisateur a déjà une session valide (depuis le callback)
-      if (supabase) {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session) {
-            setIsValidToken(true);
-          } else {
+      // Vérifier si on a un token de réinitialisation dans le hash de l'URL
+      const hash = window.location.hash.substring(1);
+      if (hash) {
+        const hashParams = new URLSearchParams(hash);
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
+
+        if (accessToken && type === 'recovery') {
+          // Échanger le token pour une session
+          supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+          }).then(({ data, error: sessionError }) => {
+            if (sessionError) {
+              console.error('Erreur lors de la validation du token:', sessionError);
+              setError('Lien de réinitialisation invalide ou expiré. Veuillez demander un nouveau lien.');
+            } else if (data.session) {
+              setIsValidToken(true);
+              // Nettoyer le hash de l'URL
+              window.history.replaceState(null, '', window.location.pathname);
+            }
+          }).catch((err) => {
+            console.error('Erreur lors de la validation du token:', err);
             setError('Lien de réinitialisation invalide ou expiré. Veuillez demander un nouveau lien.');
-          }
-        });
+          });
+          return; // Sortir si on a traité le hash
+        }
       }
-    }
-  }, [searchParams]);
+
+      // Si pas de hash, vérifier si l'utilisateur a déjà une session valide
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setIsValidToken(true);
+        } else {
+          // Attendre un peu au cas où le hash arrive après le montage
+          setTimeout(() => {
+            const hash = window.location.hash.substring(1);
+            if (!hash) {
+              setError('Lien de réinitialisation invalide ou expiré. Veuillez demander un nouveau lien.');
+            }
+          }, 1000);
+        }
+      });
+    };
+
+    // Traiter immédiatement
+    processHash();
+
+    // Écouter les changements de hash (au cas où)
+    const handleHashChange = () => {
+      processHash();
+    };
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []); // Dépendances vides pour s'exécuter une seule fois au montage
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

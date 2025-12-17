@@ -107,23 +107,32 @@ export async function POST(req: NextRequest) {
               }
             }
 
-            // Récupérer les notes existantes de la réservation
+            // Récupérer les notes existantes et les heures de retrait/retour de la réservation
             let existingNotes = {};
+            let existingPickupTime = null;
+            let existingReturnTime = null;
             try {
               const { data: existingReservation } = await supabaseClient
                 .from('reservations')
-                .select('notes')
+                .select('notes, pickup_time, return_time')
                 .eq('id', reservationId)
                 .single();
               
               if (existingReservation?.notes) {
                 existingNotes = JSON.parse(existingReservation.notes);
               }
+              if (existingReservation?.pickup_time) {
+                existingPickupTime = existingReservation.pickup_time;
+              }
+              if (existingReservation?.return_time) {
+                existingReturnTime = existingReservation.return_time;
+              }
             } catch (e) {
-              console.warn('⚠️ Impossible de récupérer les notes existantes:', e);
+              console.warn('⚠️ Impossible de récupérer les données existantes:', e);
             }
 
             // Mettre à jour la réservation pour indiquer que la caution a été autorisée
+            // Préserver les heures de retrait et de retour si elles existent
             const { data: updatedReservation, error: updateError } = await supabaseClient
               .from('reservations')
               .update({
@@ -137,6 +146,8 @@ export async function POST(req: NextRequest) {
                   depositPaymentIntentId: paymentIntentId,
                   depositAuthorizedAt: new Date().toISOString(),
                 }),
+                pickup_time: existingPickupTime,
+                return_time: existingReturnTime,
               })
               .eq('id', reservationId)
               .select()
@@ -561,17 +572,26 @@ export async function POST(req: NextRequest) {
                 .single();
 
               if (!pendingError && pendingReservation && pendingReservation.status === 'PENDING') {
-                // Récupérer les notes existantes
+                // Récupérer les notes existantes et les heures de retrait/retour
                 let existingNotes = {};
+                let existingPickupTime = null;
+                let existingReturnTime = null;
                 try {
                   if (pendingReservation.notes) {
                     existingNotes = JSON.parse(pendingReservation.notes);
                   }
+                  if (pendingReservation.pickup_time) {
+                    existingPickupTime = pendingReservation.pickup_time;
+                  }
+                  if (pendingReservation.return_time) {
+                    existingReturnTime = pendingReservation.return_time;
+                  }
                 } catch (e) {
-                  console.error('Erreur parsing notes existantes:', e);
+                  console.error('Erreur parsing données existantes:', e);
                 }
 
                 // Mettre à jour avec les données complètes (mais garder le statut PENDING)
+                // Préserver les heures de retrait et de retour si elles existent
                 const updatedNotes = {
                   ...existingNotes,
                   sessionId: session.id,
@@ -592,6 +612,8 @@ export async function POST(req: NextRequest) {
                     stripe_payment_intent_id: paymentIntentId,
                     total_price: (session.amount_total || 0) / 100,
                     notes: JSON.stringify(updatedNotes),
+                    pickup_time: existingPickupTime,
+                    return_time: existingReturnTime,
                   })
                   .eq('id', reservationId);
 
@@ -605,20 +627,25 @@ export async function POST(req: NextRequest) {
           // Aussi mettre à jour les autres réservations existantes en pending si elles existent
           const { data: pendingReservations } = await supabaseClient
             .from('reservations')
-            .select('id')
+            .select('id, pickup_time, return_time')
             .eq('user_id', userId)
             .eq('status', 'PENDING')
             .order('created_at', { ascending: false })
             .limit(10);
 
           if (pendingReservations && pendingReservations.length > 0) {
-            await supabaseClient
-              .from('reservations')
-              .update({
-                status: 'CONFIRMED',
-                stripe_payment_intent_id: paymentIntentId,
-              })
-              .in('id', pendingReservations.map(r => r.id));
+            // Mettre à jour chaque réservation individuellement pour préserver les heures
+            for (const pendingReservation of pendingReservations) {
+              await supabaseClient
+                .from('reservations')
+                .update({
+                  status: 'CONFIRMED',
+                  stripe_payment_intent_id: paymentIntentId,
+                  pickup_time: pendingReservation.pickup_time || null,
+                  return_time: pendingReservation.return_time || null,
+                })
+                .eq('id', pendingReservation.id);
+            }
 
             console.log(`✅ ${pendingReservations.length} réservations en attente mises à jour`);
 

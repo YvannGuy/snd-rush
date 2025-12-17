@@ -47,6 +47,9 @@ export async function POST(
 
     let updateData: any = {
       updated_at: new Date().toISOString(),
+      // Préserver les heures de retrait et de retour si elles existent
+      pickup_time: reservation.pickup_time || null,
+      return_time: reservation.return_time || null,
     };
 
     if (action === 'approve') {
