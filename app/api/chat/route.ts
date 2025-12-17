@@ -3,6 +3,15 @@ import OpenAI from 'openai';
 import { ChatMessage, DraftFinalConfig, ChatIntent } from '@/types/chat';
 import { getScenario } from '@/lib/scenarios';
 import { ScenarioId } from '@/types/scenarios';
+import {
+  buildConversationState,
+  getNextQuestion,
+  buildSystemPreamble,
+  detectGreeting,
+  isNumberOnly,
+  isAckOnly,
+  type ConversationState,
+} from '@/lib/chatState';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -75,29 +84,7 @@ Pour te conseiller le bon pack, dis-moi :
 – et si la soirée est en intérieur ou en extérieur`
 };
 
-/**
- * Détecte si un message est une salutation ou conversation informelle
- */
-function detectGreeting(message: string): boolean {
-  const trimmed = message.trim().toLowerCase();
-  
-  // ❌ NE JAMAIS considérer un message contenant un chiffre comme salutation
-  if (/\d/.test(trimmed)) {
-    return false;
-  }
-  
-  // Patterns de salutation UNIQUEMENT (vraies salutations)
-  const greetingPatterns = [
-    /^(bonjour|salut|hello|hey|hi|coucou|yo|bonsoir|bonne soirée|bonne journée)$/i,
-    /^(bonjour|salut|hello|hey|hi|coucou|yo)\s*(!|\.|,)?$/i,
-    /^ça\s+va(\s*[?\.!])?$/i,
-    /^comment\s+ça\s+va(\s*[?\.!])?$/i,
-    /^comment\s+allez\s+vous(\s*[?\.!])?$/i,
-  ];
-  
-  // Vérifier si le message correspond à un pattern de salutation
-  return greetingPatterns.some(pattern => pattern.test(trimmed));
-}
+// detectGreeting, isNumberOnly, isAckOnly sont maintenant importés depuis lib/chatState.ts
 
 /**
  * Détecte l'intent principal du message utilisateur
@@ -145,10 +132,7 @@ function detectIntent(message: string): string | null {
   if (trimmed.match(/(voix|parole|discours|allocution|clarté)/)) return 'besoin-son-clair-voix';
   
   // 💬 COMPORTEMENTS HUMAINS / COMMERCIAUX
-  // Détecter si c'est uniquement un nombre (peopleCount)
-  if (/^(\d{1,4})$/.test(trimmed.trim())) {
-    return 'provide-number';
-  }
+  // Note: Les nombres et salutations sont gérés séparément maintenant (pas via intent)
   
   if (detectGreeting(message)) return 'salutation-simple';
   if (trimmed.match(/(je cherche|j'aimerais|je voudrais|besoin|infos|renseignements)/) && trimmed.length < 50) return 'demande-aide-floue';
@@ -304,11 +288,7 @@ On a des solutions adaptées pour limiter le volume. C'est pour combien de perso
 C'est pour combien de personnes et quel type d'événement (conférence, discours, allocution) ?`,
 
   // 💬 COMPORTEMENTS
-  'salutation-simple': `Salut 👋
-
-Tu es au bon endroit si tu prépares un événement et que tu as besoin de son, de DJ gear ou d'une solution rapide.
-
-Dis-moi simplement ce que tu organises (type d'événement + nombre de personnes), je m'occupe du reste.`,
+  // 'salutation-simple' supprimé : géré directement via buildConversationState et getNextQuestion
 
   'demande-aide-floue': `Pas de souci, tu n'es clairement pas le seul 🙂
 
@@ -353,16 +333,10 @@ Tu peux appeler directement le 06 51 08 49 94, ou dis-moi ce dont tu as besoin e
 function buildAssistantReply({
   scenarioId,
   userMessage,
-  knownContext,
   isFirstMessage
 }: {
   scenarioId?: string | null;
   userMessage: string;
-  knownContext?: {
-    eventType?: string;
-    peopleCount?: number;
-    indoorOutdoor?: string;
-  };
   isFirstMessage: boolean;
 }): string | null {
   // Si c'est le premier message et qu'on a un scenarioId, utiliser la réponse spécifique
@@ -373,35 +347,7 @@ function buildAssistantReply({
   // Détecter l'intent du message
   const intent = detectIntent(userMessage);
   
-  // Gestion spéciale pour salutation-simple avec contexte connu
-  if (intent === 'salutation-simple') {
-    // Si on a déjà du contexte (conversation engagée), ne pas retourner le message d'accueil
-    const hasContext = knownContext && (
-      knownContext.eventType || 
-      knownContext.peopleCount || 
-      knownContext.indoorOutdoor
-    );
-    
-    if (hasContext) {
-      // Retourner une phrase de continuité + question suivante logique
-      let nextQuestion = '';
-      if (!knownContext.eventType) {
-        nextQuestion = "C'est pour quel type d'événement ?";
-      } else if (!knownContext.peopleCount) {
-        nextQuestion = "Combien de personnes environ ?";
-      } else if (!knownContext.indoorOutdoor) {
-        nextQuestion = "C'est en intérieur ou extérieur ?";
-      } else {
-        nextQuestion = "Quel type d'ambiance souhaites-tu ? Musique d'ambiance ou DJ avec son fort ?";
-      }
-      
-      return `Ok je suis là 🙂 On continue. ${nextQuestion}`;
-    }
-    
-    // Aucun contexte connu = vrai début, autoriser le message d'accueil
-    // Retourner null pour laisser OpenAI générer une réponse humaine
-    return null;
-  }
+  // 'salutation-simple' géré directement dans le handler principal (avant buildAssistantReply)
   
   // Pour les autres intents, utiliser les réponses prédéfinies
   if (intent && intent in INTENT_RESPONSES) {
@@ -1247,27 +1193,7 @@ TU ES UN VENDEUR EXPERT : Tu connais les caractéristiques techniques de chaque 
 
 Le catalogue complet sera fourni dans le message système. Utilise UNIQUEMENT les produits listés avec leurs IDs exacts.`;
 
-/**
- * Détecte si un message est un simple acquiescement sans contexte
- */
-function isAckOnly(text: string): boolean {
-  const trimmed = text.trim().toLowerCase();
-  const ackPatterns = [
-    /^oui$/,
-    /^ok$/,
-    /^d'accord$/,
-    /^dac$/,
-    /^yes$/,
-    /^yep$/,
-    /^parfait$/,
-    /^ça marche$/,
-    /^vas-y$/,
-    /^go$/,
-    /^c'est bon$/,
-    /^okay$/,
-  ];
-  return ackPatterns.some(pattern => pattern.test(trimmed));
-}
+// isAckOnly est maintenant importé depuis lib/chatState.ts
 
 /**
  * Vérifie si l'historique contient un message utilisateur normal (hors welcome/idle)
@@ -1278,70 +1204,7 @@ function hasNormalUserMessage(messages: ChatMessage[]): boolean {
   );
 }
 
-/**
- * Récupère le dernier message utilisateur normal
- */
-function getLastNormalUserMessage(messages: ChatMessage[]): ChatMessage | null {
-  const userMessages = messages.filter(
-    msg => msg.role === 'user' && msg.kind === 'normal'
-  );
-  return userMessages.length > 0 ? userMessages[userMessages.length - 1] : null;
-}
-
-/**
- * Détecte si une conversation est déjà engagée (scénario actif, questions posées, infos collectées)
- */
-function isConversationEngaged(messages: ChatMessage[], scenarioId?: string | null, productContext?: any): boolean {
-  // Si un scénario est actif, la conversation est engagée
-  if (scenarioId) {
-    return true;
-  }
-  
-  // Si un contexte produit est fourni, la conversation est engagée
-  if (productContext && productContext.productName) {
-    return true;
-  }
-  
-  // Vérifier si des informations utiles ont été échangées
-  const assistantMessages = messages.filter(msg => msg.role === 'assistant' && msg.kind === 'normal');
-  const userMessages = messages.filter(msg => msg.role === 'user' && msg.kind === 'normal');
-  
-  // Si l'assistant a déjà posé des questions ou donné des recommandations
-  const hasAssistantQuestions = assistantMessages.some(msg => {
-    const content = msg.content.toLowerCase();
-    return content.includes('combien') ||
-           content.includes('personnes') ||
-           content.includes('intérieur') ||
-           content.includes('extérieur') ||
-           content.includes('type d\'événement') ||
-           content.includes('quel type') ||
-           content.includes('recommand') ||
-           content.includes('pack');
-  });
-  
-  // Si l'utilisateur a donné des informations (nombres, lieux, types d'événements)
-  const hasUserInfo = userMessages.some(msg => {
-    const content = msg.content.toLowerCase();
-    // Détecter des nombres (50, 100, etc.)
-    const hasNumber = /\d+/.test(content);
-    // Détecter des types d'événements
-    const hasEventType = content.includes('mariage') ||
-                         content.includes('anniversaire') ||
-                         content.includes('soirée') ||
-                         content.includes('conférence') ||
-                         content.includes('dj') ||
-                         content.includes('événement');
-    // Détecter intérieur/extérieur
-    const hasLocation = content.includes('intérieur') ||
-                        content.includes('extérieur') ||
-                        content.includes('intérieur') ||
-                        content.includes('extérieur');
-    
-    return hasNumber || hasEventType || hasLocation;
-  });
-  
-  return hasAssistantQuestions || hasUserInfo || assistantMessages.length > 0;
-}
+// isConversationEngaged remplacé par buildConversationState (importé depuis lib/chatState.ts)
 
 export async function POST(req: NextRequest) {
   try {
@@ -1402,36 +1265,7 @@ export async function POST(req: NextRequest) {
     console.log('[API/CHAT] System message présent:', hasSystemMessage);
     console.log('[API/CHAT] Welcome message présent:', hasWelcomeMessage);
 
-    // Vérifier le dernier message utilisateur
-    const lastUserMsg = getLastNormalUserMessage(filteredMessages);
-    if (lastUserMsg && isAckOnly(lastUserMsg.content)) {
-      // Vérifier si c'est une confirmation dans un contexte de commande
-      // Si l'historique contient des mots-clés de confirmation de commande, c'est une confirmation, pas un "oui" sans contexte
-      const hasCommandContext = filteredMessages.some((m: ChatMessage) => {
-        const content = m.content.toLowerCase();
-        return content.includes('confirme') || 
-               content.includes('tout est bon') || 
-               content.includes('c\'est bon') ||
-               content.includes('préparer l\'ajout') ||
-               content.includes('ajouter au panier') ||
-               content.includes('livraison') ||
-               content.includes('retrait') ||
-               content.includes('adresse');
-      });
-      
-      if (hasCommandContext) {
-        // C'est une confirmation de commande, laisser OpenAI gérer (il doit générer le draftFinalConfig)
-        console.log('[API/CHAT] Message utilisateur est un acquiescement dans un contexte de commande, traitement normal');
-      } else {
-        // Si c'est juste "oui/ok" sans contexte, retourner une relance
-        console.log('[API/CHAT] Message utilisateur est un simple acquiescement sans contexte, retour relance');
-        return NextResponse.json({
-          reply: 'Oui 🙂 Dis-moi ce que tu organises : type d\'événement, combien de personnes, intérieur ou extérieur.',
-          intent: 'NEEDS_INFO',
-          draftFinalConfig: undefined,
-        });
-      }
-    }
+    // Note: La vérification isAckOnly est maintenant gérée dans la nouvelle architecture (après buildConversationState)
 
     // Charger tous les produits du catalogue pour les passer au prompt
     let catalogProducts: any[] = [];
@@ -1589,52 +1423,67 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
     const isFirstUserMessage = userMessages.length === 1;
     const lastUserMessage = userMessages[userMessages.length - 1];
     
-    // Construire le contexte connu depuis les messages précédents
-    const knownContext: {
-      eventType?: string;
-      peopleCount?: number;
-      indoorOutdoor?: string;
-    } = {};
-    
-    // Extraire les infos connues depuis les messages précédents
-    filteredMessages.forEach((msg: ChatMessage) => {
-      const content = msg.content.toLowerCase();
-      if (content.includes('mariage')) knownContext.eventType = 'mariage';
-      if (content.includes('anniversaire')) knownContext.eventType = 'anniversaire';
-      if (content.includes('soirée')) knownContext.eventType = 'soirée';
-      if (content.includes('conférence')) knownContext.eventType = 'conférence';
-      
-      // Détecter nombre de personnes (avec ou sans mot-clé)
-      const peopleMatch = content.match(/(\d+)\s*(personnes|personne|invités|invité|pax)/);
-      if (peopleMatch) {
-        knownContext.peopleCount = parseInt(peopleMatch[1]);
-      } else {
-        // Si le message est uniquement un nombre (ex: "50"), le considérer comme peopleCount
-        const numberOnlyMatch = msg.content.trim().match(/^(\d{1,4})$/);
-        if (numberOnlyMatch && msg.role === 'user') {
-          const num = parseInt(numberOnlyMatch[1]);
-          if (num >= 1 && num <= 9999) {
-            knownContext.peopleCount = num;
-          }
-        }
-      }
-      
-      if (content.includes('intérieur')) knownContext.indoorOutdoor = 'intérieur';
-      if (content.includes('extérieur')) knownContext.indoorOutdoor = 'extérieur';
+    // 🎯 NOUVELLE ARCHITECTURE : Une seule source de vérité pour l'état de la conversation
+    const state: ConversationState = buildConversationState({
+      messages: filteredMessages,
+      scenarioId: scenarioId || null,
+      productContext,
     });
+
+    // 🛡️ GESTION PRÉ-OPENAI : Traiter les cas spéciaux AVANT l'appel OpenAI
+    const lastUserContent = state.lastUserNormal?.content || '';
     
-    // Normalisation de indoorOutdoor
-    if (knownContext.indoorOutdoor) {
-      knownContext.indoorOutdoor = knownContext.indoorOutdoor.toLowerCase().includes('ext')
-        ? 'extérieur'
-        : 'intérieur';
+    // Cas 1: Message uniquement un nombre (ex: "50")
+    if (isNumberOnly(lastUserContent) && !state.known.peopleCount) {
+      const nextQ = getNextQuestion(state);
+      console.log('[API/CHAT] Nombre seul détecté, réponse directe avec prochaine question');
+      return NextResponse.json({
+        reply: `Parfait. ${nextQ}`,
+        intent: 'NEEDS_INFO',
+        draftFinalConfig: undefined,
+      });
     }
-    
-    // Essayer de construire une réponse spécifique pour le scénario ou la salutation
+
+    // Cas 2: Salutation pendant conversation engagée
+    if (detectGreeting(lastUserContent) && state.engaged) {
+      const nextQ = getNextQuestion(state);
+      console.log('[API/CHAT] Salutation pendant conversation engagée, réponse directe');
+      return NextResponse.json({
+        reply: `Ok 🙂 ${nextQ}`,
+        intent: 'NEEDS_INFO',
+        draftFinalConfig: undefined,
+      });
+    }
+
+    // Cas 3: Acquittement simple sans contexte de commande
+    if (isAckOnly(lastUserContent)) {
+      const hasCommandContext = filteredMessages.some((m: ChatMessage) => {
+        const content = m.content.toLowerCase();
+        return content.includes('confirme') || 
+               content.includes('tout est bon') || 
+               content.includes('c\'est bon') ||
+               content.includes('préparer l\'ajout') ||
+               content.includes('ajouter au panier') ||
+               content.includes('livraison') ||
+               content.includes('retrait') ||
+               content.includes('adresse');
+      });
+      
+      if (!hasCommandContext) {
+        const nextQ = getNextQuestion(state);
+        console.log('[API/CHAT] Acquittement simple sans contexte, réponse directe');
+        return NextResponse.json({
+          reply: `Ok 🙂 ${nextQ}`,
+          intent: 'NEEDS_INFO',
+          draftFinalConfig: undefined,
+        });
+      }
+    }
+
+    // Essayer de construire une réponse spécifique pour le scénario
     const scenarioReply = buildAssistantReply({
       scenarioId: scenarioId || null,
       userMessage: lastUserMessage?.content || '',
-      knownContext,
       isFirstMessage: isFirstUserMessage
     });
     
@@ -1648,57 +1497,10 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       });
     }
 
-    // Détecter si une conversation est déjà engagée (AVANT de construire openaiMessages)
-    const conversationEngaged = isConversationEngaged(filteredMessages, scenarioId, productContext);
-
-    // Vérifier si un accueil a déjà été fait dans l'historique
-    const hasGreetingBeenDone = filteredMessages.some((msg: ChatMessage) => {
-      if (msg.role !== 'assistant') return false;
-      const content = (msg.content || '').toLowerCase();
-      return (
-        content.includes('salut') ||
-        content.includes('bonjour') ||
-        content.includes('bienvenue') ||
-        content.includes('dis-moi ce que tu organises') ||
-        content.includes("quel type d'événement")
-      );
-    });
-
-    // 1) Protection anti-reset : PRÉFIXER le prompt AVANT openaiMessages
-    if (conversationEngaged) {
-      const noResetInstruction = `RÈGLE ABSOLUE — CONVERSATION DÉJÀ ENGAGÉE
-
-Une conversation est déjà en cours (scénario actif, contexte produit, question posée ou info utile reçue).
-
-Interdictions :
-- Ne refais jamais un message d'accueil (salut/bonjour/bienvenue, "dis-moi ce que tu organises", etc.)
-- Ne repars jamais de zéro
-- Ne redemande pas une info déjà donnée
-- Ne répète pas exactement la même question
-
-Obligation :
-- Continue avec la prochaine question logique manquante, ou avance vers la recommandation.`;
-
-      systemPromptWithCatalog = `${noResetInstruction}\n\n${systemPromptWithCatalog}`;
-      console.log('[API/CHAT] Conversation engagée détectée - Protection anti-reset activée');
-    }
-
-    // 2) Gestion salutation : toujours AVANT openaiMessages
-    if (lastUserMessage && detectGreeting(lastUserMessage.content)) {
-      if (hasGreetingBeenDone || conversationEngaged) {
-        const noRepeatGreetingInstruction = `L'utilisateur vient de saluer, mais la conversation est déjà engagée ou l'accueil a déjà été fait.
-
-Tu réponds en 1 ligne maximum, sans refaire d'accueil, puis tu poses UNE question concrète pour continuer (pas une question déjà posée).`;
-
-        systemPromptWithCatalog = `${noRepeatGreetingInstruction}\n\n${systemPromptWithCatalog}`;
-      } else {
-        const greetingInstruction = `L'utilisateur vient de saluer et la conversation n'a pas encore commencé.
-
-Tu peux saluer brièvement (2-3 lignes max), puis poser UNE seule question pour démarrer (type d'événement). Pas de blabla.`;
-
-        systemPromptWithCatalog = `${greetingInstruction}\n\n${systemPromptWithCatalog}`;
-      }
-    }
+    // 🎯 NOUVELLE ARCHITECTURE : Préfixe système unique (remplace les 3 blocs précédents)
+    const preamble = buildSystemPreamble(state);
+    systemPromptWithCatalog = `${preamble}\n\n${systemPromptWithCatalog}`;
+    console.log('[API/CHAT] Préfixe système appliqué:', state.engaged ? 'CONVERSATION ENGAGÉE' : 'DÉMARRAGE');
 
     // 3) Construire openaiMessages APRÈS avoir finalisé systemPromptWithCatalog
     const openaiMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
@@ -1761,38 +1563,14 @@ Tu peux saluer brièvement (2-3 lignes max), puis poser UNE seule question pour 
     cleanReply = cleanReply.trim();
     
     // 🛡️ GARDE-FOU POST-OPENAI : Empêcher les resets si conversation engagée
-    if (conversationEngaged) {
-      const reply = (cleanReply || '').trim();
-      const replyLower = reply.toLowerCase();
-
-      // Détection large des resets (salutations + phrases de restart)
-      const resetRegexes: RegExp[] = [
-        /^(salut|bonjour|bienvenue)\b/i,
-        /\b(dis[- ]?moi|dit[- ]?moi)\b.*\b(ce que tu organises|ton événement|ton evenement)\b/i,
-        /\btu es au bon endroit\b/i,
-        /\bje (suis|reste) là pour t['']aider\b/i,
-        /\bje peux t['']aider\b/i,
-        /\bdis[- ]?moi\b.*\b(type d['']événement|type d['']evenement|quel type d['']événement|quel type d['']evenement)\b/i,
-      ];
-
-      const looksLikeReset = resetRegexes.some((r) => r.test(replyLower));
-
-      if (looksLikeReset) {
+    if (state.engaged) {
+      const replyLower = cleanReply.toLowerCase();
+      const resetRegex = /(tu es au bon endroit|dis[- ]?moi.*organises|bienvenue|bonjour|salut|je suis là pour t['']aider)/i;
+      
+      if (resetRegex.test(replyLower)) {
         console.log('[API/CHAT] 🛡️ Garde-fou activé : Reset détecté et corrigé');
-
-        let continuationQuestion = '';
-        if (!knownContext?.eventType) {
-          continuationQuestion = "C'est pour quel type d'événement ?";
-        } else if (!knownContext?.peopleCount) {
-          continuationQuestion = 'Combien de personnes environ ?';
-        } else if (!knownContext?.indoorOutdoor) {
-          continuationQuestion = "C'est en intérieur ou extérieur ?";
-        } else {
-          continuationQuestion =
-            "Tu veux plutôt musique d'ambiance, des discours, ou une vraie soirée DJ (son fort) ?";
-        }
-
-        cleanReply = `Ok je suis là 🙂 On continue. ${continuationQuestion}`;
+        const nextQ = getNextQuestion(state);
+        cleanReply = nextQ; // Pas de phrase répétitive, juste la prochaine question
       }
     }
 

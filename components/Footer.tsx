@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useState } from 'react';
 import Image from 'next/image';
 import LegalNoticeModal from './LegalNoticeModal';
-import NewsletterBanner from './NewsletterBanner';
 
 interface FooterProps {
   language: 'fr' | 'en';
@@ -106,9 +105,6 @@ export default function Footer({ language }: FooterProps) {
 
   return (
     <>
-      {/* Bandeau Newsletter - En haut du Footer */}
-      <NewsletterBanner language={language} />
-      
       <footer className="bg-black text-white py-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">

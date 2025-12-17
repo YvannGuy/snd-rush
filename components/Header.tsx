@@ -9,9 +9,6 @@ import MiniCart from '@/components/cart/MiniCart';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import SignModal from '@/components/auth/SignModal';
-import TopBanner from '@/components/TopBanner';
-import GuaranteesBanner from '@/components/GuaranteesBanner';
-import SearchBar from '@/components/SearchBar';
 import UserIconWithName from '@/components/UserIconWithName';
 import { supabase } from '@/lib/supabase';
 // Shadcn UI components
@@ -222,9 +219,15 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
 
   const texts = {
     fr: {
+      solutions: 'Solutions',
+      conference: 'Conférence',
+      soiree: 'Soirée',
+      mariage: 'Mariage',
+      urgence: 'Urgence',
+      commentCaMarche: 'Comment ça marche',
+      cataloguePro: 'Catalogue pro',
       catalogue: 'Catalogue',
       packs: 'Packs',
-      urgence: 'Urgence 24/7',
       faq: 'FAQ',
       callNow: 'Appelez',
       banner: '1er spécialiste de l\'urgence sonore • Paris et Île-de-France • 24h/24 7j/7 • Intervention rapide • Devis gratuit',
@@ -242,9 +245,15 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       adminInvoices: 'Factures',
     },
     en: {
+      solutions: 'Solutions',
+      conference: 'Conference',
+      soiree: 'Party',
+      mariage: 'Wedding',
+      urgence: 'Emergency',
+      commentCaMarche: 'How it works',
+      cataloguePro: 'Pro catalog',
       catalogue: 'Catalogue',
       packs: 'Packs',
-      urgence: 'Emergency 24/7',
       faq: 'FAQ',
       callNow: 'Call',
       banner: '1st sound emergency specialist • Paris and Île-de-France • 24/7 • Fast intervention • Free quote',
@@ -277,23 +286,59 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               </span>
             </Link>
 
-            {/* Barre de recherche */}
-            <div className="hidden lg:flex items-center justify-center flex-1 px-8">
-              <SearchBar language={language} />
-            </div>
+            {/* Navigation Links - Desktop */}
+            <nav className="hidden lg:flex items-center gap-6 flex-1 justify-center px-8">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap flex items-center gap-1">
+                    {texts[language].solutions}
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="bg-black border border-gray-800">
+                  <DropdownMenuItem asChild className="text-white hover:text-[#F2431E] hover:bg-gray-900 focus:bg-gray-900 focus:text-[#F2431E]">
+                    <Link href="/conference" className="cursor-pointer">
+                      {texts[language].conference}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="text-white hover:text-[#F2431E] hover:bg-gray-900 focus:bg-gray-900 focus:text-[#F2431E]">
+                    <Link href="/soiree" className="cursor-pointer">
+                      {texts[language].soiree}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="text-white hover:text-[#F2431E] hover:bg-gray-900 focus:bg-gray-900 focus:text-[#F2431E]">
+                    <Link href="/mariage" className="cursor-pointer">
+                      {texts[language].mariage}
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Link 
+                href="/#urgence"
+                className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
+              >
+                {texts[language].urgence}
+              </Link>
+              <Link 
+                href="/#how-it-works"
+                className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
+              >
+                {texts[language].commentCaMarche}
+              </Link>
+            </nav>
 
             {/* CTA Buttons */}
             <div className="flex items-center gap-1 lg:gap-1">
-              {/* CTA Principal - Réserver */}
+              {/* CTA Principal - Appelez */}
               <Button
                 asChild
                 variant="default"
                 size="default"
                 className="hidden lg:flex bg-[#F2431E] hover:bg-[#E63A1A] text-white"
               >
-                <Link href="/catalogue">
-                  {language === 'fr' ? 'Réserver' : 'Book'}
-                </Link>
+                <a href="tel:+33651084994">
+                  {texts[language].callNow}
+                </a>
               </Button>
 
               {/* Séparateur vertical */}
@@ -390,7 +435,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                     aria-label="Se connecter"
                   >
                     <User className="h-5 w-5" />
-                    <span className="font-semibold text-sm">{language === 'fr' ? 'Connexion' : 'Login'}</span>
+                    <span className="font-semibold text-sm">Pro</span>
                   </Button>
                 )}
               </div>
@@ -625,18 +670,13 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
             </div>
           </div>
           
-          {/* Mobile menu - Positionné en fixed pour être visible sous le bandeau orange */}
+          {/* Mobile menu */}
           {isMobileMenuOpen && (
             <div 
-              className="lg:hidden fixed top-[112px] left-0 right-0 border-t border-white/20 z-40 overflow-hidden bg-black"
+              className="lg:hidden fixed top-16 left-0 right-0 border-t border-white/20 z-40 overflow-hidden bg-black"
             >
-              <div className="pt-3 pb-4 space-y-2 px-4">
-                {/* Barre de recherche mobile */}
-                <div className="mb-4">
-                  <SearchBar language={language} />
-                </div>
-            
-            {/* CTA Réserver - Mobile */}
+              <div className="pt-3 pb-4 space-y-2 px-4 sm:px-6 lg:px-8">
+            {/* CTA Appelez - Mobile */}
             <Button
               asChild
               variant="default"
@@ -644,10 +684,54 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white mt-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <Link href="/catalogue">
-                {language === 'fr' ? 'Réserver' : 'Book'}
-              </Link>
+              <a href="tel:+33651084994">
+                {texts[language].callNow}
+              </a>
             </Button>
+
+            {/* Navigation Links - Mobile */}
+            <div className="flex flex-col gap-2 pt-2">
+              <div className="text-white font-medium text-base py-2">
+                {texts[language].solutions}
+              </div>
+              <div className="flex flex-col gap-1 pl-4">
+                <Link 
+                  href="/conference"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-white/80 hover:text-[#F2431E] transition-colors text-sm py-1"
+                >
+                  {texts[language].conference}
+                </Link>
+                <Link 
+                  href="/soiree"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-white/80 hover:text-[#F2431E] transition-colors text-sm py-1"
+                >
+                  {texts[language].soiree}
+                </Link>
+                <Link 
+                  href="/mariage"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-white/80 hover:text-[#F2431E] transition-colors text-sm py-1"
+                >
+                  {texts[language].mariage}
+                </Link>
+              </div>
+              <Link 
+                href="/#urgence"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
+              >
+                {texts[language].urgence}
+              </Link>
+              <Link 
+                href="/#how-it-works"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
+              >
+                {texts[language].commentCaMarche}
+              </Link>
+            </div>
 
             {/* Language switcher for mobile */}
             <DropdownMenu>
@@ -686,11 +770,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
         </div>
       </div>
 
-      {/* Bandeau orange en bas - collé directement au Header */}
-      <TopBanner language={language} />
-      
-      {/* Bandeau garanties */}
-      {!isDashboardPage && <GuaranteesBanner language={language} />}
 
       {/* Mini Cart */}
       <MiniCart

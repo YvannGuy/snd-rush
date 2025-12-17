@@ -9,8 +9,14 @@ interface HeroSectionProps {
   language: 'fr' | 'en';
 }
 
+const animatedWords = {
+  fr: ['Son', 'Lumière', 'DJ gear'],
+  en: ['Sound', 'Lighting', 'DJ gear']
+};
+
 export default function HeroSection({ language }: HeroSectionProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
 
   const backgroundImages = [
     'https://readdy.ai/api/search-image?query=Professional%20DJ%20mixing%20console%20with%20glowing%20buttons%20and%20sliders%20in%20dark%20nightclub%20environment%2C%20emergency%20lighting%20effects%2C%20red%20and%20orange%20dramatic%20lighting%2C%20urgent%20atmosphere%2C%20high-end%20audio%20equipment%20setup%20for%20emergency%20sound%20rental%20service&width=1920&height=1080&seq=hero-bg-1&orientation=landscape',
@@ -21,22 +27,22 @@ export default function HeroSection({ language }: HeroSectionProps) {
 
   const texts = {
     fr: {
-      title1: 'La location ',
-      title2: 'sono express',
-      title3: ' à paris en 2min',
-      subtitle: 'Leader de la location de sonorisation express à paris, SoundRush accompagne vos évènements urgents comme planifiés. Matériel professionnel, réactivité immédiate et équipes disponibles 24h/24 - 7j/7 sur paris et région parisienne',
-      cta: 'Voir les packs & tarifs',
-      ctaSecondary: 'Trouver mon pack',
+      title1Prefix: 'Solutions',
+      title1Suffix: 'clé en main à paris',
+      title2: 'Intervention rapide et réservation assistée par IA',
+      subtitle: 'Conférences, événements, soirées, mariages. Nous livrons, installons et réglons une solution adaptée à votre événement, sans stress',
+      cta: 'Préparer mon événement',
+      ctaSecondary: 'Intervention urgente',
       catalogue: 'Voir le catalogue',
       available: 'Disponible 24h/24 - 7j/7'
     },
     en: {
-      title1: 'Sound system, lighting & DJ gear rental',
-      title2: 'in 2 minutes',
-      title3: '',
-      subtitle: 'Leader in express sound system rental in Paris, SoundRush supports your urgent and planned events. Professional equipment, immediate responsiveness and teams available 24/7 in Paris and the Paris region',
-      cta: 'View packs & prices',
-      ctaSecondary: 'Find my pack',
+      title1Prefix: 'Turnkey',
+      title1Suffix: 'solutions in Paris',
+      title2: 'Rapid intervention and AI-assisted booking',
+      subtitle: 'Conferences, events, parties, weddings. We deliver, install and set up a solution adapted to your event, stress-free',
+      cta: 'Prepare my event',
+      ctaSecondary: 'Urgent intervention',
       catalogue: 'View catalogue',
       available: 'Available 24/7'
     }
@@ -52,8 +58,19 @@ export default function HeroSection({ language }: HeroSectionProps) {
     return () => clearInterval(imageInterval);
   }, [backgroundImages.length]);
 
+  // Animation du mot qui change
+  useEffect(() => {
+    const wordInterval = setInterval(() => {
+      setCurrentWordIndex((prevIndex) =>
+        prevIndex === animatedWords[language].length - 1 ? 0 : prevIndex + 1
+      );
+    }, 2000); // Change toutes les 2 secondes
+
+    return () => clearInterval(wordInterval);
+  }, [language]);
+
   return (
-    <section className="relative min-h-screen bg-black pt-16 overflow-hidden">
+    <section className="relative min-h-screen bg-black overflow-hidden" style={{ paddingTop: '64px' }}>
       {/* Background Images with Smooth Transition */}
       {backgroundImages.map((image, index) => (
         <div
@@ -76,30 +93,40 @@ export default function HeroSection({ language }: HeroSectionProps) {
               <div className="space-y-8 sm:space-y-12">
                 <div className="space-y-6 sm:space-y-8">
                   <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-tight">
-                    {texts[language].title1}
-                    <span className="text-[#F2431E]">{texts[language].title2}</span>
-                    {texts[language].title3 && (
-                      <>
-                        <br />
-                        <span className="text-white">{texts[language].title3}</span>
-                      </>
-                    )}
+                    {texts[language].title1Prefix}{' '}
+                    <span className="text-[#F2431E] transition-all duration-500 inline-block">
+                      {animatedWords[language][currentWordIndex]}
+                    </span>
+                    {' '}{texts[language].title1Suffix}
                   </h1>
+
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-white/95 font-semibold leading-tight">
+                    {texts[language].title2}
+                  </h2>
 
                   <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white/90 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0">
                     {texts[language].subtitle}
                   </p>
                 </div>
 
-                {/* Input AI Hero */}
-                <div className="mt-8 sm:mt-12">
-                  <HeroAIInput
-                    language={language}
-                    onSend={(message) => {
+                {/* CTA Buttons */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 sm:mt-12">
+                  <button
+                    onClick={() => {
                       // Ouvrir le chat avec le message draft (une seule source)
-                      window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: message || undefined } }));
+                      window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
                     }}
-                  />
+                    className="bg-[#F2431E] hover:bg-[#E63A1A] text-white font-semibold px-8 py-4 rounded-full text-lg sm:text-xl transition-colors shadow-lg hover:shadow-xl"
+                  >
+                    {texts[language].cta}
+                  </button>
+                  
+                  <a
+                    href="tel:+33651084994"
+                    className="bg-white hover:bg-gray-100 text-[#F2431E] font-semibold px-8 py-4 rounded-full text-lg sm:text-xl transition-colors shadow-lg hover:shadow-xl"
+                  >
+                    {texts[language].ctaSecondary}
+                  </a>
                 </div>
               </div>
             </div>

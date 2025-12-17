@@ -179,6 +179,60 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         highlight: "Caution : selon devis",
         ideal: "80 à 150 personnes",
         note: "Idéal pour soirées dansantes, mariages, événements festifs."
+      },
+      {
+        id: 9,
+        name: "Pack Conférence",
+        tagline: "Solution sonore pour conférences et événements institutionnels",
+        description: "Pack Conférence parfait pour réunions, conférences, prises de parole, cultes et événements institutionnels. Sonorisation claire et équilibrée avec micros adaptés à la voix.",
+        priceParis: "279 € /jour TTC",
+        priceHorsParis: "279 € /jour TTC",
+        featured: false,
+        image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop",
+        features: [
+          "Sonorisation claire et équilibrée",
+          "Micros adaptés à la voix",
+          "Livraison, installation et récupération incluses"
+        ],
+        highlight: "Solution clé en main",
+        ideal: "Tous types d'événements",
+        note: "Idéal pour conférences, réunions, cultes, événements institutionnels."
+      },
+      {
+        id: 10,
+        name: "Pack Soirée",
+        tagline: "Solution sonore pour soirées privées et événements festifs",
+        description: "Pack Soirée parfait pour soirées privées, anniversaires et événements festifs. Son puissant et homogène pour créer l'ambiance parfaite.",
+        priceParis: "329 € /jour TTC",
+        priceHorsParis: "329 € /jour TTC",
+        featured: false,
+        image: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=600&fit=crop",
+        features: [
+          "Son puissant et homogène",
+          "Ambiance maîtrisée",
+          "Livraison, installation et récupération incluses"
+        ],
+        highlight: "Solution clé en main",
+        ideal: "Tous types d'événements",
+        note: "Idéal pour soirées privées, anniversaires, événements festifs."
+      },
+      {
+        id: 11,
+        name: "Pack Mariage",
+        tagline: "Solution sonore haute puissance pour mariages et événements à fort enjeu",
+        description: "Pack Mariage idéal pour mariages, soirées DJ et événements à fort enjeu. Son haute puissance avec gestion optimale des basses et de l'équilibre sonore.",
+        priceParis: "449 € /jour TTC",
+        priceHorsParis: "449 € /jour TTC",
+        featured: false,
+        image: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&h=600&fit=crop",
+        features: [
+          "Son haute puissance",
+          "Gestion des basses et de l'équilibre sonore",
+          "Livraison, installation et récupération incluses"
+        ],
+        highlight: "Solution clé en main",
+        ideal: "Tous types d'événements",
+        note: "Idéal pour mariages, soirées DJ, événements à fort enjeu."
       }
     ],
     en: [
@@ -311,6 +365,60 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         highlight: "Deposit: 1600 €",
         ideal: "80 to 150 people",
         note: "Ideal for dance parties, weddings, festive events."
+      },
+      {
+        id: 9,
+        name: "Conference Pack",
+        tagline: "Sound solution for conferences and institutional events",
+        description: "Conference Pack perfect for meetings, conferences, speeches, services and institutional events. Clear and balanced sound system with voice-adapted microphones.",
+        priceParis: "€279 /day TTC",
+        priceHorsParis: "€279 /day TTC",
+        featured: false,
+        image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop",
+        features: [
+          "Clear and balanced sound system",
+          "Voice-adapted microphones",
+          "Delivery, installation and pickup included"
+        ],
+        highlight: "Turnkey solution",
+        ideal: "All types of events",
+        note: "Ideal for conferences, meetings, services, institutional events."
+      },
+      {
+        id: 10,
+        name: "Party Pack",
+        tagline: "Sound solution for private parties and festive events",
+        description: "Party Pack perfect for private parties, birthdays and festive events. Powerful and homogeneous sound to create the perfect atmosphere.",
+        priceParis: "€329 /day TTC",
+        priceHorsParis: "€329 /day TTC",
+        featured: false,
+        image: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=600&fit=crop",
+        features: [
+          "Powerful and homogeneous sound",
+          "Controlled atmosphere",
+          "Delivery, installation and pickup included"
+        ],
+        highlight: "Turnkey solution",
+        ideal: "All types of events",
+        note: "Ideal for private parties, birthdays, festive events."
+      },
+      {
+        id: 11,
+        name: "Wedding Pack",
+        tagline: "High-power sound solution for weddings and high-stakes events",
+        description: "Wedding Pack ideal for weddings, DJ parties and high-stakes events. High-power sound with optimal bass and sound balance management.",
+        priceParis: "€449 /day TTC",
+        priceHorsParis: "€449 /day TTC",
+        featured: false,
+        image: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&h=600&fit=crop",
+        features: [
+          "High-power sound",
+          "Bass and sound balance management",
+          "Delivery, installation and pickup included"
+        ],
+        highlight: "Turnkey solution",
+        ideal: "All types of events",
+        note: "Ideal for weddings, DJ parties, high-stakes events."
       }
     ]
   };
@@ -757,7 +865,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
   const capacity = parseCapacity(pack.ideal);
 
   return (
-    <div className="pt-[180px] sm:pt-[190px] bg-white">
+    <div className={`${(pack.id === 9 || pack.id === 10 || pack.id === 11) ? 'pt-16' : 'pt-[180px] sm:pt-[190px]'} bg-white`}>
       {/* Hero Section - Image + Infos principales */}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
@@ -977,34 +1085,50 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
           </div>
             )}
 
-            {/* Bouton Ajouter au panier */}
-            <button
-              onClick={handleAddToCart}
-              disabled={checkingAvailability || (availability !== null && !availability.available) || !startDate || !endDate || !startTime || !endTime}
-              className={`
-                w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2
-                ${!checkingAvailability && startDate && endDate && startTime && endTime && (availability === null || availability.available)
-                  ? 'bg-[#F2431E] text-white hover:bg-[#E63A1A] hover:shadow-xl'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }
-              `}
-            >
-              <span>🛒</span>
-              {checkingAvailability 
-                ? currentTexts.checking
-                : currentTexts.addToCart
-              }
-            </button>
+            {/* Bouton Ajouter au panier / Demander de réservation */}
+            {(pack.id === 9 || pack.id === 10 || pack.id === 11) ? (
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('openChatWithDraft', { 
+                    detail: { message: language === 'fr' ? `Je souhaite réserver le ${pack.name}` : `I would like to book the ${pack.name}` } 
+                  }));
+                }}
+                className="w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2 bg-[#F2431E] text-white hover:bg-[#E63A1A] hover:shadow-xl"
+              >
+                <span>📅</span>
+                {language === 'fr' ? 'Demander de réservation' : 'Request reservation'}
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleAddToCart}
+                  disabled={checkingAvailability || (availability !== null && !availability.available) || !startDate || !endDate || !startTime || !endTime}
+                  className={`
+                    w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2
+                    ${!checkingAvailability && startDate && endDate && startTime && endTime && (availability === null || availability.available)
+                      ? 'bg-[#F2431E] text-white hover:bg-[#E63A1A] hover:shadow-xl'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  <span>🛒</span>
+                  {checkingAvailability 
+                    ? currentTexts.checking
+                    : currentTexts.addToCart
+                  }
+                </button>
 
-            {/* Bouton Demander à l'assistant */}
-            {pack && (
-              <AskAssistantButton
-                productId={pack.id.toString()}
-                productName={`Pack ${pack.name}`}
-                productType="pack"
-                productUrl={`/packs/${pack.id}`}
-                language={language}
-              />
+                {/* Bouton Demander à l'assistant */}
+                {pack && (
+                  <AskAssistantButton
+                    productId={pack.id.toString()}
+                    productName={`Pack ${pack.name}`}
+                    productType="pack"
+                    productUrl={`/packs/${pack.id}`}
+                    language={language}
+                  />
+                )}
+              </>
             )}
 
             {/* Carte Installation */}
@@ -1054,6 +1178,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             })()}
 
             {/* Carte Livraison */}
+            {(pack.id !== 9 && pack.id !== 10 && pack.id !== 11) && (
             <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-3 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -1111,8 +1236,10 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                 })}
               </div>
             </div>
+            )}
 
             {/* Caution */}
+            {(pack.id !== 9 && pack.id !== 10 && pack.id !== 11) && (
             <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
               <span>🔒</span>
               <span>
@@ -1122,6 +1249,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                 }
               </span>
             </div>
+            )}
           </div>
         </div>
       </div>
@@ -1135,6 +1263,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
           </p>
           
           {/* 3 Features avec icônes */}
+          {(pack.id !== 9 && pack.id !== 10 && pack.id !== 11) && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex items-start gap-4">
               <div className="text-4xl">⚡</div>
@@ -1183,10 +1312,12 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
 
       {/* Caractéristiques techniques */}
+      {(pack.id !== 9 && pack.id !== 10 && pack.id !== 11) && (
       <div className="bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.specs}</h2>
@@ -1246,8 +1377,10 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
           </div>
         </div>
       </div>
+      )}
 
       {/* Vous pourriez en avoir besoin */}
+      {(pack.id !== 9 && pack.id !== 10 && pack.id !== 11) && (
       <div className="bg-white py-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.youMightNeed}</h2>
@@ -1326,6 +1459,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
           </div>
         </div>
       </div>
+      )}
 
       {/* Nos engagements */}
       <div className="bg-gray-50 py-12">

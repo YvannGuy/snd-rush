@@ -6,14 +6,15 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
+import IASection from '@/components/IASection';
 import SolutionsSection from '@/components/SolutionsSection';
 import UrgencySection from '@/components/UrgencySection';
+import CommentCaMarcheSection from '@/components/CommentCaMarcheSection';
 import PourQuiSection from '@/components/PourQuiSection';
 import AboutSection from '@/components/AboutSection';
 import GallerySection from '@/components/GallerySection';
 import TrustedBySection from '@/components/TrustedBySection';
 import TrustindexReviews from '@/components/TrustindexReviews';
-import TutosSection from '@/components/TutosSection';
 import Footer from '@/components/Footer';
 import SectionAnimation from '@/components/SectionAnimation';
 import ReservationModal from '@/components/ReservationModal';
@@ -150,10 +151,15 @@ export default function Home() {
             onLanguageChange={setLanguage}
           />
       
-      <main className="pt-[112px]">
+      <main>
         <HeroSection 
           language={language}
         />
+
+        {/* Section IA */}
+        <SectionAnimation delay={0.05}>
+          <IASection language={language} />
+        </SectionAnimation>
 
         {/* Section Nos Solutions */}
         <SectionAnimation delay={0.1}>
@@ -166,6 +172,11 @@ export default function Home() {
         {/* Section Besoin d'une sono maintenant ? */}
         <SectionAnimation delay={0.2}>
           <UrgencySection language={language} />
+        </SectionAnimation>
+
+        {/* Section Comment ça marche */}
+        <SectionAnimation delay={0.25}>
+          <CommentCaMarcheSection language={language} />
         </SectionAnimation>
 
         {/* Section Pour Qui ? */}
@@ -191,11 +202,6 @@ export default function Home() {
         {/* Section Témoignages Clients */}
         <SectionAnimation delay={0.5}>
           <TrustindexReviews />
-        </SectionAnimation>
-
-        {/* Section Tutos */}
-        <SectionAnimation delay={0.55}>
-          <TutosSection language={language} />
         </SectionAnimation>
 
         {/* Section FAQ Scénarios */}

@@ -22,7 +22,9 @@ export default function TrustedBySection({ language }: TrustedBySectionProps) {
     "The Maptique SRL",
     "Fédération Syndicale Étudiante",
     "American School of Paris",
-    "Wave in Paris"
+    "Wave in Paris",
+    "Synergie productions",
+    "Restaurant Leriche"
   ];
 
   const currentTexts = texts[language];
@@ -41,46 +43,20 @@ export default function TrustedBySection({ language }: TrustedBySectionProps) {
           </p>
         </div>
 
-        {/* Client Banner - Infinite Scrolling */}
-        <div className="relative overflow-hidden">
-          <div className="flex gap-8 md:gap-12 lg:gap-16 animate-scroll">
-            {/* Duplicate items for seamless infinite loop */}
-            {[...clients, ...clients, ...clients].map((client, index) => (
-              <div
-                key={`${client}-${index}`}
-                className="flex-shrink-0"
-              >
-                <div className="px-8 py-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-                  <p className="text-lg md:text-xl font-semibold text-gray-800 whitespace-nowrap">
-                    {client}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Client Grid - All visible */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {clients.map((client, index) => (
+            <div
+              key={index}
+              className="px-6 py-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 flex items-center justify-center"
+            >
+              <p className="text-base md:text-lg font-semibold text-gray-800 text-center">
+                {client}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-33.333%);
-          }
-        }
-
-        .animate-scroll {
-          display: flex;
-          animation: scroll 40s linear infinite;
-          will-change: transform;
-        }
-
-        .animate-scroll:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
     </section>
   );
 }

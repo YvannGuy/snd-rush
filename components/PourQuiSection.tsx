@@ -12,14 +12,38 @@ export default function PourQuiSection({ language }: PourQuiSectionProps) {
       sectionTitle: 'POUR QUI ?',
       title: 'On s\'occupe de tout, pour tous vos événements',
       categories: [
-        { name: 'Mariages', icon: '💒' },
-        { name: 'Anniversaires', icon: '🎂' },
-        { name: 'Concerts & live', icon: '🎵' },
-        { name: 'Soirées privées', icon: '🎉' },
-        { name: 'Corporate & séminaires', icon: '🏢' },
-        { name: 'Associations & églises', icon: '⛪' },
-        { name: 'Écoles & salles municipales', icon: '🏛️' },
-        { name: 'Festivals & événements', icon: '🎪' }
+        { 
+          name: 'Mariages', 
+          image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Anniversaires', 
+          image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Concerts & live', 
+          image: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Soirées privées', 
+          image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Corporate & séminaires', 
+          image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Associations & églises', 
+          image: 'https://images.unsplash.com/photo-1507692049790-de58290a4334?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Écoles & salles municipales', 
+          image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Festivals & événements', 
+          image: 'https://images.unsplash.com/photo-1478147427282-58a87a120781?w=400&h=300&fit=crop&q=80'
+        }
       ],
       cta: 'Voir les packs adaptés'
     },
@@ -27,14 +51,38 @@ export default function PourQuiSection({ language }: PourQuiSectionProps) {
       sectionTitle: 'FOR WHO?',
       title: 'We take care of everything, for all your events',
       categories: [
-        { name: 'Weddings', icon: '💒' },
-        { name: 'Birthdays', icon: '🎂' },
-        { name: 'Concerts & live', icon: '🎵' },
-        { name: 'Private parties', icon: '🎉' },
-        { name: 'Corporate & seminars', icon: '🏢' },
-        { name: 'Associations & churches', icon: '⛪' },
-        { name: 'Schools & town halls', icon: '🏛️' },
-        { name: 'Festivals & events', icon: '🎪' }
+        { 
+          name: 'Weddings', 
+          image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Birthdays', 
+          image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Concerts & live', 
+          image: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Private parties', 
+          image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Corporate & seminars', 
+          image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Associations & churches', 
+          image: 'https://images.unsplash.com/photo-1507692049790-de58290a4334?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Schools & town halls', 
+          image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop&q=80'
+        },
+        { 
+          name: 'Festivals & events', 
+          image: 'https://images.unsplash.com/photo-1478147427282-58a87a120781?w=400&h=300&fit=crop&q=80'
+        }
       ],
       cta: 'View adapted packs'
     }
@@ -61,10 +109,25 @@ export default function PourQuiSection({ language }: PourQuiSectionProps) {
           {currentTexts.categories.map((category, index) => (
             <div
               key={index}
-              className="bg-gray-50 rounded-2xl p-6 border-2 border-gray-200 hover:border-[#F2431E] transition-all hover:shadow-lg text-center cursor-pointer transform hover:scale-105"
+              className="relative rounded-2xl overflow-hidden border-2 border-gray-200 hover:border-[#F2431E] transition-all hover:shadow-lg cursor-pointer transform hover:scale-105 group"
             >
-              <div className="text-4xl mb-3">{category.icon}</div>
-              <p className="font-semibold text-gray-900 text-sm">{category.name}</p>
+              {/* Image */}
+              <div className="relative h-48 overflow-hidden">
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                {/* Overlay gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+              </div>
+              
+              {/* Category Name */}
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <p className="font-bold text-white text-sm lg:text-base drop-shadow-lg">
+                  {category.name}
+                </p>
+              </div>
             </div>
           ))}
         </div>

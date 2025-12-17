@@ -9,94 +9,81 @@ export default function AboutSection({ language }: AboutSectionProps) {
 
   const texts = {
     fr: {
-      title: 'Pourquoi SoundRush',
-      subtitle: 'Des raisons de nous faire confiance',
+      sectionTitle: 'POURQUOI SOUNDRUSH PARIS',
       features: [
         {
-          icon: '🔧',
-          title: 'Installation sur mesure',
-          description: 'Nos techniciens qualifiés installent et configurent votre matériel selon vos besoins.'
+          icon: '⚡',
+          title: 'Intervention rapide à Paris'
+        },
+        {
+          icon: '🔑',
+          title: 'Solutions clé en main, sans bricolage'
+        },
+        {
+          icon: '🤖',
+          title: 'Assistant intelligent pour éviter les erreurs'
         },
         {
           icon: '⭐',
-          title: 'Matériel haut de gamme',
-          description: 'Équipement professionnel de qualité pour garantir le succès de votre événement.'
+          title: 'Clients professionnels et particuliers exigeants'
         },
         {
-          icon: '🕐',
-          title: 'Urgence 24/7',
-          description: 'Disponible à tout moment pour répondre à vos besoins urgents.'
-        },
-        {
-          icon: '📦',
-          title: 'Packs adaptables',
-          description: 'Des formules flexibles qui s\'adaptent à tous vos événements.'
+          icon: '🎯',
+          title: 'Matériel adapté à l\'événement, jamais imposé'
         }
       ]
     },
     en: {
-      title: 'Why SoundRush',
-      subtitle: 'Reasons to trust us',
+      sectionTitle: 'WHY SOUNDRUSH PARIS',
       features: [
         {
-          icon: '🔧',
-          title: 'Custom installation',
-          description: 'Our qualified technicians install and configure your equipment according to your needs.'
+          icon: '⚡',
+          title: 'Rapid intervention in Paris'
+        },
+        {
+          icon: '🔑',
+          title: 'Turnkey solutions, no DIY'
+        },
+        {
+          icon: '🤖',
+          title: 'Intelligent assistant to avoid mistakes'
         },
         {
           icon: '⭐',
-          title: 'High-end equipment',
-          description: 'Professional quality equipment to guarantee the success of your event.'
+          title: 'Professional and demanding private clients'
         },
         {
-          icon: '🕐',
-          title: '24/7 Emergency',
-          description: 'Available at any time to meet your urgent needs.'
-        },
-        {
-          icon: '📦',
-          title: 'Adaptable packs',
-          description: 'Flexible formulas that adapt to all your events.'
+          icon: '🎯',
+          title: 'Equipment adapted to the event, never imposed'
         }
       ]
     }
   };
 
+  const currentTexts = texts[language];
+
   return (
     <section id="about" className="py-16 lg:py-24 bg-gray-50">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        {/* Title */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-4">
-            <span className="text-black">{language === 'fr' ? 'Pourquoi ' : 'Why '}</span>
-            <span className="text-[#F2431E]">SoundRush</span>
-          </h2>
-          <p className="text-xl text-gray-600">
-            {texts[language].subtitle}
-          </p>
-        </div>
+        {/* Section Title */}
+        <p className="text-xs font-bold text-[#F2431E] uppercase tracking-[0.2em] mb-12 text-center">
+          {currentTexts.sectionTitle}
+        </p>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {texts[language].features.map((feature, index) => (
+        {/* Features Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {currentTexts.features.map((feature, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow border border-gray-100 text-center"
+              className="bg-white rounded-2xl p-6 lg:p-8 border-2 border-gray-200 hover:border-[#F2431E] transition-all hover:shadow-lg text-center"
             >
               {/* Icon */}
-              <div className="w-16 h-16 bg-[#F2431E] rounded-full flex items-center justify-center mb-4 mx-auto text-3xl">
-                {feature.icon}
-              </div>
-
+              <div className="text-5xl mb-4">{feature.icon}</div>
+              
               {/* Title */}
-              <h3 className="text-xl font-bold text-black mb-3">
+              <h3 className="text-lg lg:text-xl font-bold text-black">
                 {feature.title}
               </h3>
-
-              {/* Description */}
-              <p className="text-gray-600">
-                {feature.description}
-              </p>
             </div>
           ))}
         </div>
