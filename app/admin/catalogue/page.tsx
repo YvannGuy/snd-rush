@@ -166,7 +166,7 @@ useEffect(() => {
       <Header language={language} onLanguageChange={setLanguage} />
       <div className="flex flex-1 pt-[112px] lg:flex-row">
         {/* Sidebar - Fixed, ne prend pas d'espace dans le flux */}
-        <div className="hidden lg:block w-64 flex-shrink-0"></div>
+        <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
         <AdminSidebar 
           language={language} 
           isOpen={isSidebarOpen} 
