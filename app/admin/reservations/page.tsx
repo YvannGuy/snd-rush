@@ -173,8 +173,18 @@ useEffect(() => {
 
         setReservations(enrichedReservations);
         setFilteredReservations(enrichedReservations);
-      } catch (error) {
-        console.error('Erreur chargement réservations:', error);
+      } catch (error: any) {
+        console.error('❌ Erreur chargement réservations:', {
+          error,
+          message: error?.message,
+          details: error?.details,
+          hint: error?.hint,
+          code: error?.code,
+          stack: error?.stack
+        });
+        // En cas d'erreur, initialiser avec un tableau vide
+        setReservations([]);
+        setFilteredReservations([]);
       }
     };
 

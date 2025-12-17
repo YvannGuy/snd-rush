@@ -101,12 +101,12 @@ export default function AdminDashboardPage() {
         });
 
         // OPTIMISATION: Exécuter les requêtes en parallèle avec Promise.all
-        // OPTIMISATION CRITIQUE: Ne sélectionner QUE les colonnes nécessaires au lieu de '*'
         // 1. Réservations à venir (prochaines 30 jours, limitées à 50 pour les performances)
         // Note: Utiliser start_date pour filtrer les réservations qui commencent dans les prochains 30 jours
+        // Utiliser select('*') pour éviter les erreurs de colonnes manquantes
         const reservationsPromise = supabaseClient
           .from('reservations')
-          .select('id, status, start_date, end_date, created_at, total_price, customer_name, customer_email, customer_phone, delivery_status, client_signature, pickup_time, return_time, pack_id, notes, user_id')
+          .select('*')
           .gte('start_date', todayStr)
           .lte('start_date', endDateStr)
           .order('start_date', { ascending: true })
@@ -196,10 +196,22 @@ export default function AdminDashboardPage() {
 
         // Log des erreurs pour débogage
         if (reservationsError) {
-          console.error('❌ Erreur réservations du mois:', reservationsError);
+          console.error('❌ Erreur chargement réservations à venir:', {
+            error: reservationsError,
+            message: reservationsError?.message,
+            details: reservationsError?.details,
+            hint: reservationsError?.hint,
+            code: reservationsError?.code
+          });
         }
         if (countError) {
-          console.error('❌ Erreur count réservations:', countError);
+          console.error('❌ Erreur count réservations à venir:', {
+            error: countError,
+            message: countError?.message,
+            details: countError?.details,
+            hint: countError?.hint,
+            code: countError?.code
+          });
         }
 
         // Traitement des données récupérées
@@ -239,7 +251,15 @@ export default function AdminDashboardPage() {
         }
 
         if (reservationsError) {
-          console.error('❌ Erreur chargement réservations:', reservationsError);
+          console.error('❌ Erreur chargement réservations à venir:', {
+            error: reservationsError,
+            message: reservationsError?.message,
+            details: reservationsError?.details,
+            hint: reservationsError?.hint,
+            code: reservationsError?.code
+          });
+          // Mettre un tableau vide en cas d'erreur pour éviter les crashes
+          setUpcomingReservations([]);
         } else {
           console.log('✅ Réservations à venir récupérées:', {
             count: reservationsWithOrders?.length || 0,
@@ -327,8 +347,22 @@ export default function AdminDashboardPage() {
         setRecentClients(clientsArray);
         setCalendarData(calendarReservations || []);
 
-      } catch (error) {
-        console.error('Erreur chargement dashboard admin:', error);
+      } catch (error: any) {
+        console.error('❌ Erreur chargement dashboard admin:', {
+          error,
+          message: error?.message,
+          stack: error?.stack,
+          name: error?.name
+        });
+        // En cas d'erreur globale, initialiser les états vides pour éviter les crashes
+        setUpcomingReservations([]);
+        setStats({
+          upcomingReservations: 0,
+          revenueThisMonth: 0,
+          equipmentOut: 0,
+          totalEquipment: 45,
+          lateReturns: 0,
+        });
       }
     };
 
