@@ -117,13 +117,19 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
 
     const calculatePendingActions = async () => {
       try {
-        // Réservations en attente
-        const { count: pendingCount } = await supabase
+        // Réservations en attente (non vues)
+        const viewedReservations = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('admin_viewed_reservations') || '[]')
+          : [];
+        
+        const { data: pendingReservationsData } = await supabase
           .from('reservations')
-          .select('*', { count: 'exact', head: true })
+          .select('id, status')
           .eq('status', 'PENDING');
         
-        const pendingReservations = pendingCount || 0;
+        const pendingReservations = (pendingReservationsData || []).filter(
+          (r) => !viewedReservations.includes(r.id)
+        ).length;
 
         // Contrats à signer par les clients
         const viewedContracts = typeof window !== 'undefined'
@@ -171,7 +177,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           (r) => !viewedDeliveries.includes(r.id)
         ).length;
 
-        // Demandes d'annulation en attente
+        // Demandes d'annulation en attente (non vues)
         const viewedCancellations = typeof window !== 'undefined'
           ? JSON.parse(localStorage.getItem('admin_viewed_cancellations') || '[]')
           : [];
@@ -185,7 +191,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           (r) => !viewedCancellations.includes(r.id)
         ).length;
 
-        // Demandes de modification en attente
+        // Demandes de modification en attente (non vues)
         const viewedModifications = typeof window !== 'undefined'
           ? JSON.parse(localStorage.getItem('admin_viewed_modifications') || '[]')
           : [];
