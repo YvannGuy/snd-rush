@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -14,6 +14,7 @@ interface ProductNavigationProps {
 
 export default function ProductNavigation({ currentProduct, language }: ProductNavigationProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [productsInCategory, setProductsInCategory] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>(currentProduct.category || 'all');
@@ -118,17 +119,6 @@ export default function ProductNavigation({ currentProduct, language }: ProductN
           return !nameLower.includes('xdj');
         });
 
-        // Si on est dans la catégorie DJ, ajouter les packs DJ définis dans le code
-        if (selectedCategory === 'dj') {
-          const djPacks = [
-            { id: 'pack-6', name: 'Pack DJ Essentiel', slug: 'pack-6', category: 'dj' },
-            { id: 'pack-7', name: 'Pack DJ Performance', slug: 'pack-7', category: 'dj' },
-            { id: 'pack-8', name: 'Pack DJ Premium', slug: 'pack-8', category: 'dj' },
-          ];
-          // Ajouter les packs DJ et trier par nom
-          filtered = [...filtered, ...djPacks].sort((a, b) => a.name.localeCompare(b.name));
-        }
-
         setProductsInCategory(filtered);
       } catch (err) {
         console.error('Erreur chargement produits:', err);
@@ -151,8 +141,10 @@ export default function ProductNavigation({ currentProduct, language }: ProductN
   const nextProduct = currentIndex < productsInCategory.length - 1 ? productsInCategory[currentIndex + 1] : null;
 
   const getProductUrl = (product: Product) => {
-    // Dans le contexte du catalogue, tous les produits (y compris packs DJ) pointent vers /catalogue
-    return `/catalogue/${product.slug || product.id}`;
+    // Détecter si on est dans le contexte Pro
+    const isProContext = pathname?.includes('/pro/catalogue');
+    const basePath = isProContext ? '/pro/catalogue' : '/catalogue';
+    return `${basePath}/${product.slug || product.id}`;
   };
 
   const handleCategoryChange = async (category: string) => {
@@ -182,16 +174,6 @@ export default function ProductNavigation({ currentProduct, language }: ProductN
           const nameLower = p.name.toLowerCase();
           return !nameLower.includes('xdj');
         });
-
-        // Si on change vers la catégorie DJ, ajouter les packs DJ définis dans le code
-        if (category === 'dj') {
-          const djPacks = [
-            { id: 'pack-6', name: 'Pack DJ Essentiel', slug: 'pack-6', category: 'dj' },
-            { id: 'pack-7', name: 'Pack DJ Performance', slug: 'pack-7', category: 'dj' },
-            { id: 'pack-8', name: 'Pack DJ Premium', slug: 'pack-8', category: 'dj' },
-          ];
-          filtered = [...filtered, ...djPacks].sort((a, b) => a.name.localeCompare(b.name));
-        }
 
         // Rediriger vers le premier produit de la nouvelle catégorie
         if (filtered.length > 0) {

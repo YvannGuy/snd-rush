@@ -41,8 +41,8 @@ export async function getCatalogItemById(id: string): Promise<CatalogItem | null
       const pack = packs.find(p => p.id === mappedId);
       
       if (pack) {
-        // Déterminer la catégorie selon le type de pack
-        const category = pack.id.includes('dj') ? 'dj' : 'packs';
+        // Tous les packs sont dans la catégorie 'packs' (y compris les packs DJ)
+        const category = 'packs';
         
         return {
           id: id, // Utiliser l'ID original du catalogue (pack-6, pack-7, etc.) pour la navigation

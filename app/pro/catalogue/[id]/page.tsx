@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -15,16 +15,24 @@ import { Product, AvailabilityResponse, CalendarDisabledRange, ProductAddon, Car
 import { useCart } from '@/contexts/CartContext';
 import { calculateInstallationPrice } from '@/lib/calculateInstallationPrice';
 import { getDeliveryPrice, getZoneLabel, DELIVERY_AR } from '@/lib/zone-detection';
+import { useUser } from '@/hooks/useUser';
+import { usePro } from '@/hooks/usePro';
+import SignModal from '@/components/auth/SignModal';
+import { Button } from '@/components/ui/button';
 
-export default function ProductDetailPage() {
+export default function ProProductDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const productId = params?.id as string;
   const { addToCart } = useCart();
+  const { user, loading: userLoading } = useUser();
+  const { isPro, checkingPro } = usePro();
 
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSignModalOpen, setIsSignModalOpen] = useState(false);
 
   // État du formulaire
   const [startDate, setStartDate] = useState<string | null>(null);
@@ -42,6 +50,20 @@ export default function ProductDetailPage() {
 
   // Produits recommandés
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+
+  // Guard: Rediriger si pas pro
+  useEffect(() => {
+    if (!checkingPro && !userLoading) {
+      if (!user) {
+        router.push('/pro');
+        return;
+      }
+      if (!isPro) {
+        router.push('/pro?denied=1');
+        return;
+      }
+    }
+  }, [isPro, checkingPro, user, userLoading, router]);
 
   // Charger les produits recommandés depuis Supabase
   useEffect(() => {
@@ -732,7 +754,8 @@ export default function ProductDetailPage() {
 
   const currentTexts = texts[language];
 
-  if (loading) {
+  // Loading state
+  if (loading || checkingPro || userLoading) {
     return (
       <div className="min-h-screen bg-white">
         <Header language={language} onLanguageChange={setLanguage} />
@@ -740,6 +763,44 @@ export default function ProductDetailPage() {
           <p className="text-gray-600">{language === 'fr' ? 'Chargement...' : 'Loading...'}</p>
         </main>
         <Footer language={language} onLegalNoticeClick={() => {}} onRentalConditionsClick={() => {}} />
+      </div>
+    );
+  }
+
+  // Guard: Si pas user ou pas pro
+  if (!user || !isPro) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header language={language} onLanguageChange={setLanguage} />
+        <main className="pt-[112px] min-h-screen flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto px-6">
+            <div className="text-6xl mb-6">🔒</div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              {language === 'fr' ? 'Accès Pro requis' : 'Pro Access Required'}
+            </h1>
+            <p className="text-xl text-gray-600 mb-8">
+              {language === 'fr' 
+                ? 'Vous devez être connecté avec un compte Pro pour voir les détails de ce produit.'
+                : 'You must be signed in with a Pro account to view this product details.'}
+            </p>
+            <Button
+              onClick={() => setIsSignModalOpen(true)}
+              className="bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
+            >
+              {language === 'fr' ? 'Se connecter' : 'Sign in'}
+            </Button>
+          </div>
+        </main>
+        <Footer language={language} onLegalNoticeClick={() => {}} onRentalConditionsClick={() => {}} />
+        <SignModal
+          isOpen={isSignModalOpen}
+          onClose={() => setIsSignModalOpen(false)}
+          language={language}
+          onSuccess={() => {
+            setIsSignModalOpen(false);
+            window.location.reload();
+          }}
+        />
       </div>
     );
   }
@@ -787,7 +848,7 @@ export default function ProductDetailPage() {
             <div>
               {/* Breadcrumb */}
               <nav className="text-sm text-gray-500 mb-4">
-                <Link href="/catalogue" className="hover:text-[#F2431E] transition-colors">{language === 'fr' ? 'Catalogue' : 'Catalogue'}</Link>
+                <Link href="/pro/catalogue" className="hover:text-[#F2431E] transition-colors">{language === 'fr' ? 'Catalogue Pro' : 'Pro Catalog'}</Link>
                 <span className="mx-2">/</span>
                 <span className="text-gray-900 font-medium">{product.name}</span>
               </nav>
@@ -883,7 +944,7 @@ export default function ProductDetailPage() {
                 </h1>
                 <ShareProductButton
                   productName={product.name}
-                  productUrl={`/catalogue/${product.slug || product.id}`}
+                  productUrl={`/pro/catalogue/${product.slug || product.id}`}
                   language={language}
                   className="flex-shrink-0"
                 />
@@ -1035,7 +1096,7 @@ export default function ProductDetailPage() {
                   productId={product.id.toString()}
                   productName={product.name}
                   productType="product"
-                  productUrl={`/catalogue/${product.slug || product.id}`}
+                  productUrl={`/pro/catalogue/${product.slug || product.id}`}
                   language={language}
                 />
               )}
@@ -1762,8 +1823,8 @@ export default function ProductDetailPage() {
                     };
                     const result = await addToCart(cartItem);
                     if (!result.success) {
-                      alert(result.error || (language === 'fr'
-                        ? 'Impossible d\'ajouter ce produit au panier.'
+                      alert(result.error || (language === 'fr' 
+                        ? 'Impossible d\'ajouter ce produit au panier.' 
                         : 'Unable to add this product to cart.'));
                     }
                   };
@@ -1771,7 +1832,7 @@ export default function ProductDetailPage() {
                   return (
                     <Link 
                       key={recProduct.id} 
-                      href={`/catalogue/${recProduct.id}`}
+                      href={`/pro/catalogue/${recProduct.slug || recProduct.id}`}
                       className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full"
                     >
                       <div className="relative h-48 bg-gray-100 flex-shrink-0">
@@ -1893,8 +1954,18 @@ export default function ProductDetailPage() {
         </div>
       </main>
 
-
       <Footer language={language} onLegalNoticeClick={() => {}} onRentalConditionsClick={() => {}} />
+
+      {/* Sign Modal */}
+      <SignModal
+        isOpen={isSignModalOpen}
+        onClose={() => setIsSignModalOpen(false)}
+        language={language}
+        onSuccess={() => {
+          setIsSignModalOpen(false);
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

@@ -7,10 +7,10 @@ import { supabase } from '@/lib/supabase';
 
 interface CartContextType {
   cart: Cart;
-  addToCart: (item: CartItem) => void;
+  addToCart: (item: CartItem) => Promise<{ success: boolean; error?: string; availableQuantity?: number }>;
   removeFromCart: (productId: string, startDate?: string, endDate?: string) => void;
   updateCartItem: (productId: string, updates: Partial<CartItem>) => void;
-  increaseQuantity: (productId: string, startDate?: string, endDate?: string) => void;
+  increaseQuantity: (productId: string, startDate?: string, endDate?: string) => Promise<{ success: boolean; error?: string; availableQuantity?: number }>;
   decreaseQuantity: (productId: string, startDate?: string, endDate?: string) => void;
   clearCart: () => void;
   getCartItemCount: () => number;
@@ -342,7 +342,83 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return { total, depositTotal };
   };
 
-  const addToCart = (item: CartItem) => {
+  /**
+   * Vérifie le stock disponible pour un produit en tenant compte :
+   * - Du stock total du produit
+   * - Des réservations existantes pour la période
+   * - De la quantité déjà dans le panier pour cette période
+   */
+  const checkStockAvailability = async (
+    productId: string,
+    requestedQuantity: number,
+    startDate: string,
+    endDate: string,
+    startTime?: string,
+    endTime?: string,
+    currentCartQuantity: number = 0
+  ): Promise<{ available: boolean; availableQuantity: number; error?: string }> => {
+    // Si c'est un pack (commence par "pack-"), on considère qu'il y a toujours au moins 1 disponible
+    // Les packs sont gérés différemment car ils ne sont pas dans la table products
+    if (productId.startsWith('pack-') || productId.startsWith('pack_')) {
+      // Pour les packs, on vérifie juste qu'on ne dépasse pas une limite raisonnable (ex: 10)
+      const maxPackQuantity = 10;
+      const totalRequested = currentCartQuantity + requestedQuantity;
+      if (totalRequested > maxPackQuantity) {
+        return {
+          available: false,
+          availableQuantity: Math.max(0, maxPackQuantity - currentCartQuantity),
+          error: `Quantité maximale de ${maxPackQuantity} packs autorisée`,
+        };
+      }
+      return { available: true, availableQuantity: maxPackQuantity - currentCartQuantity };
+    }
+
+    // Pour les produits individuels, vérifier via l'API availability
+    try {
+      const params = new URLSearchParams({
+        productId,
+        startDate,
+        endDate,
+      });
+      
+      if (startTime) params.append('startTime', startTime);
+      if (endTime) params.append('endTime', endTime);
+
+      const response = await fetch(`/api/availability?${params.toString()}`);
+      
+      if (!response.ok) {
+        console.error('Erreur vérification disponibilité:', response.status);
+        // En cas d'erreur, autoriser l'ajout mais loguer l'erreur
+        return { available: true, availableQuantity: 999 };
+      }
+
+      const data = await response.json();
+      const { available, remaining, totalQuantity } = data;
+
+      // Calculer la quantité disponible en tenant compte de ce qui est déjà dans le panier
+      // Si le produit est déjà dans le panier pour cette période, on doit soustraire cette quantité
+      const availableAfterCart = remaining - currentCartQuantity;
+
+      if (availableAfterCart < requestedQuantity) {
+        return {
+          available: false,
+          availableQuantity: Math.max(0, availableAfterCart),
+          error: `Stock insuffisant. Quantité disponible : ${Math.max(0, availableAfterCart)} unité(s)`,
+        };
+      }
+
+      return {
+        available: true,
+        availableQuantity: availableAfterCart,
+      };
+    } catch (error) {
+      console.error('Erreur lors de la vérification du stock:', error);
+      // En cas d'erreur réseau, autoriser l'ajout mais loguer l'erreur
+      return { available: true, availableQuantity: 999 };
+    }
+  };
+
+  const addToCart = async (item: CartItem): Promise<{ success: boolean; error?: string; availableQuantity?: number }> => {
     // Réinitialiser le flag de panier vidé si on ajoute un produit
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('cart_cleared');
@@ -362,14 +438,50 @@ export function CartProvider({ children }: { children: ReactNode }) {
       })) : [],
     };
 
+    // Vérifier le stock disponible avant d'ajouter
+    const currentCart = cart;
+    const existingIndex = currentCart.items.findIndex(
+      (i) => i.productId === normalizedItem.productId && 
+             i.startDate === normalizedItem.startDate && 
+             i.endDate === normalizedItem.endDate &&
+             i.startTime === normalizedItem.startTime &&
+             i.endTime === normalizedItem.endTime
+    );
+
+    const currentCartQuantity = existingIndex >= 0 
+      ? (currentCart.items[existingIndex].quantity || 0)
+      : 0;
+
+    const stockCheck = await checkStockAvailability(
+      normalizedItem.productId,
+      normalizedItem.quantity,
+      normalizedItem.startDate,
+      normalizedItem.endDate,
+      normalizedItem.startTime,
+      normalizedItem.endTime,
+      currentCartQuantity
+    );
+
+    if (!stockCheck.available) {
+      return {
+        success: false,
+        error: stockCheck.error || 'Stock insuffisant',
+        availableQuantity: stockCheck.availableQuantity,
+      };
+    }
+
+    // Si le stock est disponible, ajouter au panier
     setCart((prevCart) => {
-      // Vérifier si le produit existe déjà dans le panier
+      // Vérifier si le produit existe déjà dans le panier (même période et heures)
       const existingIndex = prevCart.items.findIndex(
-        (i) => i.productId === normalizedItem.productId && i.startDate === normalizedItem.startDate && i.endDate === normalizedItem.endDate
+        (i) => i.productId === normalizedItem.productId && 
+               i.startDate === normalizedItem.startDate && 
+               i.endDate === normalizedItem.endDate &&
+               i.startTime === normalizedItem.startTime &&
+               i.endTime === normalizedItem.endTime
       );
 
       let newItems: CartItem[];
-      const isNewItem = existingIndex < 0;
       
       if (existingIndex >= 0) {
         // Mettre à jour la quantité si le produit existe déjà
@@ -395,6 +507,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       
       return newCart;
     });
+
+    return { success: true, availableQuantity: stockCheck.availableQuantity };
   };
 
   // Dispatcher l'événement productAddedToCart après chaque changement du panier
@@ -427,7 +541,42 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const increaseQuantity = (productId: string, startDate?: string, endDate?: string) => {
+  const increaseQuantity = async (productId: string, startDate?: string, endDate?: string): Promise<{ success: boolean; error?: string; availableQuantity?: number }> => {
+    const currentCart = cart;
+    
+    // Trouver l'item à augmenter
+    const itemToIncrease = currentCart.items.find((item) => {
+      if (startDate && endDate) {
+        return item.productId === productId && item.startDate === startDate && item.endDate === endDate;
+      } else {
+        return item.productId === productId;
+      }
+    });
+
+    if (!itemToIncrease) {
+      return { success: false, error: 'Produit non trouvé dans le panier' };
+    }
+
+    // Vérifier le stock disponible avant d'augmenter
+    const stockCheck = await checkStockAvailability(
+      itemToIncrease.productId,
+      1, // On veut ajouter 1 unité
+      itemToIncrease.startDate,
+      itemToIncrease.endDate,
+      itemToIncrease.startTime,
+      itemToIncrease.endTime,
+      itemToIncrease.quantity // Quantité actuelle dans le panier
+    );
+
+    if (!stockCheck.available) {
+      return {
+        success: false,
+        error: stockCheck.error || 'Stock insuffisant',
+        availableQuantity: stockCheck.availableQuantity,
+      };
+    }
+
+    // Si le stock est disponible, augmenter la quantité
     setCart((prevCart) => {
       const newItems = prevCart.items.map((item) => {
         // Si startDate et endDate sont fournis, mettre à jour uniquement l'item avec ces dates spécifiques
@@ -446,6 +595,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const { total, depositTotal } = calculateTotals(newItems);
       return { items: newItems, total, depositTotal };
     });
+
+    return { success: true, availableQuantity: stockCheck.availableQuantity };
   };
 
   const decreaseQuantity = (productId: string, startDate?: string, endDate?: string) => {

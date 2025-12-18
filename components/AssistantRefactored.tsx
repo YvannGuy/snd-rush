@@ -1161,12 +1161,22 @@ export default function AssistantRefactored({
       },
     };
 
-    addToCart(cartItem);
+    const packResult = await addToCart(cartItem);
+    if (!packResult.success) {
+      alert(packResult.error || (language === 'fr' 
+        ? 'Impossible d\'ajouter ce pack au panier.' 
+        : 'Unable to add this pack to cart.'));
+      return;
+    }
 
     // Ajouter les accessoires comme items séparés
-    accessoryItems.forEach((item) => {
-      addToCart(item);
-    });
+    for (const item of accessoryItems) {
+      const result = await addToCart(item);
+      if (!result.success) {
+        console.warn('Erreur ajout accessoire:', result.error);
+        // Continuer même en cas d'erreur pour les accessoires
+      }
+    }
 
     // Ajouter la livraison et/ou l'installation selon les choix
     const deliveryOptions = Array.isArray(answers.deliveryOptions) ? answers.deliveryOptions : [];
@@ -1200,7 +1210,8 @@ export default function AssistantRefactored({
           addons: [],
           images: ['/livraison.jpg'],
         };
-        addToCart(deliveryItem);
+        // La livraison n'a pas de stock, on peut l'ajouter sans vérification
+        await addToCart(deliveryItem);
       }
     }
     
@@ -1219,7 +1230,8 @@ export default function AssistantRefactored({
         addons: [],
         images: ['/installation.jpg'],
       };
-      addToCart(installationItem);
+      // L'installation n'a pas de stock, on peut l'ajouter sans vérification
+      await addToCart(installationItem);
     }
     
     // Ancien système de livraison (pour compatibilité)
@@ -1248,7 +1260,8 @@ export default function AssistantRefactored({
           addons: [],
           images: ['/livraison.jpg'],
         };
-        addToCart(deliveryItem);
+        // La livraison n'a pas de stock, on peut l'ajouter sans vérification
+        await addToCart(deliveryItem);
       }
     }
     

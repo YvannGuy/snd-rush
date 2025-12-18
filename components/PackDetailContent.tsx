@@ -611,7 +611,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
   // Sticky bar visibility
 
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!pack || !startDate || !endDate) {
       return;
     }
@@ -646,7 +646,13 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
       images: [pack.image],
     };
 
-    addToCart(cartItem);
+    const result = await addToCart(cartItem);
+    if (!result.success) {
+      const errorMessage = result.error || (language === 'fr' 
+        ? 'Impossible d\'ajouter ce pack au panier.' 
+        : 'Unable to add this pack to cart.');
+      alert(errorMessage);
+    }
   };
 
   // Fonction pour obtenir le prix d'installation selon le pack
@@ -659,7 +665,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
   };
 
   // Fonction pour ajouter l'installation au panier
-  const handleAddInstallation = () => {
+  const handleAddInstallation = async () => {
     if (!pack || !startDate || !endDate) {
       alert(language === 'fr' 
         ? 'Veuillez d\'abord sélectionner les dates de location.' 
@@ -691,7 +697,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
       },
     };
 
-    addToCart(installationItem);
+    // L'installation n'a pas de stock, on peut l'ajouter sans vérification
+    await addToCart(installationItem);
     
     if (language === 'fr') {
       alert('Installation ajoutée au panier');
@@ -701,7 +708,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
   };
 
   // Fonction pour ajouter la livraison au panier
-  const handleAddDelivery = (zone: string) => {
+  const handleAddDelivery = async (zone: string) => {
     if (!pack || !startDate || !endDate) {
       alert(language === 'fr' 
         ? 'Veuillez d\'abord sélectionner les dates de location.' 
@@ -743,7 +750,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
       },
     };
 
-    addToCart(deliveryItem);
+    // La livraison n'a pas de stock, on peut l'ajouter sans vérification
+    await addToCart(deliveryItem);
     
     if (language === 'fr') {
       alert(`${zoneName} ajoutée au panier`);
@@ -1408,11 +1416,16 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                     addons: [],
                     images: product.images || [],
                   };
-                  addToCart(cartItem);
-                  
-                  // Afficher un message de confirmation
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('productAddedToCart'));
+                  const result = await addToCart(cartItem);
+                  if (result.success) {
+                    // Afficher un message de confirmation
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('productAddedToCart'));
+                    }
+                  } else {
+                    alert(result.error || (language === 'fr' 
+                      ? 'Impossible d\'ajouter ce produit au panier.' 
+                      : 'Unable to add this product to cart.'));
                   }
                 };
 

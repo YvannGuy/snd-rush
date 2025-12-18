@@ -349,7 +349,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
       {
         id: 'pack-6',
         name: 'Pack DJ Essentiel',
-        category: 'dj',
+        category: 'packs',
         description: 'Pour 30 à 70 personnes. 1 enceinte Mac Mah AS 115, 1 console de mixage, 1 console DJ Pioneer',
         price: '109€/jour',
         image: '/packdjs.png',
@@ -359,7 +359,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
       {
         id: 'pack-7',
         name: 'Pack DJ Performance',
-        category: 'dj',
+        category: 'packs',
         description: 'Pour 50 à 100 personnes. 2 enceintes FBT sur pied, 1 console DJ Pioneer',
         price: '159€/jour',
         image: '/packdjM.png',
@@ -369,7 +369,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
       {
         id: 'pack-8',
         name: 'Pack DJ Premium',
-        category: 'dj',
+        category: 'packs',
         description: 'Pour 80 à 150 personnes. 2 enceintes FBT sur pied, 1 caisson de basses, 1 console DJ Pioneer',
         price: '219€/jour',
         image: '/packdjL.png',

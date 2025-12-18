@@ -581,7 +581,8 @@ export default function CartPage() {
         addons: [],
         images: ['/installation.jpg'],
       };
-      addToCart(installationCartItem);
+      // L'installation n'a pas de stock, on peut l'ajouter sans vérification
+      await addToCart(installationCartItem);
     }
   };
 
@@ -775,7 +776,14 @@ export default function CartPage() {
                               </button>
                               <span className="px-4 py-1.5 font-semibold text-gray-900 min-w-[3rem] text-center">{item.quantity}</span>
                               <button
-                                onClick={() => increaseQuantity(item.productId, item.startDate, item.endDate)}
+                                onClick={async () => {
+                                  const result = await increaseQuantity(item.productId, item.startDate, item.endDate);
+                                  if (!result.success) {
+                                    alert(result.error || (language === 'fr' 
+                                      ? 'Stock insuffisant' 
+                                      : 'Insufficient stock'));
+                                  }
+                                }}
                                 className="px-3 py-1.5 hover:bg-gray-50 transition-colors font-semibold text-gray-700"
                               >
                                 +
@@ -864,7 +872,8 @@ export default function CartPage() {
                                     addons: [],
                                     images: ['/livraison.jpg'],
                                   };
-                                  addToCart(deliveryCartItem);
+                                  // La livraison n'a pas de stock, on peut l'ajouter sans vérification
+                                  await addToCart(deliveryCartItem);
                                 }
                               }}
                               className={`w-full text-left px-2 py-1.5 rounded transition-all border ${
@@ -945,7 +954,7 @@ export default function CartPage() {
                       const endDate = firstItem?.endDate || new Date(Date.now() + 86400000).toISOString().split('T')[0];
                       const rentalDays = firstItem?.rentalDays || 1;
 
-                      const handleAddProduct = () => {
+                      const handleAddProduct = async () => {
                         const cartItem: CartItem = {
                           productId: product.id,
                           productName: product.name,
@@ -959,7 +968,12 @@ export default function CartPage() {
                           addons: [],
                           images: Array.isArray(product.images) ? product.images : product.images ? [product.images] : [],
                         };
-                        addToCart(cartItem);
+                        const result = await addToCart(cartItem);
+                        if (!result.success) {
+                          alert(result.error || (language === 'fr' 
+                            ? 'Impossible d\'ajouter ce produit au panier.' 
+                            : 'Unable to add this product to cart.'));
+                        }
                         
                         // Rafraîchir les produits recommandés pour exclure celui qui vient d'être ajouté
                         setRecommendedProducts(prev => prev.filter(p => p.id !== product.id));

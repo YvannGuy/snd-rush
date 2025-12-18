@@ -148,8 +148,14 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
           endTime,
         };
         
-        addToCart(cartItem);
-        onClose();
+        const result = await addToCart(cartItem);
+        if (result.success) {
+          onClose();
+        } else {
+          alert(result.error || (language === 'fr' 
+            ? 'Impossible d\'ajouter ce produit au panier.' 
+            : 'Unable to add this product to cart.'));
+        }
         return;
       }
     }
@@ -172,8 +178,14 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
       endTime,
     };
 
-    addToCart(cartItem);
-    onClose();
+    const result = await addToCart(cartItem);
+    if (result.success) {
+      onClose();
+    } else {
+      alert(result.error || (language === 'fr' 
+        ? 'Impossible d\'ajouter ce produit au panier.' 
+        : 'Unable to add this product to cart.'));
+    }
   };
 
   const texts = {

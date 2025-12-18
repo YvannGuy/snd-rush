@@ -295,9 +295,13 @@ export default function FloatingChatWidget() {
         
         // Ajouter tous les items au panier en une seule fois (batch)
         // Cela évite d'ouvrir le mini cart plusieurs fois
-        itemsWithImages.forEach(item => {
-          addToCart(item);
-        });
+        for (const item of itemsWithImages) {
+          const result = await addToCart(item);
+          if (!result.success) {
+            console.warn('Erreur ajout au panier:', result.error);
+            // Ne pas bloquer l'utilisateur pour les erreurs de panier dans le widget
+          }
+        }
         
         console.log(`[CHAT] ${itemsWithImages.length} items ajoutés au panier avec succès`);
         

@@ -38,7 +38,7 @@ export default function AddToCartButton({
 
   const currentTexts = texts[language];
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (disabled) return;
 
     const cartItem: CartItem = {
@@ -55,7 +55,13 @@ export default function AddToCartButton({
       images: item.images,
     };
 
-    addToCart(cartItem);
+    const result = await addToCart(cartItem);
+    if (!result.success) {
+      alert(result.error || (language === 'fr' 
+        ? 'Impossible d\'ajouter ce produit au panier.' 
+        : 'Unable to add this product to cart.'));
+      return;
+    }
 
     if (onAdd) {
       onAdd();
