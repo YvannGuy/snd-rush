@@ -113,8 +113,14 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
 
   const currentTexts = texts[language];
 
-  const handleReservationRequest = () => {
-    window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
+  const handleReservationRequest = (packKey: 'conference' | 'soiree' | 'mariage') => {
+    // Ouvrir le chat avec le packKey correspondant
+    window.dispatchEvent(new CustomEvent('openChatWithDraft', { 
+      detail: { 
+        message: `Je souhaite faire une demande de réservation pour le ${packKey === 'conference' ? 'Pack Conférence' : packKey === 'soiree' ? 'Pack Soirée' : 'Pack Mariage'}.`,
+        packKey: packKey
+      } 
+    }));
   };
 
   return (
@@ -208,7 +214,18 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
 
               {/* Button */}
               <button
-                onClick={handleReservationRequest}
+                onClick={() => {
+                  // Mapper l'ID du pack au packKey
+                  const packKeyMap: Record<number, 'conference' | 'soiree' | 'mariage'> = {
+                    1: 'conference',
+                    2: 'soiree',
+                    3: 'mariage'
+                  };
+                  const packKey = packKeyMap[pack.id];
+                  if (packKey) {
+                    handleReservationRequest(packKey);
+                  }
+                }}
                 className="w-full bg-[#F2431E] text-white px-6 py-4 rounded-xl font-semibold hover:bg-[#E63A1A] transition-all duration-300 mt-auto flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 mb-2"
               >
                 <span>👉</span>

@@ -85,7 +85,7 @@ export default function MesReservationsPage() {
       
       try {
         // Charger toutes les réservations sauf PENDING (inclure CANCELLED pour l'historique)
-        const { data, error } = await supabaseClient
+        const { data: reservationsData, error: reservationsError } = await supabaseClient
           .from('reservations')
           .select('*')
           .eq('user_id', user.id)
@@ -94,12 +94,44 @@ export default function MesReservationsPage() {
           // Ne plus filtrer CANCELLED pour afficher toutes les réservations dans l'historique
           .order('created_at', { ascending: false });
 
-        if (error) {
-          throw error;
+        if (reservationsError) {
+          throw reservationsError;
         }
+
+        // Charger aussi les client_reservations avec statut PAID ou CONFIRMED
+        const { data: clientReservationsData, error: clientReservationsError } = await supabaseClient
+          .from('client_reservations')
+          .select('*')
+          .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`)
+          .in('status', ['PAID', 'CONFIRMED', 'paid', 'confirmed'])
+          .order('created_at', { ascending: false });
+
+        if (clientReservationsError) {
+          console.error('Erreur chargement client_reservations:', clientReservationsError);
+        }
+
+        // Combiner les deux listes en adaptant les client_reservations au format des réservations
+        const adaptedClientReservations = (clientReservationsData || []).map(cr => ({
+          ...cr,
+          // Adapter les champs pour compatibilité
+          start_date: cr.start_at || cr.created_at,
+          end_date: cr.end_at || cr.created_at,
+          total_price: cr.price_total,
+          pack_id: cr.pack_key,
+          type: 'client_reservation', // Marqueur pour identifier les nouvelles réservations
+        }));
+
+        const allReservations = [
+          ...(reservationsData || []),
+          ...adaptedClientReservations
+        ].sort((a, b) => {
+          const dateA = new Date(a.created_at || a.start_date).getTime();
+          const dateB = new Date(b.created_at || b.start_date).getTime();
+          return dateB - dateA; // Plus récent en premier
+        });
         
-        setReservations(data || []);
-        setFilteredReservations(data || []);
+        setReservations(allReservations);
+        setFilteredReservations(allReservations);
       } catch (error) {
         console.error('Erreur chargement réservations:', error);
       }

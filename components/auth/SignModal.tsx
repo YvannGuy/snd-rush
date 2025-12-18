@@ -42,7 +42,11 @@ export default function SignModal({
         setActiveTab('signin');
         setAdminError('');
       } else {
-        setActiveTab(initialTab);
+        // Si on vient du dashboard avec une réservation, privilégier signin
+        // Sinon utiliser initialTab
+        const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+        const hasReservation = urlParams?.get('reservation');
+        setActiveTab(hasReservation ? 'signin' : initialTab);
       }
     }
   }, [isOpen, initialTab, isAdmin]);
@@ -534,13 +538,21 @@ export default function SignModal({
     
     if (!result.error) {
       setSignUpSuccess(true);
-      // Fermer le modal et rediriger vers la page d'accueil après 3 secondes
-      setTimeout(() => {
-        onClose();
-        if (typeof window !== 'undefined') {
-          window.location.href = '/';
-        }
-      }, 3000);
+      // Si onSuccess est fourni, l'appeler après un court délai
+      if (onSuccess) {
+        setTimeout(() => {
+          onSuccess();
+          onClose();
+        }, 1500);
+      } else {
+        // Sinon, fermer le modal et rediriger vers la page d'accueil après 3 secondes
+        setTimeout(() => {
+          onClose();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/';
+          }
+        }, 3000);
+      }
     }
   };
 

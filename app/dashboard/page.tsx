@@ -31,7 +31,8 @@ import {
   Settings,
   Phone,
   MessageCircle,
-  Music
+  Music,
+  RefreshCw
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -44,6 +45,7 @@ export default function DashboardPage() {
   const { isCollapsed: isSidebarCollapsed, toggleSidebar: handleToggleSidebar } = useSidebarCollapse();
   const [reservations, setReservations] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [clientReservations, setClientReservations] = useState<any[]>([]);
   const [stats, setStats] = useState({
     signedContracts: 0,
     totalDeposit: 0,
@@ -60,16 +62,35 @@ export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isConfirmingDeposit, setIsConfirmingDeposit] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentReservationId, setPaymentReservationId] = useState<string | null>(null);
 
-  // Rediriger vers l'accueil si l'utilisateur n'est pas connecté
+  // Gérer l'authentification et les paramètres URL
   useEffect(() => {
     if (loading) return; // Attendre que le chargement soit terminé
     
+    const reservationParam = searchParams.get('reservation');
+    
+    // Si pas connecté mais qu'il y a une réservation dans l'URL, ouvrir le modal de connexion (onglet signin)
+    if (!user && reservationParam) {
+      setIsSignModalOpen(true);
+      return;
+    }
+    
+    // Si pas connecté et pas de réservation, rediriger vers l'accueil
     if (!user) {
       router.push('/');
       return;
     }
-  }, [user, loading, router]);
+    
+    // Si connecté et qu'il y a une réservation dans l'URL, nettoyer l'URL (les données seront chargées normalement)
+    if (user && reservationParam) {
+      // Nettoyer l'URL après un court délai pour garder l'historique propre
+      setTimeout(() => {
+        router.replace('/dashboard');
+      }, 1000);
+    }
+  }, [user, loading, router, searchParams]);
 
   // Vider le panier si demandé (après paiement principal)
   useEffect(() => {
@@ -83,62 +104,167 @@ export default function DashboardPage() {
     }
   }, [searchParams]);
 
-  // Confirmer la caution si on vient du succès du paiement
+  // Gérer le retour de paiement Stripe avec polling et vérification directe du statut Stripe
   useEffect(() => {
-    const deposit = searchParams.get('deposit');
-    const sessionId = searchParams.get('session_id');
+    const payment = searchParams.get('payment');
     const reservationId = searchParams.get('reservation_id');
 
-    if (deposit === 'success' && sessionId && reservationId && !isConfirmingDeposit) {
-      setIsConfirmingDeposit(true);
+    if (payment === 'success' && reservationId && user && supabase) {
+      setPaymentSuccess(true);
+      setPaymentReservationId(reservationId);
       
-      const confirmDeposit = async () => {
+      let attempts = 0;
+      const maxAttempts = 15; // 15 tentatives sur 30 secondes
+      
+      const pollReservationStatus = async () => {
         try {
+          console.log(`🔄 Tentative ${attempts + 1}/${maxAttempts} - Vérification statut réservation ${reservationId}`);
           
-          const response = await fetch('/api/deposit/confirm', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              sessionId,
-              reservationId,
-            }),
-          });
-
-          const data = await response.json();
-
-          if (data.success) {
-            // Recharger les données du dashboard
-            if (user && supabase) {
-              const loadDashboardData = async () => {
-                // Ne charger que les réservations payées (exclure PENDING et CANCELLED)
-                const { data: reservationsData } = await supabase
-                  .from('reservations')
-                  .select('*')
-                  .eq('user_id', user.id)
-                  .not('status', 'eq', 'PENDING')
-                  .not('status', 'eq', 'pending')
-                  .not('status', 'eq', 'CANCELLED')
-                  .not('status', 'eq', 'cancelled')
-                  .order('start_date', { ascending: true });
-                setReservations(reservationsData || []);
-              };
-              loadDashboardData();
+          const { data: reservationData, error: fetchError } = await supabase
+            .from('client_reservations')
+            .select('status, stripe_session_id')
+            .eq('id', reservationId)
+            .single();
+          
+          if (fetchError) {
+            console.error('❌ Erreur récupération réservation:', fetchError);
+          }
+          
+          console.log('📊 Statut actuel:', reservationData?.status);
+          console.log('📊 Session Stripe ID:', reservationData?.stripe_session_id);
+          
+          // Si le statut est PAID ou CONFIRMED, recharger toutes les données
+          const status = reservationData?.status?.toUpperCase();
+          if (status === 'PAID' || status === 'CONFIRMED') {
+            console.log('✅ Statut mis à jour à PAID/CONFIRMED, rechargement des données...');
+            
+            // Recharger toutes les client_reservations
+            const { data: clientReservationsData, error: reloadError } = await supabase
+              .from('client_reservations')
+              .select('*')
+              .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`)
+              .order('created_at', { ascending: false });
+            
+            if (reloadError) {
+              console.error('❌ Erreur rechargement:', reloadError);
+            } else if (clientReservationsData) {
+              setClientReservations(clientReservationsData);
+              console.log('✅ Données rechargées avec succès');
+              console.log('📊 Nombre total de réservations:', clientReservationsData.length);
+              const paidCount = clientReservationsData.filter(r => {
+                const status = r.status?.toUpperCase();
+                return status === 'PAID' || status === 'CONFIRMED';
+              }).length;
+              console.log('📊 Réservations payées après rechargement:', paidCount);
+              
+              // Masquer le message de succès après 3 secondes
+              setTimeout(() => {
+                setPaymentSuccess(false);
+                setPaymentReservationId(null);
+              }, 3000);
+              
+              // Nettoyer l'URL
+              router.replace('/dashboard');
+              return; // Arrêter le polling
             }
-            // Nettoyer l'URL
-            router.replace('/dashboard');
+          }
+          
+          // Si le statut n'est toujours pas PAID et qu'on a une session Stripe, vérifier directement avec Stripe
+          // On fait cette vérification dès la première tentative si on a une session_id
+          if (status === 'AWAITING_PAYMENT' && reservationData?.stripe_session_id) {
+            console.log('🔍 Vérification directe du statut Stripe (tentative', attempts + 1, ')...');
+            try {
+              // Appeler notre API pour vérifier le statut Stripe
+              const checkResponse = await fetch(`/api/payments/verify-session?session_id=${reservationData.stripe_session_id}&reservation_id=${reservationId}`);
+              if (checkResponse.ok) {
+                const checkData = await checkResponse.json();
+                console.log('📊 Résultat vérification Stripe:', checkData);
+                if (checkData.paid) {
+                  console.log('✅ Paiement confirmé via vérification Stripe directe');
+                  
+                  // Attendre un peu pour que la mise à jour soit propagée
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                  
+                  // Recharger les données
+                  const { data: clientReservationsData, error: reloadError } = await supabase
+                    .from('client_reservations')
+                    .select('*')
+                    .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`)
+                    .order('created_at', { ascending: false });
+                  
+                  if (reloadError) {
+                    console.error('❌ Erreur rechargement après vérification Stripe:', reloadError);
+                  } else if (clientReservationsData) {
+                    setClientReservations(clientReservationsData);
+                    console.log('✅ Données rechargées après vérification Stripe');
+                    console.log('📊 Nombre total de réservations:', clientReservationsData.length);
+                    const paidCount = clientReservationsData.filter(r => {
+                      const status = r.status?.toUpperCase();
+                      return status === 'PAID' || status === 'CONFIRMED';
+                    }).length;
+                    console.log('📊 Réservations payées après vérification Stripe:', paidCount);
+                  }
+                  
+                  setTimeout(() => {
+                    setPaymentSuccess(false);
+                    setPaymentReservationId(null);
+                  }, 3000);
+                  
+                  router.replace('/dashboard');
+                  return; // Arrêter le polling
+                }
+              } else {
+                const errorData = await checkResponse.json().catch(() => ({}));
+                console.error('❌ Erreur réponse vérification Stripe:', errorData);
+              }
+            } catch (stripeError) {
+              console.error('❌ Erreur vérification Stripe:', stripeError);
+            }
+          }
+          
+          attempts++;
+          if (attempts < maxAttempts) {
+            // Réessayer après 2 secondes
+            setTimeout(pollReservationStatus, 2000);
           } else {
+            // Après maxAttempts tentatives, recharger quand même les données
+            console.warn('⚠️ Timeout polling après', maxAttempts, 'tentatives, rechargement forcé');
+            const { data: clientReservationsData } = await supabase
+              .from('client_reservations')
+              .select('*')
+              .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`)
+              .order('created_at', { ascending: false });
+            
+            if (clientReservationsData) {
+              setClientReservations(clientReservationsData);
+            }
+            
+            setTimeout(() => {
+              setPaymentSuccess(false);
+              setPaymentReservationId(null);
+            }, 3000);
+            
+            router.replace('/dashboard');
           }
         } catch (error) {
-        } finally {
-          setIsConfirmingDeposit(false);
+          console.error('❌ Erreur polling statut:', error);
+          attempts++;
+          if (attempts < maxAttempts) {
+            setTimeout(pollReservationStatus, 2000);
+          } else {
+            setTimeout(() => {
+              setPaymentSuccess(false);
+              setPaymentReservationId(null);
+            }, 3000);
+            router.replace('/dashboard');
+          }
         }
       };
-
-      confirmDeposit();
+      
+      // Démarrer le polling après 1 seconde
+      setTimeout(pollReservationStatus, 1000);
     }
-  }, [searchParams, user, router, isConfirmingDeposit]);
+  }, [searchParams, user, router, supabase]);
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -168,6 +294,14 @@ export default function DashboardPage() {
           .not('status', 'eq', 'pending')
           // Ne plus filtrer CANCELLED pour afficher toutes les réservations
           .order('start_date', { ascending: true });
+        
+        // Charger aussi les client_reservations (demandes de réservation)
+        console.time('⏱️ Dashboard - Requête client_reservations');
+        const clientReservationsPromise = supabaseClient
+          .from('client_reservations')
+          .select('*')
+          .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`)
+          .order('created_at', { ascending: false });
 
         console.time('⏱️ Dashboard - Requête orders');
         // OPTIMISATION: Ne sélectionner que les colonnes nécessaires
@@ -183,17 +317,21 @@ export default function DashboardPage() {
         // Exécuter les premières requêtes en parallèle
         const [
           { data: reservationsData, error: reservationsError },
-          { data: ordersData, error: ordersError }
+          { data: ordersData, error: ordersError },
+          { data: clientReservationsData, error: clientReservationsError }
         ] = await Promise.all([
           reservationsPromise,
-          ordersPromise
+          ordersPromise,
+          clientReservationsPromise
         ]);
 
         console.timeEnd('⏱️ Dashboard - Requête réservations');
         console.timeEnd('⏱️ Dashboard - Requête orders');
+        console.timeEnd('⏱️ Dashboard - Requête client_reservations');
         console.log('✅ Données chargées:', { 
           reservations: reservationsData?.length || 0, 
           orders: ordersData?.length || 0,
+          clientReservations: clientReservationsData?.length || 0,
           userId: user?.id,
           userEmail: user?.email
         });
@@ -231,6 +369,19 @@ export default function DashboardPage() {
           setOrders([]);
         } else {
           setOrders(ordersData || []);
+        }
+        
+        if (clientReservationsError) {
+          console.error('❌ Erreur chargement client_reservations:', JSON.stringify(clientReservationsError, null, 2));
+          setClientReservations([]);
+        } else {
+          const clientReservationsList = clientReservationsData || [];
+          setClientReservations(clientReservationsList);
+          console.log('📊 Client reservations chargées:', clientReservationsList.length);
+          console.log('📊 Réservations PAID:', clientReservationsList.filter(r => {
+            const status = r.status?.toUpperCase();
+            return status === 'PAID' || status === 'CONFIRMED';
+          }).length);
         }
         
         // Libérer le rendu IMMÉDIATEMENT après avoir les données principales
@@ -674,13 +825,33 @@ export default function DashboardPage() {
 
   // Obtenir la prochaine réservation (exclure CANCELLED)
   const getNextReservation = () => {
-    const upcoming = reservations
-      .filter((r) => 
-        r.status !== 'CANCELLED' && 
-        r.status !== 'cancelled' &&
-        (r.status === 'confirmed' || r.status === 'CONFIRMED') && 
-        new Date(r.start_date) >= new Date()
-      )
+    // Combiner les réservations de l'ancienne table et les nouvelles client_reservations
+    const allReservations = [
+      ...reservations.map(r => ({ ...r, type: 'old' })),
+      ...clientReservations
+        .filter(cr => {
+          const status = cr.status?.toUpperCase();
+          return status === 'PAID' || status === 'CONFIRMED';
+        })
+        .map(cr => ({
+          ...cr,
+          type: 'new',
+          // Adapter les champs pour compatibilité avec l'ancienne structure
+          start_date: cr.start_at || cr.created_at,
+          end_date: cr.end_at || cr.created_at,
+          total_price: cr.price_total,
+          pack_id: cr.pack_key,
+        }))
+    ];
+    
+    const upcoming = allReservations
+      .filter((r) => {
+        const status = r.status?.toUpperCase();
+        return status !== 'CANCELLED' &&
+          status !== 'cancelled' &&
+          (status === 'confirmed' || status === 'CONFIRMED' || status === 'PAID' || status === 'paid') &&
+          new Date(r.start_date) >= new Date()
+      })
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
     return upcoming[0] || null;
   };
@@ -688,12 +859,33 @@ export default function DashboardPage() {
   // Obtenir les réservations à venir (sans la prochaine, exclure CANCELLED)
   const getUpcomingReservations = () => {
     const next = getNextReservation();
-    return reservations
-      .filter((r) => 
-        r.status !== 'CANCELLED' && 
-        r.status !== 'cancelled' && 
-        r.id !== next?.id
-      )
+    
+    // Combiner les réservations de l'ancienne table et les nouvelles client_reservations
+    const allReservations = [
+      ...reservations.map(r => ({ ...r, type: 'old' })),
+      ...clientReservations
+        .filter(cr => {
+          const status = cr.status?.toUpperCase();
+          return status === 'PAID' || status === 'CONFIRMED';
+        })
+        .map(cr => ({
+          ...cr,
+          type: 'new',
+          // Adapter les champs pour compatibilité avec l'ancienne structure
+          start_date: cr.start_at || cr.created_at,
+          end_date: cr.end_at || cr.created_at,
+          total_price: cr.price_total,
+          pack_id: cr.pack_key,
+        }))
+    ];
+    
+    return allReservations
+      .filter((r) => {
+        const status = r.status?.toUpperCase();
+        return status !== 'CANCELLED' &&
+          status !== 'cancelled' &&
+          r.id !== next?.id
+      })
       .slice(0, 2);
   };
 
@@ -726,6 +918,10 @@ export default function DashboardPage() {
       'pack-2': { fr: 'Standard', en: 'Standard' },
       'pack-3': { fr: 'Premium', en: 'Premium' },
       'pack-4': { fr: 'Événement', en: 'Event' },
+      // Nouveaux packs (client_reservations)
+      'conference': { fr: 'Conférence', en: 'Conference' },
+      'soiree': { fr: 'Soirée', en: 'Evening' },
+      'mariage': { fr: 'Mariage', en: 'Wedding' },
     };
 
     return packNames[packId]?.[language] || `Pack ${packId}`;
@@ -745,6 +941,8 @@ export default function DashboardPage() {
   }
 
   if (!user) {
+    // Si pas connecté mais qu'il y a une réservation dans l'URL, le modal s'ouvrira automatiquement
+    // Sinon afficher l'écran de connexion
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="flex items-center justify-center min-h-screen">
@@ -762,8 +960,19 @@ export default function DashboardPage() {
         </div>
         <SignModal
           isOpen={isSignModalOpen}
-          onClose={() => setIsSignModalOpen(false)}
+          onClose={() => {
+            setIsSignModalOpen(false);
+            // Rediriger vers l'accueil si l'utilisateur ferme le modal sans se connecter
+            if (!user) {
+              router.push('/');
+            }
+          }}
           language={language}
+          onSuccess={() => {
+            setIsSignModalOpen(false);
+            // Recharger la page pour afficher le dashboard
+            window.location.reload();
+          }}
           onOpenAdminModal={() => setIsAdminModalOpen(true)}
         />
         <SignModal
@@ -834,6 +1043,32 @@ export default function DashboardPage() {
               <p className="text-xs sm:text-sm text-gray-600">{currentTexts.welcomeDescription}</p>
             </div>
           </div>
+
+          {/* Message de succès après paiement */}
+          {paymentSuccess && (
+            <Card className="mb-6 border-2 border-green-500 bg-green-50">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 mt-1">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-green-900 mb-2">
+                      ✅ Paiement confirmé !
+                    </h3>
+                    <p className="text-green-800 mb-2">
+                      Votre paiement a été traité avec succès. Nous mettons à jour votre réservation...
+                    </p>
+                    <p className="text-sm text-green-700">
+                      Si le statut ne se met pas à jour automatiquement, veuillez rafraîchir la page.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Message persistant pour les réservations payées non signées */}
           {(() => {
@@ -927,8 +1162,8 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg sm:text-2xl font-bold mb-2 sm:mb-3 truncate">
-                        {nextReservation.pack_id 
-                          ? `Pack ${getPackName(nextReservation.pack_id, language) || nextReservation.pack_id}` 
+                        {nextReservation.pack_id || nextReservation.pack_key
+                          ? `Pack ${getPackName(nextReservation.pack_id || nextReservation.pack_key, language) || nextReservation.pack_id || nextReservation.pack_key}` 
                           : nextReservation.product_id 
                           ? `Réservation #${nextReservation.id.slice(0, 8)}`
                           : 'Réservation'
@@ -945,7 +1180,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                          <span>{nextReservation.total_price || 420}€ TTC</span>
+                          <span>{nextReservation.total_price || nextReservation.price_total || 420}€ TTC</span>
                         </div>
                       </div>
                     </div>
@@ -954,7 +1189,7 @@ export default function DashboardPage() {
                       variant="secondary"
                       className="w-full sm:w-auto bg-white text-[#F2431E] hover:bg-gray-100"
                     >
-                      <Link href={`/mes-reservations/${nextReservation.id}`}>
+                      <Link href={nextReservation.type === 'new' ? `/dashboard?reservation=${nextReservation.id}` : `/mes-reservations/${nextReservation.id}`}>
                         {currentTexts.viewReservation}
                       </Link>
                     </Button>
@@ -963,6 +1198,261 @@ export default function DashboardPage() {
               </Card>
             </div>
           )}
+
+          {/* Réservations en attente de paiement (client_reservations) */}
+          {clientReservations.filter(r => {
+            const status = r.status?.toUpperCase();
+            return status === 'AWAITING_PAYMENT';
+          }).length > 0 && (
+            <div className="mb-6 sm:mb-8">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  Réservations en attente de paiement
+                </h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    if (user && supabase) {
+                      const { data: clientReservationsData } = await supabase
+                        .from('client_reservations')
+                        .select('*')
+                        .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`)
+                        .order('created_at', { ascending: false });
+                      
+                      if (clientReservationsData) {
+                        setClientReservations(clientReservationsData);
+                      }
+                    }
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Actualiser
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {clientReservations
+                  .filter(r => {
+                    const status = r.status?.toUpperCase();
+                    return status === 'AWAITING_PAYMENT';
+                  })
+                  .map((reservation) => {
+                    const packNames: Record<string, string> = {
+                      'conference': 'Pack Conférence',
+                      'soiree': 'Pack Soirée',
+                      'mariage': 'Pack Mariage'
+                    };
+                    const packName = packNames[reservation.pack_key] || reservation.pack_key;
+                    
+                    // Parser final_items si disponible
+                    let finalItems: Array<{ label: string; qty: number }> = [];
+                    try {
+                      if (reservation.final_items) {
+                        finalItems = typeof reservation.final_items === 'string' 
+                          ? JSON.parse(reservation.final_items)
+                          : reservation.final_items;
+                      }
+                    } catch (e) {
+                      console.error('Erreur parsing final_items:', e);
+                    }
+                    
+                    return (
+                      <Card key={reservation.id} className="border-2 border-orange-500">
+                        <CardContent className="p-4 sm:p-6">
+                          <div className="flex flex-col gap-4">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">{packName}</h3>
+                                
+                                {/* Résumé client si disponible */}
+                                {reservation.customer_summary && (
+                                  <p className="text-sm text-gray-700 mb-3 italic bg-blue-50 p-2 rounded-lg border border-blue-200">
+                                    {reservation.customer_summary}
+                                  </p>
+                                )}
+                                
+                                {/* Détail du matériel */}
+                                {finalItems.length > 0 && (
+                                  <div className="mb-3">
+                                    <p className="text-sm font-semibold text-gray-700 mb-2">Matériel inclus :</p>
+                                    <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
+                                      {finalItems.map((item, idx) => (
+                                        <li key={idx}>
+                                          {item.qty} {item.label.toLowerCase()}{item.qty > 1 ? 's' : ''}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                
+                                {/* Services inclus */}
+                                <div className="mb-3 p-2 bg-green-50 rounded-lg border border-green-200">
+                                  <p className="text-xs text-green-800">
+                                    📦 Pack clé en main — livraison, installation et récupération incluses
+                                  </p>
+                                </div>
+                                
+                                <div className="space-y-1 text-sm text-gray-600">
+                                  <p>
+                                    <strong>Total:</strong> {reservation.price_total}€
+                                  </p>
+                                  <p>
+                                    <strong>Caution:</strong> {reservation.deposit_amount}€
+                                  </p>
+                                  {reservation.start_at && (
+                                    <p>
+                                      <strong>Date:</strong> {new Date(reservation.start_at).toLocaleDateString('fr-FR', {
+                                        day: 'numeric',
+                                        month: 'long',
+                                        year: 'numeric'
+                                      })}
+                                    </p>
+                                  )}
+                                  {reservation.end_at && reservation.start_at !== reservation.end_at && (
+                                    <p>
+                                      <strong>Jusqu'au:</strong> {new Date(reservation.end_at).toLocaleDateString('fr-FR', {
+                                        day: 'numeric',
+                                        month: 'long',
+                                        year: 'numeric'
+                                      })}
+                                    </p>
+                                  )}
+                                  {reservation.address && (
+                                    <p>
+                                      <strong>Lieu:</strong> {reservation.address}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <Button
+                                onClick={async () => {
+                                  try {
+                                    // Récupérer le token d'authentification si disponible
+                                    const { supabase } = await import('@/lib/supabase');
+                                    let authHeader = '';
+                                    
+                                    if (supabase) {
+                                      const { data: { session } } = await supabase.auth.getSession();
+                                      if (session?.access_token) {
+                                        authHeader = `Bearer ${session.access_token}`;
+                                      }
+                                    }
+                                    
+                                    const response = await fetch('/api/payments/create-checkout-session', {
+                                      method: 'POST',
+                                      headers: { 
+                                        'Content-Type': 'application/json',
+                                        ...(authHeader ? { 'Authorization': authHeader } : {}),
+                                      },
+                                      body: JSON.stringify({
+                                        reservation_id: reservation.id,
+                                      }),
+                                    });
+                                    
+                                    if (response.ok) {
+                                      const data = await response.json();
+                                      if (data.url) {
+                                        window.location.href = data.url;
+                                      } else {
+                                        alert('Erreur: URL de paiement non reçue');
+                                      }
+                                    } else {
+                                      const errorData = await response.json().catch(() => ({}));
+                                      alert(errorData.error || 'Erreur lors de la création de la session de paiement');
+                                    }
+                                  } catch (error) {
+                                    console.error('Erreur:', error);
+                                    alert('Erreur lors de la création de la session de paiement');
+                                  }
+                                }}
+                                className="bg-[#F2431E] hover:bg-[#E63A1A] text-white w-full sm:w-auto"
+                              >
+                                Payer maintenant
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
+          {/* Réservations payées (client_reservations) - Toujours afficher si PAID ou CONFIRMED */}
+          {(() => {
+            const paidReservations = clientReservations.filter(r => {
+              const status = r.status?.toUpperCase();
+              return status === 'PAID' || status === 'CONFIRMED';
+            });
+            
+            // Ne pas afficher si aucune réservation payée
+            if (paidReservations.length === 0) return null;
+            
+            return (
+              <div className="mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
+                  Réservations confirmées
+                </h2>
+                <div className="space-y-4">
+                  {paidReservations.map((reservation) => {
+                    const packNames: Record<string, string> = {
+                      'conference': 'Pack Conférence',
+                      'soiree': 'Pack Soirée',
+                      'mariage': 'Pack Mariage'
+                    };
+                    const packName = packNames[reservation.pack_key] || reservation.pack_key;
+                    
+                    return (
+                      <Card key={reservation.id} className="border-2 border-green-500">
+                        <CardContent className="p-4 sm:p-6">
+                          <div className="flex flex-col gap-4">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h3 className="text-lg font-bold text-gray-900">{packName}</h3>
+                                  <Badge className="bg-green-500 text-white">
+                                    {reservation.status === 'PAID' || reservation.status === 'paid' ? 'Payée' : 'Confirmée'}
+                                  </Badge>
+                                </div>
+                                
+                                {reservation.customer_summary && (
+                                  <p className="text-sm text-gray-700 mb-3 italic bg-blue-50 p-2 rounded-lg border border-blue-200">
+                                    {reservation.customer_summary}
+                                  </p>
+                                )}
+                                
+                                <div className="space-y-1 text-sm text-gray-600">
+                                  <p>
+                                    <strong>Total:</strong> {reservation.price_total}€
+                                  </p>
+                                  {reservation.start_at && (
+                                    <p>
+                                      <strong>Date:</strong> {new Date(reservation.start_at).toLocaleDateString('fr-FR', {
+                                        day: 'numeric',
+                                        month: 'long',
+                                        year: 'numeric'
+                                      })}
+                                    </p>
+                                  )}
+                                  {reservation.address && (
+                                    <p>
+                                      <strong>Lieu:</strong> {reservation.address}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Réservations à venir */}
           {upcomingReservations.length > 0 && (

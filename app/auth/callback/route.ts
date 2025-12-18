@@ -3,6 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabaseAdmin = (supabaseUrl && supabaseServiceKey && supabaseUrl.trim() !== '' && supabaseServiceKey.trim() !== '')
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null;
 
 export async function GET(req: NextRequest) {
   try {
@@ -62,6 +67,27 @@ export async function GET(req: NextRequest) {
       // Si c'est une réinitialisation de mot de passe, rediriger vers la page de réinitialisation
       if (type === 'recovery') {
         return NextResponse.redirect(new URL('/reinitialiser-mot-de-passe', redirectUrl));
+      }
+
+      // Rattacher les réservations à l'utilisateur si c'est une nouvelle inscription
+      if (data.user && data.user.email && supabaseAdmin) {
+        try {
+          // Rattacher les client_reservations qui correspondent à cet email mais n'ont pas encore de user_id
+          const { error: updateError } = await supabaseAdmin
+            .from('client_reservations')
+            .update({ user_id: data.user.id })
+            .eq('customer_email', data.user.email.toLowerCase().trim())
+            .is('user_id', null);
+
+          if (updateError) {
+            console.warn('Erreur rattachement réservations (non bloquant):', updateError);
+          } else {
+            console.log(`✅ Réservations rattachées à l'utilisateur ${data.user.id}`);
+          }
+        } catch (attachError) {
+          // Ne pas bloquer la redirection en cas d'erreur
+          console.warn('Erreur rattachement réservations (non bloquant):', attachError);
+        }
       }
 
       // Vérifier s'il y a un panier dans localStorage (via cookie ou paramètre)

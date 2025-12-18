@@ -91,6 +91,16 @@ useEffect(() => {
           .from('reservations')
           .select('*')
           .order('created_at', { ascending: false });
+        
+        // Charger aussi les client_reservations (nouvelles réservations)
+        const { data: clientReservationsData, error: clientReservationsError } = await supabase
+          .from('client_reservations')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (clientReservationsError) {
+          console.error('Erreur chargement client_reservations:', clientReservationsError);
+        }
 
         if (error) throw error;
 
@@ -113,6 +123,21 @@ useEffect(() => {
           userProfilesMap.set(profile.user_id, profile);
         });
 
+        // Adapter les client_reservations au format des réservations pour l'affichage
+        const adaptedClientReservations = (clientReservationsData || []).map((cr: any) => ({
+          ...cr,
+          // Adapter les champs pour compatibilité
+          start_date: cr.start_at || cr.created_at,
+          end_date: cr.end_at || cr.created_at,
+          total_price: cr.price_total,
+          pack_id: cr.pack_key,
+          type: 'client_reservation', // Marqueur pour identifier les nouvelles réservations
+          customer_email: cr.customer_email,
+          customer_name: cr.customer_name || '',
+          // Adapter le statut
+          status: cr.status === 'PAID' ? 'CONFIRMED' : cr.status,
+        }));
+        
         // Enrichir avec les informations des orders
         const enrichedReservations = (reservationsData || []).map((reservation) => {
           let customerName = 'Client';
@@ -171,8 +196,18 @@ useEffect(() => {
           };
         });
 
-        setReservations(enrichedReservations);
-        setFilteredReservations(enrichedReservations);
+        // Combiner les réservations anciennes et nouvelles
+        const allReservations = [
+          ...enrichedReservations,
+          ...adaptedClientReservations
+        ].sort((a, b) => {
+          const dateA = new Date(a.created_at || a.start_date).getTime();
+          const dateB = new Date(b.created_at || b.start_date).getTime();
+          return dateB - dateA; // Plus récent en premier
+        });
+        
+        setReservations(allReservations);
+        setFilteredReservations(allReservations);
       } catch (error: any) {
         console.error('❌ Erreur chargement réservations:', {
           error,
@@ -632,28 +667,45 @@ useEffect(() => {
                   </div>
                 </div>
 
-                {/* Heures de retrait et retour (pour retrait sur place) */}
+                {/* Heures de retrait et retour (pour retrait sur place uniquement) */}
                 {(() => {
-                  // Vérifier si c'est un retrait sur place
+                  // Vérifier si c'est un retrait sur place (NE PAS afficher pour les livraisons)
                   let isPickup = false;
+                  let isDelivery = false;
+                  
                   if (selectedReservation.notes) {
                     try {
                       const parsedNotes = typeof selectedReservation.notes === 'string' 
                         ? JSON.parse(selectedReservation.notes) 
                         : selectedReservation.notes;
+                      
+                      // Vérifier explicitement si c'est une livraison
+                      const deliveryOption = parsedNotes?.deliveryOption;
+                      isDelivery = deliveryOption === 'livraison' || 
+                                   deliveryOption === 'paris' || 
+                                   deliveryOption === 'idf' ||
+                                   deliveryOption === 'delivery';
+                      
+                      // Vérifier si c'est un retrait sur place
                       const cartItems = parsedNotes?.cartItems || [];
-                      const hasDelivery = cartItems.some((item: any) => 
+                      const hasDeliveryItem = cartItems.some((item: any) => 
                         item.productId?.startsWith('delivery-') || 
                         item.metadata?.type === 'delivery'
                       );
-                      isPickup = !hasDelivery && 
-                        (parsedNotes?.deliveryOption === 'retrait' || !parsedNotes?.deliveryOption);
+                      
+                      // C'est un retrait seulement si :
+                      // 1. Ce n'est PAS une livraison
+                      // 2. ET (deliveryOption est 'retrait' OU n'existe pas ET pas d'item de livraison)
+                      isPickup = !isDelivery && 
+                        (deliveryOption === 'retrait' || 
+                         (!deliveryOption && !hasDeliveryItem));
                     } catch (e) {
                       // Ignorer les erreurs de parsing
                     }
                   }
                   
-                  if (!isPickup) return null;
+                  // Ne pas afficher si c'est une livraison ou si ce n'est pas un retrait
+                  if (isDelivery || !isPickup) return null;
                   
                   return (
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">

@@ -79,10 +79,87 @@ export async function POST(req: NextRequest) {
         try {
           // Récupérer les métadonnées de la session
           const metadata = session.metadata || {};
-          const paymentType = metadata.type || 'cart'; // 'cart' pour paiement principal, 'deposit' pour caution
+          const paymentType = metadata.type || 'cart'; // 'cart' pour paiement principal, 'deposit' pour caution, 'client_reservation' pour demande de réservation
           
           console.log('🔍 Type de paiement détecté:', paymentType);
           console.log('🔍 Métadonnées complètes:', JSON.stringify(metadata, null, 2));
+          
+          // Si c'est un paiement de client_reservation (demande de réservation)
+          if (paymentType === 'client_reservation') {
+            const reservationId = metadata.reservation_id;
+            
+            console.log('📋 Webhook client_reservation reçu:', {
+              sessionId: session.id,
+              reservationId,
+              paymentStatus: session.payment_status,
+              metadata: JSON.stringify(metadata),
+            });
+            
+            if (!reservationId) {
+              console.warn('⚠️ reservation_id manquant dans les métadonnées');
+              return NextResponse.json({ received: true, warning: 'reservation_id manquant' });
+            }
+            
+            // Vérifier que le paiement est bien complété
+            if (session.payment_status !== 'paid') {
+              console.warn('⚠️ Paiement non complété, statut:', session.payment_status);
+              return NextResponse.json({ received: true, warning: 'Paiement non complété' });
+            }
+            
+            console.log('🔄 Mise à jour client_reservation:', reservationId);
+            
+            // Vérifier d'abord si la réservation existe
+            const { data: existingReservation, error: fetchError } = await supabaseClient
+              .from('client_reservations')
+              .select('id, status, stripe_session_id')
+              .eq('id', reservationId)
+              .single();
+            
+            if (fetchError || !existingReservation) {
+              console.error('❌ Réservation non trouvée:', reservationId);
+              console.error('❌ Erreur:', fetchError);
+              return NextResponse.json({ received: true, error: 'Réservation non trouvée' });
+            }
+            
+            console.log('📊 Statut actuel avant mise à jour:', existingReservation.status);
+            console.log('📊 Session ID actuelle:', existingReservation.stripe_session_id);
+            
+            // Si déjà payée, ne pas refaire la mise à jour
+            if (existingReservation.status === 'PAID' || existingReservation.status === 'paid') {
+              console.log('✅ Réservation déjà payée, pas de mise à jour nécessaire');
+              return NextResponse.json({ received: true, alreadyPaid: true });
+            }
+            
+            // Mettre à jour le statut de la réservation à PAID après paiement réussi
+            const { data: updatedReservation, error: updateError } = await supabaseClient
+              .from('client_reservations')
+              .update({
+                status: 'PAID',
+                stripe_session_id: session.id,
+              })
+              .eq('id', reservationId)
+              .select()
+              .single();
+            
+            if (updateError) {
+              console.error('❌ Erreur mise à jour client_reservation:', updateError);
+              console.error('❌ Code erreur:', updateError.code);
+              console.error('❌ Message erreur:', updateError.message);
+              console.error('❌ Détails erreur:', JSON.stringify(updateError, null, 2));
+              return NextResponse.json({ received: true, error: 'Erreur mise à jour' });
+            }
+            
+            if (!updatedReservation) {
+              console.error('❌ Aucune donnée retournée après mise à jour');
+              return NextResponse.json({ received: true, error: 'Aucune donnée retournée' });
+            }
+            
+            console.log('✅ client_reservation payée avec succès:', reservationId);
+            console.log('✅ Nouveau statut:', updatedReservation.status);
+            console.log('✅ Nouveau session_id:', updatedReservation.stripe_session_id);
+            
+            return NextResponse.json({ received: true, success: true, status: updatedReservation.status });
+          }
           
           // Si c'est un paiement de caution, traiter différemment
           if (paymentType === 'deposit') {

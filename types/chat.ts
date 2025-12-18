@@ -27,3 +27,22 @@ export interface DraftFinalConfig {
   needsConfirmation: boolean;
   withInstallation?: boolean; // true si le client demande explicitement l'installation
 }
+
+// Type pour les demandes de réservation (mode pack)
+export interface ReservationRequestDraft {
+  pack_key: 'conference' | 'soiree' | 'mariage';
+  payload: {
+    eventType?: string;
+    peopleCount?: number;
+    location?: string;
+    indoorOutdoor?: string;
+    ambiance?: string;
+    startDate?: string;
+    endDate?: string;
+    startTime?: string;
+    endTime?: string;
+    address?: string;
+    department?: string;
+    [key: string]: any; // Pour permettre d'autres champs dynamiques
+  };
+}

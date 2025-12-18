@@ -22,8 +22,11 @@ export default function FloatingChatWidget() {
     isLoading,
     draftConfig,
     activeScenarioId,
+    activePackKey,
+    reservationRequestDraft,
     setIsLoading,
     setDraftConfig,
+    setReservationRequestDraft,
     addUserMessage,
     addAssistantMessage,
     openChat,
@@ -35,6 +38,7 @@ export default function FloatingChatWidget() {
 
   const [inputValue, setInputValue] = useState('');
   const [cartItemsNames, setCartItemsNames] = useState<Record<string, string>>({});
+  const [customerPhoneInput, setCustomerPhoneInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { addToCart } = useCart();
@@ -100,8 +104,10 @@ export default function FloatingChatWidget() {
 
   // Flag pour éviter double envoi
   const isSendingRef = useRef(false);
-  // Flag pour éviter double traitement du draft message
+  // Flag pour éviter double traitement du draft message (one-shot)
   const draftProcessedRef = useRef<string>('');
+  // Ref pour stocker le dernier draft traité (pour éviter réinjection)
+  const lastDraftRef = useRef<string>('');
   // Ref pour stocker le scenarioId actif (persiste entre les messages)
   // Synchroniser avec activeScenarioId depuis useChat
   const scenarioIdRef = useRef<string | null>(null);
@@ -127,11 +133,16 @@ export default function FloatingChatWidget() {
       return;
     }
 
-    // Guard anti-doublon pour le draft message
+    // Guard anti-doublon pour le draft message (one-shot)
     const trimmedContent = userContent.trim();
-    if (draftProcessedRef.current === trimmedContent) {
-      console.log('[CHAT] Draft message déjà traité, ignoré:', trimmedContent);
+    if (draftProcessedRef.current === trimmedContent && lastDraftRef.current === trimmedContent) {
+      console.log('[CHAT] Draft message déjà traité (one-shot), ignoré:', trimmedContent);
       return;
+    }
+    
+    // Si c'est un nouveau draft, mettre à jour les refs
+    if (draftProcessedRef.current === trimmedContent && lastDraftRef.current !== trimmedContent) {
+      lastDraftRef.current = trimmedContent;
     }
 
     isSendingRef.current = true;
@@ -197,6 +208,7 @@ export default function FloatingChatWidget() {
       // Utiliser scenarioIdRef.current (persiste entre les messages) ou activeScenarioId (depuis useChat)
       const currentScenarioId = scenarioIdRef.current || activeScenarioId;
       const currentProductContext = productContextRef.current;
+      const currentPackKey = activePackKey;
       
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -205,6 +217,7 @@ export default function FloatingChatWidget() {
           messages: apiMessages, // Utiliser le tableau construit AVANT setMessages
           scenarioId: currentScenarioId, // Inclure le scenarioId si présent
           productContext: currentProductContext, // Inclure le contexte produit si présent
+          packKey: currentPackKey, // Inclure le packKey si présent (mode pack)
         }),
       });
 
@@ -220,7 +233,8 @@ export default function FloatingChatWidget() {
       console.log('[CHAT] Réponse reçue:', { 
         hasReply: !!data.reply, 
         replyLength: data.reply?.length || 0,
-        hasConfig: !!data.draftFinalConfig 
+        hasConfig: !!data.draftFinalConfig,
+        hasReservationRequest: !!data.reservationRequestDraft
       });
       
       let cleanContent = data.reply || '';
@@ -236,6 +250,17 @@ export default function FloatingChatWidget() {
       }
 
       addAssistantMessage(cleanContent, data.draftFinalConfig);
+      
+      // Si on est en mode pack et qu'on a un reservationRequestDraft, le stocker
+      if (activePackKey && data.reservationRequestDraft) {
+        // Vérifier que activePackKey est bien l'un des types attendus
+        if (activePackKey === 'conference' || activePackKey === 'soiree' || activePackKey === 'mariage') {
+          setReservationRequestDraft({
+            pack_key: activePackKey,
+            payload: data.reservationRequestDraft.payload || {}
+          });
+        }
+      }
     } catch (error) {
       console.error('[CHAT] Erreur envoi message:', error);
       // UI fallback : ne pas afficher le welcome, afficher un message d'erreur clair
@@ -361,31 +386,36 @@ export default function FloatingChatWidget() {
     const handleOpenChatWithDraft = (event: CustomEvent) => {
       const message = event.detail?.message;
       const scenarioId = event.detail?.scenarioId;
-      const productContext = event.detail?.productContext;
-      
-      console.log('[CHAT] Événement openChatWithDraft reçu:', { message, scenarioId, productContext });
-      
-      // Stocker le contexte produit si fourni
-      if (productContext) {
-        productContextRef.current = productContext;
-      }
-      
-      openChatWithDraft(message, scenarioId);
+        const productContext = event.detail?.productContext;
+        const packKey = event.detail?.packKey;
+        
+        console.log('[CHAT] Événement openChatWithDraft reçu:', { message, scenarioId, productContext, packKey });
+        
+        // Stocker le contexte produit si fourni
+        if (productContext) {
+          productContextRef.current = productContext;
+        }
+        
+        openChatWithDraft(message, scenarioId, packKey);
     };
 
     const handleChatDraftMessage = async (event: CustomEvent) => {
       const message = event.detail?.message;
       const scenarioId = event.detail?.scenarioId;
       const productContext = event.detail?.productContext;
+      const packKey = event.detail?.packKey;
       
       if (message && message.trim() && isOpen && !isSendingRef.current) {
         const trimmedMessage = message.trim();
         
-        // Vérifier que ce message n'a pas déjà été traité
+        // ONE-SHOT : vérifier que ce message n'a pas déjà été traité
         if (draftProcessedRef.current === trimmedMessage) {
-          console.log('[CHAT] Draft message déjà traité, ignoré');
+          console.log('[CHAT] Draft message déjà traité (one-shot), ignoré');
           return;
         }
+        
+        // Marquer comme traité IMMÉDIATEMENT (one-shot)
+        draftProcessedRef.current = trimmedMessage;
         
         // Si scenarioId fourni, le stocker dans la ref ET synchroniser avec useChat
         if (scenarioId) {
@@ -399,7 +429,12 @@ export default function FloatingChatWidget() {
           console.log('[CHAT] ProductContext stocké:', productContext);
         }
         
-        console.log('[CHAT] Traitement draft message:', trimmedMessage);
+        // Si packKey fourni, il sera géré par useChat via openChatWithDraft
+        if (packKey) {
+          console.log('[CHAT] PackKey reçu:', packKey);
+        }
+        
+        console.log('[CHAT] Traitement draft message (one-shot):', trimmedMessage);
         
         // Attendre un peu pour s'assurer que le welcome est supprimé et le state est à jour
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -408,12 +443,21 @@ export default function FloatingChatWidget() {
       }
     };
 
-    window.addEventListener('openChatWithDraft', handleOpenChatWithDraft as EventListener);
-    window.addEventListener('chatDraftMessage', handleChatDraftMessage as EventListener);
+    // Wrappers pour convertir Event en CustomEvent
+    const handleOpenChatWithDraftWrapper = (event: Event) => {
+      handleOpenChatWithDraft(event as CustomEvent);
+    };
+
+    const handleChatDraftMessageWrapper = (event: Event) => {
+      handleChatDraftMessage(event as CustomEvent);
+    };
+
+    window.addEventListener('openChatWithDraft', handleOpenChatWithDraftWrapper);
+    window.addEventListener('chatDraftMessage', handleChatDraftMessageWrapper);
     
     return () => {
-      window.removeEventListener('openChatWithDraft', handleOpenChatWithDraft as EventListener);
-      window.removeEventListener('chatDraftMessage', handleChatDraftMessage as EventListener);
+      window.removeEventListener('openChatWithDraft', handleOpenChatWithDraftWrapper);
+      window.removeEventListener('chatDraftMessage', handleChatDraftMessageWrapper);
     };
   }, [openChatWithDraft, isOpen, sendMessage, activeScenarioId]);
 
@@ -550,8 +594,8 @@ export default function FloatingChatWidget() {
           </ScrollArea>
         </div>
 
-        {/* Récap et bouton Ajouter au panier - Style Apple avec glass */}
-        {draftConfig && draftConfig.needsConfirmation && (
+        {/* Récap et bouton Ajouter au panier / Envoyer la demande - Style Apple avec glass */}
+        {draftConfig && draftConfig.needsConfirmation && !activePackKey && (
           <div className="px-6 py-4 border-t border-gray-100/50 bg-white/80 backdrop-blur-sm">
             <div className="mb-3">
               <p className="text-sm font-semibold text-gray-900 mb-2.5">Récapitulatif</p>
@@ -589,6 +633,153 @@ export default function FloatingChatWidget() {
               className="w-full bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-[14px] font-semibold shadow-sm hover:shadow-md active:scale-[0.98]"
             >
               Ajouter au panier
+            </Button>
+          </div>
+        )}
+        
+        {/* Mode pack : Récap et bouton Envoyer la demande */}
+        {activePackKey && reservationRequestDraft && (
+          <div className="px-6 py-4 border-t border-gray-100/50 bg-white/80 backdrop-blur-sm">
+            <div className="mb-3">
+              <p className="text-sm font-semibold text-gray-900 mb-2.5">Récapitulatif de votre demande</p>
+              <ul className="text-xs text-gray-600 space-y-1.5">
+                <li>
+                  <span className="font-semibold">Pack:</span> {
+                    activePackKey === 'conference' ? 'Pack Conférence' :
+                    activePackKey === 'soiree' ? 'Pack Soirée' :
+                    'Pack Mariage'
+                  }
+                </li>
+                {reservationRequestDraft.payload.eventType && (
+                  <li><span className="font-semibold">Événement:</span> {reservationRequestDraft.payload.eventType}</li>
+                )}
+                {reservationRequestDraft.payload.peopleCount && (
+                  <li><span className="font-semibold">Personnes:</span> {reservationRequestDraft.payload.peopleCount}</li>
+                )}
+                {reservationRequestDraft.payload.startDate && (
+                  <li><span className="font-semibold">Date:</span> {reservationRequestDraft.payload.startDate}</li>
+                )}
+                {reservationRequestDraft.payload.address && (
+                  <li><span className="font-semibold">Lieu:</span> {reservationRequestDraft.payload.address}</li>
+                )}
+              </ul>
+            </div>
+            
+            {/* Champ téléphone obligatoire */}
+            <div className="mb-3">
+              <label htmlFor="customer-phone" className="block text-xs font-semibold text-gray-900 mb-1.5">
+                Numéro de téléphone <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="customer-phone"
+                type="tel"
+                value={customerPhoneInput || reservationRequestDraft.payload.customerPhone || ''}
+                onChange={(e) => {
+                  const phone = e.target.value;
+                  setCustomerPhoneInput(phone);
+                  // Mettre à jour aussi dans le payload
+                  if (reservationRequestDraft) {
+                    setReservationRequestDraft({
+                      ...reservationRequestDraft,
+                      payload: {
+                        ...reservationRequestDraft.payload,
+                        customerPhone: phone,
+                      },
+                    });
+                  }
+                }}
+                placeholder="06 12 34 56 78"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F2431E] focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                📞 Utilisé uniquement pour la logistique (coordination livraison/installation). Vos données sont protégées.
+              </p>
+            </div>
+            
+            <Button
+              onClick={async () => {
+                // Récupérer l'email depuis la session si disponible
+                let customerEmail = '';
+                let customerName = '';
+                let customerPhone = customerPhoneInput || reservationRequestDraft.payload.customerPhone || '';
+                
+                try {
+                  const { supabase } = await import('@/lib/supabase');
+                  if (supabase) {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user?.email) {
+                      customerEmail = user.email;
+                      customerName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+                    }
+                  }
+                } catch (e) {
+                  console.error('Erreur récupération user:', e);
+                }
+                
+                // Utiliser l'email du payload si pas de session
+                if (!customerEmail && reservationRequestDraft.payload.customerEmail) {
+                  customerEmail = reservationRequestDraft.payload.customerEmail;
+                }
+                if (!customerName && reservationRequestDraft.payload.customerName) {
+                  customerName = reservationRequestDraft.payload.customerName;
+                }
+                
+                // Validation téléphone obligatoire
+                if (!customerPhone || customerPhone.trim() === '') {
+                  addAssistantMessage('Veuillez renseigner votre numéro de téléphone pour finaliser votre demande. Il est nécessaire pour coordonner la livraison et l\'installation.');
+                  return;
+                }
+                
+                // Validation format téléphone basique (au moins 10 caractères)
+                const phoneDigits = customerPhone.replace(/\D/g, '');
+                if (phoneDigits.length < 10) {
+                  addAssistantMessage('Veuillez renseigner un numéro de téléphone valide (au moins 10 chiffres).');
+                  return;
+                }
+                
+                if (!customerEmail) {
+                  addAssistantMessage('Veuillez fournir votre email pour envoyer la demande. Vous pouvez me le donner maintenant ou vous connecter.');
+                  return;
+                }
+                
+                // Envoyer la demande de réservation
+                try {
+                  // Vérifier que activePackKey est bien l'un des types attendus
+                  if (!activePackKey || (activePackKey !== 'conference' && activePackKey !== 'soiree' && activePackKey !== 'mariage')) {
+                    addAssistantMessage('Erreur: type de pack invalide. Veuillez réessayer.');
+                    return;
+                  }
+                  
+                  const response = await fetch('/api/reservation-requests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      pack_key: activePackKey,
+                      payload: reservationRequestDraft.payload,
+                      customer_email: customerEmail,
+                      customer_phone: customerPhone.trim(),
+                      customer_name: customerName || null,
+                    }),
+                  });
+                  
+                  if (response.ok) {
+                    addAssistantMessage('Votre demande a été envoyée avec succès ! Nous vous recontacterons rapidement par email.');
+                    setReservationRequestDraft(null);
+                    setDraftConfig(null);
+                    setCustomerPhoneInput('');
+                  } else {
+                    const errorData = await response.json();
+                    addAssistantMessage(errorData.error || 'Erreur lors de l\'envoi de la demande. Veuillez réessayer.');
+                  }
+                } catch (error) {
+                  console.error('Erreur envoi demande:', error);
+                  addAssistantMessage('Erreur lors de l\'envoi de la demande. Veuillez réessayer.');
+                }
+              }}
+              disabled={!customerPhoneInput && !reservationRequestDraft.payload.customerPhone}
+              className="w-full bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-[14px] font-semibold shadow-sm hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Envoyer la demande
             </Button>
           </div>
         )}

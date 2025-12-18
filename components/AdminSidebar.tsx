@@ -23,6 +23,7 @@ interface AdminSidebarProps {
     pendingCancellations?: number;
     pendingModifications?: number;
     pendingProRequests?: number;
+    pendingReservationRequests?: number;
   };
 }
 
@@ -39,6 +40,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
     pendingCancellations: 0,
     pendingModifications: 0,
     pendingProRequests: 0,
+    pendingReservationRequests: 0,
   });
 
   const texts = {
@@ -51,6 +53,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
       planning: 'Planning & Disponibilités',
       clients: 'Clients',
       proAccess: 'Accès Pro',
+      reservationRequests: 'Demandes de réservation',
       invoices: 'Factures',
       contracts: 'Contrats',
       deliveries: 'Livraisons',
@@ -69,6 +72,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
       planning: 'Planning & Availabilities',
       clients: 'Clients',
       proAccess: 'Pro Access',
+      reservationRequests: 'Reservation Requests',
       invoices: 'Invoices',
       contracts: 'Contracts',
       deliveries: 'Deliveries',
@@ -217,6 +221,33 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           // Erreur silencieuse
         }
 
+        // Demandes de réservation non vues (NEW ou PENDING_REVIEW)
+        const viewedReservationRequests = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('admin_viewed_reservation_requests') || '[]')
+          : [];
+        
+        let pendingReservationRequests = 0;
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const response = await fetch('/api/admin/reservation-requests', {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+            if (response.ok) {
+              const data = await response.json();
+              const newRequests = (data.requests || []).filter(
+                (r: any) => (r.status === 'NEW' || r.status === 'PENDING_REVIEW')
+                  && !viewedReservationRequests.includes(r.id)
+              );
+              pendingReservationRequests = newRequests.length;
+            }
+          }
+        } catch (error) {
+          // Erreur silencieuse
+        }
+
         setLocalPendingActions({
           pendingReservations,
           contractsToSign,
@@ -225,6 +256,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           pendingCancellations,
           pendingModifications,
           pendingProRequests,
+          pendingReservationRequests,
         });
       } catch (error) {
         // Erreur silencieuse
@@ -361,6 +393,33 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
               {currentTexts.reservations}
+            </div>
+          )}
+        </Link>
+        <Link
+          href="/admin/reservation-requests"
+          onClick={onClose}
+          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
+            isActive('/admin/reservation-requests')
+              ? 'bg-[#F2431E] text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+          title={isCollapsed ? currentTexts.reservationRequests : undefined}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.reservationRequests}</span>
+          )}
+          {((pendingActions.pendingReservationRequests ?? 0) > 0) && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {pendingActions.pendingReservationRequests}
+            </span>
+          )}
+          {isCollapsed && (
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              {currentTexts.reservationRequests}
             </div>
           )}
         </Link>

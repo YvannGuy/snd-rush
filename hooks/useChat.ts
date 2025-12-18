@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChatMessage, DraftFinalConfig } from '@/types/chat';
+import { ChatMessage, DraftFinalConfig, ReservationRequestDraft } from '@/types/chat';
 
 const STORAGE_KEY = 'sndrush_chat_messages';
 const IDLE_TIMEOUT_MS = 45000; // 45 secondes d'inactivité réelle
@@ -34,10 +34,13 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [draftConfig, setDraftConfig] = useState<DraftFinalConfig | null>(null);
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
+  const [activePackKey, setActivePackKey] = useState<'conference' | 'soiree' | 'mariage' | null>(null);
+  const [reservationRequestDraft, setReservationRequestDraft] = useState<ReservationRequestDraft | null>(null);
 
   // Refs pour éviter les doublons
   const welcomeAddedRef = useRef(false);
   const hasLoadedRef = useRef(false);
+  const pendingDraftRef = useRef<string | null>(null); // Flag pour injection one-shot du message pack
   
   // Refs pour la gestion de l'inactivité (logique stricte)
   const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -94,7 +97,14 @@ export function useChat() {
       if (stored) {
         const parsed = JSON.parse(stored) as ChatMessage[];
         if (parsed.length > 0) {
-          setMessages(parsed);
+          // Utiliser la forme fonctionnelle pour éviter d'écraser les messages
+          setMessages(prev => {
+            // Ne remplacer que si vraiment vide (première fois)
+            if (prev.length === 0) {
+              return parsed;
+            }
+            return prev; // Garder les messages existants
+          });
           // Vérifier si welcome existe déjà
           welcomeAddedRef.current = parsed.some(m => m.kind === 'welcome');
           
@@ -104,38 +114,62 @@ export function useChat() {
             // Supprimer le welcome s'il existe car un message user existe
             const withoutWelcome = parsed.filter(m => m.kind !== 'welcome');
             if (withoutWelcome.length !== parsed.length) {
-              setMessages(withoutWelcome);
+              setMessages(prev => {
+                // Ne mettre à jour que si nécessaire
+                const currentHasWelcome = prev.some(m => m.kind === 'welcome');
+                if (currentHasWelcome) {
+                  return prev.filter(m => m.kind !== 'welcome');
+                }
+                return prev;
+              });
               welcomeAddedRef.current = false;
               localStorage.setItem(STORAGE_KEY, JSON.stringify(withoutWelcome));
             }
           }
         } else {
-          // Si le tableau est vide, injecter le welcome
+          // Si le tableau est vide, injecter le welcome (append-only)
           const welcome = createWelcomeMessage();
-          setMessages([welcome]);
-          welcomeAddedRef.current = true;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify([welcome]));
+          setMessages(prev => {
+            if (prev.length === 0) {
+              welcomeAddedRef.current = true;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify([welcome]));
+              return [welcome];
+            }
+            return prev;
+          });
         }
       } else {
-        // Pas de localStorage, injecter le welcome
+        // Pas de localStorage, injecter le welcome (append-only)
         const welcome = createWelcomeMessage();
-        setMessages([welcome]);
-        welcomeAddedRef.current = true;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([welcome]));
+        setMessages(prev => {
+          if (prev.length === 0) {
+            welcomeAddedRef.current = true;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify([welcome]));
+            return [welcome];
+          }
+          return prev;
+        });
       }
     } catch (error) {
       console.error('Erreur chargement messages:', error);
-      // En cas d'erreur, injecter le welcome
+      // En cas d'erreur, injecter le welcome (append-only)
       const welcome = createWelcomeMessage();
-      setMessages([welcome]);
-      welcomeAddedRef.current = true;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([welcome]));
+      setMessages(prev => {
+        if (prev.length === 0) {
+          welcomeAddedRef.current = true;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify([welcome]));
+          return [welcome];
+        }
+        return prev;
+      });
     }
   }, []); // Pas de dépendances - s'exécute une seule fois au mount
 
   // Sauvegarder dans localStorage à chaque changement
+  // IMPORTANT : Ne sauvegarder que si hasLoadedRef est true (après le premier chargement)
+  // Cela évite d'écraser le localStorage pendant le chargement initial
   useEffect(() => {
-    if (messages.length > 0) {
+    if (hasLoadedRef.current && messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
   }, [messages]);
@@ -223,7 +257,11 @@ export function useChat() {
     const now = Date.now();
     
     // Guard anti-doublon : ignorer si même texte dans les 800ms
+    // MAIS : permettre si c'est le draft en attente (one-shot)
+    const isPendingDraft = pendingDraftRef.current === trimmedContent;
+    
     if (
+      !isPendingDraft &&
       lastSubmittedTextRef.current === trimmedContent &&
       now - lastSubmittedTimeRef.current < 800
     ) {
@@ -232,10 +270,12 @@ export function useChat() {
     }
 
     // Vérifier aussi dans les messages existants (dernier message user)
+    // MAIS : permettre si c'est le draft en attente (one-shot)
     let shouldAdd = true;
     setMessages(prev => {
       const lastUserMessage = [...prev].reverse().find(m => m.role === 'user' && m.kind === 'normal');
       if (
+        !isPendingDraft &&
         lastUserMessage &&
         lastUserMessage.content === trimmedContent &&
         now - lastUserMessage.createdAt < 1000
@@ -253,6 +293,11 @@ export function useChat() {
 
     lastSubmittedTextRef.current = trimmedContent;
     lastSubmittedTimeRef.current = now;
+    
+    // Si c'est le draft en attente, le clear après ajout (one-shot)
+    if (isPendingDraft) {
+      pendingDraftRef.current = null;
+    }
 
     const userMessage: ChatMessage = {
       id: 'user-' + now + '-' + Math.random(),
@@ -298,8 +343,9 @@ export function useChat() {
   /**
    * Ouvrir le chat avec un message draft (depuis Hero ou ScenarioFAQSection)
    * Le Hero ne doit QUE passer le texte, le chat gère l'ajout et l'envoi
+   * ONE-SHOT : le message draft ne sera injecté qu'une seule fois
    */
-  const openChatWithDraft = useCallback((draftText?: string, scenarioId?: string) => {
+  const openChatWithDraft = useCallback((draftText?: string, scenarioId?: string, packKey?: 'conference' | 'soiree' | 'mariage') => {
     setIsOpen(true);
     
     // Stocker le scenarioId si fourni (persiste pour toute la conversation)
@@ -308,18 +354,35 @@ export function useChat() {
       console.log('[CHAT] ScenarioId défini:', scenarioId);
     }
     
+    // Stocker le packKey si fourni (persiste pour toute la conversation)
+    if (packKey && (packKey === 'conference' || packKey === 'soiree' || packKey === 'mariage')) {
+      setActivePackKey(packKey);
+      console.log('[CHAT] PackKey défini:', packKey);
+    }
+    
     // Si un message draft arrive, SUPPRIMER le welcome s'il existe
     // Le message user sera ajouté et l'assistant répondra directement
     if (draftText && draftText.trim()) {
-      // Supprimer le message d'accueil s'il existe
+      const trimmedDraft = draftText.trim();
+      
+      // ONE-SHOT : vérifier si ce draft a déjà été traité
+      if (pendingDraftRef.current === trimmedDraft) {
+        console.log('[CHAT] Draft déjà en attente, ignoré:', trimmedDraft);
+        return;
+      }
+      
+      // Marquer ce draft comme en attente (one-shot)
+      pendingDraftRef.current = trimmedDraft;
+      
+      // Supprimer le message d'accueil s'il existe (append-only, ne pas remplacer)
       setMessages(prev => {
         // Si le dernier message est un welcome, le supprimer
-        const filtered = prev.filter(m => m.kind !== 'welcome');
-        // Marquer que le welcome a été supprimé pour éviter sa réinjection
-        if (prev.some(m => m.kind === 'welcome')) {
+        const hasWelcome = prev.some(m => m.kind === 'welcome');
+        if (hasWelcome) {
           welcomeAddedRef.current = true; // Empêcher la réinjection
+          return prev.filter(m => m.kind !== 'welcome');
         }
-        return filtered;
+        return prev;
       });
       
       // Ne PAS reset le timer idle ici
@@ -330,8 +393,9 @@ export function useChat() {
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('chatDraftMessage', { 
           detail: { 
-            message: draftText.trim(),
-            scenarioId: scenarioId 
+            message: trimmedDraft,
+            scenarioId: scenarioId,
+            packKey: packKey
           } 
         }));
       }, 100); // Réduire le délai car on n'a plus besoin d'attendre l'injection du welcome
@@ -389,17 +453,20 @@ export function useChat() {
     welcomeAddedRef.current = false;
     idleShownRef.current = false;
     lastUserInteractionRef.current = Date.now();
+    pendingDraftRef.current = null; // Réinitialiser le flag draft
     
     // 3. Vider le state
     setDraftConfig(null);
     setActiveScenarioId(null); // Réinitialiser le scenarioId
+    setActivePackKey(null); // Réinitialiser le packKey
+    setReservationRequestDraft(null); // Réinitialiser le reservationRequestDraft
     
     // 4. Vider localStorage
     localStorage.removeItem(STORAGE_KEY);
     
-    // 5. Créer et injecter immédiatement le message de bienvenue
+    // 5. Créer et injecter immédiatement le message de bienvenue (remplacer complètement)
     const welcome = createWelcomeMessage();
-    setMessages([welcome]);
+    setMessages([welcome]); // OK ici car c'est un reset complet
     welcomeAddedRef.current = true;
     
     // 6. Sauvegarder immédiatement
@@ -434,8 +501,11 @@ export function useChat() {
     isLoading,
     draftConfig,
     activeScenarioId,
+    activePackKey,
+    reservationRequestDraft,
     setIsLoading,
     setDraftConfig,
+    setReservationRequestDraft,
     addUserMessage,
     addAssistantMessage,
     openChat,

@@ -38,6 +38,17 @@ export default function AdminDashboardPage() {
   const [equipmentStatus, setEquipmentStatus] = useState<any[]>([]);
   const [recentClients, setRecentClients] = useState<any[]>([]);
   const [calendarData, setCalendarData] = useState<any[]>([]);
+  const [pendingActions, setPendingActions] = useState({
+    pendingReservations: 0,
+    contractsToSign: 0,
+    conditionReportsToReview: 0,
+    deliveriesInProgress: 0,
+    pendingCancellations: 0,
+    pendingModifications: 0,
+    pendingProRequests: 0,
+    pendingReservationRequests: 0,
+  });
+  const [showReservationRequestNotification, setShowReservationRequestNotification] = useState(false);
 
   // Charger l'état de la sidebar depuis localStorage
   useEffect(() => {
@@ -347,6 +358,50 @@ export default function AdminDashboardPage() {
         setRecentClients(clientsArray);
         setCalendarData(calendarReservations || []);
 
+        // Calculer les demandes de réservation non vues
+        const viewedReservationRequests = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('admin_viewed_reservation_requests') || '[]')
+          : [];
+        
+        let pendingReservationRequests = 0;
+        try {
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          if (session) {
+            const response = await fetch('/api/admin/reservation-requests', {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+            if (response.ok) {
+              const data = await response.json();
+              const newRequests = (data.requests || []).filter(
+                (r: any) => (r.status === 'NEW' || r.status === 'PENDING_REVIEW')
+                  && !viewedReservationRequests.includes(r.id)
+              );
+              pendingReservationRequests = newRequests.length;
+              
+              // Afficher la notification si il y a de nouvelles demandes
+              if (newRequests.length > 0) {
+                setShowReservationRequestNotification(true);
+              }
+            }
+          }
+        } catch (error) {
+          // Erreur silencieuse
+        }
+
+        // Mettre à jour pendingActions
+        setPendingActions({
+          pendingReservations: reservationsThisMonthCount || 0,
+          contractsToSign: 0, // À calculer si nécessaire
+          conditionReportsToReview: 0, // À calculer si nécessaire
+          deliveriesInProgress: 0, // À calculer si nécessaire
+          pendingCancellations: 0, // À calculer si nécessaire
+          pendingModifications: 0, // À calculer si nécessaire
+          pendingProRequests: 0, // À calculer si nécessaire
+          pendingReservationRequests,
+        });
+
       } catch (error: any) {
         console.error('❌ Erreur chargement dashboard admin:', {
           error,
@@ -621,6 +676,7 @@ export default function AdminDashboardPage() {
           onClose={() => setIsSidebarOpen(false)}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          pendingActions={pendingActions}
         />
 
         {/* Main Content */}
@@ -651,6 +707,43 @@ export default function AdminDashboardPage() {
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+              {/* Notification pour nouvelles demandes de réservation */}
+              {showReservationRequestNotification && pendingActions.pendingReservationRequests > 0 && (
+                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold">{pendingActions.pendingReservationRequests}</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        Vous avez {pendingActions.pendingReservationRequests} nouvelle{pendingActions.pendingReservationRequests > 1 ? 's' : ''} demande{pendingActions.pendingReservationRequests > 1 ? 's' : ''} de réservation
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Cliquez pour voir les détails
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/admin/reservation-requests"
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                      onClick={() => setShowReservationRequestNotification(false)}
+                    >
+                      Voir les demandes
+                    </Link>
+                    <button
+                      onClick={() => setShowReservationRequestNotification(false)}
+                      className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                      aria-label="Fermer la notification"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+              
               {/* Bouton Nouvelle réservation - Uniquement sur le tableau de bord */}
               <div className="mb-6 flex justify-end">
                 <Link

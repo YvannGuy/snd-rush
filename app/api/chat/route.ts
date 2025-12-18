@@ -87,10 +87,49 @@ Pour te conseiller le bon pack, dis-moi :
 // detectGreeting, isNumberOnly, isAckOnly sont maintenant importés depuis lib/chatState.ts
 
 /**
+ * Normalise le texte pour le matching robuste
+ * - lowerCase
+ * - remplace apostrophe typographique (') par (')
+ * - retire les diacritiques (téléphone -> telephone)
+ * - remplace les caractères non-alphanum par des espaces
+ * - collapse espaces multiples
+ */
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/['']/g, "'") // Apostrophe typographique -> apostrophe simple
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '') // Retire les diacritiques
+    .replace(/[^a-z0-9\s']/g, ' ') // Remplace non-alphanum par espaces
+    .replace(/\s+/g, ' ') // Collapse espaces multiples
+    .trim();
+}
+
+/**
+ * Vérifie si un mot entier est présent dans le texte (pas une sous-chaîne)
+ * Ex: "personne" ne match pas "personnes"
+ */
+function hasWholeWord(text: string, word: string): boolean {
+  const normalizedText = normalizeText(text);
+  const normalizedWord = normalizeText(word);
+  // Utiliser des word boundaries pour matcher uniquement les mots entiers
+  const regex = new RegExp(`\\b${normalizedWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+  return regex.test(normalizedText);
+}
+
+/**
+ * Vérifie si au moins un mot entier parmi une liste est présent dans le texte
+ */
+function hasAnyWholeWord(text: string, words: string[]): boolean {
+  return words.some(word => hasWholeWord(text, word));
+}
+
+/**
  * Détecte l'intent principal du message utilisateur
  */
-function detectIntent(message: string): string | null {
+export function detectIntent(message: string): string | null {
   const trimmed = message.toLowerCase();
+  const normalized = normalizeText(message);
   
   // 🔥 URGENCES (PRIORITÉ MAX)
   if (trimmed.match(/(enceinte|sono|matériel).*(panne|cassé|ne marche|fonctionne pas|mort)/)) return 'urgence-enceinte-panne';
@@ -143,10 +182,94 @@ function detectIntent(message: string): string | null {
   if (trimmed.match(/(disponible|disponibilité|stock|en stock)/)) return 'disponibilite-stock';
   if (trimmed.match(/(rassure|sûr|garantie|confiance)/)) return 'reassurance-generale';
   if (trimmed.match(/(hésite|hésitation|pas sûr|pas certain)/)) return 'hesitation-achat';
-  if (trimmed.match(/(humain|personne|parler|téléphone|appeler)/)) return 'contact-humain';
+  
+  // 💬 CONTACT HUMAIN (matching sur mots entiers pour éviter faux positifs)
+  // Mots-clés pour contact humain (synonymes de "parler à quelqu'un", "appeler", etc.)
+  const contactHumanKeywords = [
+    'humain', 'conseiller', 'conseillere', 'conseilleur', 'quelquun', 'quelqu un',
+    'parler', 'telephone', 'telephoner', 'appeler', 'appel', 'coup de fil'
+  ];
+  
+  // Détecter les structures "parler à" / "parler avec"
+  if (normalized.match(/\bparler\s+(a|avec|au|aux)\b/)) return 'contact-humain';
+  
+  // Détecter les structures "je veux parler" / "je peux parler" / "peux-tu appeler"
+  if (normalized.match(/\b(je\s+veux|je\s+peux|peux[- ]tu|peut[- ]on)\s+(parler|appeler|telephoner)\b/)) return 'contact-humain';
+  
+  // Détecter les structures "un humain" / "un conseiller"
+  if (normalized.match(/\b(un|une)\s+(humain|conseiller|conseillere)\b/)) return 'contact-humain';
+  
+  // Matching sur mots entiers uniquement (évite "personnes" -> "personne")
+  if (hasAnyWholeWord(message, contactHumanKeywords)) return 'contact-humain';
   
   return null;
 }
+
+/**
+ * TESTS SELF-TEST pour detectIntent()
+ * 
+ * Pour exécuter ces tests manuellement, décommentez le bloc ci-dessous et exécutez :
+ * node -e "const { detectIntent } = require('./app/api/chat/route.ts'); ..."
+ * 
+ * Ou créez un script de test séparé qui importe detectIntent.
+ * 
+ * CAS DE TEST MINIMUM :
+ * 
+ * ✅ "pour 50 personnes" => null (ou intent pertinent, mais PAS 'contact-humain')
+ * ✅ "je veux parler à quelqu'un" => 'contact-humain'
+ * ✅ "tu peux m'appeler ?" => 'contact-humain'
+ * ✅ "peux-tu m'appeler ?" => 'contact-humain'
+ * ✅ "bonjour" => 'salutation-simple' (si detectGreeting le gère)
+ * ✅ "allo" => 'salutation-simple' (si detectGreeting le gère)
+ * ✅ "je voudrais des infos" => 'demande-aide-floue'
+ * ✅ "un humain" => 'contact-humain'
+ * ✅ "un conseiller" => 'contact-humain'
+ * ✅ "parler à quelqu'un" => 'contact-humain'
+ * ✅ "téléphone" => 'contact-humain'
+ * ✅ "appeler" => 'contact-humain'
+ * ✅ "coup de fil" => 'contact-humain'
+ * 
+ * ❌ "50 personnes" => NE DOIT PAS retourner 'contact-humain'
+ * ❌ "100 personnes" => NE DOIT PAS retourner 'contact-humain'
+ * ❌ "pour X personnes" => NE DOIT PAS retourner 'contact-humain'
+ * 
+ * TABLEAU DE TESTS (format: [input, expectedIntent]):
+ * 
+ * const testCases = [
+ *   // Tests contact-humain (doivent matcher)
+ *   ["je veux parler à quelqu'un", 'contact-humain'],
+ *   ["tu peux m'appeler ?", 'contact-humain'],
+ *   ["peux-tu m'appeler ?", 'contact-humain'],
+ *   ["je peux t'appeler ?", 'contact-humain'],
+ *   ["un humain", 'contact-humain'],
+ *   ["un conseiller", 'contact-humain'],
+ *   ["parler à quelqu'un", 'contact-humain'],
+ *   ["parler avec un conseiller", 'contact-humain'],
+ *   ["téléphone", 'contact-humain'],
+ *   ["appeler", 'contact-humain'],
+ *   ["coup de fil", 'contact-humain'],
+ *   ["je veux parler", 'contact-humain'],
+ *   
+ *   // Tests faux positifs (NE DOIVENT PAS matcher contact-humain)
+ *   ["pour 50 personnes", null], // ou autre intent, mais PAS 'contact-humain'
+ *   ["100 personnes", null],
+ *   ["environ 30 personnes", null],
+ *   ["combien de personnes", null],
+ *   ["personnes attendues", null],
+ *   
+ *   // Tests autres intents
+ *   ["bonjour", 'salutation-simple'], // si detectGreeting le gère
+ *   ["allo", 'salutation-simple'], // si detectGreeting le gère
+ *   ["je voudrais des infos", 'demande-aide-floue'],
+ * ];
+ * 
+ * // Exécution des tests (à décommenter pour tester)
+ * // testCases.forEach(([input, expected]) => {
+ * //   const result = detectIntent(input);
+ * //   const passed = result === expected || (expected === null && result !== 'contact-humain');
+ * //   console.log(`${passed ? '✅' : '❌'} "${input}" => ${result} (attendu: ${expected})`);
+ * // });
+ */
 
 /**
  * Réponses spécifiques pour chaque intent
@@ -333,11 +456,13 @@ Tu peux appeler directement le 06 51 08 49 94, ou dis-moi ce dont tu as besoin e
 function buildAssistantReply({
   scenarioId,
   userMessage,
-  isFirstMessage
+  isFirstMessage,
+  state
 }: {
   scenarioId?: string | null;
   userMessage: string;
   isFirstMessage: boolean;
+  state?: ConversationState;
 }): string | null {
   // Si c'est le premier message et qu'on a un scenarioId, utiliser la réponse spécifique
   if (isFirstMessage && scenarioId && scenarioId in SCENARIO_RESPONSES) {
@@ -348,6 +473,54 @@ function buildAssistantReply({
   const intent = detectIntent(userMessage);
   
   // 'salutation-simple' géré directement dans le handler principal (avant buildAssistantReply)
+  
+  // 🛡️ ANTI-BOUCLE : Si conversation engagée, éviter les templates qui reposent des questions déjà posées
+  if (state?.engaged && intent && intent in INTENT_RESPONSES) {
+    const templateReply = INTENT_RESPONSES[intent];
+    const k = state.known;
+    const asked = state.askedQuestions;
+    
+    // Vérifier si le template repose une question déjà posée ou déjà connue
+    const templateLower = templateReply.toLowerCase();
+    
+    // Si le template demande "combien de personnes" mais qu'on connaît déjà peopleCount
+    if (k.peopleCount && /combien.*person/i.test(templateReply)) {
+      console.log('[API/CHAT] 🛡️ Template bloqué : peopleCount déjà connu');
+      return null; // Laisser OpenAI générer une réponse contextuelle
+    }
+    
+    // Si le template demande "intérieur ou extérieur" mais qu'on connaît déjà indoorOutdoor
+    if (k.indoorOutdoor && /intérieur|extérieur/i.test(templateReply)) {
+      console.log('[API/CHAT] 🛡️ Template bloqué : indoorOutdoor déjà connu');
+      return null;
+    }
+    
+    // Si le template demande le type d'événement mais qu'on connaît déjà eventType
+    if (k.eventType && /quel type.*événement/i.test(templateReply)) {
+      console.log('[API/CHAT] 🛡️ Template bloqué : eventType déjà connu');
+      return null;
+    }
+    
+    // Pour les templates d'événements spécifiques (conference, seminaire, etc.)
+    // Si l'eventType correspond mais qu'on a déjà des infos, éviter de reposer les questions de base
+    if (intent === 'conference' || intent === 'seminaire') {
+      if (k.peopleCount && k.indoorOutdoor) {
+        // On a déjà les infos de base, éviter de reposer "combien de personnes" et "intérieur/extérieur"
+        if (/combien.*person|intérieur|extérieur/i.test(templateReply)) {
+          console.log('[API/CHAT] 🛡️ Template conférence bloqué : infos de base déjà connues');
+          return null;
+        }
+      }
+    }
+    
+    // 🛡️ ANTI-MÉLANGE : Si packKey === "conference", bloquer tout template mentionnant DJ/son fort
+    if (state.packKey === 'conference' || (k.eventType === 'conférence' && state.packKey)) {
+      if (/dj|danser|son fort|musique forte/i.test(templateReply)) {
+        console.log('[API/CHAT] 🛡️ Template bloqué : mention DJ/son fort interdite pour pack conférence');
+        return null;
+      }
+    }
+  }
   
   // Pour les autres intents, utiliser les réponses prédéfinies
   if (intent && intent in INTENT_RESPONSES) {
@@ -1223,7 +1396,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { messages, context, scenarioId, productContext } = body;
+    const { messages, context, scenarioId, productContext, packKey } = body;
+
+    // Log packKey pour debugging
+    if (packKey) {
+      console.log('[API/CHAT] PackKey reçu:', packKey);
+    }
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
@@ -1331,6 +1509,85 @@ ID du produit : ${productId || 'non disponible'}
       }
     }
     
+    // Si un packKey est fourni, prépendre les instructions pour le mode pack
+    if (packKey && typeof packKey === 'string' && ['conference', 'soiree', 'mariage'].includes(packKey)) {
+      const packNameMap: Record<string, string> = {
+        'conference': 'Pack Conférence (279€)',
+        'soiree': 'Pack Soirée (329€)',
+        'mariage': 'Pack Mariage (449€)'
+      };
+      const packName = packNameMap[packKey] || packKey;
+      
+      const packModeInstruction = `MODE PACK ACTIVÉ (CRITIQUE) :
+
+L'utilisateur a cliqué sur le bouton "Demande de réservation" pour le ${packName}.
+Tu es maintenant en MODE DEMANDE DE RÉSERVATION, pas en mode panier classique.
+
+RÈGLES OBLIGATOIRES EN MODE PACK :
+
+1. LOGISTIQUE PRÉ-REMPLIE (NE JAMAIS DEMANDER) :
+   - Livraison : INCLUSE (ne jamais demander "retrait ou livraison")
+   - Installation : INCLUSE (ne jamais demander si installation souhaitée)
+   - Ces packs sont "clé en main" : livraison + installation automatiques
+
+2. Tu dois collecter TOUTES les informations nécessaires dans cet ordre :
+   - Type d'événement (conférence, soirée, mariage, etc.)
+   - Nombre de personnes
+   - Intérieur ou extérieur
+   - Ambiance/vibe (ADAPTÉ selon packKey) :
+     * Si packKey === "conference" : questions sur micros/intervenants/vidéo (PAS de mention DJ/son fort/danser)
+     * Si packKey === "soiree" : ambiance/DJ/son fort ok
+     * Si packKey === "mariage" : cérémonie + discours + soirée DJ
+   - Date de début (format ISO)
+   - Date de fin (format ISO)
+   - Heure de début
+   - Heure de fin
+   - Département (obligatoire car livraison incluse)
+   - Adresse complète (obligatoire car livraison incluse)
+   - Nom du client (si fourni)
+   - Email du client (si fourni)
+   - Téléphone du client (si fourni)
+
+3. 🛡️ ANTI-MÉLANGE : Si packKey === "conference", NE JAMAIS mentionner DJ/son fort/danser dans tes questions ou réponses.
+
+4. Une fois que tu as TOUTES ces informations, tu DOIS générer un objet JSON "reservationRequestDraft" au lieu de "draftFinalConfig" :
+
+Format exact :
+{
+  "reservationRequestDraft": {
+    "pack_key": "${packKey}",
+    "payload": {
+      "eventType": "type d'événement",
+      "peopleCount": nombre,
+      "startDate": "YYYY-MM-DD",
+      "endDate": "YYYY-MM-DD",
+      "startTime": "HH:mm",
+      "endTime": "HH:mm",
+      "address": "adresse complète",
+      "department": "département (ex: 75)",
+      "indoorOutdoor": "intérieur" ou "extérieur",
+      "ambiance": "description de l'ambiance",
+      "customerName": "nom si fourni",
+      "customerEmail": "email si fourni",
+      "customerPhone": "téléphone si fourni"
+    }
+  }
+}
+
+5. 🚫 INTERDICTION ABSOLUE : Ne génère JAMAIS de "draftFinalConfig" en mode pack. Utilise UNIQUEMENT "reservationRequestDraft".
+
+6. Quand tu génères le reservationRequestDraft, dis à l'utilisateur : "Parfait, j'ai toutes les informations. Je vais maintenant envoyer votre demande de réservation."
+
+7. Le bouton affiché sera "Envoyer la demande" et non "Ajouter au panier".
+
+---
+
+`;
+
+      systemPromptWithCatalog = `${packModeInstruction}${systemPromptWithCatalog}`;
+      console.log(`[API/CHAT] Mode pack activé: ${packKey} - ${packName}`);
+    }
+    
     // Si un scenarioId est fourni, prépendre la politique du scénario
     if (scenarioId && typeof scenarioId === 'string') {
       try {
@@ -1428,7 +1685,14 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       messages: filteredMessages,
       scenarioId: scenarioId || null,
       productContext,
+      packKey: packKey || null, // Passer packKey pour mode pack
     });
+    
+    // Log mode pack pour debugging
+    if (state.packKey) {
+      console.log(`[API/CHAT] Mode pack détecté dans state: ${state.packKey}`);
+      console.log(`[API/CHAT] Livraison pré-remplie: ${state.known.deliveryChoice}, Installation: ${state.known.withInstallation}`);
+    }
 
     // 🛡️ GESTION PRÉ-OPENAI : Traiter les cas spéciaux AVANT l'appel OpenAI
     const lastUserContent = state.lastUserNormal?.content || '';
@@ -1484,7 +1748,8 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
     const scenarioReply = buildAssistantReply({
       scenarioId: scenarioId || null,
       userMessage: lastUserMessage?.content || '',
-      isFirstMessage: isFirstUserMessage
+      isFirstMessage: isFirstUserMessage,
+      state // Passer le state pour éviter les boucles
     });
     
     // Si on a une réponse de scénario spécifique, l'utiliser directement
@@ -1574,20 +1839,38 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       }
     }
 
-    // Essayer d'extraire draftFinalConfig depuis la réponse
+    // Essayer d'extraire draftFinalConfig ou reservationRequestDraft depuis la réponse
     let draftFinalConfig: DraftFinalConfig | undefined = undefined;
+    let reservationRequestDraft: { pack_key: string; payload: Record<string, any> } | undefined = undefined;
     let intent: ChatIntent = 'NEEDS_INFO';
 
     // Chercher un bloc JSON dans la réponse
-    const jsonMatch = cleanReply.match(/\{[\s\S]*"draftFinalConfig"[\s\S]*\}/);
+    const jsonMatch = cleanReply.match(/\{[\s\S]*("draftFinalConfig"|"reservationRequestDraft")[\s\S]*\}/);
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[0]);
-        if (parsed.draftFinalConfig) {
+        
+        // Mode pack : chercher reservationRequestDraft
+        if (packKey && parsed.reservationRequestDraft) {
+          reservationRequestDraft = {
+            pack_key: packKey,
+            payload: parsed.reservationRequestDraft.payload || {}
+          };
+          intent = 'READY_TO_ADD';
+          // Retirer le JSON de la réponse texte
+          cleanReply = cleanReply.replace(jsonMatch[0], '').trim();
+        }
+        // Mode normal : chercher draftFinalConfig (UNIQUEMENT si pas en mode pack)
+        else if (!packKey && parsed.draftFinalConfig) {
           draftFinalConfig = parsed.draftFinalConfig;
           intent = 'READY_TO_ADD';
           // Retirer le JSON de la réponse texte
           cleanReply = cleanReply.replace(jsonMatch[0], '').trim();
+        }
+        // 🛡️ GARDE-FOU MODE PACK : Si packKey défini mais draftFinalConfig généré, l'ignorer
+        else if (packKey && parsed.draftFinalConfig) {
+          console.warn('[API/CHAT] 🛡️ draftFinalConfig généré en mode pack, ignoré. packKey:', packKey);
+          // Ne pas utiliser draftFinalConfig, continuer à attendre reservationRequestDraft
         }
       } catch (e) {
         console.error('Erreur parsing JSON:', e);
@@ -1595,8 +1878,8 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
     }
 
     // Si pas de JSON trouvé, essayer de détecter si l'assistant propose une config
-    // et construire draftFinalConfig manuellement depuis le contexte
-    if (!draftFinalConfig && context?.event) {
+    // et construire draftFinalConfig manuellement depuis le contexte (UNIQUEMENT si pas en mode pack)
+    if (!draftFinalConfig && !packKey && context?.event) {
       // Logique simple : si l'assistant mentionne un pack, construire la config
       const packMentioned = cleanReply.match(/Pack\s+([SMLXL])/i);
       if (packMentioned) {
@@ -1641,6 +1924,7 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       reply: cleanReply,
       intent,
       draftFinalConfig,
+      reservationRequestDraft, // Inclure le draft de demande si en mode pack
     });
   } catch (error: any) {
     console.error('[API/CHAT] Erreur API chat:', error);
