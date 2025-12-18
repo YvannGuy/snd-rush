@@ -11,6 +11,10 @@ import ShareProductButton from '@/components/ShareProductButton';
 import AskAssistantButton from '@/components/AskAssistantButton';
 import PackNavigation from '@/components/packs/PackNavigation';
 
+// Configuration : Masquer les options Installation et Livraison
+// Pour les réactiver, changer cette valeur à true
+const SHOW_INSTALLATION_AND_DELIVERY = false;
+
 interface PackDetailContentProps {
   packId: string;
   language: 'fr' | 'en';
@@ -1140,7 +1144,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             )}
 
             {/* Carte Installation */}
-            {(() => {
+            {SHOW_INSTALLATION_AND_DELIVERY && (() => {
               const installationPrice = getInstallationPrice();
               if (installationPrice === null) return null;
               
@@ -1186,7 +1190,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             })()}
 
             {/* Carte Livraison */}
-            {(pack.id !== 9 && pack.id !== 10 && pack.id !== 11) && (
+            {SHOW_INSTALLATION_AND_DELIVERY && (pack.id !== 9 && pack.id !== 10 && pack.id !== 11) && (
             <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-3 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">

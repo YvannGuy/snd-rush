@@ -20,6 +20,10 @@ import { usePro } from '@/hooks/usePro';
 import SignModal from '@/components/auth/SignModal';
 import { Button } from '@/components/ui/button';
 
+// Configuration : Masquer les options Installation et Livraison
+// Pour les réactiver, changer cette valeur à true
+const SHOW_INSTALLATION_AND_DELIVERY = false;
+
 export default function ProProductDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -1102,7 +1106,7 @@ export default function ProProductDetailPage() {
               )}
 
               {/* Carte Installation - Masquée pour les accessoires et lumières */}
-              {product.category !== 'accessoires' && !isLightProduct() && (() => {
+              {SHOW_INSTALLATION_AND_DELIVERY && product.category !== 'accessoires' && !isLightProduct() && (() => {
                 const installationPrice = getInstallationPrice();
                 if (installationPrice === null) return null;
                 
@@ -1148,7 +1152,7 @@ export default function ProProductDetailPage() {
               })()}
 
               {/* Carte Livraison - Masquée pour les accessoires et lumières */}
-              {product.category !== 'accessoires' && !isLightProduct() && (
+              {SHOW_INSTALLATION_AND_DELIVERY && product.category !== 'accessoires' && !isLightProduct() && (
                 <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-3 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">

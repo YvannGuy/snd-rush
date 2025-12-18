@@ -13,6 +13,10 @@ import { CartItem, Product } from '@/types/db';
 import { supabase } from '@/lib/supabase';
 import { calculateInstallationPrice } from '@/lib/calculateInstallationPrice';
 
+// Configuration : Masquer les options Installation et Livraison dans la section "Achat additionnel"
+// Pour les réactiver, changer cette valeur à true
+const SHOW_INSTALLATION_AND_DELIVERY = false;
+
 type DeliveryOption = 'paris' | 'petite_couronne' | 'grande_couronne' | 'retrait';
 
 interface DeliveryOptionType {
@@ -817,6 +821,7 @@ export default function CartPage() {
               })}
 
               {/* Section Achats additionnels */}
+              {SHOW_INSTALLATION_AND_DELIVERY && (
               <div className="mt-8">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">
                   {language === 'fr' ? 'Vous souhaitez peut-être ajouter...' : 'You might want to add...'}
@@ -938,8 +943,20 @@ export default function CartPage() {
                         </button>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+              )}
 
-                    {/* Produits recommandés depuis Supabase */}
+              {/* Produits recommandés depuis Supabase */}
+              {recommendedProducts.length > 0 && (
+                <div className="mt-8">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">
+                    {language === 'fr' ? 'Produits recommandés' : 'Recommended products'}
+                  </h2>
+                  <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                    <div className="flex gap-3 min-w-max">
+                      {recommendedProducts.map((product) => {
                     {recommendedProducts.map((product) => {
                       const productImage = product.images && product.images.length > 0 
                         ? (Array.isArray(product.images) ? product.images[0] : typeof product.images === 'string' ? product.images : '/placeholder-product.png')
@@ -1008,10 +1025,11 @@ export default function CartPage() {
                           </div>
                         </Link>
                       );
-                    })}
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Résumé - Design moderne et épuré */}
