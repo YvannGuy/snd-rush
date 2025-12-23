@@ -59,13 +59,44 @@ export async function DELETE(req: NextRequest) {
         .in('reservation_id', reservationIds);
     }
 
-    // 3. Supprimer les réservations de l'utilisateur
+    // 3. Supprimer les réservations de l'utilisateur (anciennes)
     await supabaseAdmin
       .from('reservations')
       .delete()
       .eq('user_id', userId);
 
-    // 4. Récupérer les IDs des commandes pour supprimer les order_items associés
+    // 4. Supprimer les réservations client_reservations (nouvelles)
+    // Supprimer par user_id
+    await supabaseAdmin
+      .from('client_reservations')
+      .delete()
+      .eq('user_id', userId);
+
+    // Supprimer par customer_email si disponible
+    if (userEmail) {
+      await supabaseAdmin
+        .from('client_reservations')
+        .delete()
+        .eq('customer_email', userEmail);
+    }
+
+    // 5. Supprimer les reservation_holds associés (par email ou phone si disponible)
+    if (userEmail) {
+      await supabaseAdmin
+        .from('reservation_holds')
+        .delete()
+        .eq('contact_email', userEmail);
+    }
+
+    // 6. Supprimer les reservation_requests (par email)
+    if (userEmail) {
+      await supabaseAdmin
+        .from('reservation_requests')
+        .delete()
+        .eq('customer_email', userEmail);
+    }
+
+    // 7. Récupérer les IDs des commandes pour supprimer les order_items associés
     let orderIds: string[] = [];
     if (userEmail) {
       const { data: userOrders } = await supabaseAdmin
@@ -90,19 +121,19 @@ export async function DELETE(req: NextRequest) {
         .eq('customer_email', userEmail);
     }
 
-    // 5. Supprimer le panier
+    // 8. Supprimer le panier
     await supabaseAdmin
       .from('carts')
       .delete()
       .eq('user_id', userId);
 
-    // 6. Supprimer le profil utilisateur
+    // 9. Supprimer le profil utilisateur
     await supabaseAdmin
       .from('user_profiles')
       .delete()
       .eq('user_id', userId);
 
-    // 7. Supprimer le compte auth (nécessite service role)
+    // 10. Supprimer le compte auth (nécessite service role)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {
