@@ -8,3 +8,4 @@ ALTER TABLE client_reservations
 
 -- Commentaire pour documentation
 COMMENT ON COLUMN client_reservations.customer_email IS 'Email du client (peut être NULL pour instant booking, sera rempli après paiement Stripe)';
+

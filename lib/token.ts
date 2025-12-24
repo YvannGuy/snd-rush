@@ -99,3 +99,4 @@ export async function ensureValidCheckoutToken(
   // Retourner le token plaintext (uniquement pour email, jamais loggé)
   return token;
 }
+

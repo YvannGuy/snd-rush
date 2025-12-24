@@ -514,3 +514,4 @@ Webhook Stripe → Met à jour client_reservation
 
 **Dernière mise à jour** : Janvier 2025
 **Version** : V1.5 (avec suivi public) + Phase C (automatisation)
+

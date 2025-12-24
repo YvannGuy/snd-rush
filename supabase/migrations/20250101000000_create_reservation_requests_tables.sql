@@ -94,3 +94,4 @@ CREATE POLICY "Users can view their own client reservations"
 
 -- Note: Les admins peuvent voir toutes les données via les API routes qui utilisent supabaseAdmin (service role)
 
+

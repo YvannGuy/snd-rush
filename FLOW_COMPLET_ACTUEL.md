@@ -822,3 +822,4 @@ Client → Paiement
 ---
 
 **Fin de la documentation**
+

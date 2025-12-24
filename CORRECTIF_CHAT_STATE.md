@@ -118,3 +118,4 @@ npx ts-node lib/__tests__/chatState.test.ts
 3. Ajouter plus de variations de questions conférence (rotation)
 4. Monitorer les logs pour détecter d'éventuels cas edge
 
+
