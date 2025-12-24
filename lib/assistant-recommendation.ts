@@ -113,7 +113,7 @@ export async function recommendPackWithStock(
       base: basePrice,
       delivery: getDeliveryPrice(answers.zone || ''),
       extras: computeOptionsTotal(answers, basePrice),
-      urgency: isUrgent(answers.date || '') ? Math.round(totalPrice * 0.2) : 0
+      urgency: isUrgent(answers.startDate || '', answers.startTime) ? Math.round(totalPrice * 0.2) : 0
     },
     compositionFinale: customConfig.items.map(item => `${item.label} (${item.qty}x)`),
     customConfig: customConfig.items,

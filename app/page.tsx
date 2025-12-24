@@ -23,6 +23,7 @@ import RentalConditionsModal from '@/components/RentalConditionsModal';
 import CookieBanner from '@/components/CookieBanner';
 import SplashScreen from '@/components/SplashScreen';
 import ScenarioFAQSection from '@/components/ScenarioFAQSection';
+import BookingWizard from '@/components/BookingWizard';
 
 export default function Home() {
   const router = useRouter();
@@ -32,6 +33,8 @@ export default function Home() {
   const [rentalConditionsModal, setRentalConditionsModal] = useState(false);
   const [selectedPackId, setSelectedPackId] = useState<number | undefined>(undefined);
   const [showContent, setShowContent] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardPackKey, setWizardPackKey] = useState<'conference' | 'soiree' | 'mariage' | null>(null);
 
   const handleReservePack = (packId: number) => {
     setSelectedPackId(packId);
@@ -132,9 +135,20 @@ export default function Home() {
     };
     window.addEventListener('openAssistantModal', handleOpenAssistantToChat as EventListener);
     
+    // Écouter l'événement pour ouvrir le wizard de réservation
+    const handleOpenBookingWizard = (event: CustomEvent) => {
+      const { packKey } = event.detail;
+      if (packKey && ['conference', 'soiree', 'mariage'].includes(packKey)) {
+        setWizardPackKey(packKey as 'conference' | 'soiree' | 'mariage');
+        setWizardOpen(true);
+      }
+    };
+    window.addEventListener('openBookingWizard', handleOpenBookingWizard as EventListener);
+    
     return () => {
       window.removeEventListener('openReservationModal', handleOpenReservationModal as EventListener);
       window.removeEventListener('openAssistantModal', handleOpenAssistantToChat as EventListener);
+      window.removeEventListener('openBookingWizard', handleOpenBookingWizard as EventListener);
     };
   }, []);
 
@@ -243,6 +257,19 @@ export default function Home() {
             onClose={() => setRentalConditionsModal(false)}
             language={language}
           />
+          
+          {/* Wizard de réservation guidée */}
+          {wizardPackKey && (
+            <BookingWizard
+              isOpen={wizardOpen}
+              onClose={() => {
+                setWizardOpen(false);
+                setWizardPackKey(null);
+              }}
+              packKey={wizardPackKey}
+              language={language}
+            />
+          )}
         </div>
       )}
     </>

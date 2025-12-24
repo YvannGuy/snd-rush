@@ -25,9 +25,9 @@ export const BASE_PACKS: Record<string, BasePack> = {
   conference: {
     key: 'conference',
     title: 'Pack Conférence',
-    description: 'Solution complète pour conférences, réunions et présentations',
+    description: 'Solution complète et professionnelle pour vos conférences, réunions d\'affaires, présentations et événements corporate. Équipement de qualité professionnelle, livraison et installation par nos techniciens expérimentés, garantissant une sonorisation optimale pour tous vos intervenants.',
     defaultItems: [
-      { label: 'Enceinte', qty: 2 },
+      { label: 'Enceinte', qty: 1 },
       { label: 'Micro HF', qty: 2 },
       { label: 'Console de mixage', qty: 1 },
     ],
@@ -43,8 +43,7 @@ export const BASE_PACKS: Record<string, BasePack> = {
     title: 'Pack Soirée',
     description: 'Sonorisation pour soirées et événements privés',
     defaultItems: [
-      { label: 'Enceinte', qty: 2 },
-      { label: 'Micro', qty: 1 },
+      { label: 'Enceinte', qty: 1 },
       { label: 'Console de mixage', qty: 1 },
     ],
     services: {

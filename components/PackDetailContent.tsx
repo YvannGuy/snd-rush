@@ -1424,9 +1424,9 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
 
                 const handleAddProduct = async () => {
                   const cartItem: CartItem = {
-                    productId: product.id,
+                    productId: product.id.toString(),
                     productName: product.name,
-                    productSlug: product.slug || product.id,
+                    productSlug: product.slug || product.id.toString(),
                     quantity: 1,
                     rentalDays: rentalDays || 1,
                     startDate: startDate || new Date().toISOString().split('T')[0],

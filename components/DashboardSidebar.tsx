@@ -33,6 +33,7 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
     conditionReportsToReview: 0,
     deliveriesNotReturned: 0,
     newInvoices: 0,
+    reservationsWithContractsToSign: 0,
   });
 
   // Utiliser les props si fournies, sinon calculer localement
@@ -43,6 +44,8 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
     if (propsPendingActions || !user || !supabase) return;
 
     const calculatePendingActions = async () => {
+      if (!supabase || !user) return;
+      
       try {
         // OPTIMISATION: Limiter à 50 réservations pour les performances
         const { data: reservationsData } = await supabase

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
@@ -39,7 +39,7 @@ import { loadDashboardData } from '@/lib/dashboardDataLoader';
 import { pickNextReservation, isOrderRelatedToReservation } from '@/lib/reservationViewMapper';
 import { ReservationView } from '@/types/reservationView';
 
-export default function DashboardPage() {
+function DashboardContent() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
   const { signOut } = useAuth();
@@ -771,6 +771,21 @@ export default function DashboardPage() {
       {/* Footer */}
       <Footer language={language} />
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E] mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
 

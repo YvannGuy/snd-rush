@@ -49,13 +49,13 @@ export async function fetchProductsFromSupabase(): Promise<AssistantProduct[]> {
     return data.map((product: Product) => ({
       id: product.id.toString(),
       name: product.name,
-      slug: product.slug,
-      category: product.category,
-      dailyPrice: product.daily_price_ttc,
-      deposit: product.deposit,
+      slug: product.slug || product.id.toString(),
+      category: product.category ?? null,
+      dailyPrice: product.daily_price_ttc || 0,
+      deposit: product.deposit || 0,
       quantity: product.quantity || 0,
-      description: product.description,
-      images: product.images || [],
+      description: product.description ?? null,
+      images: product.images ?? null,
     }));
   } catch (error) {
     console.error('Erreur lors du fetch des produits:', error);
@@ -172,13 +172,13 @@ export async function fetchProductsByCategory(category: string): Promise<Assista
     return data.map((product: Product) => ({
       id: product.id.toString(),
       name: product.name,
-      slug: product.slug,
-      category: product.category,
-      dailyPrice: product.daily_price_ttc,
-      deposit: product.deposit,
+      slug: product.slug || product.id.toString(),
+      category: product.category ?? null,
+      dailyPrice: product.daily_price_ttc || 0,
+      deposit: product.deposit || 0,
       quantity: product.quantity || 0,
-      description: product.description,
-      images: product.images || [],
+      description: product.description ?? null,
+      images: product.images ?? null,
     }));
   } catch (error) {
     console.error('Erreur lors du fetch des produits par catégorie:', error);
@@ -359,13 +359,13 @@ export async function searchProducts(query: string): Promise<AssistantProduct[]>
     return data.map((product: Product) => ({
       id: product.id.toString(),
       name: product.name,
-      slug: product.slug,
-      category: product.category,
-      dailyPrice: product.daily_price_ttc,
-      deposit: product.deposit,
+      slug: product.slug || product.id.toString(),
+      category: product.category ?? null,
+      dailyPrice: product.daily_price_ttc || 0,
+      deposit: product.deposit || 0,
       quantity: product.quantity || 0,
-      description: product.description,
-      images: product.images || [],
+      description: product.description ?? null,
+      images: product.images ?? null,
     }));
   } catch (error) {
     console.error('Erreur lors de la recherche:', error);

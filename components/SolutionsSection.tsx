@@ -1,12 +1,15 @@
 'use client';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface SolutionsSectionProps {
   language: 'fr' | 'en';
 }
 
 export default function SolutionsSection({ language }: SolutionsSectionProps) {
+  const router = useRouter();
+  
   const texts = {
     fr: {
       sectionTitle: 'NOS SOLUTIONS',
@@ -119,29 +122,8 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
       return;
     }
     
-    // Nouveau système simplifié : ouvrir directement avec packKey
-    if (process.env.NEXT_PUBLIC_USE_SIMPLIFIED_CHAT === 'true') {
-      window.dispatchEvent(new CustomEvent('openChatWithPack', { 
-        detail: { packKey } 
-      }));
-    } else {
-      // Ancien système (fallback)
-      const packNameMap: Record<string, string> = {
-        'conference': 'Pack Conférence',
-        'soiree': 'Pack Soirée',
-        'mariage': 'Pack Mariage'
-      };
-      
-      const packName = packNameMap[packKey];
-      const message = `Je souhaite faire une demande de réservation pour le ${packName}.`;
-      
-      window.dispatchEvent(new CustomEvent('openChatWithDraft', { 
-        detail: { 
-          message,
-          packKey: packKey
-        } 
-      }));
-    }
+    // NOUVEAU FLOW : Redirection directe vers la page de réservation
+    router.push(`/book/${packKey}`);
   };
 
   return (
@@ -228,28 +210,53 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
                 </div>
               </div>
 
-              {/* Button */}
-              <button
-                onClick={() => {
-                  // Mapper l'ID du pack au packKey
-                  const packKeyMap: Record<number, 'conference' | 'soiree' | 'mariage'> = {
-                    1: 'conference',
-                    2: 'soiree',
-                    3: 'mariage'
-                  };
-                  const packKey = packKeyMap[pack.id];
-                  if (packKey) {
-                    handleReservationRequest(packKey);
-                  }
-                }}
-                className="w-full bg-[#F2431E] text-white px-6 py-4 rounded-xl font-semibold hover:bg-[#E63A1A] transition-all duration-300 mt-auto flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 mb-2"
-              >
-                <span>✨</span>
-                {pack.cta}
-              </button>
+              {/* Buttons - 2 CTA */}
+              <div className="mt-auto space-y-3">
+                {/* CTA Principal : Réserver maintenant */}
+                <button
+                  onClick={() => {
+                    // Mapper l'ID du pack au packKey
+                    const packKeyMap: Record<number, 'conference' | 'soiree' | 'mariage'> = {
+                      1: 'conference',
+                      2: 'soiree',
+                      3: 'mariage'
+                    };
+                    const packKey = packKeyMap[pack.id];
+                    if (packKey) {
+                      handleReservationRequest(packKey);
+                    }
+                  }}
+                  className="w-full bg-[#F2431E] text-white px-6 py-4 rounded-xl font-semibold hover:bg-[#E63A1A] transition-all duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                >
+                  <span>✨</span>
+                  {language === 'fr' ? 'Réserver maintenant' : 'Book now'}
+                </button>
+
+                {/* CTA Secondaire : L'assistant me guide */}
+                <button
+                  onClick={() => {
+                    const packKeyMap: Record<number, 'conference' | 'soiree' | 'mariage'> = {
+                      1: 'conference',
+                      2: 'soiree',
+                      3: 'mariage'
+                    };
+                    const packKey = packKeyMap[pack.id];
+                    if (packKey) {
+                      // Ouvrir le wizard guidé
+                      window.dispatchEvent(new CustomEvent('openBookingWizard', { 
+                        detail: { packKey } 
+                      }));
+                    }
+                  }}
+                  className="w-full bg-white text-[#F2431E] border-2 border-[#F2431E] px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  <span>💬</span>
+                  {language === 'fr' ? 'L\'assistant me guide' : 'Get guided help'}
+                </button>
+              </div>
 
               {/* Price Note - Discreet */}
-              <p className="text-xs text-gray-500 text-center">
+              <p className="text-xs text-gray-500 text-center mt-3">
                 {pack.priceNote}
               </p>
             </div>

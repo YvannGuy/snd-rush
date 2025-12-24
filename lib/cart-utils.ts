@@ -98,10 +98,10 @@ export async function applyFinalConfigToCart(
           deposit: packDeposit, // Caution du pack
           addons: [],
           images: [packImage], // Toujours une image garantie
-          eventType: config.event ? 'event' : undefined,
           startTime: config.event?.startISO ? new Date(config.event.startISO).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined,
           endTime: config.event?.endISO ? new Date(config.event.endISO).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined,
           zone: config.event?.department,
+          metadata: config.event ? { type: 'event' } : undefined,
         });
       } else {
         // Produit individuel - récupérer l'image depuis Supabase
@@ -145,10 +145,10 @@ export async function applyFinalConfigToCart(
           deposit: catalogItem.deposit || 0,
           addons: [],
           images: productImage, // Toujours au moins une image
-          eventType: config.event ? 'event' : undefined,
           startTime: config.event?.startISO ? new Date(config.event.startISO).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined,
           endTime: config.event?.endISO ? new Date(config.event.endISO).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined,
           zone: config.event?.department,
+          metadata: config.event ? { type: 'event' } : undefined,
         });
       }
     }
@@ -201,10 +201,10 @@ export async function applyFinalConfigToCart(
         deposit: 0,
         addons: [],
         images: ['/installation.jpg'],
-        eventType: 'event',
         startTime: config.event?.startISO ? new Date(config.event.startISO).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined,
         endTime: config.event?.endISO ? new Date(config.event.endISO).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined,
         zone: config.event?.department,
+        metadata: { type: 'event' },
       });
       console.log(`[CART] Installation ajoutée: ${installationPrice}€`);
     }
@@ -258,10 +258,10 @@ export async function applyFinalConfigToCart(
           deposit: 0,
           addons: [],
           images: ['/livraison.jpg'],
-          eventType: 'event',
           startTime: config.event.startISO ? new Date(config.event.startISO).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined,
           endTime: config.event.endISO ? new Date(config.event.endISO).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : undefined,
           zone: deliveryZone,
+          metadata: { type: 'event' },
         });
         
         console.log(`[CART] Livraison ajoutée: ${zoneName} (${deliveryPrice}€)`);

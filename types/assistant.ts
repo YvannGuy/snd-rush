@@ -23,7 +23,7 @@ export interface Pack {
   id: string;
   name: string;
   description: string;
-  basePrice: number;
+  basePrice: number | null;
   features: string[];
   capacity: {
     min: number;
@@ -116,7 +116,7 @@ export interface Step {
   id: string;
   title: string;
   subtitle?: string;
-  type: 'single' | 'multiple' | 'date' | 'text';
+  type: 'single' | 'multiple' | 'date' | 'text' | 'time';
   options?: Array<{
     value: string;
     label: string;
@@ -147,7 +147,7 @@ export const PACK_IDS = {
 // Configuration des prix
 export const PRICING_CONFIG: Pricing = {
   packs: {
-    petit: {
+    essentiel: {
       id: PACK_IDS.essentiel.id,
       name: 'Pack S Petit',
       description: 'Pack S parfait pour les petits événements jusqu\'à 70 personnes, avec 1 enceinte Mac Mah AS 115 et console de mixage.',
@@ -156,7 +156,7 @@ export const PRICING_CONFIG: Pricing = {
       capacity: { min: 30, max: 70 },
       priceId: PACK_IDS.essentiel.priceId,
     },
-    confort: {
+    standard: {
       id: PACK_IDS.standard.id,
       name: 'Pack M Confort',
       description: 'Pack M pour événements moyens jusqu\'à 150 personnes, avec 2 enceintes Mac Mah AS 115 et console HPA Promix 8.',
@@ -165,7 +165,7 @@ export const PRICING_CONFIG: Pricing = {
       capacity: { min: 70, max: 150 },
       priceId: PACK_IDS.standard.priceId,
     },
-    grand: {
+    premium: {
       id: PACK_IDS.premium.id,
       name: 'Pack L Grand',
       description: 'Pack L idéal pour événements jusqu\'à 250 personnes, avec 2 enceintes FBT X-Lite 115A, 1 caisson X-Sub 118SA et console HPA Promix 16.',
@@ -174,7 +174,7 @@ export const PRICING_CONFIG: Pricing = {
       capacity: { min: 150, max: 250 },
       priceId: PACK_IDS.premium.priceId,
     },
-    maxi: {
+    prestige: {
       id: PACK_IDS.prestige.id,
       name: 'Pack XL Maxi / Sur mesure',
       description: 'Solution sur mesure pour très grands événements',

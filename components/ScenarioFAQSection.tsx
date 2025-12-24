@@ -10,7 +10,8 @@ import {
   Mic, 
   Users 
 } from 'lucide-react';
-import { getAllScenarios, getScenario, ScenarioId } from '@/lib/scenarios';
+import { getAllScenarios, getScenario } from '@/lib/scenarios';
+import { ScenarioId } from '@/types/scenarios';
 
 const ICON_MAP: Record<ScenarioId, React.ReactNode> = {
   'dj-lache': <Headphones className="w-6 h-6 text-[#F2431E]" />,
@@ -106,7 +107,7 @@ export default function ScenarioFAQSection({
                 onMouseEnter={() => setHoveredCard(scenario.id)}
                 onMouseLeave={() => setHoveredCard(null)}
                 className="w-full bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 text-left h-full flex flex-col group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F2431E] focus:ring-offset-2"
-                aria-label={`${scenario.title}. ${scenario.description}`}
+                aria-label={`${scenario.title}. ${scenario.preview}`}
                 whileHover={{ y: -4 }}
                 whileFocus={{ y: -4 }}
               >
@@ -122,7 +123,7 @@ export default function ScenarioFAQSection({
 
                 {/* Description */}
                 <p className="text-[#6B7280] mb-6 flex-grow leading-relaxed">
-                  {scenario.description}
+                  {scenario.preview}
                 </p>
 
                 {/* CTA */}

@@ -40,9 +40,9 @@ export default function DocumentsPanel({
   language = 'fr',
 }: DocumentsPanelProps) {
   // Déterminer si c'est une client_reservation
-  // Si reservation.type existe et vaut 'client_reservation' ou 'new', c'est une client_reservation
+  // Si reservation.type existe et vaut 'client_reservation', c'est une client_reservation
   // Sinon, on considère que c'est une ancienne reservation
-  const isClientReservation = reservation.type === 'client_reservation' || reservation.type === 'new';
+  const isClientReservation = reservation.type === 'client_reservation';
   
   // Déterminer si le contrat est signé
   const isContractSigned = reservation.client_signature !== null && reservation.client_signature !== undefined;

@@ -443,40 +443,6 @@ export default function PaymentStep({ language, selectedPack, personalInfo, onBa
                 </p>
               </div>
 
-              {/* Masquer les options de paiement de caution - sera demandée plus tard */}
-              {false && (
-              <div className="space-y-3">
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="cautionPayment"
-                    value="now"
-                    checked={cautionPayment === 'now'}
-                    onChange={(e) => setCautionPayment('now')}
-                    className="w-4 h-4 text-[#F2431E] border-gray-300 focus:ring-[#F2431E]"
-                  />
-                  <div>
-                    <span className="font-medium text-black">{texts[language].cautionNow}</span>
-                    <p className="text-sm text-gray-600">{cautionAmount}€</p>
-                  </div>
-                </label>
-
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="cautionPayment"
-                    value="delivery"
-                    checked={cautionPayment === 'delivery'}
-                    onChange={(e) => setCautionPayment('delivery')}
-                    className="w-4 h-4 text-[#F2431E] border-gray-300 focus:ring-[#F2431E]"
-                  />
-                  <div>
-                    <span className="font-medium text-black">{texts[language].cautionDelivery}</span>
-                    <p className="text-sm text-gray-600">À régler lors de la livraison</p>
-                  </div>
-                </label>
-              </div>
-
               <div className="mt-4 pt-4 border-t">
                 <div className="bg-orange-50 p-3 rounded-lg">
                   <div className="flex items-center text-orange-800">

@@ -401,10 +401,10 @@ function getRecommendedMicros(answers: Answers): { filaire: number; sansFil: num
  */
 function shouldProposeMorePower(answers: Answers): boolean {
   // Si l'utilisateur a déjà répondu, utiliser sa réponse
-  if (answers.morePower === true || answers.morePower === 'yes') {
+  if (answers.morePower === true || (Array.isArray(answers.morePower) && answers.morePower.length > 0)) {
     return true;
   }
-  if (answers.morePower === false || answers.morePower === 'no') {
+  if (answers.morePower === false) {
     return false;
   }
   

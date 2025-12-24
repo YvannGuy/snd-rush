@@ -452,6 +452,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       ? (currentCart.items[existingIndex].quantity || 0)
       : 0;
 
+    // Vérifier que les dates sont présentes avant de vérifier le stock
+    if (!normalizedItem.startDate || !normalizedItem.endDate) {
+      return {
+        success: false,
+        error: 'Les dates de début et de fin sont requises',
+        availableQuantity: 0,
+      };
+    }
+
     const stockCheck = await checkStockAvailability(
       normalizedItem.productId,
       normalizedItem.quantity,
@@ -555,6 +564,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     if (!itemToIncrease) {
       return { success: false, error: 'Produit non trouvé dans le panier' };
+    }
+
+    // Vérifier que les dates sont présentes avant de vérifier le stock
+    if (!itemToIncrease.startDate || !itemToIncrease.endDate) {
+      return {
+        success: false,
+        error: 'Les dates de début et de fin sont requises',
+        availableQuantity: 0,
+      };
     }
 
     // Vérifier le stock disponible avant d'augmenter

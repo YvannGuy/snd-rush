@@ -80,6 +80,14 @@ export interface CartItem {
   deposit: number;
   addons: Array<{ id: string; name: string; price: number }>;
   images?: string[];
+  zone?: string;
+  metadata?: {
+    type?: string;
+    relatedProductId?: string;
+    relatedProductName?: string;
+    urgencySurcharge?: number;
+    [key: string]: any;
+  };
 }
 
 /**

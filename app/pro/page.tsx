@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { usePro } from '@/hooks/usePro';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, Lock, CheckCircle2, Clock } from 'lucide-react';
 
-export default function ProPage() {
+function ProContent() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
   const { isPro, proStatus, checkingPro } = usePro();
@@ -253,5 +253,20 @@ export default function ProPage() {
         }}
       />
     </div>
+  );
+}
+
+export default function ProPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E] mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <ProContent />
+    </Suspense>
   );
 }

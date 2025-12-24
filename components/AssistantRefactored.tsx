@@ -1809,7 +1809,7 @@ export default function AssistantRefactored({
           rentalDays: 1,
           startDate: answers.startDate || '',
           endDate: answers.endDate || answers.startDate || '',
-          dailyPrice: recommendation.pack.basePrice,
+          dailyPrice: recommendation.pack.basePrice || 0,
           deposit: selectedPack.deposit || 0,
           addons: [],
           images: [],

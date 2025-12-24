@@ -14,8 +14,8 @@ export function detectZoneFromText(input: string): "paris" | "petite" | "grande"
 
 export const DELIVERY_AR = { 
   paris: 80, 
-  petite: 120, 
-  grande: 160, 
+  petite: 60,  // 92/93/94
+  grande: 90,  // 77/78/91/95
   retrait: 0 
 };
 

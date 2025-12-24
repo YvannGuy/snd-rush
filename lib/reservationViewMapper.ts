@@ -80,7 +80,7 @@ export function mapLegacyReservationToView(r: any): ReservationView {
   const balanceAmount = priceTotal && depositAmount ? priceTotal - depositAmount : null;
   
   const depositPaid = !!r.deposit_paid_at || !!r.deposit_amount; // Fallback si pas de champ explicite
-  const balancePaid = !!r.balance_paid_at || (depositAmount && priceTotal && depositAmount >= priceTotal);
+  const balancePaid = !!r.balance_paid_at || !!(depositAmount && priceTotal && depositAmount >= priceTotal);
   const contractSigned = !!(r.client_signature && r.client_signature.trim() !== '');
   
   // Pour les réservations legacy, on ne peut pas déterminer balance_due_at facilement

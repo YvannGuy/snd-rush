@@ -183,6 +183,8 @@ export default function EtatDesLieuxModal({
     if (!isOpen || !reservation || !supabase) return;
 
     const loadData = async () => {
+      if (!supabase || !reservation) return;
+      
       setLoading(true);
       try {
         let { data: etatLieuxData, error } = await supabase
@@ -300,7 +302,8 @@ export default function EtatDesLieuxModal({
           };
 
           if (items.before) {
-            Object.keys(items.before).forEach((zone: Zone) => {
+            Object.keys(items.before).forEach((zoneKey) => {
+              const zone = zoneKey as Zone;
               if (items.before[zone]) {
                 beforeData[zone] = {
                   zone,
@@ -314,7 +317,8 @@ export default function EtatDesLieuxModal({
           }
           
           if (items.after) {
-            Object.keys(items.after).forEach((zone: Zone) => {
+            Object.keys(items.after).forEach((zoneKey) => {
+              const zone = zoneKey as Zone;
               if (items.after[zone]) {
                 afterData[zone] = {
                   zone,
@@ -486,7 +490,8 @@ export default function EtatDesLieuxModal({
   const getProgress = (phase: Phase) => {
     const zones = phase === 'before' ? beforeZones : afterZones;
     const requiredZones = ['overview', 'speakers'] as Zone[];
-    const completedZones = activeZones.filter(zone => {
+    const completedZones = activeZones.filter((zoneKey) => {
+      const zone = zoneKey as Zone;
       if (zone === 'overview') {
         return zones[zone].photos.length >= 1;
       }
@@ -703,7 +708,18 @@ export default function EtatDesLieuxModal({
       comment: 'Commentaire global (optionnel)',
       reservation: 'Réservation',
       dates: 'Dates',
-      address: 'Adresse'
+      address: 'Adresse',
+      finalValidate: 'Finaliser l\'état des lieux',
+      finalValidated: 'État des lieux finalisé',
+      damagesDetected: 'Anomalies détectées',
+      damagesMessage: 'Des anomalies ont été détectées lors de l\'état des lieux. Vous recevrez un email dans les prochains jours pour vous informer des prochaines étapes selon nos conditions de location.',
+      damagesTypes: {
+        rayure: 'Rayure(s)',
+        choc: 'Choc',
+        casse: 'Casse',
+        manque: 'Pièce manquante',
+        autre: 'Autre'
+      }
     },
     en: {
       title: 'Condition report',
@@ -830,10 +846,11 @@ export default function EtatDesLieuxModal({
           </div>
 
           <TabsContent value="before" className="space-y-6">
-            {activeZones.map((zone) => {
+            {activeZones.map((zoneKey) => {
+              const zone = zoneKey as Zone;
               const zoneData = currentZones[zone];
-              const zoneKey = `before-${zone}`;
-              const error = uploadErrors[zoneKey];
+              const key = `before-${zone}`;
+              const error = uploadErrors[key];
               
               return (
                 <Card key={zone} className="border-2">
@@ -1037,10 +1054,11 @@ export default function EtatDesLieuxModal({
           </TabsContent>
 
           <TabsContent value="after" className="space-y-6">
-            {activeZones.map((zone) => {
+            {activeZones.map((zoneKey) => {
+              const zone = zoneKey as Zone;
               const zoneData = currentZones[zone];
-              const zoneKey = `after-${zone}`;
-              const error = uploadErrors[zoneKey];
+              const key = `after-${zone}`;
+              const error = uploadErrors[key];
               
               return (
                 <Card key={zone} className="border-2">

@@ -1597,7 +1597,7 @@ ID du produit : ${productId || 'non disponible'}
 
 Pack choisi : ${packName}
 
-🎯 OBJECTIF : Collecter infos minimales puis proposer 2 CTAs (Payer acompte 30% OU Appeler)
+🎯 OBJECTIF : Conseiller et rassurer, puis rediriger vers la page de réservation directe
 
 📋 INFOS À COLLECTER (ordre strict) :
 1. Date + horaire début (format ISO: YYYY-MM-DDTHH:mm:ssZ)
@@ -1613,11 +1613,12 @@ Options selon pack (UNE seule question) :
 🚫 INTERDICTIONS :
 - JAMAIS proposer "envoyer une demande"
 - JAMAIS proposer "suivre ma demande"
+- JAMAIS créer de panier
 - JAMAIS répéter une question déjà posée
 - JAMAIS poser plus de questions que nécessaire
 
 ✅ QUAND COMPLET :
-Générer JSON "chatDraft" avec toutes les infos + résumé + 2 CTAs :
+Générer JSON "chatDraft" avec toutes les infos + résumé + REDIRECTION :
 
 Format exact :
 {
@@ -1637,10 +1638,12 @@ Format exact :
 }
 
 Dans ta réponse texte, afficher :
-1. Résumé clair
-2. "Payer l'acompte 30%" (CTA principal)
-3. "Appeler Soundrush" (CTA secondaire)
+1. Résumé clair et rassurant
+2. "Tu peux réserver directement ici : [lien vers /book/${packKey}]" (CTA principal)
+3. "Ou appeler Soundrush au 06 51 08 49 94" (CTA secondaire)
 4. "Solde J-5, caution J-2" (mention courte)
+
+IMPORTANT : Le chat ne crée plus de panier. Il conseille et redirige vers /book/${packKey} pour réserver.
 
 ---
 `;

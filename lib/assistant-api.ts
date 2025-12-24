@@ -114,8 +114,10 @@ Informations client :
 - Téléphone : ${personalInfo.phone}
 
 Détails de l'événement :
-- Date : ${eventDetails.date}
-- Horaire : ${eventDetails.time}
+- Date de début : ${eventDetails.startDate}
+- Date de fin : ${eventDetails.endDate}
+- Horaire de début : ${eventDetails.startTime}
+- Horaire de fin : ${eventDetails.endTime}
 - Code postal : ${eventDetails.postalCode}
 - Adresse : ${eventDetails.address || 'Non renseignée'}
 - Demandes spéciales : ${eventDetails.specialRequests || 'Aucune'}
@@ -143,8 +145,10 @@ Informations client :
 - Téléphone : ${personalInfo.phone}
 
 Détails de l'événement :
-- Date : ${eventDetails.date}
-- Horaire : ${eventDetails.time}
+- Date de début : ${eventDetails.startDate}
+- Date de fin : ${eventDetails.endDate}
+- Horaire de début : ${eventDetails.startTime}
+- Horaire de fin : ${eventDetails.endTime}
 - Code postal : ${eventDetails.postalCode}
 - Adresse : ${eventDetails.address || 'Non renseignée'}
 - Demandes spéciales : ${eventDetails.specialRequests || 'Aucune'}

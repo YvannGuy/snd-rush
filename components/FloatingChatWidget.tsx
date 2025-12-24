@@ -1184,25 +1184,33 @@ export default function FloatingChatWidget() {
               return instantEligible ? (
                 <Button
                   onClick={() => {
-                    console.log('[INSTANT] Bouton cliqué');
-                    console.log('[INSTANT] isDisabled:', isDisabled);
-                    console.log('[INSTANT] instantEligible:', instantEligible);
-                    handleInstantBooking();
+                    // NOUVEAU FLOW : Redirection vers la page de réservation directe
+                    if (activePackKey && ['conference', 'soiree', 'mariage'].includes(activePackKey)) {
+                      window.location.href = `/book/${activePackKey}`;
+                    }
                   }}
-                  disabled={isDisabled}
+                  disabled={!activePackKey || !['conference', 'soiree', 'mariage'].includes(activePackKey)}
                   className="w-full bg-green-600 text-white hover:bg-green-700 rounded-[14px] font-semibold shadow-sm hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isCreatingInstantReservation ? 'Traitement...' : 'Bloquer ma date (acompte 30%)'}
+                  Réserver maintenant
                 </Button>
               ) : (
                 <Button
-                  onClick={handleNormalRequest}
+                  onClick={() => {
+                    // NOUVEAU FLOW : Redirection vers la page de réservation directe si pack
+                    if (activePackKey && ['conference', 'soiree', 'mariage'].includes(activePackKey)) {
+                      window.location.href = `/book/${activePackKey}`;
+                    } else {
+                      // Fallback : demande normale pour les autres cas
+                      handleNormalRequest();
+                    }
+                  }}
                   disabled={isDisabled}
                   className="w-full bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-[14px] font-semibold shadow-sm hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {availabilityStatus === 'checking' && 'Vérification...'}
                   {availabilityStatus === 'unavailable' && 'Indisponible à cette date'}
-                  {availabilityStatus !== 'checking' && availabilityStatus !== 'unavailable' && 'Bloquer ma date (acompte 30%)'}
+                  {availabilityStatus !== 'checking' && availabilityStatus !== 'unavailable' && (activePackKey && ['conference', 'soiree', 'mariage'].includes(activePackKey) ? 'Réserver maintenant' : 'Bloquer ma date (acompte 30%)')}
                 </Button>
               );
             })()}

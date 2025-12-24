@@ -2,17 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useCart } from '@/contexts/CartContext';
-import { CartItem } from '@/types/db';
+import { CartItem, Product } from '@/types/db';
 
 interface QuickAddToCartModalProps {
   isOpen: boolean;
   onClose: () => void;
-  product: {
-    id: number;
-    name: string;
-    price: string;
-    image: string;
-  };
+  product: Product;
   language: 'fr' | 'en';
 }
 
@@ -47,7 +42,7 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
   }, [startDate, endDate]);
 
   // Extraire le prix journalier
-  const dailyPrice = parseFloat(product.price.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+  const dailyPrice = product.daily_price_ttc || 0;
   const total = dailyPrice * quantity * rentalDays;
 
   const handleAddToCart = async () => {
@@ -140,7 +135,7 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
           dailyPrice,
           deposit: packDeposit,
           addons: [],
-          images: packImages[productId] ? [packImages[productId]] : [product.image],
+          images: packImages[productId] ? [packImages[productId]] : (product.images && product.images.length > 0 ? [product.images[0]] : []),
           startTime,
           endTime,
         };
@@ -169,8 +164,7 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
       dailyPrice,
       deposit: 500,
       addons: [],
-      images: [product.image],
-      eventType: 'event',
+      images: product.images && product.images.length > 0 ? [product.images[0]] : [],
       startTime,
       endTime,
     };
@@ -242,7 +236,7 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
           {/* Product Info */}
           <div className="mb-6">
             <h3 className="text-lg font-bold text-black mb-2">{product.name}</h3>
-            <p className="text-xl font-bold text-[#F2431E]">{product.price}</p>
+            <p className="text-xl font-bold text-[#F2431E]">{dailyPrice.toFixed(2)}€</p>
           </div>
 
           {/* Date Selection */}
