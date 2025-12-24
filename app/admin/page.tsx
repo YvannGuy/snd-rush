@@ -5,7 +5,7 @@ import { useUser } from '@/hooks/useUser';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/adminApiClient';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
@@ -13,6 +13,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 
 export default function AdminDashboardPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -22,7 +23,6 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   // Stats
   const [stats, setStats] = useState({
@@ -38,6 +38,10 @@ export default function AdminDashboardPage() {
   const [equipmentStatus, setEquipmentStatus] = useState<any[]>([]);
   const [recentClients, setRecentClients] = useState<any[]>([]);
   const [calendarData, setCalendarData] = useState<any[]>([]);
+  // Données automatisation
+  const [balanceDueReservations, setBalanceDueReservations] = useState<any[]>([]); // Solde à payer J-5
+  const [depositDueReservations, setDepositDueReservations] = useState<any[]>([]); // Caution à demander J-2
+  const [weekEvents, setWeekEvents] = useState<any[]>([]); // Événements de la semaine
   const [pendingActions, setPendingActions] = useState({
     pendingReservations: 0,
     contractsToSign: 0,
@@ -49,19 +53,8 @@ export default function AdminDashboardPage() {
     pendingReservationRequests: 0,
   });
   const [showReservationRequestNotification, setShowReservationRequestNotification] = useState(false);
-
-  // Charger l'état de la sidebar depuis localStorage
-  useEffect(() => {
-    const savedState = localStorage.getItem('adminSidebarCollapsed');
-    if (savedState !== null) {
-      setIsSidebarCollapsed(savedState === 'true');
-    }
-  }, []);
-
-  // Sauvegarder l'état de la sidebar dans localStorage
-  useEffect(() => {
-    localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
-  }, [isSidebarCollapsed]);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
 
   // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
@@ -72,7 +65,7 @@ export default function AdminDashboardPage() {
   }, [isAdmin, checkingAdmin, user, router]);
 
   useEffect(() => {
-    if (!user || !supabase) return;
+    if (!user) return;
     // Attendre que la vérification admin soit terminée avant de charger les données
     if (checkingAdmin) {
       console.log('⏳ Vérification admin en cours, attente...');
@@ -86,330 +79,82 @@ export default function AdminDashboardPage() {
     }
 
     const loadAdminData = async () => {
-      const supabaseClient = supabase;
-      if (!supabaseClient) return;
+      setLoadingDashboard(true);
+      setDashboardError(null);
 
       try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayStr = today.toISOString().split('T')[0];
+        const data = await adminFetch<{
+          stats: {
+            upcoming_30d: number;
+            revenue_month: number;
+            equipment_out: number;
+            total_equipment: number;
+            late_returns: number;
+          };
+          automation: {
+            balance_due: any[];
+            deposit_due: any[];
+            week_events: any[];
+          };
+          upcoming: any[];
+          equipment_status: any[];
+          recent_clients: any[];
+          calendar: { day: string; count: number }[];
+        }>('/api/admin/dashboard');
 
-        // Calculer le début du mois (1er du mois) pour les statistiques de CA
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        startOfMonth.setHours(0, 0, 0, 0);
-        const startOfMonthStr = startOfMonth.toISOString().split('T')[0];
-        
-        // Calculer la date dans 30 jours pour les réservations à venir
-        const endDate = new Date(today);
-        endDate.setDate(endDate.getDate() + 30);
-        const endDateStr = endDate.toISOString().split('T')[0];
-
-        console.log('📅 Chargement réservations à venir:', {
-          todayStr,
-          endDateStr,
-          checkingAdmin,
-          isAdmin
-        });
-
-        // OPTIMISATION: Exécuter les requêtes en parallèle avec Promise.all
-        // 1. Réservations à venir (prochaines 30 jours, limitées à 50 pour les performances)
-        // Note: Utiliser start_date pour filtrer les réservations qui commencent dans les prochains 30 jours
-        // Utiliser select('*') pour éviter les erreurs de colonnes manquantes
-        const reservationsPromise = supabaseClient
-          .from('reservations')
-          .select('*')
-          .gte('start_date', todayStr)
-          .lte('start_date', endDateStr)
-          .order('start_date', { ascending: true })
-          .limit(50);
-
-        // 2. Orders récents uniquement (limité à 100 pour les performances)
-        const ordersPromise = supabaseClient
-          .from('orders')
-          .select('customer_email, customer_name, customer_phone, total, status, created_at, stripe_session_id, metadata')
-          .order('created_at', { ascending: false })
-          .limit(100);
-
-        // 3. Statistiques - Réservations à venir (count uniquement)
-        const reservationsCountPromise = supabaseClient
-          .from('reservations')
-          .select('*', { count: 'exact', head: true })
-          .gte('start_date', todayStr)
-          .lte('start_date', endDateStr);
-
-        // 4. Statistiques - CA ce mois
-        const reservationsRevenuePromise = supabaseClient
-          .from('reservations')
-          .select('id, total_price, created_at')
-          .gte('created_at', startOfMonthStr);
-
-        // 5. Matériel sorti ce mois
-        const equipmentOutPromise = supabaseClient
-          .from('reservations')
-          .select('quantity, start_date')
-          .gte('start_date', startOfMonthStr)
-          .in('status', ['CONFIRMED', 'confirmed', 'completed', 'COMPLETED']);
-
-        // 6. Retours en retard
-        const lateReturnsPromise = supabaseClient
-          .from('reservations')
-          .select('id')
-          .lt('end_date', todayStr)
-          .eq('status', 'CONFIRMED');
-
-        // 7. Clients récents
-        const recentOrdersPromise = supabaseClient
-          .from('orders')
-          .select('customer_email, customer_name, total, created_at')
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        // 8. État du matériel (réservations actives)
-        const equipmentDataPromise = supabaseClient
-          .from('reservations')
-          .select('*')
-          .lte('start_date', todayStr)
-          .gte('end_date', todayStr)
-          .eq('status', 'CONFIRMED')
-          .order('end_date', { ascending: true })
-          .limit(5);
-
-        // 9. Planning - Réservations pour le mois
-        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        const calendarReservationsPromise = supabaseClient
-          .from('reservations')
-          .select('start_date, end_date, status')
-          .gte('start_date', startOfMonth.toISOString().split('T')[0])
-          .lte('start_date', endOfMonth.toISOString().split('T')[0]);
-
-        // Exécuter toutes les requêtes en parallèle
-        const [
-          { data: reservationsData, error: reservationsError },
-          { data: allOrdersForReservations, error: ordersError },
-          { count: reservationsThisMonthCount, error: countError },
-          { data: reservationsThisMonth, error: revenueError },
-          { data: reservationsStartedThisMonth, error: equipmentError },
-          { data: lateReturns, error: lateReturnsError },
-          { data: recentOrders, error: recentOrdersError },
-          { data: equipmentData, error: equipmentDataError },
-          { data: calendarReservations, error: calendarError }
-        ] = await Promise.all([
-          reservationsPromise,
-          ordersPromise,
-          reservationsCountPromise,
-          reservationsRevenuePromise,
-          equipmentOutPromise,
-          lateReturnsPromise,
-          recentOrdersPromise,
-          equipmentDataPromise,
-          calendarReservationsPromise
-        ]);
-
-        // Log des erreurs pour débogage
-        if (reservationsError) {
-          console.error('❌ Erreur chargement réservations à venir:', {
-            error: reservationsError,
-            message: reservationsError?.message,
-            details: reservationsError?.details,
-            hint: reservationsError?.hint,
-            code: reservationsError?.code
-          });
-        }
-        if (countError) {
-          console.error('❌ Erreur count réservations à venir:', {
-            error: countError,
-            message: countError?.message,
-            details: countError?.details,
-            hint: countError?.hint,
-            code: countError?.code
-          });
-        }
-
-        // Traitement des données récupérées
-        // 1. Associer les orders aux réservations via sessionId dans notes
-        // OPTIMISATION: Créer un Map pour recherche O(1) au lieu de O(n)
-        const ordersMap = new Map();
-        if (allOrdersForReservations) {
-          allOrdersForReservations.forEach((order: any) => {
-            if (order.stripe_session_id) {
-              ordersMap.set(order.stripe_session_id, order);
-            }
-          });
-        }
-
-        let reservationsWithOrders = [];
-        if (reservationsData) {
-          reservationsWithOrders = reservationsData.map((reservation) => {
-            let matchingOrder = null;
-            
-            // Chercher l'order via sessionId dans notes (optimisé avec Map)
-            if (reservation.notes) {
-              try {
-                const notesData = JSON.parse(reservation.notes);
-                if (notesData.sessionId && ordersMap.has(notesData.sessionId)) {
-                  matchingOrder = ordersMap.get(notesData.sessionId);
-                }
-              } catch (e) {
-                // Ignorer les erreurs de parsing
-              }
-            }
-
-            return {
-              ...reservation,
-              order: matchingOrder,
-            };
-          });
-        }
-
-        if (reservationsError) {
-          console.error('❌ Erreur chargement réservations à venir:', {
-            error: reservationsError,
-            message: reservationsError?.message,
-            details: reservationsError?.details,
-            hint: reservationsError?.hint,
-            code: reservationsError?.code
-          });
-          // Mettre un tableau vide en cas d'erreur pour éviter les crashes
-          setUpcomingReservations([]);
-        } else {
-          console.log('✅ Réservations à venir récupérées:', {
-            count: reservationsWithOrders?.length || 0,
-            reservations: reservationsWithOrders?.slice(0, 3).map(r => ({
-              id: r.id,
-              start_date: r.start_date,
-              status: r.status
-            }))
-          });
-          setUpcomingReservations(reservationsWithOrders || []);
-        }
-
-        // 2. Calculer le CA du mois
-        let revenueThisMonth = 0;
-        if (reservationsThisMonth) {
-          revenueThisMonth = reservationsThisMonth.reduce((sum, reservation) => {
-            const total = parseFloat(reservation.total_price) || 0;
-            return sum + total;
-          }, 0);
-        }
-
-        // 3. Calculer le matériel sorti
-        let equipmentOut = 0;
-        if (reservationsStartedThisMonth) {
-          equipmentOut = reservationsStartedThisMonth.reduce((sum, r) => sum + (r.quantity || 1), 0);
-        }
-
-        // 4. Grouper les clients récents
-        const clientsMap = new Map();
-        if (recentOrders) {
-          recentOrders.forEach((order: any) => {
-            const email = order.customer_email;
-            if (!clientsMap.has(email)) {
-              clientsMap.set(email, {
-                email,
-                name: order.customer_name || email.split('@')[0],
-                reservations: 0,
-                totalSpent: 0,
-                lastOrder: order.created_at,
-              });
-            }
-            const client = clientsMap.get(email);
-            client.reservations += 1;
-            client.totalSpent += parseFloat(order.total) || 0;
-          });
-        }
-
-        const clientsArray = Array.from(clientsMap.values()).slice(0, 3);
-
-        // 5. Enrichir les données d'équipement avec les orders (utiliser le même Map)
-        let equipmentWithOrders = [];
-        if (equipmentData) {
-          equipmentWithOrders = equipmentData.map((item) => {
-            let matchingOrder = null;
-            
-            // Chercher l'order via sessionId dans notes (optimisé avec Map)
-            if (item.notes) {
-              try {
-                const notesData = JSON.parse(item.notes);
-                if (notesData.sessionId && ordersMap.has(notesData.sessionId)) {
-                  matchingOrder = ordersMap.get(notesData.sessionId);
-                }
-              } catch (e) {
-                // Ignorer les erreurs de parsing
-              }
-            }
-
-            return {
-              ...item,
-              order: matchingOrder,
-            };
-          });
-        }
-
-        // Mettre à jour tous les états en une seule fois
+        // Mettre à jour les stats
         setStats({
-          upcomingReservations: reservationsThisMonthCount || 0,
-          revenueThisMonth: revenueThisMonth,
-          equipmentOut: equipmentOut,
-          totalEquipment: 45, // Valeur fixe pour l'instant
-          lateReturns: lateReturns?.length || 0,
+          upcomingReservations: data.stats?.upcoming_30d || 0,
+          revenueThisMonth: data.stats?.revenue_month || 0,
+          equipmentOut: data.stats?.equipment_out || 0,
+          totalEquipment: data.stats?.total_equipment || 45,
+          lateReturns: data.stats?.late_returns || 0,
         });
 
-        setEquipmentStatus(equipmentWithOrders || []);
-        setRecentClients(clientsArray);
-        setCalendarData(calendarReservations || []);
+        // Adapter les réservations à venir pour compatibilité avec le rendu existant
+        const adaptedUpcoming = (data.upcoming || []).map((r: any) => ({
+          ...r,
+          start_date: r.start_at,
+          end_date: r.end_at,
+          total_price: r.price_total,
+          pack_id: r.pack_key,
+        }));
+        setUpcomingReservations(adaptedUpcoming);
 
-        // Calculer les demandes de réservation non vues
-        const viewedReservationRequests = typeof window !== 'undefined'
-          ? JSON.parse(localStorage.getItem('admin_viewed_reservation_requests') || '[]')
-          : [];
-        
-        let pendingReservationRequests = 0;
-        try {
-          const { data: { session } } = await supabaseClient.auth.getSession();
-          if (session) {
-            const response = await fetch('/api/admin/reservation-requests', {
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-              },
-            });
-            if (response.ok) {
-              const data = await response.json();
-              const newRequests = (data.requests || []).filter(
-                (r: any) => (r.status === 'NEW' || r.status === 'PENDING_REVIEW')
-                  && !viewedReservationRequests.includes(r.id)
-              );
-              pendingReservationRequests = newRequests.length;
-              
-              // Afficher la notification si il y a de nouvelles demandes
-              if (newRequests.length > 0) {
-                setShowReservationRequestNotification(true);
-              }
-            }
-          }
-        } catch (error) {
-          // Erreur silencieuse
-        }
+        // Adapter l'équipement
+        const adaptedEquipment = (data.equipment_status || []).map((item: any) => ({
+          ...item,
+          start_date: item.start_at,
+          end_date: item.end_at,
+          total_price: item.price_total || 0,
+          pack_id: item.pack_key,
+        }));
+        setEquipmentStatus(adaptedEquipment);
 
-        // Mettre à jour pendingActions
-        setPendingActions({
-          pendingReservations: reservationsThisMonthCount || 0,
-          contractsToSign: 0, // À calculer si nécessaire
-          conditionReportsToReview: 0, // À calculer si nécessaire
-          deliveriesInProgress: 0, // À calculer si nécessaire
-          pendingCancellations: 0, // À calculer si nécessaire
-          pendingModifications: 0, // À calculer si nécessaire
-          pendingProRequests: 0, // À calculer si nécessaire
-          pendingReservationRequests,
-        });
+        // Clients récents
+        setRecentClients(data.recent_clients || []);
+
+        // Calendrier (adapter pour le format attendu)
+        const adaptedCalendar = (data.calendar || []).map((c: any) => ({
+          start_at: c.day,
+          end_at: c.day,
+          status: 'CONFIRMED',
+        }));
+        setCalendarData(adaptedCalendar);
+
+        // Automatisation
+        setBalanceDueReservations(data.automation?.balance_due || []);
+        setDepositDueReservations(data.automation?.deposit_due || []);
+        setWeekEvents(data.automation?.week_events || []);
+
+        // Pending actions depuis l'API pending-actions (si disponible dans dashboard)
+        // Sinon, AdminSidebar les chargera lui-même
+        // Pour l'instant, on ne met pas à jour pendingActions ici car AdminSidebar le fait
 
       } catch (error: any) {
-        console.error('❌ Erreur chargement dashboard admin:', {
-          error,
-          message: error?.message,
-          stack: error?.stack,
-          name: error?.name
-        });
-        // En cas d'erreur globale, initialiser les états vides pour éviter les crashes
+        console.error('❌ Erreur chargement dashboard admin:', error);
+        setDashboardError(error.message || 'Erreur lors du chargement');
+        // En cas d'erreur, initialiser les états vides pour éviter les crashes
         setUpcomingReservations([]);
         setStats({
           upcomingReservations: 0,
@@ -418,11 +163,13 @@ export default function AdminDashboardPage() {
           totalEquipment: 45,
           lateReturns: 0,
         });
+      } finally {
+        setLoadingDashboard(false);
       }
     };
 
     loadAdminData();
-  }, [user, checkingAdmin]);
+  }, [user, checkingAdmin, isAdmin]);
 
   const texts = {
     fr: {
@@ -547,6 +294,10 @@ export default function AdminDashboardPage() {
       'pack-2': 'Pack Standard',
       'pack-3': 'Pack Premium',
       'pack-4': 'Pack Événement',
+      // Nouveaux packs (client_reservations)
+      'conference': 'Pack Conférence',
+      'soiree': 'Pack Soirée',
+      'mariage': 'Pack Mariage',
     };
     return packNames[packId] || `Pack ${packId}`;
   };
@@ -569,12 +320,12 @@ export default function AdminDashboardPage() {
       days.push(i);
     }
 
-    // Marquer les jours avec réservations
+    // Marquer les jours avec réservations (depuis client_reservations)
     const daysWithReservations = new Set();
     calendarData.forEach((reservation: any) => {
-      const start = new Date(reservation.start_date);
-      const end = new Date(reservation.end_date);
-      for (let d = start.getDate(); d < end.getDate(); d++) {
+      const start = new Date(reservation.start_at || reservation.start_date);
+      const end = new Date(reservation.end_at || reservation.end_date);
+      for (let d = start.getDate(); d <= end.getDate(); d++) {
         if (d <= daysInMonth) {
           daysWithReservations.add(d);
         }
@@ -669,14 +420,12 @@ export default function AdminDashboardPage() {
 
       <div className="flex flex-1 pt-[112px] lg:flex-row">
         {/* Sidebar - Fixed, ne prend pas d'espace dans le flux */}
-        <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+        <div className="hidden lg:block flex-shrink-0 transition-all duration-300 w-64"></div>
         <AdminSidebar 
           language={language} 
           isOpen={isSidebarOpen} 
           onClose={() => setIsSidebarOpen(false)}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          pendingActions={pendingActions}
+          pendingActions={undefined}
         />
 
         {/* Main Content */}
@@ -707,6 +456,27 @@ export default function AdminDashboardPage() {
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+              {/* Loading state */}
+              {loadingDashboard && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E]"></div>
+                </div>
+              )}
+
+              {/* Error state */}
+              {dashboardError && !loadingDashboard && (
+                <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+                  <p className="text-red-800 font-semibold">Erreur de chargement</p>
+                  <p className="text-red-600 text-sm mt-1">{dashboardError}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    Réessayer
+                  </button>
+                </div>
+              )}
+
               {/* Notification pour nouvelles demandes de réservation */}
               {showReservationRequestNotification && pendingActions.pendingReservationRequests > 0 && (
                 <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
@@ -745,15 +515,19 @@ export default function AdminDashboardPage() {
               )}
               
               {/* Bouton Nouvelle réservation - Uniquement sur le tableau de bord */}
-              <div className="mb-6 flex justify-end">
-                <Link
-                  href="/admin/reservations/nouvelle"
-                  className="bg-[#F2431E] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors whitespace-nowrap"
-                >
-                  + Nouvelle réservation
-                </Link>
-              </div>
+              {!loadingDashboard && !dashboardError && (
+                <div className="mb-6 flex justify-end">
+                  <Link
+                    href="/admin/reservations/nouvelle"
+                    className="bg-[#F2431E] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors whitespace-nowrap"
+                  >
+                    + Nouvelle réservation
+                  </Link>
+                </div>
+              )}
               {/* Stats Cards */}
+              {!loadingDashboard && !dashboardError && (
+              <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-3 sm:mb-4">
@@ -793,6 +567,129 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
+              {/* Sections Automatisation - Automation First */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                {/* Paiements à venir (J-5) */}
+                {balanceDueReservations.length > 0 && (
+                  <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 sm:p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                        ⏳ Solde à payer (J-5)
+                      </h2>
+                      <Badge className="bg-yellow-500 text-white">
+                        {balanceDueReservations.length}
+                      </Badge>
+                    </div>
+                    <div className="space-y-3">
+                      {balanceDueReservations.slice(0, 3).map((reservation) => {
+                        const packNames: Record<string, string> = {
+                          'conference': 'Pack Conférence',
+                          'soiree': 'Pack Soirée',
+                          'mariage': 'Pack Mariage'
+                        };
+                        const packName = packNames[reservation.pack_key] || reservation.pack_key;
+                        const balanceAmount = reservation.balance_amount 
+                          ? parseFloat(reservation.balance_amount.toString())
+                          : Math.round(parseFloat(reservation.price_total.toString()) * 0.7);
+                        return (
+                          <div key={reservation.id} className="bg-white rounded-lg p-3 border border-yellow-200">
+                            <p className="font-semibold text-sm text-gray-900">{packName}</p>
+                            <p className="text-xs text-gray-600">{reservation.customer_email}</p>
+                            <p className="text-sm font-bold text-yellow-600 mt-1">{balanceAmount.toFixed(2)}€</p>
+                            {reservation.balance_due_at && (
+                              <p className="text-xs text-gray-500">
+                                Échéance: {new Date(reservation.balance_due_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cautions à demander (J-2) */}
+                {depositDueReservations.length > 0 && (
+                  <div className="bg-blue-50 border-2 border-blue-300 rounded-2xl p-4 sm:p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                        🔒 Cautions à demander (J-2)
+                      </h2>
+                      <Badge className="bg-blue-500 text-white">
+                        {depositDueReservations.length}
+                      </Badge>
+                    </div>
+                    <div className="space-y-3">
+                      {depositDueReservations.slice(0, 3).map((reservation) => {
+                        const packNames: Record<string, string> = {
+                          'conference': 'Pack Conférence',
+                          'soiree': 'Pack Soirée',
+                          'mariage': 'Pack Mariage'
+                        };
+                        const packName = packNames[reservation.pack_key] || reservation.pack_key;
+                        return (
+                          <div key={reservation.id} className="bg-white rounded-lg p-3 border border-blue-200">
+                            <p className="font-semibold text-sm text-gray-900">{packName}</p>
+                            <p className="text-xs text-gray-600">{reservation.customer_email}</p>
+                            <p className="text-sm font-bold text-blue-600 mt-1">
+                              {reservation.deposit_amount ? parseFloat(reservation.deposit_amount.toString()).toFixed(2) : '0'}€
+                            </p>
+                            {reservation.deposit_requested_at && (
+                              <p className="text-xs text-gray-500">
+                                À demander: {new Date(reservation.deposit_requested_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Événements de la semaine */}
+                {weekEvents.length > 0 && (
+                  <div className="bg-green-50 border-2 border-green-300 rounded-2xl p-4 sm:p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                        📅 Événements cette semaine
+                      </h2>
+                      <Badge className="bg-green-500 text-white">
+                        {weekEvents.length}
+                      </Badge>
+                    </div>
+                    <div className="space-y-3">
+                      {weekEvents.slice(0, 3).map((reservation) => {
+                        const packNames: Record<string, string> = {
+                          'conference': 'Pack Conférence',
+                          'soiree': 'Pack Soirée',
+                          'mariage': 'Pack Mariage'
+                        };
+                        const packName = packNames[reservation.pack_key] || reservation.pack_key;
+                        return (
+                          <div key={reservation.id} className="bg-white rounded-lg p-3 border border-green-200">
+                            <p className="font-semibold text-sm text-gray-900">{packName}</p>
+                            {reservation.start_at && (
+                              <p className="text-xs text-gray-600">
+                                {new Date(reservation.start_at).toLocaleDateString('fr-FR', { 
+                                  weekday: 'short', 
+                                  day: 'numeric', 
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            )}
+                            {reservation.address && (
+                              <p className="text-xs text-gray-500 mt-1">{reservation.address}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 {/* Réservations à venir */}
                 <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
@@ -812,9 +709,12 @@ export default function AdminDashboardPage() {
                     ) : (
                       upcomingReservations.slice(0, 3).map((reservation) => {
                         const order = reservation.order || {};
-                        const statusInfo = getStatusText(reservation.status, reservation.end_date);
+                        const endDate = reservation.end_date || reservation.end_at;
+                        const statusInfo = getStatusText(reservation.status, endDate);
                         return (
-                          <div key={reservation.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                          <div key={reservation.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
+                            onClick={() => router.push(`/admin/reservations?reservation=${reservation.id}`)}
+                          >
                             <div className="w-10 h-10 bg-[#F2431E] rounded-lg flex items-center justify-center flex-shrink-0">
                               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -823,24 +723,30 @@ export default function AdminDashboardPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-bold text-gray-900 mb-1">
-                                {getPackName(reservation.pack_id)} - {order.customer_name || 'Client'}
+                                {getPackName(reservation.pack_id || reservation.pack_key)} - {order?.customer_name || reservation.customer_email?.split('@')[0] || 'Client'}
                               </h3>
                               <p className="text-sm text-gray-600">
-                                {currentTexts.delivery} {formatTime(reservation.start_date)} - Paris 11ème
+                                {currentTexts.delivery} {formatTime(reservation.start_date || reservation.start_at)} - {reservation.address || 'Paris'}
                               </p>
-                              {/* Heures de retrait et retour si retrait sur place */}
-                              {reservation.pickup_time && reservation.return_time && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                  {language === 'fr' ? 'Retrait' : 'Pickup'}: {reservation.pickup_time} | {language === 'fr' ? 'Retour' : 'Return'}: {reservation.return_time}
-                                </p>
-                              )}
                               <p className="text-sm font-semibold text-gray-900 mt-1">
-                                {order.total || reservation.total_price || 0}€
+                                {order?.total || reservation.total_price || reservation.price_total || 0}€
                               </p>
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
-                              {statusInfo.text}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
+                                {statusInfo.text}
+                              </span>
+                              {/* Accès rapide documents */}
+                              <Link
+                                href={`/admin/reservations?reservation=${reservation.id}`}
+                                className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </Link>
+                            </div>
                           </div>
                         );
                       })
@@ -922,12 +828,12 @@ export default function AdminDashboardPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-bold text-gray-900 mb-1">
-                                {getPackName(item.pack_id)} - {order.customer_name || 'Client'}
+                                {getPackName(item.pack_id || item.pack_key)} - {order?.customer_name || item.customer_email?.split('@')[0] || 'Client'}
                               </h3>
                               <p className="text-sm text-gray-600">
                                 {isLate 
-                                  ? `${currentTexts.lateReturn} - Client: ${order.customer_name || 'N/A'}`
-                                  : `${currentTexts.returnToday} ${formatTime(item.end_date)}`
+                                  ? `${currentTexts.lateReturn} - Client: ${order?.customer_name || item.customer_email || 'N/A'}`
+                                  : `${currentTexts.returnToday} ${formatTime(item.end_date || item.end_at)}`
                                 }
                               </p>
                               <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
@@ -936,7 +842,7 @@ export default function AdminDashboardPage() {
                             </div>
                             {isLate && (
                               <a 
-                                href={`tel:${order.customer_phone || ''}`}
+                                href={`tel:${order?.customer_phone || item.customer_phone || ''}`}
                                 className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors inline-block"
                               >
                                 {currentTexts.contact}
@@ -1037,6 +943,8 @@ export default function AdminDashboardPage() {
                   })}
                 </div>
               </div>
+              </>
+              )}
             </div>
           </div>
 

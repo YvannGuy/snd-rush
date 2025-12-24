@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { useAdmin } from '@/hooks/useAdmin';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/adminApiClient';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 import { PACKS } from '@/lib/packs';
+import DocumentsPanel from '@/components/DocumentsPanel';
+import AdjustReservationModal from '@/components/admin/AdjustReservationModal';
 
 export default function AdminReservationDetailPage() {
   const params = useParams();
@@ -20,9 +22,12 @@ export default function AdminReservationDetailPage() {
   const { user, loading } = useUser();
   const { isAdmin, checkingAdmin } = useAdmin();
   const [reservation, setReservation] = useState<any>(null);
+  const [orders, setOrders] = useState<any[]>([]);
   const [loadingReservation, setLoadingReservation] = useState(true);
+  const [reservationError, setReservationError] = useState<string | null>(null);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [etatLieux, setEtatLieux] = useState<any>(null);
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
 
     // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
@@ -33,63 +38,54 @@ export default function AdminReservationDetailPage() {
   }, [isAdmin, checkingAdmin, user, router]);
 
 useEffect(() => {
-    if (!user || !supabase || !reservationId) return;
+    if (!user || !reservationId) return;
 
     const loadReservation = async () => {
-      if (!supabase) return;
+      setLoadingReservation(true);
+      setReservationError(null);
+
       try {
-        const { data, error } = await supabase
-          .from('reservations')
-          .select('*')
-          .eq('id', reservationId)
-          .single();
+        const data = await adminFetch<{
+          reservation: any;
+          orders: any[];
+          contract: { signed: boolean; signed_at: string | null };
+          documents: {
+            contract_url: string;
+            invoice_urls: string[];
+            etat_lieux_url?: string;
+          };
+        }>(`/api/admin/reservations/${reservationId}`);
 
-        if (error) throw error;
+        // Adapter la réservation pour compatibilité avec le rendu existant
+        const adaptedReservation = {
+          ...data.reservation,
+          start_date: data.reservation.start_at || data.reservation.start_date,
+          end_date: data.reservation.end_at || data.reservation.end_date,
+          total_price: data.reservation.price_total || data.reservation.total_price,
+          pack_id: data.reservation.pack_key || data.reservation.pack_id,
+          order: data.orders?.[0] || null, // Prendre le premier order pour compatibilité
+        };
 
-        // Récupérer l'order associé si disponible
-        let order = null;
-        if (data.notes) {
-          try {
-            const notesData = JSON.parse(data.notes);
-            if (notesData.sessionId) {
-              if (!supabase) return;
-              const { data: orderData } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('stripe_session_id', notesData.sessionId)
-                .single();
-              order = orderData;
-            }
-          } catch (e) {
-            // Ignorer les erreurs de parsing
-          }
+        setReservation(adaptedReservation);
+        setOrders(data.orders || []);
+
+        // Si URL état des lieux disponible, marquer comme chargé
+        if (data.documents?.etat_lieux_url) {
+          setEtatLieux({ id: 'loaded', url: data.documents.etat_lieux_url });
+        } else {
+          setEtatLieux(null);
         }
-
-        setReservation({ ...data, order });
-
-        // Charger l'état des lieux si existant
-        if (!supabase) return;
-        const { data: etatLieuxData } = await supabase
-          .from('etat_lieux')
-          .select('*')
-          .eq('reservation_id', reservationId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (etatLieuxData) {
-          setEtatLieux(etatLieuxData);
-        }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erreur chargement réservation:', error);
-        router.push('/admin/reservations');
+        setReservationError(error.message || 'Erreur lors du chargement');
+        // Ne pas rediriger automatiquement, afficher l'erreur
       } finally {
         setLoadingReservation(false);
       }
     };
 
     loadReservation();
-  }, [user, reservationId, router]);
+  }, [user, reservationId]);
 
   const getPackName = (packId: number) => {
     const pack = Object.values(PACKS).find(p => {
@@ -223,7 +219,32 @@ useEffect(() => {
   if (loading || loadingReservation) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E]"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Chargement de la réservation...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (reservationError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <AdminSidebar language={language} />
+        <main className="flex-1 p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+              <p className="text-red-800 font-semibold mb-2">Erreur de chargement</p>
+              <p className="text-red-600 text-sm mb-4">{reservationError}</p>
+              <button
+                onClick={() => router.push('/admin/reservations')}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Retour aux réservations
+              </button>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -568,6 +589,35 @@ useEffect(() => {
                     </div>
                   </div>
 
+                  {/* Documents */}
+                  <div className="pt-4 border-t">
+                    <DocumentsPanel
+                      context="admin"
+                      reservation={{
+                        id: reservation.id,
+                        type: reservation.source === 'client_reservation' ? 'client_reservation' : 'reservation',
+                        client_signature: reservation.client_signature,
+                        client_signed_at: reservation.client_signed_at,
+                        status: reservation.status,
+                      }}
+                      orders={orders}
+                      etatLieux={etatLieux}
+                      language={language}
+                    />
+                  </div>
+
+                  {/* Bouton Ajuster le pack (pour client_reservations uniquement) */}
+                  {reservation.source === 'client_reservation' && (
+                    <div className="pt-4 border-t">
+                      <button
+                        onClick={() => setIsAdjustModalOpen(true)}
+                        className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+                      >
+                        Ajuster le pack
+                      </button>
+                    </div>
+                  )}
+
                   {/* Notes */}
                   {reservation.notes && (() => {
                     let displayNotes = null;
@@ -608,6 +658,18 @@ useEffect(() => {
           <AdminFooter language={language} />
         </main>
       </div>
+
+      {/* Modal d'ajustement */}
+      <AdjustReservationModal
+        isOpen={isAdjustModalOpen}
+        onClose={() => setIsAdjustModalOpen(false)}
+        reservation={reservation}
+        language={language}
+        onSuccess={() => {
+          // Recharger la page pour mettre à jour les données
+          window.location.reload();
+        }}
+      />
 
       <SignModal
         isOpen={isSignModalOpen}

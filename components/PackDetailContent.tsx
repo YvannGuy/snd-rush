@@ -1101,14 +1101,30 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
             {(pack.id === 9 || pack.id === 10 || pack.id === 11) ? (
               <button
                 onClick={() => {
-                  window.dispatchEvent(new CustomEvent('openChatWithDraft', { 
-                    detail: { message: language === 'fr' ? `Je souhaite réserver le ${pack.name}` : `I would like to book the ${pack.name}` } 
-                  }));
+                  // Mapping packId vers packKey
+                  const packKeyMap: Record<number, 'conference' | 'soiree' | 'mariage'> = {
+                    9: 'conference',
+                    10: 'soiree',
+                    11: 'mariage',
+                  };
+                  const packKey = packKeyMap[pack.id];
+                  
+                  // Nouveau système simplifié
+                  if (process.env.NEXT_PUBLIC_USE_SIMPLIFIED_CHAT === 'true' && packKey) {
+                    window.dispatchEvent(new CustomEvent('openChatWithPack', { 
+                      detail: { packKey } 
+                    }));
+                  } else {
+                    // Ancien système (fallback)
+                    window.dispatchEvent(new CustomEvent('openChatWithDraft', { 
+                      detail: { message: language === 'fr' ? `Je souhaite réserver le ${pack.name}` : `I would like to book the ${pack.name}` } 
+                    }));
+                  }
                 }}
                 className="w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2 bg-[#F2431E] text-white hover:bg-[#E63A1A] hover:shadow-xl"
               >
                 <span>📅</span>
-                {language === 'fr' ? 'Demander de réservation' : 'Request reservation'}
+                {language === 'fr' ? 'Réserver maintenant' : 'Book now'}
               </button>
             ) : (
               <>
@@ -1406,7 +1422,7 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                   ? `${product.daily_price_ttc}€/jour`
                   : language === 'fr' ? 'Sur devis' : 'On quote';
 
-                const handleAddProduct = () => {
+                const handleAddProduct = async () => {
                   const cartItem: CartItem = {
                     productId: product.id,
                     productName: product.name,

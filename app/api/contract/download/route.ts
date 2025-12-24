@@ -22,24 +22,47 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const reservationId = searchParams.get('reservationId');
+  const clientReservationId = searchParams.get('clientReservationId');
   const display = searchParams.get('display'); // 'inline' pour affichage dans iframe, sinon 'attachment' pour téléchargement
 
-  if (!reservationId) {
+  // Accepter soit reservationId (ancienne table) soit clientReservationId (nouvelle table)
+  const targetId = clientReservationId || reservationId;
+  const isClientReservation = !!clientReservationId;
+
+  if (!targetId) {
     return NextResponse.json(
-      { error: 'reservationId manquant' },
+      { error: 'reservationId ou clientReservationId manquant' },
       { status: 400 }
     );
   }
 
-  console.log('🔍 Recherche réservation:', reservationId);
+  console.log('🔍 Recherche réservation:', { targetId, isClientReservation });
 
   try {
-    // Récupérer la réservation
-    const { data: reservation, error: reservationError } = await supabaseAdmin
-      .from('reservations')
-      .select('*')
-      .eq('id', reservationId)
-      .single();
+    let reservation: any = null;
+    let reservationError: any = null;
+
+    if (isClientReservation) {
+      // Récupérer depuis client_reservations (nouvelle table)
+      const { data, error } = await supabaseAdmin
+        .from('client_reservations')
+        .select('*')
+        .eq('id', targetId)
+        .single();
+      
+      reservation = data;
+      reservationError = error;
+    } else {
+      // Récupérer depuis reservations (ancienne table)
+      const { data, error } = await supabaseAdmin
+        .from('reservations')
+        .select('*')
+        .eq('id', targetId)
+        .single();
+      
+      reservation = data;
+      reservationError = error;
+    }
 
     if (reservationError) {
       console.error('❌ Erreur récupération réservation:', {
@@ -55,7 +78,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!reservation) {
-      console.error('❌ Réservation non trouvée pour ID:', reservationId);
+      console.error('❌ Réservation non trouvée pour ID:', targetId);
       return NextResponse.json(
         { error: 'Réservation non trouvée' },
         { status: 404 }
@@ -64,46 +87,72 @@ export async function GET(req: NextRequest) {
 
     console.log('✅ Réservation trouvée:', reservation.id);
 
-    // Récupérer les informations utilisateur depuis auth.users
+    // Récupérer les informations utilisateur
     let customerName = '';
     let customerEmail = '';
     let customerPhone = '';
     
-    // Essayer de récupérer le téléphone depuis les notes de la réservation
-    if (reservation.notes) {
-      try {
-        const notesData = JSON.parse(reservation.notes);
-        if (notesData.customerPhone) {
-          customerPhone = notesData.customerPhone;
-        }
-        if (notesData.customerName) {
-          customerName = notesData.customerName;
-        }
-        if (notesData.customerEmail) {
-          customerEmail = notesData.customerEmail;
-        }
-      } catch (e) {
-        // Ignorer les erreurs de parsing
-      }
-    }
-    
-    if (reservation.user_id) {
-      try {
-        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(reservation.user_id);
-        if (authError) {
-          console.error('Erreur récupération utilisateur:', authError);
-        } else if (authUser?.user) {
-          customerEmail = customerEmail || authUser.user.email || '';
-          const firstName = authUser.user.user_metadata?.first_name || authUser.user.user_metadata?.firstName || '';
-          const lastName = authUser.user.user_metadata?.last_name || authUser.user.user_metadata?.lastName || '';
-          customerName = customerName || `${firstName} ${lastName}`.trim() || customerEmail.split('@')[0];
-          // Récupérer le téléphone depuis user_metadata si pas déjà dans les notes
-          if (!customerPhone && authUser.user.user_metadata?.phone) {
-            customerPhone = authUser.user.user_metadata.phone;
+    if (isClientReservation) {
+      // Pour client_reservations, utiliser directement les champs
+      customerName = reservation.customer_name || '';
+      customerEmail = reservation.customer_email || '';
+      customerPhone = reservation.customer_phone || '';
+      
+      // Si pas de nom mais qu'on a un user_id, essayer de récupérer depuis auth
+      if (!customerName && reservation.user_id) {
+        try {
+          const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(reservation.user_id);
+          if (!authError && authUser?.user) {
+            const firstName = authUser.user.user_metadata?.first_name || authUser.user.user_metadata?.firstName || '';
+            const lastName = authUser.user.user_metadata?.last_name || authUser.user.user_metadata?.lastName || '';
+            customerName = `${firstName} ${lastName}`.trim() || customerEmail.split('@')[0];
+            if (!customerEmail) customerEmail = authUser.user.email || '';
+            if (!customerPhone && authUser.user.user_metadata?.phone) {
+              customerPhone = authUser.user.user_metadata.phone;
+            }
           }
+        } catch (error) {
+          console.error('Erreur récupération utilisateur:', error);
         }
-      } catch (error) {
-        console.error('Erreur lors de la récupération des infos utilisateur:', error);
+      }
+    } else {
+      // Pour reservations (ancienne table), utiliser la logique existante
+      // Essayer de récupérer le téléphone depuis les notes de la réservation
+      if (reservation.notes) {
+        try {
+          const notesData = JSON.parse(reservation.notes);
+          if (notesData.customerPhone) {
+            customerPhone = notesData.customerPhone;
+          }
+          if (notesData.customerName) {
+            customerName = notesData.customerName;
+          }
+          if (notesData.customerEmail) {
+            customerEmail = notesData.customerEmail;
+          }
+        } catch (e) {
+          // Ignorer les erreurs de parsing
+        }
+      }
+      
+      if (reservation.user_id) {
+        try {
+          const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(reservation.user_id);
+          if (authError) {
+            console.error('Erreur récupération utilisateur:', authError);
+          } else if (authUser?.user) {
+            customerEmail = customerEmail || authUser.user.email || '';
+            const firstName = authUser.user.user_metadata?.first_name || authUser.user.user_metadata?.firstName || '';
+            const lastName = authUser.user.user_metadata?.last_name || authUser.user.user_metadata?.lastName || '';
+            customerName = customerName || `${firstName} ${lastName}`.trim() || customerEmail.split('@')[0];
+            // Récupérer le téléphone depuis user_metadata si pas déjà dans les notes
+            if (!customerPhone && authUser.user.user_metadata?.phone) {
+              customerPhone = authUser.user.user_metadata.phone;
+            }
+          }
+        } catch (error) {
+          console.error('Erreur lors de la récupération des infos utilisateur:', error);
+        }
       }
     }
 
@@ -114,7 +163,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Générer le contrat PDF
-    const pdfBuffer = await generateContractPDF(reservation, customerName, customerEmail, customerPhone);
+    const pdfBuffer = await generateContractPDF(reservation, customerName, customerEmail, customerPhone, isClientReservation);
 
     // Retourner le PDF
     const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
@@ -174,27 +223,35 @@ function splitText(doc: jsPDF, text: string, maxWidth: number): string[] {
   return lines;
 }
 
-async function generateContractPDF(reservation: any, customerName: string, customerEmail: string, customerPhone: string = ''): Promise<Buffer> {
+async function generateContractPDF(reservation: any, customerName: string, customerEmail: string, customerPhone: string = '', isClientReservation: boolean = false): Promise<Buffer> {
   const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
   const contractDate = new Date(reservation.created_at || new Date()).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
-  const startDate = new Date(reservation.start_date).toLocaleDateString('fr-FR', {
+  
+  // Adapter les champs selon le type de réservation
+  const startDateField = isClientReservation ? reservation.start_at : reservation.start_date;
+  const endDateField = isClientReservation ? reservation.end_at : reservation.end_date;
+  const totalPriceField = isClientReservation ? reservation.price_total : reservation.total_price;
+  const depositAmountField = isClientReservation ? null : reservation.deposit_amount; // client_reservations n'a pas de deposit_amount dans le même format
+  const packIdField = isClientReservation ? reservation.pack_key : reservation.pack_id;
+  
+  const startDate = new Date(startDateField).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
-  const endDate = new Date(reservation.end_date).toLocaleDateString('fr-FR', {
+  const endDate = new Date(endDateField).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
 
   // Calculer le nombre de jours
-  const start = new Date(reservation.start_date);
-  const end = new Date(reservation.end_date);
+  const start = new Date(startDateField);
+  const end = new Date(endDateField);
   const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
   // Charger la signature du prestataire
@@ -309,8 +366,18 @@ async function generateContractPDF(reservation: any, customerName: string, custo
   if (reservation.address) {
     locationItems.push({ label: 'Adresse de livraison :', value: reservation.address });
   }
-  if (reservation.pack_id) {
-    locationItems.push({ label: 'Pack réservé :', value: `Pack ${reservation.pack_id}` });
+  if (packIdField) {
+    const packNames: Record<string, string> = {
+      'conference': 'Conférence',
+      'soiree': 'Soirée',
+      'mariage': 'Mariage',
+      '1': 'Essentiel',
+      '2': 'Standard',
+      '3': 'Premium',
+      '4': 'Événement',
+    };
+    const packName = packNames[packIdField] || packIdField;
+    locationItems.push({ label: 'Pack réservé :', value: `Pack ${packName}` });
   }
 
   locationItems.forEach((item) => {
@@ -329,6 +396,57 @@ async function generateContractPDF(reservation: any, customerName: string, custo
 
   yPos += 5;
 
+  // Matériel inclus (si final_items disponible pour client_reservations)
+  if (isClientReservation && reservation.final_items && Array.isArray(reservation.final_items) && reservation.final_items.length > 0) {
+    checkPageBreak(20);
+    doc.setFontSize(16);
+    doc.setTextColor(242, 67, 30);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MATÉRIEL INCLUS', margin, yPos);
+    yPos += 8;
+
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+
+    // Séparer les items du pack et les extras
+    const packItems = reservation.final_items.filter((item: any) => !item.isExtra);
+    const extras = reservation.final_items.filter((item: any) => item.isExtra);
+
+    // Afficher les items du pack
+    if (packItems.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Inclus dans le pack :', margin, yPos);
+      yPos += 6;
+      doc.setFont('helvetica', 'normal');
+      packItems.forEach((item: any) => {
+        checkPageBreak(8);
+        const itemText = item.qty > 1 ? `${item.qty}× ${item.label}` : item.label;
+        doc.text(`• ${itemText}`, margin + 5, yPos);
+        yPos += 6;
+      });
+      yPos += 2;
+    }
+
+    // Afficher les extras
+    if (extras.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Extras :', margin, yPos);
+      yPos += 6;
+      doc.setFont('helvetica', 'normal');
+      extras.forEach((item: any) => {
+        checkPageBreak(8);
+        const itemText = item.qty > 1 ? `${item.qty}× ${item.label}` : item.label;
+        const itemPrice = item.unitPrice ? ` (${(item.qty * item.unitPrice).toFixed(2)}€)` : '';
+        doc.text(`• ${itemText}${itemPrice}`, margin + 5, yPos);
+        yPos += 6;
+      });
+      yPos += 2;
+    }
+  }
+
+  yPos += 5;
+
   // Conditions financières
   checkPageBreak(15);
   doc.setFontSize(16);
@@ -341,22 +459,31 @@ async function generateContractPDF(reservation: any, customerName: string, custo
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'normal');
 
-  if (reservation.total_price) {
+  if (totalPriceField) {
     checkPageBreak(8);
     const labelWidth = doc.getTextWidth('Montant total TTC :');
     doc.setFont('helvetica', 'bold');
     doc.text('Montant total TTC :', margin, yPos);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${parseFloat(reservation.total_price).toFixed(2)}€`, pageWidth - margin, yPos, { align: 'right' });
+    doc.text(`${parseFloat(totalPriceField.toString()).toFixed(2)}€`, pageWidth - margin, yPos, { align: 'right' });
     yPos += 8;
   }
 
-  if (reservation.deposit_amount) {
+  // Pour client_reservations, on peut afficher l'acompte payé si disponible
+  if (isClientReservation && reservation.deposit_paid_at) {
+    const depositAmount = parseFloat(totalPriceField.toString()) * 0.3;
+    checkPageBreak(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Acompte payé (30%) :', margin, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${depositAmount.toFixed(2)}€`, pageWidth - margin, yPos, { align: 'right' });
+    yPos += 8;
+  } else if (!isClientReservation && depositAmountField) {
     checkPageBreak(8);
     doc.setFont('helvetica', 'bold');
     doc.text('Dépôt de garantie :', margin, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${parseFloat(reservation.deposit_amount).toFixed(2)}€`, pageWidth - margin, yPos, { align: 'right' });
+    doc.text(`${parseFloat(depositAmountField.toString()).toFixed(2)}€`, pageWidth - margin, yPos, { align: 'right' });
     yPos += 8;
   }
 

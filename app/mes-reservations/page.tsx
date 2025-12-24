@@ -145,8 +145,15 @@ export default function MesReservationsPage() {
     if (!reservations.length) return;
 
     const reservationsWithContractsToSign = reservations.filter(
-      (r) => (r.status === 'CONFIRMED' || r.status === 'CONTRACT_PENDING' || r.status === 'confirmed') 
-        && (!r.client_signature || r.client_signature.trim() === '')
+      (r) => {
+        const status = r.status?.toUpperCase();
+        const isConfirmed = status === 'CONFIRMED' || status === 'CONTRACT_PENDING' || status === 'CONFIRMED';
+        const isNotSigned = !r.client_signature || r.client_signature.trim() === '';
+        // Pour client_reservations, vérifier aussi CONFIRMED ou AWAITING_BALANCE
+        const isClientReservationConfirmed = r.type === 'client_reservation' && 
+          (status === 'CONFIRMED' || status === 'AWAITING_BALANCE');
+        return (isConfirmed || isClientReservationConfirmed) && isNotSigned;
+      }
     );
 
     if (reservationsWithContractsToSign.length > 0) {
@@ -742,7 +749,9 @@ export default function MesReservationsPage() {
             const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
             const { startTime, endTime } = getTimesFromNotes(reservation.notes);
             const dateRange = formatDateShort(reservation.start_date, reservation.end_date);
-            const isConfirmed = reservation.status === 'confirmed' || reservation.status === 'CONFIRMED';
+            const status = reservation.status?.toUpperCase();
+            const isConfirmed = status === 'CONFIRMED' || status === 'CONTRACT_PENDING' || 
+              (reservation.type === 'client_reservation' && (status === 'CONFIRMED' || status === 'AWAITING_BALANCE'));
             const isSigned = !!reservation.client_signature;
             const statusUI = getReservationStatusUI(reservation.status, language);
             const showActionButtons = shouldShowActionButtons(reservation);
@@ -864,7 +873,9 @@ export default function MesReservationsPage() {
                             asChild
                             className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white"
                           >
-                            <Link href={`/sign-contract?reservationId=${reservation.id}`}>
+                            <Link href={reservation.type === 'client_reservation'
+                              ? `/sign-contract?clientReservationId=${reservation.id}`
+                              : `/sign-contract?reservationId=${reservation.id}`}>
                               <FilePenLine className="w-4 h-4 mr-2" />
                               {language === 'fr' ? 'Signer le contrat' : 'Sign the contract'}
                             </Link>

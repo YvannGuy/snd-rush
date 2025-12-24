@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { getAcceptedEmailTemplate } from '@/lib/reservation-email-templates';
+import { generateTokenWithHash } from '@/lib/token';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -57,6 +58,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Demande non trouvée' }, { status: 404 });
     }
 
+    // V1.4 - Générer un token public pour le checkout sans compte
+    const { token: publicToken, hash: publicTokenHash, expiresAt: publicTokenExpiresAt } = generateTokenWithHash(7);
+
+    // Calculer les dates de paiement en 3 temps
+    const startDate = request.payload.startDate ? new Date(request.payload.startDate) : null;
+    let balanceDueAt: string | null = null;
+    let depositRequestedAt: string | null = null;
+    
+    if (startDate) {
+      // Solde à payer J-5 avant l'événement
+      const balanceDueDate = new Date(startDate);
+      balanceDueDate.setDate(balanceDueDate.getDate() - 5);
+      balanceDueDate.setHours(9, 0, 0, 0); // 9h du matin
+      balanceDueAt = balanceDueDate.toISOString();
+      
+      // Caution à demander J-2 avant l'événement
+      const depositRequestDate = new Date(startDate);
+      depositRequestDate.setDate(depositRequestDate.getDate() - 2);
+      depositRequestDate.setHours(9, 0, 0, 0); // 9h du matin
+      depositRequestedAt = depositRequestDate.toISOString();
+    }
+    
+    // Calculer le montant du solde (70% du total)
+    const balanceAmount = Math.round((parseFloat(price_total.toString()) * 0.7) * 100) / 100;
+
     // Créer la réservation client
     const { data: reservation, error: createError } = await supabaseAdmin
       .from('client_reservations')
@@ -67,7 +93,8 @@ export async function POST(req: NextRequest) {
         status: 'AWAITING_PAYMENT',
         price_total: price_total,
         deposit_amount: deposit_amount,
-        start_at: request.payload.startDate ? new Date(request.payload.startDate).toISOString() : null,
+        balance_amount: balanceAmount, // Montant du solde (70%)
+        start_at: startDate ? startDate.toISOString() : null,
         end_at: request.payload.endDate ? new Date(request.payload.endDate).toISOString() : null,
         address: request.payload.address || null,
         notes: notes || null,
@@ -75,6 +102,10 @@ export async function POST(req: NextRequest) {
         customer_summary: customer_summary || null,
         base_pack_price: base_pack_price || null,
         extras_total: extras_total || 0,
+        balance_due_at: balanceDueAt, // J-5 avant l'événement
+        deposit_requested_at: depositRequestedAt, // J-2 avant l'événement
+        public_token_hash: publicTokenHash, // V1.4 - Stocker le hash du token
+        public_token_expires_at: publicTokenExpiresAt.toISOString(), // V1.4 - Expiration dans 7 jours
       })
       .select()
       .single();
@@ -100,10 +131,12 @@ export async function POST(req: NextRequest) {
       userExists = false;
     }
     
-    // Envoyer l'email
+    // V1.4 - Envoyer l'email avec lien checkout public
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    // Toujours pointer vers le dashboard - il gérera l'authentification
-    const finalizeLink = `${baseUrl}/dashboard?reservation=${reservation.id}`;
+    // Lien checkout public (sans compte requis)
+    const checkoutLink = `${baseUrl}/checkout/${reservation.id}?token=${publicToken}`;
+    // Lien dashboard (fallback pour utilisateurs connectés)
+    const dashboardLink = `${baseUrl}/dashboard?reservation=${reservation.id}`;
     
     const firstName = request.customer_name?.split(' ')[0] || request.customer_email.split('@')[0];
     const packNames: Record<string, string> = {
@@ -133,7 +166,8 @@ export async function POST(req: NextRequest) {
       peopleCount: request.payload.peopleCount || 0,
       priceTotal: price_total,
       depositAmount: deposit_amount,
-      finalizeLink,
+      finalizeLink: checkoutLink, // V1.4 - Lien checkout public
+      dashboardLink, // V1.4 - Lien dashboard (fallback)
       finalItems,
       customerSummary: body.customer_summary || undefined,
       userExists,

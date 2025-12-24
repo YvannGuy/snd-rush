@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/adminApiClient';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
@@ -17,7 +17,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { getReservationStatusUI } from '@/lib/reservationStatus';
-import { CheckCircle2, XCircle, AlertCircle, Calendar, MapPin, ChevronRight, Search, X, Clock } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Calendar, MapPin, ChevronRight, Search, X, Clock, Settings } from 'lucide-react';
+import DocumentsPanel from '@/components/DocumentsPanel';
+import AdjustReservationModal from '@/components/admin/AdjustReservationModal';
 
 export default function AdminReservationsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -26,18 +28,24 @@ export default function AdminReservationsPage() {
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
-  const [filteredReservations, setFilteredReservations] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [selectedReservation, setSelectedReservation] = useState<any>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const [selectedReservationDocuments, setSelectedReservationDocuments] = useState<{
+    orders: any[];
+    etatLieux: any | null;
+  }>({ orders: [], etatLieux: null });
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
+  const [reservationToAdjust, setReservationToAdjust] = useState<any>(null);
+  const [loadingReservations, setLoadingReservations] = useState(true);
+  const [reservationsError, setReservationsError] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Marquer comme "viewé" quand le modal s'ouvre
-    // Rediriger si l'utilisateur n'est pas admin
+  // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
     if (!checkingAdmin && !isAdmin && user) {
       console.warn('⚠️ Accès admin refusé pour:', user.email);
@@ -45,13 +53,18 @@ export default function AdminReservationsPage() {
     }
   }, [isAdmin, checkingAdmin, user, router]);
 
-useEffect(() => {
-    if (!isDetailModalOpen || !selectedReservation) return;
+  // Marquer comme "viewé" quand le modal s'ouvre
+  useEffect(() => {
+    // Extraire les primitives stables au début
+    const reservationId = selectedReservation?.id;
+    const status = selectedReservation?.status;
+
+    // Garde-fous : si modal fermé ou données manquantes -> return
+    if (!isDetailModalOpen || !reservationId || !status) {
+      return;
+    }
 
     const markAsViewed = () => {
-      const reservationId = selectedReservation.id;
-      const status = selectedReservation.status;
-
       // Marquer selon le type
       if (status === 'PENDING' || status === 'pending') {
         const viewed = JSON.parse(localStorage.getItem('admin_viewed_reservations') || '[]');
@@ -74,185 +87,109 @@ useEffect(() => {
       }
 
       // Dispatcher l'événement pour mettre à jour les compteurs
-      window.dispatchEvent(new CustomEvent('pendingActionsUpdated'));
+      window.dispatchEvent(new Event('pendingActionsUpdated'));
     };
 
     markAsViewed();
-  }, [isDetailModalOpen, selectedReservation]);
+  }, [isDetailModalOpen, selectedReservation?.id, selectedReservation?.status]);
+
+  // Charger les documents pour la réservation sélectionnée via API
+  useEffect(() => {
+    // Extraire la primitive stable au début
+    const selectedId = selectedReservation?.id;
+
+    // Garde-fou : si id manquant -> reset et return
+    if (!selectedId) {
+      setSelectedReservationDocuments({ orders: [], etatLieux: null });
+      return;
+    }
+
+    const loadReservationDocuments = async () => {
+      try {
+        const data = await adminFetch<{
+          reservation: any;
+          orders: any[];
+          contract: { signed: boolean; signed_at: string | null };
+          documents: {
+            contract_url: string;
+            invoice_urls: string[];
+            etat_lieux_url?: string;
+          };
+        }>(`/api/admin/reservations/${selectedId}`);
+
+        setSelectedReservationDocuments({
+          orders: data.orders || [],
+          etatLieux: data.documents?.etat_lieux_url ? { id: 'loaded' } : null, // Placeholder si URL disponible
+        });
+      } catch (error: unknown) {
+        console.error('Erreur chargement documents:', error);
+        setSelectedReservationDocuments({ orders: [], etatLieux: null });
+      }
+    };
+
+    loadReservationDocuments();
+  }, [selectedReservation?.id]);
 
   useEffect(() => {
-    if (!user || !supabase) return;
+    if (!user) return;
 
     const loadReservations = async () => {
-      if (!supabase) return;
+      setLoadingReservations(true);
+      setReservationsError(null);
+
       try {
-        // Charger toutes les réservations avec les informations utilisateur
-        const { data: reservationsData, error } = await supabase
-          .from('reservations')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        // Charger aussi les client_reservations (nouvelles réservations)
-        const { data: clientReservationsData, error: clientReservationsError } = await supabase
-          .from('client_reservations')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (clientReservationsError) {
-          console.error('Erreur chargement client_reservations:', clientReservationsError);
+        // Construire les query params
+        const params = new URLSearchParams({
+          page: currentPage.toString(),
+          pageSize: itemsPerPage.toString(),
+        });
+
+        if (searchQuery.trim()) {
+          params.set('query', searchQuery.trim());
         }
+        // Note: status, from, to peuvent être ajoutés plus tard si besoin
+        // L'API attend: query, status, from, to, page, pageSize
 
-        if (error) throw error;
+        const data = await adminFetch<{
+          data: any[];
+          page: number;
+          pageSize: number;
+          total: number;
+        }>(`/api/admin/reservations?${params.toString()}`);
 
-        // Récupérer tous les orders pour enrichir les réservations
-        const { data: allOrders } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        // Récupérer tous les user_profiles pour enrichir avec les noms/prénoms
-        const userIds = [...new Set((reservationsData || []).map((r: any) => r.user_id).filter(Boolean))];
-        const { data: userProfiles } = userIds.length > 0 ? await supabase
-          .from('user_profiles')
-          .select('user_id, first_name, last_name, email')
-          .in('user_id', userIds) : { data: [] };
-
-        // Créer un map pour accès rapide aux profils utilisateur
-        const userProfilesMap = new Map();
-        (userProfiles || []).forEach((profile: any) => {
-          userProfilesMap.set(profile.user_id, profile);
-        });
-
-        // Adapter les client_reservations au format des réservations pour l'affichage
-        const adaptedClientReservations = (clientReservationsData || []).map((cr: any) => ({
-          ...cr,
+        // Adapter les réservations pour compatibilité avec le rendu existant
+        const adaptedReservations = (data.data || []).map((r: any) => ({
+          ...r,
           // Adapter les champs pour compatibilité
-          start_date: cr.start_at || cr.created_at,
-          end_date: cr.end_at || cr.created_at,
-          total_price: cr.price_total,
-          pack_id: cr.pack_key,
-          type: 'client_reservation', // Marqueur pour identifier les nouvelles réservations
-          customer_email: cr.customer_email,
-          customer_name: cr.customer_name || '',
-          // Adapter le statut
-          status: cr.status === 'PAID' ? 'CONFIRMED' : cr.status,
+          start_date: r.start_at || r.created_at,
+          end_date: r.end_at || r.created_at,
+          total_price: r.price_total,
+          pack_id: r.pack_key,
+          type: r.source === 'client_reservation' ? 'client_reservation' : 'reservation',
+          customerName: r.customer_name || 'Client',
+          customerEmail: r.customer_email || '',
         }));
-        
-        // Enrichir avec les informations des orders
-        const enrichedReservations = (reservationsData || []).map((reservation) => {
-          let customerName = 'Client';
-          let customerEmail = '';
-          let order = null;
 
-          // D'abord, essayer de récupérer depuis user_profiles si user_id existe
-          if (reservation.user_id && userProfilesMap.has(reservation.user_id)) {
-            const profile = userProfilesMap.get(reservation.user_id);
-            if (profile.first_name && profile.last_name) {
-              customerName = `${profile.first_name} ${profile.last_name}`;
-            } else if (profile.first_name) {
-              customerName = profile.first_name;
-            } else if (profile.last_name) {
-              customerName = profile.last_name;
-            }
-            if (profile.email) {
-              customerEmail = profile.email;
-            }
-          }
-
-          // Chercher l'order associé via sessionId dans notes
-          if (reservation.notes) {
-            try {
-              const notesData = JSON.parse(reservation.notes);
-              if (notesData.sessionId && allOrders) {
-                order = allOrders.find((o: any) => o.stripe_session_id === notesData.sessionId);
-              }
-              // Utiliser les infos du notes si disponibles et que le nom n'a pas été trouvé
-              if (!customerName || customerName === 'Client') {
-                if (notesData.customerName) customerName = notesData.customerName;
-              }
-              if (!customerEmail && notesData.customerEmail) {
-                customerEmail = notesData.customerEmail;
-              }
-            } catch (e) {
-              // Ignorer les erreurs de parsing
-            }
-          }
-
-          // Si on a trouvé un order, utiliser ses infos (priorité moindre que user_profiles)
-          if (order) {
-            if (!customerName || customerName === 'Client') {
-              customerName = order.customer_name || customerName;
-            }
-            if (!customerEmail) {
-              customerEmail = order.customer_email || customerEmail;
-            }
-          }
-
-          return {
-            ...reservation,
-            customerName,
-            customerEmail,
-            order,
-          };
-        });
-
-        // Combiner les réservations anciennes et nouvelles
-        const allReservations = [
-          ...enrichedReservations,
-          ...adaptedClientReservations
-        ].sort((a, b) => {
-          const dateA = new Date(a.created_at || a.start_date).getTime();
-          const dateB = new Date(b.created_at || b.start_date).getTime();
-          return dateB - dateA; // Plus récent en premier
-        });
-        
-        setReservations(allReservations);
-        setFilteredReservations(allReservations);
+        setReservations(adaptedReservations);
+        setTotalPages(Math.ceil((data.total || 0) / itemsPerPage));
       } catch (error: any) {
-        console.error('❌ Erreur chargement réservations:', {
-          error,
-          message: error?.message,
-          details: error?.details,
-          hint: error?.hint,
-          code: error?.code,
-          stack: error?.stack
-        });
-        // En cas d'erreur, initialiser avec un tableau vide
+        console.error('❌ Erreur chargement réservations:', error);
+        setReservationsError(error.message || 'Erreur lors du chargement');
         setReservations([]);
-        setFilteredReservations([]);
+      } finally {
+        setLoadingReservations(false);
       }
     };
 
     loadReservations();
-  }, [user]);
+  }, [user, currentPage, searchQuery]);
 
-  // Filtrer les réservations
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredReservations(reservations);
-      return;
-    }
-
-    const query = searchQuery.toLowerCase();
-    const filtered = reservations.filter((reservation) => {
-    
   // Double vérification de sécurité
   if (!isAdmin) {
     return null;
   }
 
-  return (
-        reservation.customerName?.toLowerCase().includes(query) ||
-        reservation.customerEmail?.toLowerCase().includes(query) ||
-        reservation.id.toLowerCase().includes(query) ||
-        reservation.status?.toLowerCase().includes(query) ||
-        reservation.address?.toLowerCase().includes(query)
-      );
-    });
-    setFilteredReservations(filtered);
-    setCurrentPage(1);
-  }, [searchQuery, reservations]);
-
+  // Helper functions
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -274,15 +211,14 @@ useEffect(() => {
       'pack-2': 'Pack Standard',
       'pack-3': 'Pack Premium',
       'pack-4': 'Pack Événement',
+      'conference': 'Pack Conférence',
+      'soiree': 'Pack Soirée',
+      'mariage': 'Pack Mariage',
     };
     return packNames[packId] || `Pack ${packId}`;
   };
 
-  const paginatedReservations = filteredReservations.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage);
+  const paginatedReservations = reservations;
 
   const texts = {
     fr: {
@@ -345,19 +281,6 @@ useEffect(() => {
 
   const currentTexts = texts[language];
 
-  // Charger l'état de la sidebar depuis localStorage
-  useEffect(() => {
-    const savedState = localStorage.getItem('adminSidebarCollapsed');
-    if (savedState !== null) {
-      setIsSidebarCollapsed(savedState === 'true');
-    }
-  }, []);
-
-  // Sauvegarder l'état de la sidebar dans localStorage
-  useEffect(() => {
-    localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
-  }, [isSidebarCollapsed]);
-
   if (loading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -400,13 +323,11 @@ useEffect(() => {
       <Header language={language} onLanguageChange={setLanguage} />
       <div className="flex flex-1 pt-[112px] lg:flex-row">
         {/* Sidebar - Fixed, ne prend pas d'espace dans le flux */}
-        <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+        <div className="hidden lg:block flex-shrink-0 transition-all duration-300 w-64"></div>
         <AdminSidebar 
           language={language} 
           isOpen={isSidebarOpen} 
           onClose={() => setIsSidebarOpen(false)}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
         <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
           {/* Mobile Header */}
@@ -458,20 +379,20 @@ useEffect(() => {
                   </div>
                   {searchQuery && (
                     <p className="mt-2 text-sm text-gray-600">
-                      {filteredReservations.length} {filteredReservations.length === 1 ? 'réservation' : 'réservations'} trouvée{filteredReservations.length > 1 ? 's' : ''}
+                      {reservations.length} {reservations.length === 1 ? 'réservation' : 'réservations'} trouvée{reservations.length > 1 ? 's' : ''}
                     </p>
                   )}
                 </div>
               )}
 
-              {paginatedReservations.length === 0 ? (
+              {!loadingReservations && !reservationsError && paginatedReservations.length === 0 ? (
                 <Card>
                   <CardContent className="text-center py-16">
                     <Search className="w-16 h-16 mx-auto mb-6 text-gray-400" />
                     <p className="text-gray-500 text-lg">{currentTexts.noResults}</p>
                   </CardContent>
                 </Card>
-              ) : (
+              ) : !loadingReservations && !reservationsError ? (
                 <>
                   <div className="space-y-4 mb-6">
                     {paginatedReservations.map((reservation) => {
@@ -609,7 +530,7 @@ useEffect(() => {
                     </div>
                   )}
                 </>
-              )}
+              ) : null}
             </div>
           </div>
           <AdminFooter language={language} />
@@ -976,6 +897,39 @@ useEffect(() => {
                   ) : null;
                 })()}
 
+                {/* Section Documents */}
+                <div className="pt-4 border-t">
+                  <DocumentsPanel
+                    context="admin"
+                    reservation={{
+                      id: selectedReservation.id,
+                      type: selectedReservation.start_at ? 'client_reservation' : 'reservation',
+                      client_signature: selectedReservation.client_signature,
+                      client_signed_at: selectedReservation.client_signed_at,
+                      status: selectedReservation.status,
+                    }}
+                    orders={selectedReservationDocuments.orders}
+                    etatLieux={selectedReservationDocuments.etatLieux}
+                    language={language}
+                  />
+                </div>
+
+                {/* Bouton Ajuster le pack (pour client_reservations uniquement) */}
+                {selectedReservation.start_at && (
+                  <div className="pt-4 border-t">
+                    <Button
+                      onClick={() => {
+                        setReservationToAdjust(selectedReservation);
+                        setIsAdjustModalOpen(true);
+                      }}
+                      className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      {language === 'fr' ? 'Ajuster le pack' : 'Adjust pack'}
+                    </Button>
+                  </div>
+                )}
+
                 {/* Bouton fermer */}
                 <div className="flex justify-end pt-4 border-t">
                   <Button
@@ -990,6 +944,21 @@ useEffect(() => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Modal d'ajustement */}
+      <AdjustReservationModal
+        isOpen={isAdjustModalOpen}
+        onClose={() => {
+          setIsAdjustModalOpen(false);
+          setReservationToAdjust(null);
+        }}
+        reservation={reservationToAdjust}
+        language={language}
+        onSuccess={() => {
+          // Recharger la page pour mettre à jour les données
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

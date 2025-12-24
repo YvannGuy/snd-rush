@@ -44,14 +44,27 @@ useEffect(() => {
     const loadContracts = async () => {
       if (!supabase) return;
       try {
-        // Récupérer toutes les réservations signées
-        const { data: reservationsData, error } = await supabase
+        // Récupérer toutes les réservations signées (ancienne table)
+        const { data: reservationsData, error: oldError } = await supabase
           .from('reservations')
           .select('*')
           .not('client_signature', 'is', null)
           .order('client_signed_at', { ascending: false });
 
-        if (error) throw error;
+        if (oldError) {
+          console.error('Erreur chargement anciennes réservations:', oldError);
+        }
+
+        // Récupérer toutes les client_reservations signées (nouvelle table)
+        const { data: clientReservationsData, error: clientError } = await supabase
+          .from('client_reservations')
+          .select('*')
+          .not('client_signature', 'is', null)
+          .order('client_signed_at', { ascending: false });
+
+        if (clientError) {
+          console.error('Erreur chargement client_reservations:', clientError);
+        }
 
         // Enrichir avec les informations des orders
         const { data: allOrders } = await supabase
@@ -59,7 +72,8 @@ useEffect(() => {
           .select('*')
           .order('created_at', { ascending: false });
 
-        const enrichedContracts = (reservationsData || []).map((reservation) => {
+        // Enrichir les anciennes réservations
+        const enrichedOldContracts = (reservationsData || []).map((reservation) => {
           let customerName = 'Client';
           let customerEmail = '';
           let order = null;
@@ -88,11 +102,52 @@ useEffect(() => {
             customerName,
             customerEmail,
             order,
+            type: 'old_reservation',
           };
         });
 
-        setContracts(enrichedContracts);
-        setFilteredContracts(enrichedContracts);
+        // Enrichir les client_reservations
+        const enrichedClientContracts = (clientReservationsData || []).map((cr) => {
+          let customerName = cr.customer_name || 'Client';
+          let customerEmail = cr.customer_email || '';
+          let order = null;
+
+          // Chercher l'order associé via client_reservation_id
+          if (allOrders) {
+            order = allOrders.find((o: any) => o.client_reservation_id === cr.id);
+          }
+
+          if (order) {
+            customerName = order.customer_name || customerName;
+            customerEmail = order.customer_email || customerEmail;
+          }
+
+          return {
+            ...cr,
+            // Adapter les champs pour compatibilité avec l'affichage
+            start_date: cr.start_at || cr.created_at,
+            end_date: cr.end_at || cr.created_at,
+            total_price: cr.price_total,
+            pack_id: cr.pack_key,
+            customerName,
+            customerEmail,
+            order,
+            type: 'client_reservation',
+          };
+        });
+
+        // Combiner les deux listes
+        const allContracts = [
+          ...enrichedOldContracts,
+          ...enrichedClientContracts
+        ].sort((a, b) => {
+          const dateA = new Date(a.client_signed_at || 0).getTime();
+          const dateB = new Date(b.client_signed_at || 0).getTime();
+          return dateB - dateA; // Plus récent en premier
+        });
+
+        setContracts(allContracts);
+        setFilteredContracts(allContracts);
       } catch (error) {
         console.error('Erreur chargement contrats:', error);
       }
@@ -374,7 +429,9 @@ useEffect(() => {
                               
                               {/* Bouton télécharger */}
                               <a
-                                href={`/api/contract/download?reservationId=${contract.id}`}
+                                href={contract.type === 'client_reservation'
+                                  ? `/api/contract/download?clientReservationId=${contract.id}`
+                                  : `/api/contract/download?reservationId=${contract.id}`}
                                 onClick={(e) => e.stopPropagation()}
                                 className="px-4 py-2 bg-[#F2431E] hover:bg-[#E63A1A] text-white rounded-lg font-semibold transition-colors flex items-center gap-2 flex-shrink-0"
                               >

@@ -8,17 +8,34 @@ import PackDetailContent from '@/components/PackDetailContent';
 export default function MariagePage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
 
-  // Rediriger openAssistantModal vers la chatbox flottante
+  // Ouvrir le chat simplifié avec packKey 'mariage' si activé
   useEffect(() => {
-    const handleOpenAssistantModal = () => {
-      window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
-    };
-    
-    window.addEventListener('openAssistantModal', handleOpenAssistantModal as EventListener);
-    
-    return () => {
-      window.removeEventListener('openAssistantModal', handleOpenAssistantModal as EventListener);
-    };
+    // Nouveau système simplifié
+    if (process.env.NEXT_PUBLIC_USE_SIMPLIFIED_CHAT === 'true') {
+      const handleOpenChat = () => {
+        window.dispatchEvent(new CustomEvent('openChatWithPack', { detail: { packKey: 'mariage' } }));
+      };
+      
+      // Écouter les événements pour ouvrir le chat
+      window.addEventListener('openAssistantModal', handleOpenChat as EventListener);
+      window.addEventListener('openChatWithDraft', handleOpenChat as EventListener);
+      
+      return () => {
+        window.removeEventListener('openAssistantModal', handleOpenChat as EventListener);
+        window.removeEventListener('openChatWithDraft', handleOpenChat as EventListener);
+      };
+    } else {
+      // Ancien système (fallback)
+      const handleOpenAssistantModal = () => {
+        window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
+      };
+      
+      window.addEventListener('openAssistantModal', handleOpenAssistantModal as EventListener);
+      
+      return () => {
+        window.removeEventListener('openAssistantModal', handleOpenAssistantModal as EventListener);
+      };
+    }
   }, []);
 
   return (

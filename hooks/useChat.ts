@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChatMessage, DraftFinalConfig, ReservationRequestDraft } from '@/types/chat';
+import { ChatMessage, DraftFinalConfig, ReservationRequestDraft, AvailabilityStatus, AvailabilityDetails } from '@/types/chat';
 
 const STORAGE_KEY = 'sndrush_chat_messages';
 const IDLE_TIMEOUT_MS = 45000; // 45 secondes d'inactivité réelle
@@ -36,11 +36,16 @@ export function useChat() {
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
   const [activePackKey, setActivePackKey] = useState<'conference' | 'soiree' | 'mariage' | null>(null);
   const [reservationRequestDraft, setReservationRequestDraft] = useState<ReservationRequestDraft | null>(null);
+  
+  // V1.2 availability check - État de disponibilité
+  const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>('idle');
+  const [availabilityDetails, setAvailabilityDetails] = useState<AvailabilityDetails | null>(null);
 
   // Refs pour éviter les doublons
   const welcomeAddedRef = useRef(false);
   const hasLoadedRef = useRef(false);
   const pendingDraftRef = useRef<string | null>(null); // Flag pour injection one-shot du message pack
+  const lastDraftRef = useRef<string>(''); // Ref pour stocker le dernier draft traité (anti-doublon)
   
   // Refs pour la gestion de l'inactivité (logique stricte)
   const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -249,7 +254,7 @@ export function useChat() {
   const lastSubmittedTextRef = useRef<string>('');
   const lastSubmittedTimeRef = useRef<number>(0);
 
-  // Ajouter un message utilisateur avec guard anti-doublon
+  // Ajouter un message utilisateur avec guard anti-doublon renforcé
   const addUserMessage = useCallback((content: string) => {
     if (!content.trim()) return null;
 
@@ -265,7 +270,7 @@ export function useChat() {
       lastSubmittedTextRef.current === trimmedContent &&
       now - lastSubmittedTimeRef.current < 800
     ) {
-      console.log('[CHAT] Message dupliqué ignoré:', trimmedContent);
+      console.log('[CHAT] Message dupliqué ignoré (guard temporel):', trimmedContent);
       return null;
     }
 
@@ -278,9 +283,9 @@ export function useChat() {
         !isPendingDraft &&
         lastUserMessage &&
         lastUserMessage.content === trimmedContent &&
-        now - lastUserMessage.createdAt < 1000
+        now - lastUserMessage.createdAt < 2000 // Augmenter la fenêtre pour éviter doublons
       ) {
-        console.log('[CHAT] Message déjà présent, ignoré');
+        console.log('[CHAT] Message déjà présent dans les messages, ignoré');
         shouldAdd = false;
         return prev;
       }
@@ -297,6 +302,7 @@ export function useChat() {
     // Si c'est le draft en attente, le clear après ajout (one-shot)
     if (isPendingDraft) {
       pendingDraftRef.current = null;
+      console.log('[CHAT] Draft traité et marqué comme consommé:', trimmedContent);
     }
 
     const userMessage: ChatMessage = {
@@ -341,8 +347,7 @@ export function useChat() {
   }, []);
 
   /**
-   * Ouvrir le chat avec un message draft (depuis Hero ou ScenarioFAQSection)
-   * Le Hero ne doit QUE passer le texte, le chat gère l'ajout et l'envoi
+   * Ouvrir le chat avec un message draft (depuis Hero ou SolutionsSection)
    * ONE-SHOT : le message draft ne sera injecté qu'une seule fois
    */
   const openChatWithDraft = useCallback((draftText?: string, scenarioId?: string, packKey?: 'conference' | 'soiree' | 'mariage') => {
@@ -360,23 +365,24 @@ export function useChat() {
       console.log('[CHAT] PackKey défini:', packKey);
     }
     
-    // Si un message draft arrive, SUPPRIMER le welcome s'il existe
-    // Le message user sera ajouté et l'assistant répondra directement
+    // Si un message draft arrive, SUPPRIMER le welcome s'il existe et AJOUTER le message user immédiatement
+    // Le message user sera visible immédiatement pour éviter l'écran blanc
     if (draftText && draftText.trim()) {
       const trimmedDraft = draftText.trim();
       
-      // ONE-SHOT : vérifier si ce draft a déjà été traité
+      // ONE-SHOT : vérifier si ce draft a déjà été traité (anti-doublon)
+      // Note: lastDraftRef est dans FloatingChatWidget, pas ici
+      // On utilise seulement pendingDraftRef pour éviter les doublons dans useChat
       if (pendingDraftRef.current === trimmedDraft) {
-        console.log('[CHAT] Draft déjà en attente, ignoré:', trimmedDraft);
+        console.log('[CHAT] Draft déjà traité (one-shot), ignoré:', trimmedDraft);
         return;
       }
       
       // Marquer ce draft comme en attente (one-shot)
       pendingDraftRef.current = trimmedDraft;
       
-      // Supprimer le message d'accueil s'il existe (append-only, ne pas remplacer)
+      // Supprimer le welcome s'il existe
       setMessages(prev => {
-        // Si le dernier message est un welcome, le supprimer
         const hasWelcome = prev.some(m => m.kind === 'welcome');
         if (hasWelcome) {
           welcomeAddedRef.current = true; // Empêcher la réinjection
@@ -385,11 +391,16 @@ export function useChat() {
         return prev;
       });
       
-      // Ne PAS reset le timer idle ici
-      // Le timer démarrera APRÈS l'envoi du message (dans sendMessage)
+      // Ajouter le message user immédiatement via addUserMessage pour éviter l'écran blanc
+      // Cela garantit la cohérence avec le système anti-doublon
+      const userMessageAdded = addUserMessage(trimmedDraft);
+      if (!userMessageAdded) {
+        // Le message n'a pas pu être ajouté (doublon), mais on continue quand même pour l'API
+        console.log('[CHAT] Message user déjà présent, envoi à l\'API uniquement');
+      }
       
-      // Dispatcher un événement pour que le chat gère l'ajout + envoi
-      // Délai pour s'assurer que le chat est ouvert et que le welcome est supprimé
+      // Dispatcher un événement pour que FloatingChatWidget gère l'envoi à l'API
+      // Délai réduit car le message user est déjà visible
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('chatDraftMessage', { 
           detail: { 
@@ -398,7 +409,7 @@ export function useChat() {
             packKey: packKey
           } 
         }));
-      }, 100); // Réduire le délai car on n'a plus besoin d'attendre l'injection du welcome
+      }, 50);
     } else {
       // Pas de message draft → injecter le welcome normalement
       injectWelcomeMessageIfNeeded(false);
@@ -407,7 +418,7 @@ export function useChat() {
       idleShownRef.current = false;
       lastUserInteractionRef.current = Date.now();
     }
-  }, [injectWelcomeMessageIfNeeded]);
+  }, [injectWelcomeMessageIfNeeded, addUserMessage]);
 
   // Ouvrir le chat (sans message)
   const openChat = useCallback(() => {
@@ -454,12 +465,18 @@ export function useChat() {
     idleShownRef.current = false;
     lastUserInteractionRef.current = Date.now();
     pendingDraftRef.current = null; // Réinitialiser le flag draft
+    lastSubmittedTextRef.current = ''; // Réinitialiser le guard anti-doublon
+    lastSubmittedTimeRef.current = 0;
     
     // 3. Vider le state
     setDraftConfig(null);
     setActiveScenarioId(null); // Réinitialiser le scenarioId
     setActivePackKey(null); // Réinitialiser le packKey
     setReservationRequestDraft(null); // Réinitialiser le reservationRequestDraft
+    
+    // V1.2 availability check - Réinitialiser l'état de disponibilité
+    setAvailabilityStatus('idle');
+    setAvailabilityDetails(null);
     
     // 4. Vider localStorage
     localStorage.removeItem(STORAGE_KEY);
@@ -471,6 +488,8 @@ export function useChat() {
     
     // 6. Sauvegarder immédiatement
     localStorage.setItem(STORAGE_KEY, JSON.stringify([welcome]));
+    
+    console.log('[CHAT] Reset complet effectué');
   }, []);
 
   // Nettoyage au démontage
@@ -495,6 +514,108 @@ export function useChat() {
     // Le timer démarrera seulement après une interaction utilisateur (via resetIdleTimer)
   }, [isOpen, isLoading]);
 
+  /**
+   * V1.2 availability check - Vérifier la disponibilité d'un pack pour une période donnée
+   * Réutilise EXACTEMENT la même signature que PackDetailContent.tsx
+   */
+  const checkAvailability = useCallback(async (
+    packKey: 'conference' | 'soiree' | 'mariage',
+    startDate: string,
+    endDate: string,
+    startTime?: string | null,
+    endTime?: string | null
+  ) => {
+    // Réinitialiser l'état précédent
+    setAvailabilityStatus('checking');
+    setAvailabilityDetails(null);
+
+    try {
+      // Appeler l'API /api/availability avec packId = packKey (l'API accepte des strings)
+      const response = await fetch('/api/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packId: packKey, // Utiliser packKey comme packId (l'API gérera le mapping)
+          startDate,
+          endDate,
+          startTime: startTime || null,
+          endTime: endTime || null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.available) {
+        setAvailabilityStatus('available');
+        setAvailabilityDetails({
+          remaining: data.remaining,
+          bookedQuantity: data.bookedQuantity,
+          totalQuantity: data.totalQuantity,
+        });
+      } else {
+        setAvailabilityStatus('unavailable');
+        setAvailabilityDetails({
+          remaining: data.remaining,
+          bookedQuantity: data.bookedQuantity,
+          totalQuantity: data.totalQuantity,
+          reason: `Indisponible (${data.bookedQuantity}/${data.totalQuantity} réservé${data.totalQuantity > 1 ? 's' : ''})`,
+        });
+      }
+    } catch (error) {
+      console.error('[CHAT] Erreur vérification disponibilité:', error);
+      // En cas d'erreur, ne pas bloquer complètement le flux
+      setAvailabilityStatus('error');
+      setAvailabilityDetails({
+        reason: 'Impossible de vérifier la disponibilité pour le moment',
+      });
+    }
+  }, []);
+
+  /**
+   * V1.2 availability check - Déclencher la vérification automatique
+   * Quand les dates/heures sont disponibles ET qu'un pack est sélectionné
+   */
+  useEffect(() => {
+    // Conditions pour déclencher la vérification :
+    // 1. Un pack est sélectionné (activePackKey)
+    // 2. Un reservationRequestDraft existe
+    // 3. Les dates de début et fin sont présentes
+    if (
+      activePackKey &&
+      reservationRequestDraft?.payload?.startDate &&
+      reservationRequestDraft?.payload?.endDate
+    ) {
+      const { startDate, endDate, startTime, endTime } = reservationRequestDraft.payload;
+      
+      // Vérifier la disponibilité
+      checkAvailability(
+        activePackKey,
+        startDate,
+        endDate,
+        startTime || null,
+        endTime || null
+      );
+    } else {
+      // Si les conditions ne sont plus remplies, réinitialiser l'état
+      if (availabilityStatus !== 'idle') {
+        setAvailabilityStatus('idle');
+        setAvailabilityDetails(null);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    activePackKey,
+    reservationRequestDraft?.payload?.startDate,
+    reservationRequestDraft?.payload?.endDate,
+    reservationRequestDraft?.payload?.startTime,
+    reservationRequestDraft?.payload?.endTime,
+    checkAvailability,
+  ]);
+
   return {
     messages,
     isOpen,
@@ -503,6 +624,8 @@ export function useChat() {
     activeScenarioId,
     activePackKey,
     reservationRequestDraft,
+    availabilityStatus, // V1.2 availability check
+    availabilityDetails, // V1.2 availability check
     setIsLoading,
     setDraftConfig,
     setReservationRequestDraft,

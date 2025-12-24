@@ -1,115 +1,64 @@
-// Types TypeScript pour les tables Supabase
+// Types partagés pour les structures de base de données
 
-export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
-export type OrderStatus = 'PENDING' | 'PAID' | 'CANCELLED' | 'REFUNDED';
-
-export interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  long_description: string | null;
-  daily_price_ttc: number;
-  deposit: number;
-  quantity: number;
-  category: string | null;
-  tags: string[] | null;
-  images: string[] | null;
-  specs: Record<string, any> | null;
-  features: string[] | null;
-  created_at: string;
-  updated_at: string;
+/**
+ * Item final dans une réservation (pack + extras)
+ */
+export interface FinalItem {
+  id: string; // Identifiant unique de l'item
+  label: string; // Nom de l'item (ex: "Enceinte", "Micro HF", "Caisson de basses")
+  qty: number; // Quantité
+  unitPrice?: number; // Prix unitaire (optionnel si inclus dans pack)
+  isExtra: boolean; // true si c'est un extra (pas dans le pack de base)
+  note?: string; // Note optionnelle pour l'admin
 }
 
-export interface Reservation {
+/**
+ * Item extra ajouté par l'admin
+ */
+export interface ExtraItem {
   id: string;
-  product_id: string | null;
-  pack_id: string | null;
-  quantity: number;
-  start_date: string;
-  end_date: string;
-  status: ReservationStatus;
-  created_at: string;
-  updated_at: string;
+  label: string;
+  qty: number;
+  unitPrice: number; // Prix unitaire obligatoire pour les extras
+  note?: string;
 }
 
-export interface Order {
+/**
+ * Structure complète d'une client_reservation (pour ajustement admin)
+ */
+export interface ClientReservation {
   id: string;
-  stripe_session_id: string | null;
-  stripe_payment_intent_id: string | null;
+  pack_key: 'conference' | 'soiree' | 'mariage';
+  start_at: string; // ISO date string
+  end_at: string; // ISO date string
+  address?: string | null;
   customer_email: string;
-  customer_name: string | null;
-  customer_phone: string | null;
-  delivery_address: string | null;
-  delivery_option: string | null;
-  delivery_fee: number;
-  subtotal: number;
-  total: number;
-  deposit_total: number;
-  status: OrderStatus;
-  metadata: Record<string, any> | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  status: 'AWAITING_PAYMENT' | 'AWAITING_BALANCE' | 'CONFIRMED' | 'CANCELLED';
+  
+  // Pricing
+  base_pack_price: number; // Prix de base du pack
+  extras_total: number; // Total des extras
+  price_total: number; // base_pack_price + extras_total
+  deposit_amount?: number | null; // Montant de la caution (sécurité matériel)
+  
+  // Paiement 3 temps
+  deposit_paid_at?: string | null; // Date de paiement acompte 30%
+  balance_paid_at?: string | null; // Date de paiement solde 70%
+  balance_amount?: number | null; // Montant du solde restant
+  
+  // Items et résumé
+  final_items?: FinalItem[] | null; // Items finaux (pack + extras)
+  customer_summary?: string | null; // Résumé client généré
+  
+  // Validation admin
+  final_validated_at?: string | null; // Date de validation finale par l'admin
+  
+  // Métadonnées
+  source?: string | null; // Origine: 'chat', 'admin', 'api', etc.
+  chat_context?: Record<string, any> | null; // Contexte du chat si créé via chat
+  
   created_at: string;
   updated_at: string;
-}
-
-export interface OrderItem {
-  id: string;
-  order_id: string;
-  product_id: string | null;
-  product_name: string;
-  product_slug: string | null;
-  quantity: number;
-  rental_days: number;
-  start_date: string;
-  end_date: string;
-  daily_price: number;
-  deposit: number;
-  addons: ProductAddon[];
-  images: string[] | null;
-  created_at: string;
-}
-
-export interface ProductAddon {
-  id: string;
-  name: string;
-  price: number;
-  description?: string;
-}
-
-export interface CartItem {
-  productId: string;
-  productName: string;
-  productSlug: string;
-  quantity: number;
-  rentalDays: number;
-  startDate: string;
-  endDate: string;
-  dailyPrice: number;
-  deposit: number;
-  addons: ProductAddon[];
-  images?: string[];
-  // Détails de l'événement depuis l'assistant
-  eventType?: string;
-  startTime?: string;
-  endTime?: string;
-  zone?: string;
-  // Metadata pour stocker des infos supplémentaires
-  metadata?: Record<string, any>;
-}
-
-export interface Cart {
-  items: CartItem[];
-  total: number;
-  depositTotal: number;
-}
-
-export interface AvailabilityResponse {
-  available: boolean;
-  remaining: number;
-  bookedQuantity: number;
-}
-
-export interface CalendarDisabledRange {
-  start: string;
-  end: string;
 }

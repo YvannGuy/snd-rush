@@ -37,6 +37,7 @@ export default function MesFacturesPage() {
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [reservationsMap, setReservationsMap] = useState<Record<string, any>>({});
   const [orderToReservationMap, setOrderToReservationMap] = useState<Record<string, string>>({});
+  const [orderToClientReservationMap, setOrderToClientReservationMap] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -99,10 +100,12 @@ export default function MesFacturesPage() {
 
         // Extraire les IDs de réservation depuis les orders
         const reservationIds: string[] = [];
+        const clientReservationIds: string[] = [];
         const orderToReservationMap: Record<string, string> = {};
+        const orderToClientReservationMap: Record<string, string> = {};
         const stripeSessionIds = data?.map((o: any) => o.stripe_session_id).filter(Boolean) || [];
         
-        // Charger les réservations qui ont un sessionId correspondant
+        // Charger les réservations qui ont un sessionId correspondant (ancienne table)
         let reservationsBySessionId: Record<string, any> = {};
         if (stripeSessionIds.length > 0) {
           const { data: reservationsWithSession } = await supabaseClient
@@ -127,16 +130,21 @@ export default function MesFacturesPage() {
         if (data && data.length > 0) {
           data.forEach((order: any) => {
             let foundReservationId: string | null = null;
+            let foundClientReservationId: string | null = null;
             
-            // 1. Vérifier si reservation_id existe directement
-            if (order.reservation_id) {
+            // PRIORITÉ 1: client_reservation_id (nouveau champ, lien direct)
+            if (order.client_reservation_id) {
+              foundClientReservationId = order.client_reservation_id;
+            }
+            // PRIORITÉ 2: reservation_id (ancien champ)
+            else if (order.reservation_id) {
               foundReservationId = order.reservation_id;
             }
-            // 2. Chercher via stripe_session_id dans les réservations
+            // PRIORITÉ 3: Chercher via stripe_session_id dans les réservations (ancienne table)
             else if (order.stripe_session_id && reservationsBySessionId[order.stripe_session_id]) {
               foundReservationId = reservationsBySessionId[order.stripe_session_id];
             }
-            // 3. Vérifier dans metadata
+            // PRIORITÉ 4: Vérifier dans metadata
             else if (order.metadata) {
               try {
                 const metadata = typeof order.metadata === 'string' 
@@ -144,7 +152,11 @@ export default function MesFacturesPage() {
                   : order.metadata;
                 
                 // Chercher directement dans metadata
-                if (metadata.reservationId) {
+                if (metadata.reservation_id) {
+                  // Vérifier si c'est une client_reservation ou une ancienne reservation
+                  // En vérifiant dans client_reservations d'abord
+                  foundClientReservationId = metadata.reservation_id;
+                } else if (metadata.reservationId) {
                   foundReservationId = metadata.reservationId;
                 }
                 // Chercher dans sessionMetadata (métadonnées de la session Stripe)
@@ -163,18 +175,10 @@ export default function MesFacturesPage() {
                   // Chercher reservationId dans sessionMetadata
                   if (sessionMeta) {
                     // Vérifier directement
-                    if (sessionMeta.reservationId) {
+                    if (sessionMeta.reservation_id) {
+                      foundClientReservationId = sessionMeta.reservation_id;
+                    } else if (sessionMeta.reservationId) {
                       foundReservationId = sessionMeta.reservationId;
-                    }
-                    
-                    // Debug: log pour voir le contenu de sessionMetadata
-                    if (process.env.NODE_ENV === 'development') {
-                      console.log('sessionMetadata content:', {
-                        orderId: order.id,
-                        sessionMetaKeys: Object.keys(sessionMeta),
-                        hasReservationId: !!sessionMeta.reservationId,
-                        fullSessionMeta: JSON.stringify(sessionMeta, null, 2)
-                      });
                     }
                   }
                 }
@@ -184,7 +188,12 @@ export default function MesFacturesPage() {
               }
             }
             
-            if (foundReservationId) {
+            if (foundClientReservationId) {
+              if (!clientReservationIds.includes(foundClientReservationId)) {
+                clientReservationIds.push(foundClientReservationId);
+              }
+              orderToClientReservationMap[order.id] = foundClientReservationId;
+            } else if (foundReservationId) {
               if (!reservationIds.includes(foundReservationId)) {
                 reservationIds.push(foundReservationId);
               }
@@ -193,10 +202,11 @@ export default function MesFacturesPage() {
           });
         }
 
-        // Stocker le mapping order -> reservation
+        // Stocker les mappings order -> reservation
         setOrderToReservationMap(orderToReservationMap);
+        setOrderToClientReservationMap(orderToClientReservationMap);
 
-        // Charger les réservations trouvées
+        // Charger les réservations trouvées (ancienne table)
         if (reservationIds.length > 0) {
           const { data: reservationsData } = await supabaseClient
             .from('reservations')
@@ -210,6 +220,31 @@ export default function MesFacturesPage() {
               map[r.id] = r;
             });
             setReservationsMap(map);
+          }
+        }
+
+        // Charger les client_reservations trouvées (nouvelle table)
+        if (clientReservationIds.length > 0) {
+          const { data: clientReservationsData } = await supabaseClient
+            .from('client_reservations')
+            .select('id, start_at, end_at, created_at')
+            .in('id', clientReservationIds)
+            .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`);
+
+          if (clientReservationsData) {
+            const map: Record<string, any> = {};
+            clientReservationsData.forEach((cr: any) => {
+              // Adapter les champs pour compatibilité avec l'affichage
+              map[cr.id] = {
+                id: cr.id,
+                start_date: cr.start_at,
+                end_date: cr.end_at,
+                created_at: cr.created_at,
+                type: 'client_reservation',
+              };
+            });
+            // Fusionner avec les réservations existantes
+            setReservationsMap((prev) => ({ ...prev, ...map }));
           }
         }
       } catch (error) {
@@ -524,10 +559,25 @@ export default function MesFacturesPage() {
                                   </div>
                                   
                                   {/* Montant */}
-                                  <div className="flex items-center gap-2 text-gray-900">
+                                  <div className="flex items-center gap-2 text-gray-900 mb-2">
                                     <DollarSign className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                     <span className="text-sm font-semibold">{amount}€</span>
                                   </div>
+                                  
+                                  {/* Lien vers la réservation si associée */}
+                                  {(orderToClientReservationMap[order.id] || orderToReservationMap[order.id]) && (
+                                    <div className="mt-2">
+                                      <Link
+                                        href={orderToClientReservationMap[order.id]
+                                          ? `/mes-reservations`
+                                          : `/mes-reservations/${orderToReservationMap[order.id]}`}
+                                        className="text-sm text-[#F2431E] hover:underline flex items-center gap-1"
+                                      >
+                                        <Calendar className="w-3 h-3" />
+                                        {language === 'fr' ? 'Voir la réservation' : 'View reservation'}
+                                      </Link>
+                                    </div>
+                                  )}
                                 </div>
                                 
                                 {/* Bouton télécharger */}

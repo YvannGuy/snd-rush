@@ -12,6 +12,7 @@ import {
   isAckOnly,
   type ConversationState,
 } from '@/lib/chatState';
+import { isPackMode } from '@/lib/pack-helpers';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -531,6 +532,68 @@ function buildAssistantReply({
   return null;
 }
 
+// NOUVEAU PROMPT SYSTÈME SIMPLIFIÉ
+const SYSTEM_PROMPT_SIMPLIFIED = `Tu es l'assistant Soundrush. Ton rôle est simple et direct.
+
+🎯 OBJECTIF UNIQUE
+Guider le client vers 2 sorties UNIQUEMENT :
+1. Payer l'acompte 30% pour bloquer la date
+2. Appeler Soundrush si préférence ou urgence
+
+🚫 INTERDICTIONS ABSOLUES
+- JAMAIS proposer "envoyer une demande"
+- JAMAIS proposer "suivre ma demande"
+- JAMAIS poser plus de questions que nécessaire
+- JAMAIS répéter une question déjà posée
+
+📋 FLOW OBLIGATOIRE
+
+PHASE 0 (Welcome) :
+- Présenter les 3 packs : "Je te propose 3 packs: Conférence / Soirée / Mariage"
+- Attendre le choix (boutons quick replies)
+
+PHASE 1 (Infos minimales) :
+Collecter UNIQUEMENT :
+1. Date + horaire (début et fin) - format ISO
+2. Ville / code postal (ou département)
+3. Téléphone (OBLIGATOIRE)
+
+Options selon pack (UNE seule question) :
+- Conférence : "combien de micros ?" (1–4)
+- Soirée : "combien de personnes ?" (<=50 / 50-100 / 100+)
+- Mariage : "intérieur ou extérieur ?"
+
+PHASE 2 (Résumé + CTAs) :
+Quand TOUTES les infos sont collectées :
+1. Afficher résumé : pack + date + lieu + total estimé + acompte 30%
+2. Proposer 2 CTAs :
+   - "Payer l'aconpte 30%" (principal)
+   - "Appeler Soundrush" (secondaire)
+3. Mentionner : "Solde J-5, caution J-2"
+
+Format JSON quand complet :
+{
+  "chatDraft": {
+    "packKey": "conference" | "soiree" | "mariage",
+    "startAt": "2025-01-15T19:00:00Z",
+    "endAt": "2025-01-15T23:00:00Z",
+    "location": "Paris 11ème",
+    "phone": "0612345678",
+    "extras": {
+      "microsCount": 2 // ou peopleCount, ou indoorOutdoor selon pack
+    }
+  },
+  "summary": "Résumé texte pour l'utilisateur",
+  "estimatedTotal": 279,
+  "depositAmount": 84
+}
+
+✅ RÈGLES
+- Une question à la fois
+- Pas de répétition
+- Toujours finir par résumé + 2 CTAs quand complet
+- Rester simple et direct`;
+
 const SYSTEM_PROMPT = `Tu es l'assistant officiel SoundRush (sndrush.com), expert en location de matériel événementiel (sono, DJ gear, lumières).
 
 🎯 RÔLE PRINCIPAL
@@ -540,9 +603,9 @@ Ton objectif est de :
 * Accueillir humainement
 * Comprendre le besoin réel
 * Rassurer
-* Proposer le setup le plus adapté (pack, matériel à l'unité ou mix)
-* Augmenter intelligemment le panier moyen
-* Orienter vers une action concrète (reco, panier, réservation, humain)
+* Qualifier l'événement (type, date, lieu, nombre de personnes)
+* Vérifier la disponibilité
+* Orienter vers le blocage de date avec acompte 30%
 
 Tu aides vraiment.
 Tu ne réponds jamais pour remplir le vide.
@@ -555,12 +618,12 @@ Tu ne réponds jamais pour remplir le vide.
 * Tu es bienveillant, rassurant, professionnel
 * Tu ne donnes jamais de réponses sèches ou trop courtes
 * Tu poses des questions pertinentes, une à la fois si possible
-* Tu expliques toujours POURQUOI tu proposes un matériel
+* Tu poses des questions claires pour qualifier l'événement
 * Tu valorises :
   * la simplicité
   * la tranquillité
   * la sécurité le jour J
-* Tu n'oublies jamais de vendre subtilement, sans forcer
+* Tu ne vends pas, tu qualifies et rassures
 
 ────────────────────────────────────────
 🧠 GESTION DU CONTEXTE (RÈGLE CRITIQUE)
@@ -842,23 +905,23 @@ Formulation recommandée :
 > Ils valideront le setup exact et te feront une reco immédiate.
 
 ────────────────────────────────────────
-🛒 LOGIQUE DE VENTE & OPTIMISATION PANIER MOYEN (SANS FORCER)
+🎯 LOGIQUE DE QUALIFICATION (SANS VENDRE)
 ────────────────────────────────────────
 
-Tu raisonnes toujours en couches :
+Tu poses les questions essentielles dans cet ordre :
 
-1. Besoin principal (pack / enceinte / micro)
-2. Sécurité & confort (caisson, micro, pied, console adaptée)
-3. Expérience / impact (lumières, puissance supérieure)
-4. Zéro stress (installation, livraison, validation humaine)
+1. Type d'événement (conférence, soirée, mariage, etc.)
+2. Date et heure de début
+3. Date et heure de fin
+4. Lieu (adresse complète)
+5. Nombre de personnes
 
-Tu proposes 1 à 2 compléments maximum, toujours justifiés.
+Une fois ces informations collectées :
+* Tu vérifies la disponibilité via l'API
+* Tu affiches clairement : ✅ disponible / ❌ indisponible
+* Tu proposes de bloquer la date avec un acompte de 30%
 
-Formulations recommandées :
-* « Pour être vraiment à l'aise… »
-* « Dans ce type d'événement, on recommande souvent… »
-* « La plupart de nos clients dans ce cas ajoutent… »
-* « Si tu veux éviter toute mauvaise surprise… »
+Tu ne proposes JAMAIS plusieurs options ou produits. Tu qualifies uniquement.
 
 ────────────────────────────────────────
 📦 LOGIQUE DE PROPOSITION
@@ -1086,7 +1149,7 @@ Pose 2-3 questions sur l'ambiance pour bien cerner les besoins avant de passer a
 
 * Tu ne donnes JAMAIS "un exemple" si le client ne le demande pas explicitement.
 
-* Si le client répond "oui / ok" APRÈS une question de confirmation (exemples: "Peux-tu me confirmer que tout est bon ?", "Ca te va ?", "Tu preferes retrait ou livraison ?"), alors c'est une CONFIRMATION. Tu dois alors generer le draftFinalConfig pour l'ajout au panier.
+* Si le client répond "oui / ok" APRÈS une question de confirmation (exemples: "Peux-tu me confirmer que tout est bon ?", "Ca te va ?"), alors c'est une CONFIRMATION. Tu dois alors generer le draftFinalConfig pour bloquer la date.
 
 * Si le client répond "oui / ok" SANS contexte (au début de la conversation ou sans question précise), tu réponds : "Oui 🙂 Dis-moi ce que tu organises : type d'événement, combien de personnes, intérieur ou extérieur."
 
@@ -1094,7 +1157,7 @@ Pose 2-3 questions sur l'ambiance pour bien cerner les besoins avant de passer a
 
 * IMPORTANT : Quand tu as toutes les infos (événement, personnes, intérieur/extérieur, ambiance, dates, heures, livraison/retrait, adresse si livraison), et que le client confirme avec "oui", tu DOIS générer le draftFinalConfig dans ta réponse JSON.
 
-Objectif : recommander le bon pack S/M/L/XL et aider à ajouter au panier, UNIQUEMENT après avoir reçu un besoin utilisateur clair.
+Objectif : qualifier l'événement et proposer de bloquer la date avec un acompte de 30%, UNIQUEMENT après avoir collecté toutes les informations nécessaires.
 
 INFORMATIONS TECHNIQUES DES PACKS (TU ES UN EXPERT - CONNAIS CES SPÉCIFICATIONS) :
 
@@ -1216,13 +1279,14 @@ ORDRE DES QUESTIONS (OBLIGATOIRE) :
 9. Demander livraison ou retrait
 10. Si livraison confirmée : demander département puis adresse
 
-Avant de préparer un ajout panier, tu dois connaître : date début, date fin, heure début, heure fin. Et si livraison confirmée : département/adresse.
+Avant de proposer de bloquer la date, tu dois connaître : type d'événement, nombre de personnes, date début, date fin, heure début, heure fin, lieu (adresse complète).
 
-Panier :
+Blocage de date :
 
-Tu ne dis jamais "ajouté au panier". Tu dis seulement "Je te prépare l'ajout" et tu demandes une confirmation.
+Tu ne dis jamais "ajouté au panier" ou "panier". Tu dis "Je prépare votre solution" ou "Je bloque votre date".
 
-Quand tu es prêt, renvoie une structure draftFinalConfig avec catalogId et qty. L'UI affichera un bouton "Ajouter au panier".
+Quand tu as toutes les informations (événement, personnes, dates, lieu), tu génères le draftFinalConfig.
+L'UI affichera un bouton "Bloquer ma date (acompte 30%)".
 
 Style :
 
@@ -1253,7 +1317,7 @@ Propose 1 recommandation principale + 1-2 options complémentaires pertinentes s
 
 1 emoji max.
 
-Quand tu as toutes les infos nécessaires (type événement, nombre personnes, intérieur/extérieur, ambiance, date début, date fin, heure début, heure fin, livraison/retrait, adresse si livraison confirmée), et que le client confirme avec "oui" ou "ok", tu DOIS générer le draftFinalConfig dans ta réponse JSON.
+Quand tu as toutes les infos nécessaires (type événement, nombre personnes, date début, date fin, heure début, heure fin, lieu), et que le client confirme avec "oui" ou "ok", tu DOIS générer le draftFinalConfig dans ta réponse JSON pour bloquer la date.
 
 RÈGLE CRITIQUE POUR LES OPTIONS SUPPLEMENTAIRES (livraison, installation) :
 - La livraison est ajoutée automatiquement si un département est fourni (c'est nécessaire pour la commande)
@@ -1380,6 +1444,9 @@ function hasNormalUserMessage(messages: ChatMessage[]): boolean {
 // isConversationEngaged remplacé par buildConversationState (importé depuis lib/chatState.ts)
 
 export async function POST(req: NextRequest) {
+  // Déclarer packKey au niveau de la fonction pour qu'il soit accessible dans le catch
+  let packKey: string | null = null;
+  
   try {
     // Vérifier la présence de la clé OpenAI
     const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
@@ -1392,15 +1459,18 @@ export async function POST(req: NextRequest) {
         reply: 'Je rencontre un souci technique avec mon système. Peux-tu réessayer dans quelques secondes ? En attendant, tu peux me décrire ton événement et je ferai de mon mieux pour t\'aider.',
         intent: 'NEEDS_INFO',
         draftFinalConfig: undefined,
+        reservationRequestDraft: undefined,
+        chatDraft: undefined,
       });
     }
 
     const body = await req.json();
-    const { messages, context, scenarioId, productContext, packKey } = body;
+    packKey = body.packKey || null;
+    const { messages, context, scenarioId, productContext } = body;
 
     // Log packKey pour debugging
     if (packKey) {
-      console.log('[API/CHAT] PackKey reçu:', packKey);
+      console.log('[API/CHAT] PackKey reçu:', packKey, 'isPackMode:', isPackMode(packKey));
     }
 
     if (!messages || !Array.isArray(messages)) {
@@ -1418,19 +1488,21 @@ export async function POST(req: NextRequest) {
     console.log('[API/CHAT] Tous les messages:', messages.map((m: ChatMessage) => `${m.role}: ${m.kind || 'normal'}: ${m.content.substring(0, 50)}...`));
     console.log('[API/CHAT] ==========================');
 
-    // FILTRER les messages idle (ne jamais les envoyer à OpenAI)
+    // FILTRER les messages idle et welcome (ne jamais les envoyer à OpenAI)
     const filteredMessages = messages.filter(
-      (msg: ChatMessage) => msg.kind !== 'idle'
+      (msg: ChatMessage) => msg.kind !== 'idle' && msg.kind !== 'welcome'
     );
 
     // Vérifier qu'il y a au moins un message utilisateur normal
     if (!hasNormalUserMessage(filteredMessages)) {
       console.log('[API/CHAT] ❌ Aucun message utilisateur normal détecté, retour relance');
       console.log('[API/CHAT] Messages filtrés:', filteredMessages.map((m: ChatMessage) => `${m.role}: ${m.kind || 'normal'}: ${m.content.substring(0, 50)}...`));
+      const isPackInFallback = packKey ? isPackMode(packKey) : false;
       return NextResponse.json({
         reply: 'Bonjour ! Dis-moi ce que tu organises : type d\'événement, nombre de personnes, intérieur ou extérieur.',
         intent: 'NEEDS_INFO',
-        draftFinalConfig: undefined,
+        draftFinalConfig: isPackInFallback ? undefined : undefined,
+        reservationRequestDraft: isPackInFallback ? undefined : undefined,
       });
     }
     
@@ -1470,7 +1542,10 @@ export async function POST(req: NextRequest) {
     const currentISO = now.toISOString();
     
     // Construire le prompt système avec le catalogue et la date actuelle
-    let systemPromptWithCatalog = SYSTEM_PROMPT;
+    // NOUVEAU : Utiliser le prompt simplifié si packKey présent
+    let systemPromptWithCatalog = (packKey && ['conference', 'soiree', 'mariage'].includes(packKey)) 
+      ? SYSTEM_PROMPT_SIMPLIFIED 
+      : SYSTEM_PROMPT;
     
     // Si un contexte produit est fourni, prépendre les instructions spécifiques
     if (productContext && typeof productContext === 'object') {
@@ -1509,7 +1584,7 @@ ID du produit : ${productId || 'non disponible'}
       }
     }
     
-    // Si un packKey est fourni, prépendre les instructions pour le mode pack
+    // NOUVEAU MODE PACK SIMPLIFIÉ
     if (packKey && typeof packKey === 'string' && ['conference', 'soiree', 'mariage'].includes(packKey)) {
       const packNameMap: Record<string, string> = {
         'conference': 'Pack Conférence (279€)',
@@ -1518,70 +1593,56 @@ ID du produit : ${productId || 'non disponible'}
       };
       const packName = packNameMap[packKey] || packKey;
       
-      const packModeInstruction = `MODE PACK ACTIVÉ (CRITIQUE) :
+      const packModeInstruction = `MODE PACK SIMPLIFIÉ ACTIVÉ :
 
-L'utilisateur a cliqué sur le bouton "Demande de réservation" pour le ${packName}.
-Tu es maintenant en MODE DEMANDE DE RÉSERVATION, pas en mode panier classique.
+Pack choisi : ${packName}
 
-RÈGLES OBLIGATOIRES EN MODE PACK :
+🎯 OBJECTIF : Collecter infos minimales puis proposer 2 CTAs (Payer acompte 30% OU Appeler)
 
-1. LOGISTIQUE PRÉ-REMPLIE (NE JAMAIS DEMANDER) :
-   - Livraison : INCLUSE (ne jamais demander "retrait ou livraison")
-   - Installation : INCLUSE (ne jamais demander si installation souhaitée)
-   - Ces packs sont "clé en main" : livraison + installation automatiques
+📋 INFOS À COLLECTER (ordre strict) :
+1. Date + horaire début (format ISO: YYYY-MM-DDTHH:mm:ssZ)
+2. Date + horaire fin (format ISO)
+3. Ville / code postal (ou département)
+4. Téléphone (OBLIGATOIRE)
 
-2. Tu dois collecter TOUTES les informations nécessaires dans cet ordre :
-   - Type d'événement (conférence, soirée, mariage, etc.)
-   - Nombre de personnes
-   - Intérieur ou extérieur
-   - Ambiance/vibe (ADAPTÉ selon packKey) :
-     * Si packKey === "conference" : questions sur micros/intervenants/vidéo (PAS de mention DJ/son fort/danser)
-     * Si packKey === "soiree" : ambiance/DJ/son fort ok
-     * Si packKey === "mariage" : cérémonie + discours + soirée DJ
-   - Date de début (format ISO)
-   - Date de fin (format ISO)
-   - Heure de début
-   - Heure de fin
-   - Département (obligatoire car livraison incluse)
-   - Adresse complète (obligatoire car livraison incluse)
-   - Nom du client (si fourni)
-   - Email du client (si fourni)
-   - Téléphone du client (si fourni)
+Options selon pack (UNE seule question) :
+- Conférence : "combien de micros ?" (1–4) → extras.microsCount
+- Soirée : "combien de personnes ?" (<=50 / 50-100 / 100+) → extras.peopleCount
+- Mariage : "intérieur ou extérieur ?" → extras.indoorOutdoor
 
-3. 🛡️ ANTI-MÉLANGE : Si packKey === "conference", NE JAMAIS mentionner DJ/son fort/danser dans tes questions ou réponses.
+🚫 INTERDICTIONS :
+- JAMAIS proposer "envoyer une demande"
+- JAMAIS proposer "suivre ma demande"
+- JAMAIS répéter une question déjà posée
+- JAMAIS poser plus de questions que nécessaire
 
-4. Une fois que tu as TOUTES ces informations, tu DOIS générer un objet JSON "reservationRequestDraft" au lieu de "draftFinalConfig" :
+✅ QUAND COMPLET :
+Générer JSON "chatDraft" avec toutes les infos + résumé + 2 CTAs :
 
 Format exact :
 {
-  "reservationRequestDraft": {
-    "pack_key": "${packKey}",
-    "payload": {
-      "eventType": "type d'événement",
-      "peopleCount": nombre,
-      "startDate": "YYYY-MM-DD",
-      "endDate": "YYYY-MM-DD",
-      "startTime": "HH:mm",
-      "endTime": "HH:mm",
-      "address": "adresse complète",
-      "department": "département (ex: 75)",
-      "indoorOutdoor": "intérieur" ou "extérieur",
-      "ambiance": "description de l'ambiance",
-      "customerName": "nom si fourni",
-      "customerEmail": "email si fourni",
-      "customerPhone": "téléphone si fourni"
+  "chatDraft": {
+    "packKey": "${packKey}",
+    "startAt": "2025-01-15T19:00:00Z",
+    "endAt": "2025-01-15T23:00:00Z",
+    "location": "Paris 11ème",
+    "phone": "0612345678",
+    "extras": {
+      "microsCount": 2 // ou peopleCount, ou indoorOutdoor selon pack
     }
-  }
+  },
+  "summary": "Résumé clair : pack ${packName} pour [date] à [lieu]. Total estimé : [prix]€. Acompte 30% : [montant]€.",
+  "estimatedTotal": 279, // prix pack
+  "depositAmount": 84 // 30% arrondi
 }
 
-5. 🚫 INTERDICTION ABSOLUE : Ne génère JAMAIS de "draftFinalConfig" en mode pack. Utilise UNIQUEMENT "reservationRequestDraft".
-
-6. Quand tu génères le reservationRequestDraft, dis à l'utilisateur : "Parfait, j'ai toutes les informations. Je vais maintenant envoyer votre demande de réservation."
-
-7. Le bouton affiché sera "Envoyer la demande" et non "Ajouter au panier".
+Dans ta réponse texte, afficher :
+1. Résumé clair
+2. "Payer l'acompte 30%" (CTA principal)
+3. "Appeler Soundrush" (CTA secondaire)
+4. "Solde J-5, caution J-2" (mention courte)
 
 ---
-
 `;
 
       systemPromptWithCatalog = `${packModeInstruction}${systemPromptWithCatalog}`;
@@ -1697,6 +1758,10 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
     // 🛡️ GESTION PRÉ-OPENAI : Traiter les cas spéciaux AVANT l'appel OpenAI
     const lastUserContent = state.lastUserNormal?.content || '';
     
+    // 🛡️ RÈGLE CRITIQUE : En mode pack, ne jamais retourner draftFinalConfig dans les réponses pré-OpenAI
+    // Déclarer isPack une seule fois au début pour éviter les redéclarations
+    const isPackModeActive = isPackMode(packKey);
+
     // Cas 1: Message uniquement un nombre (ex: "50")
     if (isNumberOnly(lastUserContent) && !state.known.peopleCount) {
       const nextQ = getNextQuestion(state);
@@ -1704,7 +1769,8 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       return NextResponse.json({
         reply: `Parfait. ${nextQ}`,
         intent: 'NEEDS_INFO',
-        draftFinalConfig: undefined,
+        draftFinalConfig: isPackModeActive ? undefined : undefined,
+        reservationRequestDraft: isPackModeActive ? undefined : undefined,
       });
     }
 
@@ -1715,7 +1781,8 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       return NextResponse.json({
         reply: `Ok 🙂 ${nextQ}`,
         intent: 'NEEDS_INFO',
-        draftFinalConfig: undefined,
+        draftFinalConfig: isPackModeActive ? undefined : undefined,
+        reservationRequestDraft: isPackModeActive ? undefined : undefined,
       });
     }
 
@@ -1739,7 +1806,8 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
         return NextResponse.json({
           reply: `Ok 🙂 ${nextQ}`,
           intent: 'NEEDS_INFO',
-          draftFinalConfig: undefined,
+          draftFinalConfig: isPackModeActive ? undefined : undefined,
+          reservationRequestDraft: isPackModeActive ? undefined : undefined,
         });
       }
     }
@@ -1758,7 +1826,8 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       return NextResponse.json({
         reply: scenarioReply,
         intent: 'NEEDS_INFO',
-        draftFinalConfig: undefined,
+        draftFinalConfig: isPackModeActive ? undefined : undefined,
+        reservationRequestDraft: isPackModeActive ? undefined : undefined,
       });
     }
 
@@ -1768,10 +1837,11 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
     console.log('[API/CHAT] Préfixe système appliqué:', state.engaged ? 'CONVERSATION ENGAGÉE' : 'DÉMARRAGE');
 
     // 3) Construire openaiMessages APRÈS avoir finalisé systemPromptWithCatalog
+    // 🛡️ NE JAMAIS envoyer welcome/idle à OpenAI (uniquement normal)
     const openaiMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: 'system', content: systemPromptWithCatalog },
       ...filteredMessages
-        .filter((msg: ChatMessage) => msg.kind === 'normal' || msg.kind === 'welcome')
+        .filter((msg: ChatMessage) => msg.kind === 'normal') // UNIQUEMENT normal, jamais welcome/idle
         .map(
           (
             msg: ChatMessage
@@ -1802,7 +1872,8 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       return NextResponse.json({
         reply: 'Je rencontre un souci technique. Peux-tu réessayer dans quelques secondes ?',
         intent: 'NEEDS_INFO',
-        draftFinalConfig: undefined,
+        draftFinalConfig: isPackModeActive ? undefined : undefined,
+        reservationRequestDraft: isPackModeActive ? undefined : undefined,
       });
     }
 
@@ -1814,7 +1885,8 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       return NextResponse.json({
         reply: 'Je rencontre un souci technique. Peux-tu réessayer dans quelques secondes ?',
         intent: 'NEEDS_INFO',
-        draftFinalConfig: undefined,
+        draftFinalConfig: isPackModeActive ? undefined : undefined,
+        reservationRequestDraft: isPackModeActive ? undefined : undefined,
       });
     }
     
@@ -1839,47 +1911,67 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       }
     }
 
-    // Essayer d'extraire draftFinalConfig ou reservationRequestDraft depuis la réponse
+    // NOUVEAU : Extraire chatDraft (simplifié) ou draftFinalConfig/reservationRequestDraft (legacy)
     let draftFinalConfig: DraftFinalConfig | undefined = undefined;
     let reservationRequestDraft: { pack_key: string; payload: Record<string, any> } | undefined = undefined;
+    let chatDraft: { packKey: string; startAt?: string; endAt?: string; location?: string; phone?: string; extras?: any } | undefined = undefined;
     let intent: ChatIntent = 'NEEDS_INFO';
+    let summary: string | undefined = undefined;
+    let estimatedTotal: number | undefined = undefined;
+    let depositAmount: number | undefined = undefined;
+
+    // 🛡️ RÈGLE CRITIQUE : En mode pack simplifié, chercher chatDraft
+    // En mode pack legacy, chercher reservationRequestDraft
+    // En mode normal, chercher draftFinalConfig
 
     // Chercher un bloc JSON dans la réponse
-    const jsonMatch = cleanReply.match(/\{[\s\S]*("draftFinalConfig"|"reservationRequestDraft")[\s\S]*\}/);
+    const jsonMatch = cleanReply.match(/\{[\s\S]*("chatDraft"|"draftFinalConfig"|"reservationRequestDraft")[\s\S]*\}/);
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[0]);
         
-        // Mode pack : chercher reservationRequestDraft
-        if (packKey && parsed.reservationRequestDraft) {
+        // NOUVEAU MODE PACK SIMPLIFIÉ : chercher chatDraft
+        if (isPackModeActive && parsed.chatDraft) {
+          chatDraft = {
+            packKey: packKey!,
+            startAt: parsed.chatDraft.startAt,
+            endAt: parsed.chatDraft.endAt,
+            location: parsed.chatDraft.location,
+            phone: parsed.chatDraft.phone,
+            extras: parsed.chatDraft.extras,
+          };
+          summary = parsed.summary;
+          estimatedTotal = parsed.estimatedTotal;
+          depositAmount = parsed.depositAmount;
+          intent = 'READY_TO_ADD';
+          // Retirer le JSON de la réponse texte
+          cleanReply = cleanReply.replace(jsonMatch[0], '').trim();
+        }
+        // MODE PACK LEGACY : chercher reservationRequestDraft
+        else if (isPackModeActive && parsed.reservationRequestDraft) {
           reservationRequestDraft = {
-            pack_key: packKey,
+            pack_key: packKey!,
             payload: parsed.reservationRequestDraft.payload || {}
           };
           intent = 'READY_TO_ADD';
           // Retirer le JSON de la réponse texte
           cleanReply = cleanReply.replace(jsonMatch[0], '').trim();
         }
-        // Mode normal : chercher draftFinalConfig (UNIQUEMENT si pas en mode pack)
-        else if (!packKey && parsed.draftFinalConfig) {
+        // MODE NORMAL : chercher draftFinalConfig
+        else if (!isPackModeActive && parsed.draftFinalConfig) {
           draftFinalConfig = parsed.draftFinalConfig;
           intent = 'READY_TO_ADD';
           // Retirer le JSON de la réponse texte
           cleanReply = cleanReply.replace(jsonMatch[0], '').trim();
         }
-        // 🛡️ GARDE-FOU MODE PACK : Si packKey défini mais draftFinalConfig généré, l'ignorer
-        else if (packKey && parsed.draftFinalConfig) {
-          console.warn('[API/CHAT] 🛡️ draftFinalConfig généré en mode pack, ignoré. packKey:', packKey);
-          // Ne pas utiliser draftFinalConfig, continuer à attendre reservationRequestDraft
-        }
       } catch (e) {
-        console.error('Erreur parsing JSON:', e);
+        console.error('[API/CHAT] Erreur parsing JSON:', e);
       }
     }
 
     // Si pas de JSON trouvé, essayer de détecter si l'assistant propose une config
-    // et construire draftFinalConfig manuellement depuis le contexte (UNIQUEMENT si pas en mode pack)
-    if (!draftFinalConfig && !packKey && context?.event) {
+    // UNIQUEMENT en mode normal (jamais en mode pack)
+    if (!isPackModeActive && !draftFinalConfig && context?.event) {
       // Logique simple : si l'assistant mentionne un pack, construire la config
       const packMentioned = cleanReply.match(/Pack\s+([SMLXL])/i);
       if (packMentioned) {
@@ -1903,12 +1995,22 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
     }
 
     // Déterminer l'intent si pas déjà défini
-    if (!draftFinalConfig) {
-      // Si l'assistant mentionne un pack ou fait une recommandation claire
-      if (cleanReply.match(/Pack\s+[SMLXL]/i) || cleanReply.match(/recommand|propos|suggér/i)) {
-        intent = 'RECOMMENDATION';
+    if (isPackModeActive) {
+      // En mode pack, l'intent dépend de la présence de reservationRequestDraft
+      if (reservationRequestDraft) {
+        intent = 'READY_TO_ADD';
       } else {
         intent = 'NEEDS_INFO';
+      }
+    } else {
+      // Mode normal
+      if (!draftFinalConfig) {
+        // Si l'assistant mentionne un pack ou fait une recommandation claire
+        if (cleanReply.match(/Pack\s+[SMLXL]/i) || cleanReply.match(/recommand|propos|suggér/i)) {
+          intent = 'RECOMMENDATION';
+        } else {
+          intent = 'NEEDS_INFO';
+        }
       }
     }
 
@@ -1918,21 +2020,35 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
       cleanReply = 'Je rencontre un souci technique. Peux-tu réessayer dans quelques secondes ?';
     }
 
-    console.log('[API/CHAT] Réponse finale envoyée, longueur:', cleanReply.length, 'intent:', intent);
+    // 🛡️ GARDE-FOU FINAL : En mode pack, forcer draftFinalConfig à undefined
+    if (isPackModeActive) {
+      draftFinalConfig = undefined;
+    }
+
+    console.log('[API/CHAT] Réponse finale envoyée, longueur:', cleanReply.length, 'intent:', intent, 'isPackMode:', isPackModeActive);
+    if (isPackModeActive) {
+      console.log('[API/CHAT] Mode pack: reservationRequestDraft:', !!reservationRequestDraft, 'draftFinalConfig:', 'FORCÉ À UNDEFINED');
+    } else {
+      console.log('[API/CHAT] Mode normal: draftFinalConfig:', !!draftFinalConfig, 'reservationRequestDraft:', 'N/A');
+    }
 
     return NextResponse.json({
       reply: cleanReply,
       intent,
-      draftFinalConfig,
-      reservationRequestDraft, // Inclure le draft de demande si en mode pack
+      draftFinalConfig: isPackModeActive ? undefined : draftFinalConfig, // Forcer undefined en mode pack
+      reservationRequestDraft: isPackModeActive ? reservationRequestDraft : undefined, // Forcer undefined en mode normal
     });
   } catch (error: any) {
     console.error('[API/CHAT] Erreur API chat:', error);
     // Toujours retourner une réponse assistant (jamais silencieux)
+    // packKey est maintenant déclaré au niveau de la fonction, accessible ici
+    const isPackInError = packKey ? isPackMode(packKey) : false;
     return NextResponse.json({
       reply: 'Je rencontre un souci technique. Peux-tu réessayer dans quelques secondes ?',
       intent: 'NEEDS_INFO',
-      draftFinalConfig: undefined,
+      draftFinalConfig: isPackInError ? undefined : undefined,
+      reservationRequestDraft: isPackInError ? undefined : undefined,
+      chatDraft: isPackInError ? undefined : undefined,
     });
   }
 }

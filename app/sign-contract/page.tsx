@@ -20,7 +20,16 @@ function SignContractContent() {
 
   useEffect(() => {
     const reservationIdParam = searchParams.get('reservationId');
-    if (reservationIdParam) setReservationId(reservationIdParam);
+    const clientReservationIdParam = searchParams.get('clientReservationId');
+    // Accepter soit reservationId (ancienne table) soit clientReservationId (nouvelle table)
+    if (clientReservationIdParam) {
+      setReservationId(clientReservationIdParam);
+      // Stocker le type pour l'API
+      (window as any).__isClientReservation = true;
+    } else if (reservationIdParam) {
+      setReservationId(reservationIdParam);
+      (window as any).__isClientReservation = false;
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -58,12 +67,21 @@ function SignContractContent() {
         throw new Error(language === 'fr' ? 'Vous devez être connecté pour signer le contrat' : 'You must be logged in to sign the contract');
       }
 
-      const requestBody = {
-        reservationId,
+      // Déterminer si c'est une client_reservation ou une ancienne reservation
+      const isClientReservation = (window as any).__isClientReservation === true;
+      
+      const requestBody: any = {
         signature: signature.trim(),
         signedAt: new Date().toISOString(),
         userId: user.id
       };
+      
+      // Ajouter le bon paramètre selon le type
+      if (isClientReservation) {
+        requestBody.clientReservationId = reservationId;
+      } else {
+        requestBody.reservationId = reservationId;
+      }
 
       console.log('Envoi signature:', { reservationId, userId: user.id, hasSignature: !!signature.trim() });
 
@@ -258,14 +276,20 @@ function SignContractContent() {
 
             {/* Contenu du modal - PDF dans un iframe */}
             <div className="flex-1 overflow-hidden">
-              {reservationId ? (
-                <iframe
-                  src={`/api/contract/download?reservationId=${reservationId}&display=inline`}
-                  className="w-full h-full min-h-[600px]"
-                  title={currentTexts.contractModalTitle}
-                  style={{ border: 'none' }}
-                />
-              ) : (
+              {reservationId ? (() => {
+                const isClientReservation = (window as any).__isClientReservation === true;
+                const url = isClientReservation
+                  ? `/api/contract/download?clientReservationId=${reservationId}&display=inline`
+                  : `/api/contract/download?reservationId=${reservationId}&display=inline`;
+                return (
+                  <iframe
+                    src={url}
+                    className="w-full h-full min-h-[600px]"
+                    title={currentTexts.contractModalTitle}
+                    style={{ border: 'none' }}
+                  />
+                );
+              })() : (
                 <div className="flex items-center justify-center h-full p-8">
                   <p className="text-gray-500">{language === 'fr' ? 'Chargement du contrat...' : 'Loading contract...'}</p>
                 </div>

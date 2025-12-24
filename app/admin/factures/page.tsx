@@ -12,10 +12,10 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
+import { Calendar, Download } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Download } from 'lucide-react';
 
 export default function AdminFacturesPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -32,6 +32,7 @@ export default function AdminFacturesPage() {
   const itemsPerPage = 4;
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
+  const [clientReservations, setClientReservations] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -77,14 +78,31 @@ useEffect(() => {
     const loadReservations = async () => {
       if (!supabase) return;
       try {
-        const { data, error } = await supabase
+        // Charger les anciennes réservations
+        const { data: oldReservations, error: oldError } = await supabase
           .from('reservations')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(50);
 
-        if (error) throw error;
-        setReservations(data || []);
+        if (oldError) {
+          console.error('Erreur chargement réservations:', oldError);
+        } else {
+          setReservations(oldReservations || []);
+        }
+
+        // Charger les client_reservations
+        const { data: clientReservationsData, error: clientError } = await supabase
+          .from('client_reservations')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (clientError) {
+          console.error('Erreur chargement client_reservations:', clientError);
+        } else {
+          setClientReservations(clientReservationsData || []);
+        }
       } catch (error) {
         console.error('Erreur chargement réservations:', error);
       }
@@ -103,13 +121,7 @@ useEffect(() => {
 
     const query = searchQuery.toLowerCase();
     const filtered = orders.filter((order) => {
-    
-  // Double vérification de sécurité
-  if (!isAdmin) {
-    return null;
-  }
-
-  return (
+      return (
         order.customer_name?.toLowerCase().includes(query) ||
         order.customer_email?.toLowerCase().includes(query) ||
         order.id.toLowerCase().includes(query) ||
@@ -119,6 +131,24 @@ useEffect(() => {
     setFilteredOrders(filtered);
     setCurrentPage(1);
   }, [searchQuery, orders]);
+
+  // Charger l'état de la sidebar depuis localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('adminSidebarCollapsed');
+    if (savedState !== null) {
+      setIsSidebarCollapsed(savedState === 'true');
+    }
+  }, []);
+
+  // Sauvegarder l'état de la sidebar dans localStorage
+  useEffect(() => {
+    localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
+  }, [isSidebarCollapsed]);
+
+  // Double vérification de sécurité
+  if (!isAdmin) {
+    return null;
+  }
 
   const getStatusColor = (status: string) => {
     const colorMap: { [key: string]: string } = {
@@ -172,19 +202,6 @@ useEffect(() => {
   };
 
   const currentTexts = texts[language];
-
-  // Charger l'état de la sidebar depuis localStorage
-  useEffect(() => {
-    const savedState = localStorage.getItem('adminSidebarCollapsed');
-    if (savedState !== null) {
-      setIsSidebarCollapsed(savedState === 'true');
-    }
-  }, []);
-
-  // Sauvegarder l'état de la sidebar dans localStorage
-  useEffect(() => {
-    localStorage.setItem('adminSidebarCollapsed', isSidebarCollapsed.toString());
-  }, [isSidebarCollapsed]);
 
   if (loading || checkingAdmin) {
     return (
@@ -335,9 +352,46 @@ useEffect(() => {
                                 </div>
                                 
                                 {/* Montant */}
-                                <div className="text-lg font-semibold text-gray-900 mt-3">
+                                <div className="text-lg font-semibold text-gray-900 mt-3 mb-2">
                                   {order.total}€
                                 </div>
+                                
+                                {/* Lien vers la réservation si associée */}
+                                {(() => {
+                                  // Chercher la réservation associée
+                                  let reservationId = null;
+                                  let isClientReservation = false;
+                                  
+                                  // PRIORITÉ 1: client_reservation_id
+                                  if (order.client_reservation_id) {
+                                    reservationId = order.client_reservation_id;
+                                    isClientReservation = true;
+                                  }
+                                  // PRIORITÉ 2: reservation_id
+                                  else if (order.reservation_id) {
+                                    reservationId = order.reservation_id;
+                                    isClientReservation = false;
+                                  }
+                                  
+                                  if (reservationId) {
+                                    const reservationUrl = isClientReservation
+                                      ? `/admin/reservation-requests/${reservationId}` // Page de détail d'une client_reservation
+                                      : `/admin/reservations/${reservationId}`;
+                                    
+                                    return (
+                                      <div className="mt-2">
+                                        <Link
+                                          href={reservationUrl}
+                                          className="text-sm text-[#F2431E] hover:underline flex items-center gap-1"
+                                        >
+                                          <Calendar className="w-3 h-3" />
+                                          {language === 'fr' ? 'Voir la réservation' : 'View reservation'}
+                                        </Link>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
                               
                               {/* Bouton télécharger */}

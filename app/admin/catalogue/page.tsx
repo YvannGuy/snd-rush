@@ -91,7 +91,8 @@ useEffect(() => {
 
   const texts = {
     fr: {
-      title: 'Catalogue produits',
+      title: 'Catalogue produits (ADMIN ONLY)',
+      subtitle: 'Utilisé pour ajuster un pack ou gérer les exceptions. Les clients ne voient pas ce catalogue.',
       addProduct: '+ Ajouter un produit',
       searchPlaceholder: 'Rechercher un produit...',
       noProducts: 'Aucun produit',
@@ -200,7 +201,12 @@ useEffect(() => {
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
               <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{currentTexts.title}</h1>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{currentTexts.title}</h1>
+                  {currentTexts.subtitle && (
+                    <p className="text-sm text-gray-600 mt-2">{currentTexts.subtitle}</p>
+                  )}
+                </div>
                 <Link
                   href="/admin/catalogue/nouveau"
                   className="bg-[#F2431E] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold hover:bg-[#E63A1A] transition-colors text-sm sm:text-base whitespace-nowrap"

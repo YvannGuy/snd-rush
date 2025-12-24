@@ -24,7 +24,13 @@ export function useAuth() {
       }
       
       // En production, utiliser l'URL actuelle ou NEXT_PUBLIC_BASE_URL
-      return origin;
+      // Valider que l'URL est valide
+      try {
+        new URL(origin);
+        return origin;
+      } catch {
+        return 'http://localhost:3000';
+      }
     }
     
     // Côté serveur, utiliser NEXT_PUBLIC_BASE_URL ou localhost par défaut
@@ -32,7 +38,16 @@ export function useAuth() {
     if (process.env.NODE_ENV === 'development') {
       return 'http://localhost:3000';
     }
-    return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    
+    // Valider que NEXT_PUBLIC_BASE_URL est une URL valide
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    try {
+      new URL(baseUrl);
+      return baseUrl;
+    } catch {
+      console.warn('⚠️ NEXT_PUBLIC_BASE_URL invalide, utilisation de localhost par défaut');
+      return 'http://localhost:3000';
+    }
   };
 
   const signInWithEmail = async (email: string, password: string) => {
@@ -75,15 +90,88 @@ export function useAuth() {
 
       // Vérifier s'il y a un panier dans localStorage pour rediriger vers le panier après validation
       const hasCart = typeof window !== 'undefined' && localStorage.getItem('sndrush_cart');
-      const redirectUrl = hasCart 
-        ? `${getBaseUrl()}/auth/callback?has_cart=true`
-        : `${getBaseUrl()}/auth/callback`;
+      
+      // Construire l'URL de base de manière robuste
+      let baseUrl = getBaseUrl();
+      
+      // S'assurer que baseUrl est valide
+      try {
+        const testUrl = new URL(baseUrl);
+        baseUrl = testUrl.origin; // Utiliser seulement l'origin pour éviter les problèmes
+      } catch {
+        // Si getBaseUrl() retourne une URL invalide, utiliser window.location.origin
+        baseUrl = typeof window !== 'undefined' 
+          ? window.location.origin
+          : 'http://localhost:3000';
+        console.warn('⚠️ URL de base invalide, utilisation de:', baseUrl);
+      }
+      
+      // IMPORTANT: Utiliser une URL simple sans paramètres de requête pour éviter les problèmes d'encodage
+      // Le paramètre has_cart sera géré via localStorage ou cookie dans le callback
+      // Cela évite les problèmes avec Supabase qui encode l'URL dans redirect_to
+      const redirectPath = '/auth/callback';
+      let finalRedirectUrl = `${baseUrl}${redirectPath}`;
+      
+      // Si on a un panier, on le stockera dans un cookie ou localStorage
+      // et le callback le récupérera automatiquement
+      if (hasCart && typeof window !== 'undefined') {
+        // Stocker l'info dans sessionStorage pour que le callback puisse la récupérer
+        sessionStorage.setItem('pending_cart_after_auth', 'true');
+      }
+      
+      // Valider et normaliser l'URL finale
+      try {
+        const url = new URL(finalRedirectUrl);
+        // S'assurer que l'URL est bien formée
+        finalRedirectUrl = url.toString();
+        console.log('✅ URL de redirection validée:', finalRedirectUrl);
+      } catch (urlError) {
+        console.error('❌ URL de redirection invalide:', finalRedirectUrl, urlError);
+        // Utiliser une URL par défaut absolument valide
+        finalRedirectUrl = typeof window !== 'undefined' 
+          ? `${window.location.origin}/auth/callback`
+          : 'http://localhost:3000/auth/callback';
+        console.log('⚠️ Utilisation de l\'URL par défaut:', finalRedirectUrl);
+        
+        // Valider à nouveau l'URL par défaut
+        try {
+          new URL(finalRedirectUrl);
+        } catch {
+          // Si même l'URL par défaut est invalide, utiliser localhost
+          finalRedirectUrl = 'http://localhost:3000/auth/callback';
+          console.error('❌ URL par défaut invalide, utilisation de localhost');
+        }
+      }
+
+      // IMPORTANT: Encoder l'URL pour éviter les problèmes avec les paramètres de requête
+      // Supabase va ajouter cette URL dans le paramètre redirect_to du lien de confirmation
+      // Si l'URL contient déjà des paramètres (?has_cart=true), elle doit être encodée
+      const encodedRedirectUrl = encodeURIComponent(finalRedirectUrl);
+      
+      console.log('📧 Envoi de l\'email de confirmation avec URL:', finalRedirectUrl);
+      console.log('📧 URL encodée pour Supabase:', encodedRedirectUrl);
+      console.log('📧 Détails URL:', {
+        baseUrl,
+        hasCart,
+        finalRedirectUrl,
+        encodedRedirectUrl,
+        isValid: (() => {
+          try {
+            new URL(finalRedirectUrl);
+            return true;
+          } catch {
+            return false;
+          }
+        })()
+      });
 
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: redirectUrl,
+          // Ne PAS encoder ici - Supabase s'en charge automatiquement
+          // Mais on s'assure que l'URL est valide avant
+          emailRedirectTo: finalRedirectUrl,
           data: {
             title: metadata?.title,
             first_name: metadata?.firstName,
@@ -186,10 +274,40 @@ export function useAuth() {
     setError(null);
 
     try {
+      const baseUrl = getBaseUrl();
+      let redirectUrl = `${baseUrl}/auth/callback`;
+      
+      // Valider que l'URL est absolue et valide
+      try {
+        const url = new URL(redirectUrl);
+        redirectUrl = url.toString();
+        console.log('✅ URL de redirection magic link validée:', redirectUrl);
+      } catch (urlError) {
+        console.error('❌ URL de redirection invalide:', redirectUrl, urlError);
+        // Utiliser une URL par défaut valide
+        redirectUrl = typeof window !== 'undefined' 
+          ? `${window.location.origin}/auth/callback`
+          : 'http://localhost:3000/auth/callback';
+        console.log('⚠️ Utilisation de l\'URL par défaut:', redirectUrl);
+      }
+
+      // S'assurer que l'URL est valide avant de l'envoyer à Supabase
+      // Supabase encode automatiquement l'URL dans le lien de confirmation
+      let finalRedirectUrl = redirectUrl;
+      try {
+        new URL(redirectUrl);
+      } catch {
+        // Si l'URL est invalide, utiliser une URL par défaut
+        finalRedirectUrl = typeof window !== 'undefined' 
+          ? `${window.location.origin}/auth/callback`
+          : 'http://localhost:3000/auth/callback';
+        console.warn('⚠️ URL magic link invalide, utilisation de:', finalRedirectUrl);
+      }
+
       const { data, error: magicLinkError } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${getBaseUrl()}/auth/callback`,
+          emailRedirectTo: finalRedirectUrl,
         },
       });
 
@@ -218,11 +336,25 @@ export function useAuth() {
       const baseUrl = getBaseUrl();
       // Rediriger directement vers la page de réinitialisation
       // La page gérera le hash avec les tokens directement
-      const redirectUrl = `${baseUrl}/reinitialiser-mot-de-passe`;
+      let redirectUrl = `${baseUrl}/reinitialiser-mot-de-passe`;
+      
+      // Valider que l'URL est absolue et valide
+      try {
+        const url = new URL(redirectUrl);
+        redirectUrl = url.toString();
+        console.log('✅ URL de redirection validée:', redirectUrl);
+      } catch (urlError) {
+        console.error('❌ URL de redirection invalide:', redirectUrl, urlError);
+        // Utiliser une URL par défaut valide
+        redirectUrl = typeof window !== 'undefined' 
+          ? `${window.location.origin}/reinitialiser-mot-de-passe`
+          : 'http://localhost:3000/reinitialiser-mot-de-passe';
+        console.log('⚠️ Utilisation de l\'URL par défaut:', redirectUrl);
+      }
       
       console.log('🔐 Tentative de réinitialisation de mot de passe pour:', email);
       console.log('📍 URL de redirection:', redirectUrl);
-
+      
       const { data, error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
       });

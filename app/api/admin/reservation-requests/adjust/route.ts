@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { getAcceptedEmailTemplate } from '@/lib/reservation-email-templates';
+import { generateTokenWithHash } from '@/lib/token';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -63,9 +64,13 @@ export async function POST(req: NextRequest) {
       .eq('request_id', request_id)
       .maybeSingle();
 
+    // V1.4 - Générer un token public pour le checkout sans compte
+    // Si réservation existe déjà, régénérer le token (nouveau lien)
+    const { token: publicToken, hash: publicTokenHash, expiresAt: publicTokenExpiresAt } = generateTokenWithHash(7);
+
     let reservation;
     if (existingReservation) {
-      // Mettre à jour
+      // Mettre à jour (inclure le nouveau token)
       const { data, error } = await supabaseAdmin
         .from('client_reservations')
         .update({
@@ -77,6 +82,8 @@ export async function POST(req: NextRequest) {
           customer_summary: customer_summary || null,
           base_pack_price: base_pack_price || null,
           extras_total: extras_total || 0,
+          public_token_hash: publicTokenHash, // V1.4 - Nouveau token
+          public_token_expires_at: publicTokenExpiresAt.toISOString(), // V1.4 - Nouvelle expiration
         })
         .eq('id', existingReservation.id)
         .select()
@@ -103,6 +110,8 @@ export async function POST(req: NextRequest) {
           customer_summary: customer_summary || null,
           base_pack_price: base_pack_price || null,
           extras_total: extras_total || 0,
+          public_token_hash: publicTokenHash, // V1.4 - Stocker le hash du token
+          public_token_expires_at: publicTokenExpiresAt.toISOString(), // V1.4 - Expiration dans 7 jours
         })
         .select()
         .single();
@@ -127,10 +136,12 @@ export async function POST(req: NextRequest) {
       userExists = false;
     }
     
-    // Envoyer l'email (même template que approve)
+    // V1.4 - Envoyer l'email avec lien checkout public
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    // Toujours pointer vers le dashboard - il gérera l'authentification
-    const finalizeLink = `${baseUrl}/dashboard?reservation=${reservation.id}`;
+    // Lien checkout public (sans compte requis)
+    const checkoutLink = `${baseUrl}/checkout/${reservation.id}?token=${publicToken}`;
+    // Lien dashboard (fallback pour utilisateurs connectés)
+    const dashboardLink = `${baseUrl}/dashboard?reservation=${reservation.id}`;
     
     const firstName = request.customer_name?.split(' ')[0] || request.customer_email.split('@')[0];
     const packNames: Record<string, string> = {
@@ -160,7 +171,8 @@ export async function POST(req: NextRequest) {
       peopleCount: request.payload.peopleCount || 0,
       priceTotal: price_total,
       depositAmount: deposit_amount,
-      finalizeLink,
+      finalizeLink: checkoutLink, // V1.4 - Lien checkout public
+      dashboardLink, // V1.4 - Lien dashboard (fallback)
       clientMessage: client_message || undefined,
       finalItems,
       customerSummary: body.customer_summary || undefined,

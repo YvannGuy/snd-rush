@@ -46,8 +46,19 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Si l'order est lié à une client_reservation, récupérer les final_items
+    let clientReservation: any = null;
+    if (order.client_reservation_id) {
+      const { data: reservationData } = await supabaseAdmin
+        .from('client_reservations')
+        .select('*')
+        .eq('id', order.client_reservation_id)
+        .single();
+      clientReservation = reservationData;
+    }
+
     // Générer le PDF de facture
-    const pdfBuffer = await generateInvoicePDF(order);
+    const pdfBuffer = await generateInvoicePDF(order, clientReservation);
 
     // Retourner le PDF
     return new NextResponse(pdfBuffer as unknown as BodyInit, {
@@ -87,7 +98,7 @@ function splitText(doc: jsPDF, text: string, maxWidth: number): string[] {
   return lines;
 }
 
-async function generateInvoicePDF(order: any): Promise<Buffer> {
+async function generateInvoicePDF(order: any, clientReservation?: any): Promise<Buffer> {
   const orderNumber = order.id.slice(0, 8).toUpperCase();
   const date = new Date(order.created_at).toLocaleDateString('fr-FR', {
     day: 'numeric',
@@ -195,9 +206,50 @@ async function generateInvoicePDF(order: any): Promise<Buffer> {
 
   // Récupérer les items
   let items: any[] = [];
-  if (order.order_items && order.order_items.length > 0) {
+  
+  // PRIORITÉ 1: Utiliser final_items depuis client_reservation si disponible
+  if (clientReservation && clientReservation.final_items && Array.isArray(clientReservation.final_items) && clientReservation.final_items.length > 0) {
+    // Convertir final_items en format facture
+    const packItems = clientReservation.final_items.filter((item: any) => !item.isExtra);
+    const extras = clientReservation.final_items.filter((item: any) => item.isExtra);
+    
+    // Créer une ligne pour le pack de base
+    if (clientReservation.base_pack_price && parseFloat(clientReservation.base_pack_price.toString()) > 0) {
+      const packNames: Record<string, string> = {
+        'conference': 'Pack Conférence',
+        'soiree': 'Pack Soirée',
+        'mariage': 'Pack Mariage'
+      };
+      items.push({
+        product_name: packNames[clientReservation.pack_key] || `Pack ${clientReservation.pack_key}`,
+        quantity: 1,
+        daily_price: parseFloat(clientReservation.base_pack_price.toString()),
+        rental_days: 1,
+        dailyPrice: parseFloat(clientReservation.base_pack_price.toString()),
+        rentalDays: 1,
+      });
+    }
+    
+    // Ajouter les extras comme lignes séparées
+    extras.forEach((extra: any) => {
+      if (extra.unitPrice && extra.unitPrice > 0) {
+        items.push({
+          product_name: extra.label,
+          quantity: extra.qty || 1,
+          daily_price: extra.unitPrice,
+          rental_days: 1,
+          dailyPrice: extra.unitPrice,
+          rentalDays: 1,
+        });
+      }
+    });
+  }
+  // PRIORITÉ 2: Utiliser order_items si disponibles
+  else if (order.order_items && order.order_items.length > 0) {
     items = order.order_items;
-  } else {
+  }
+  // PRIORITÉ 3: Fallback sur metadata.cartItems
+  else {
     try {
       const metadata = order.metadata || {};
       const cartItems = metadata.cartItems ? (typeof metadata.cartItems === 'string' ? JSON.parse(metadata.cartItems) : metadata.cartItems) : [];

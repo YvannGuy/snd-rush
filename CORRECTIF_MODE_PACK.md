@@ -134,3 +134,4 @@ Ce correctif rend le chat "mode pack" robuste en :
 2. Monitorer les logs pour détecter d'éventuels cas edge
 3. Vérifier que le front envoie bien `packKey` dans les requêtes
 4. Valider que `reservationRequestDraft` est correctement traité côté front
+

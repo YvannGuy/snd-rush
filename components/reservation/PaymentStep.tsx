@@ -12,8 +12,10 @@ interface PaymentStepProps {
 }
 
 export default function PaymentStep({ language, selectedPack, personalInfo, onBack, onClose }: PaymentStepProps) {
-  const [paymentType, setPaymentType] = useState<'full' | 'deposit'>('deposit');
-  const [cautionPayment, setCautionPayment] = useState<'now' | 'delivery'>('now');
+  // Forcer l'acompte uniquement (pas de paiement intégral)
+  const [paymentType] = useState<'deposit'>('deposit');
+  // La caution sera demandée plus tard, pas maintenant
+  const [cautionPayment] = useState<'delivery'>('delivery');
   const [cardData, setCardData] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -121,10 +123,12 @@ export default function PaymentStep({ language, selectedPack, personalInfo, onBa
   const getPaymentAmount = () => {
     if (isQuoteRequired) return 0;
     
-    let amount = paymentType === 'full' ? packPrice : depositAmount;
-    if (cautionPayment === 'now') {
-      amount += cautionAmount;
-    }
+    // Toujours utiliser l'acompte uniquement (30%)
+    let amount = depositAmount;
+    // La caution sera demandée plus tard, pas maintenant
+    // if (cautionPayment === 'now') {
+    //   amount += cautionAmount;
+    // }
     return amount;
   };
 
@@ -319,26 +323,34 @@ export default function PaymentStep({ language, selectedPack, personalInfo, onBa
 
                 <div className="border-t pt-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-lg font-bold text-black">{texts[language].total}:</span>
+                    <span className="text-lg font-bold text-black">
+                      {language === 'fr' ? 'Acompte à payer maintenant' : 'Deposit to pay now'}
+                    </span>
                     <span className="text-xl font-bold text-[#F2431E]">{getPaymentAmount()}€</span>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {language === 'fr' ? '30% - bloque votre date' : '30% - secures your date'}
+                  </p>
                 </div>
 
-                {paymentType === 'deposit' && (
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <p className="text-sm text-blue-800">
-                      {texts[language].remainingAmount}: {remainingAmount}€
-                    </p>
-                  </div>
-                )}
+                <div className="bg-blue-50 p-3 rounded-lg mt-3">
+                  <p className="text-sm text-blue-800 mb-1">
+                    <strong>{language === 'fr' ? 'Solde à régler plus tard' : 'Balance to pay later'}</strong>: {remainingAmount}€
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    {language === 'fr' 
+                      ? 'Le solde sera demandé avant votre événement' 
+                      : 'Balance will be requested before your event'}
+                  </p>
+                </div>
 
-                {cautionPayment === 'delivery' && (
-                  <div className="bg-orange-50 p-3 rounded-lg">
-                    <p className="text-sm text-orange-800">
-                      {texts[language].cautionRemaining}: {cautionAmount}€
-                    </p>
-                  </div>
-                )}
+                <div className="bg-orange-50 p-3 rounded-lg mt-3">
+                  <p className="text-xs text-orange-800">
+                    {language === 'fr' 
+                      ? `Caution demandée à l'approche de l'événement: ${cautionAmount}€` 
+                      : `Security deposit requested near event: ${cautionAmount}€`}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -373,39 +385,34 @@ export default function PaymentStep({ language, selectedPack, personalInfo, onBa
             {/* Options de paiement */}
             <div className="bg-gray-50 rounded-xl p-6">
               <h3 className="text-lg font-bold text-black mb-4">
-                {texts[language].paymentOptions}
+                Paiement
               </h3>
 
               <div className="space-y-3">
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="paymentType"
-                    value="full"
-                    checked={paymentType === 'full'}
-                    onChange={(e) => setPaymentType('full')}
-                    className="w-4 h-4 text-[#F2431E] border-gray-300 focus:ring-[#F2431E]"
-                  />
-                  <div>
-                    <span className="font-medium text-black">{texts[language].fullPayment}</span>
-                    <p className="text-sm text-gray-600">{packPrice}€</p>
+                <div className="bg-[#F2431E]/10 border border-[#F2431E]/20 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <span className="font-semibold text-gray-900">
+                        {language === 'fr' ? 'Acompte 30%' : '30% Deposit'}
+                      </span>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {language === 'fr' ? 'Bloque votre date' : 'Secures your date'}
+                      </p>
+                    </div>
+                    <span className="text-xl font-bold text-[#F2431E]">{depositAmount}€</span>
                   </div>
-                </label>
+                </div>
 
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="paymentType"
-                    value="deposit"
-                    checked={paymentType === 'deposit'}
-                    onChange={(e) => setPaymentType('deposit')}
-                    className="w-4 h-4 text-[#F2431E] border-gray-300 focus:ring-[#F2431E]"
-                  />
-                  <div>
-                    <span className="font-medium text-black">{texts[language].depositPayment}</span>
-                    <p className="text-sm text-gray-600">{depositAmount}€</p>
-                  </div>
-                </label>
+                <div className="bg-gray-100 rounded-lg p-3 text-sm text-gray-600">
+                  <p className="mb-1">
+                    <strong>{language === 'fr' ? 'Solde à régler plus tard' : 'Balance to pay later'}</strong>: {remainingAmount}€
+                  </p>
+                  <p className="text-xs">
+                    {language === 'fr' 
+                      ? 'Le solde sera demandé avant votre événement' 
+                      : 'Balance will be requested before your event'}
+                  </p>
+                </div>
               </div>
 
               <div className="mt-4 pt-4 border-t">
@@ -413,19 +420,31 @@ export default function PaymentStep({ language, selectedPack, personalInfo, onBa
                   <div className="flex items-center text-blue-800">
                     <i className="ri-information-line mr-2"></i>
                     <span className="text-sm font-medium">
-                      {texts[language].depositRequired}
+                      {language === 'fr' 
+                        ? 'L\'acompte de 30% est obligatoire pour bloquer votre date' 
+                        : '30% deposit is required to secure your date'}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Options de caution */}
+            {/* Information caution */}
             <div className="bg-gray-50 rounded-xl p-6">
               <h3 className="text-lg font-bold text-black mb-4">
-                {texts[language].cautionOptions}
+                {language === 'fr' ? 'Caution' : 'Security Deposit'}
               </h3>
 
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <p className="text-sm text-orange-800">
+                  {language === 'fr' 
+                    ? `La caution de ${cautionAmount}€ sera demandée à l'approche de votre événement. Elle sera bloquée sur votre carte mais non débitée, et libérée après retour du matériel en bon état.`
+                    : `The security deposit of ${cautionAmount}€ will be requested near your event. It will be held on your card but not charged, and released after equipment return in good condition.`}
+                </p>
+              </div>
+
+              {/* Masquer les options de paiement de caution - sera demandée plus tard */}
+              {false && (
               <div className="space-y-3">
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <input

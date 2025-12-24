@@ -53,19 +53,9 @@ export default function TopBanner({ language }: TopBannerProps) {
         <div className="flex-1"></div>
 
         {/* Navigation Links - Centrés et espacés uniformément */}
+        {/* Masquer Catalogue et Packs pour les utilisateurs non-admin (solution clé en main uniquement) */}
         <div className="flex flex-row items-center justify-center gap-4 sm:gap-6 lg:gap-8 flex-1">
-          <Link 
-            href="/catalogue"
-            className="text-white hover:text-white/80 transition-colors font-medium text-xs sm:text-sm lg:text-base whitespace-nowrap"
-          >
-            {currentTexts.catalogue}
-          </Link>
-          <Link 
-            href="/packs"
-            className="text-white hover:text-white/80 transition-colors font-medium text-xs sm:text-sm lg:text-base whitespace-nowrap"
-          >
-            {currentTexts.packs}
-          </Link>
+          {/* Catalogue et Packs masqués - les clients utilisent uniquement les 3 solutions via le chat */}
           <Link 
             href="/#tutos"
             onClick={(e) => {

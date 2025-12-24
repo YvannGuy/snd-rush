@@ -6,6 +6,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import CookieBanner from "@/components/CookieBanner";
 import FloatingChatWidget from "@/components/FloatingChatWidget";
+import FloatingChatWidgetSimplified from "@/components/FloatingChatWidget.simplified";
 import GlobalButtons from "@/components/GlobalButtons";
 import "./globals.css";
 
@@ -224,7 +225,12 @@ export default function RootLayout({
           {children}
           
           {/* Chatbox flottante - Apparaît sur toutes les pages essentielles */}
-          <FloatingChatWidget />
+          {/* TODO: Activer le chat simplifié après tests */}
+          {process.env.NEXT_PUBLIC_USE_SIMPLIFIED_CHAT === 'true' ? (
+            <FloatingChatWidgetSimplified />
+          ) : (
+            <FloatingChatWidget />
+          )}
           
           {/* Boutons globaux - WhatsApp et Retour en haut - Apparaissent sur toutes les pages */}
           <GlobalButtons />

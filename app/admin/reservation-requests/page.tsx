@@ -981,7 +981,7 @@ export default function AdminReservationRequestsPage() {
                     {customerSummary && (
                       <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                         <Label className="text-sm font-medium text-green-900 mb-2 block">
-                          Résumé client (généré automatiquement)
+                          Solution proposée (ce que voit le client)
                         </Label>
                         <p className="text-sm text-green-800 italic">{customerSummary}</p>
                       </div>
@@ -1047,7 +1047,7 @@ export default function AdminReservationRequestsPage() {
                     </div>
                     <div>
                       <Label htmlFor="admin-notes" className="text-sm font-medium mb-2 block">
-                        Note interne (non visible client)
+                        Note interne (Ajustements internes - non visible client)
                       </Label>
                       <Textarea
                         id="admin-notes"

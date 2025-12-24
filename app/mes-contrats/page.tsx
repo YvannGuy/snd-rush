@@ -88,17 +88,53 @@ export default function MesContratsPage() {
       if (!supabaseClient) return;
       
       try {
-        // Récupérer uniquement les réservations signées
-        const { data, error } = await supabaseClient
+        // Récupérer les réservations signées (ancienne table)
+        const { data: oldReservations, error: oldError } = await supabaseClient
           .from('reservations')
           .select('*')
           .eq('user_id', user.id)
           .not('client_signature', 'is', null)
           .order('client_signed_at', { ascending: false });
 
-        if (error) throw error;
-        setContracts(data || []);
-        setFilteredContracts(data || []);
+        if (oldError) {
+          console.error('Erreur chargement anciennes réservations:', oldError);
+        }
+
+        // Récupérer les client_reservations signées (nouvelle table)
+        const { data: clientReservations, error: clientError } = await supabaseClient
+          .from('client_reservations')
+          .select('*')
+          .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`)
+          .not('client_signature', 'is', null)
+          .order('client_signed_at', { ascending: false });
+
+        if (clientError) {
+          console.error('Erreur chargement client_reservations:', clientError);
+        }
+
+        // Adapter les client_reservations au format des réservations pour compatibilité
+        const adaptedClientReservations = (clientReservations || []).map(cr => ({
+          ...cr,
+          // Adapter les champs pour compatibilité avec l'affichage
+          start_date: cr.start_at || cr.created_at,
+          end_date: cr.end_at || cr.created_at,
+          total_price: cr.price_total,
+          pack_id: cr.pack_key,
+          type: 'client_reservation', // Marqueur pour identifier les nouvelles réservations
+        }));
+
+        // Combiner les deux listes
+        const allContracts = [
+          ...(oldReservations || []),
+          ...adaptedClientReservations
+        ].sort((a, b) => {
+          const dateA = new Date(a.client_signed_at || 0).getTime();
+          const dateB = new Date(b.client_signed_at || 0).getTime();
+          return dateB - dateA; // Plus récent en premier
+        });
+
+        setContracts(allContracts);
+        setFilteredContracts(allContracts);
       } catch (error) {
         console.error('Erreur chargement contrats:', error);
       }
@@ -428,7 +464,9 @@ export default function MesContratsPage() {
                                 
                                 {/* Bouton télécharger */}
                                 <a
-                                  href={`/api/contract/download?reservationId=${contract.id}`}
+                                  href={contract.type === 'client_reservation' 
+                                    ? `/api/contract/download?clientReservationId=${contract.id}`
+                                    : `/api/contract/download?reservationId=${contract.id}`}
                                   download={`contrat-${reservationNumber}.pdf`}
                                   onClick={(e) => e.stopPropagation()}
                                   className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F2431E] hover:bg-[#E63A1A] text-white flex items-center justify-center flex-shrink-0 transition-colors"

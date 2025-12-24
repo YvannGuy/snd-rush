@@ -16,14 +16,30 @@ export async function GET(req: NextRequest) {
     const type = requestUrl.searchParams.get('type');
     const error = requestUrl.searchParams.get('error');
     const errorDescription = requestUrl.searchParams.get('error_description');
+    
+    // Log pour déboguer
+    console.log('🔍 Callback auth - URL complète:', req.url);
+    console.log('🔍 Callback auth - Code:', code ? 'présent' : 'absent');
+    console.log('🔍 Callback auth - Type:', type);
+    console.log('🔍 Callback auth - Error:', error);
 
     // Gérer les erreurs d'authentification
     if (error) {
       console.error('❌ Erreur d\'authentification:', error, errorDescription);
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-      const redirectUrl = baseUrl.includes('0.0.0.0') 
-        ? baseUrl.replace('0.0.0.0', 'localhost')
-        : baseUrl;
+      let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      
+      if (baseUrl.includes('0.0.0.0')) {
+        baseUrl = baseUrl.replace('0.0.0.0', 'localhost');
+      }
+      
+      // Valider que l'URL est valide
+      let redirectUrl = baseUrl;
+      try {
+        new URL(baseUrl);
+      } catch {
+        console.warn('⚠️ NEXT_PUBLIC_BASE_URL invalide, utilisation de localhost par défaut');
+        redirectUrl = 'http://localhost:3000';
+      }
       
       // Rediriger vers la page de mot de passe oublié avec un message d'erreur
       const errorPage = new URL('/mot-de-passe-oublie', redirectUrl);
@@ -32,12 +48,21 @@ export async function GET(req: NextRequest) {
     }
 
     // Utiliser NEXT_PUBLIC_BASE_URL ou localhost correctement
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     
     // Si l'URL contient 0.0.0.0, utiliser localhost à la place
-    const redirectUrl = baseUrl.includes('0.0.0.0') 
-      ? baseUrl.replace('0.0.0.0', 'localhost')
-      : baseUrl;
+    if (baseUrl.includes('0.0.0.0')) {
+      baseUrl = baseUrl.replace('0.0.0.0', 'localhost');
+    }
+    
+    // Valider que l'URL est valide
+    let redirectUrl = baseUrl;
+    try {
+      new URL(baseUrl);
+    } catch {
+      console.warn('⚠️ NEXT_PUBLIC_BASE_URL invalide, utilisation de localhost par défaut');
+      redirectUrl = 'http://localhost:3000';
+    }
 
     if (code) {
       const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -90,13 +115,10 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      // Vérifier s'il y a un panier dans localStorage (via cookie ou paramètre)
-      // Rediriger vers le panier si l'utilisateur avait un panier avant de créer son compte
-      // Sinon, rediriger vers le dashboard
-      const hasCart = requestUrl.searchParams.get('has_cart') === 'true';
-      if (hasCart) {
-        return NextResponse.redirect(new URL('/panier', redirectUrl));
-      }
+      // Vérifier s'il y a un panier dans sessionStorage (géré côté client)
+      // Le callback redirige toujours vers le dashboard
+      // Le client vérifiera sessionStorage et redirigera vers le panier si nécessaire
+      // Cela évite les problèmes d'encodage d'URL avec les paramètres de requête
 
       // Sinon, rediriger vers le dashboard
       return NextResponse.redirect(new URL('/dashboard', redirectUrl));
@@ -106,10 +128,21 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL('/', redirectUrl));
   } catch (err: any) {
     console.error('❌ Erreur dans le callback:', err);
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const redirectUrl = baseUrl.includes('0.0.0.0') 
-      ? baseUrl.replace('0.0.0.0', 'localhost')
-      : baseUrl;
+    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    
+    if (baseUrl.includes('0.0.0.0')) {
+      baseUrl = baseUrl.replace('0.0.0.0', 'localhost');
+    }
+    
+    // Valider que l'URL est valide
+    let redirectUrl = baseUrl;
+    try {
+      new URL(baseUrl);
+    } catch {
+      console.warn('⚠️ NEXT_PUBLIC_BASE_URL invalide, utilisation de localhost par défaut');
+      redirectUrl = 'http://localhost:3000';
+    }
+    
     return NextResponse.redirect(new URL('/', redirectUrl));
   }
 }

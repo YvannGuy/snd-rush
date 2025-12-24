@@ -5,6 +5,7 @@ import { useChat } from '@/hooks/useChat';
 import { ChatMessage, DraftFinalConfig, ChatIntent } from '@/types/chat';
 import { useCart } from '@/contexts/CartContext';
 import { applyFinalConfigToCart } from '@/lib/cart-utils';
+import { isPackMode, hasRequiredPackFields } from '@/lib/pack-helpers';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,8 @@ export default function FloatingChatWidget() {
     activeScenarioId,
     activePackKey,
     reservationRequestDraft,
+    availabilityStatus, // V1.2 availability check
+    availabilityDetails, // V1.2 availability check
     setIsLoading,
     setDraftConfig,
     setReservationRequestDraft,
@@ -39,9 +42,72 @@ export default function FloatingChatWidget() {
   const [inputValue, setInputValue] = useState('');
   const [cartItemsNames, setCartItemsNames] = useState<Record<string, string>>({});
   const [customerPhoneInput, setCustomerPhoneInput] = useState('');
+  const [isCreatingInstantReservation, setIsCreatingInstantReservation] = useState(false);
+  const [trackingUrl, setTrackingUrl] = useState<string | null>(null); // V1.5 - URL de suivi
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { addToCart } = useCart();
+
+  // V1.5 - Écouter l'événement de création de demande pour afficher le bouton de suivi
+  useEffect(() => {
+    const handleReservationRequestCreated = (event: CustomEvent) => {
+      if (event.detail?.trackingUrl) {
+        setTrackingUrl(event.detail.trackingUrl);
+      }
+    };
+
+    window.addEventListener('reservationRequestCreated', handleReservationRequestCreated as EventListener);
+    return () => {
+      window.removeEventListener('reservationRequestCreated', handleReservationRequestCreated as EventListener);
+    };
+  }, []);
+
+  /**
+   * V1.3 Instant Booking - Vérifie si la réservation est éligible pour l'instant booking
+   * Conditions:
+   * - availabilityStatus === 'available'
+   * - pack_key dans ('conference', 'soiree', 'mariage')
+   * - Pas d'urgence (pas de flag "urgent" dans le payload)
+   * - Heure de fin ≤ 23:00 (si endTime existe)
+   * - Pas de flags complexes (acoustique, accès, besoin spécial)
+   */
+  const isInstantBookingEligible = (): boolean => {
+    if (!activePackKey || !reservationRequestDraft) return false;
+    
+    // 1. Disponibilité
+    if (availabilityStatus !== 'available') return false;
+    
+    // 2. Pack standard
+    if (!['conference', 'soiree', 'mariage'].includes(activePackKey)) return false;
+    
+    // 3. Pas d'urgence
+    const payload = reservationRequestDraft.payload;
+    const payloadStr = JSON.stringify(payload).toLowerCase();
+    if (payloadStr.includes('urgent') || payloadStr.includes('urgence') || payloadStr.includes('rapide')) {
+      return false;
+    }
+    
+    // 4. Heure de fin ≤ 23:00
+    if (payload.endTime) {
+      const endTimeStr = payload.endTime.toString();
+      const timeMatch = endTimeStr.match(/(\d{1,2})[h:](\d{0,2})/);
+      if (timeMatch) {
+        const hours = parseInt(timeMatch[1], 10);
+        if (hours > 23) return false;
+      }
+    }
+    
+    // 5. Pas de flags complexes
+    const complexFlags = ['acoustique', 'acoustique complexe', 'accès compliqué', 'accès difficile', 'besoin spécial', 'spécial'];
+    for (const flag of complexFlags) {
+      if (payloadStr.includes(flag)) return false;
+    }
+    
+    // 6. Dates et heures présentes
+    if (!payload.startDate || !payload.endDate) return false;
+    
+    return true;
+  };
 
   // Charger les noms des produits pour le récap
   useEffect(() => {
@@ -108,6 +174,8 @@ export default function FloatingChatWidget() {
   const draftProcessedRef = useRef<string>('');
   // Ref pour stocker le dernier draft traité (pour éviter réinjection)
   const lastDraftRef = useRef<string>('');
+  // Ref pour stocker le dernier packKey traité avec timestamp (pour éviter doubles clics rapides)
+  const lastPackKeyRef = useRef<{ packKey: string; timestamp: number } | null>(null);
   // Ref pour stocker le scenarioId actif (persiste entre les messages)
   // Synchroniser avec activeScenarioId depuis useChat
   const scenarioIdRef = useRef<string | null>(null);
@@ -150,27 +218,29 @@ export default function FloatingChatWidget() {
     // CORRECTION BUG STATE ASYNC : Construire le tableau de messages AVANT de mettre à jour le state
     const currentMessages = messagesRef.current;
     
-    // Vérifier anti-doublon avant de construire
+    // Vérifier si le message user existe déjà (peut être ajouté immédiatement par openChatWithDraft)
     const lastUserMessage = [...currentMessages].reverse().find(m => m.role === 'user' && m.kind === 'normal');
-    if (lastUserMessage && lastUserMessage.content === trimmedContent && Date.now() - lastUserMessage.createdAt < 1000) {
-      console.log('[CHAT] Message déjà présent, ignoré');
-      isSendingRef.current = false;
-      return;
+    const messageAlreadyExists = lastUserMessage && lastUserMessage.content === trimmedContent && Date.now() - lastUserMessage.createdAt < 2000;
+    
+    // Si le message existe déjà, on ne l'ajoute pas à nouveau mais on envoie quand même à l'API
+    // (le message a été ajouté immédiatement dans openChatWithDraft pour éviter l'écran blanc)
+    if (!messageAlreadyExists) {
+      // Le message n'existe pas encore, l'ajouter via addUserMessage
+      const added = addUserMessage(trimmedContent);
+      if (!added) {
+        // Message dupliqué, ne pas envoyer
+        isSendingRef.current = false;
+        return;
+      }
+    } else {
+      console.log('[CHAT] Message déjà présent dans l\'UI (ajouté par openChatWithDraft), envoi à l\'API uniquement');
+      // Reset timer même si le message existe déjà (action utilisateur)
+      resetIdleTimers();
     }
     
-    const userMessage: ChatMessage = {
-      id: 'user-' + Date.now() + '-' + Math.random(),
-      role: 'user',
-      kind: 'normal',
-      content: trimmedContent,
-      createdAt: Date.now(),
-    };
-    
-    // Construire le tableau nextMessages avec le nouveau message user
-    const nextMessages = [...currentMessages, userMessage];
-    
+    // Construire le tableau de messages pour l'API (utiliser les messages actuels)
     // Filtrer pour l'API (exclure idle et welcome) et inclure 'kind'
-    const apiMessages = nextMessages
+    const apiMessages = currentMessages
       .filter(m => m.kind !== 'idle' && m.kind !== 'welcome')
       .map(m => ({
         role: m.role,
@@ -185,17 +255,8 @@ export default function FloatingChatWidget() {
     console.log('[CHAT] Tous les messages:', apiMessages.map(m => `${m.role}: ${m.kind || 'normal'}: ${m.content.substring(0, 50)}...`));
     console.log('[CHAT] ======================================');
     
-    // Mettre à jour le state via addUserMessage (qui gère aussi le timer idle)
-    // On utilise addUserMessage pour l'UI, mais on envoie nextMessages à l'API (construit localement)
-    const added = addUserMessage(trimmedContent);
-    if (!added) {
-      // Message dupliqué, ne pas envoyer
-      isSendingRef.current = false;
-      return;
-    }
-    
-    // Mettre à jour messagesRef pour que les prochains appels utilisent le bon state
-    messagesRef.current = nextMessages;
+    // Mettre à jour messagesRef avec les messages actuels
+    messagesRef.current = currentMessages;
     
     // Marquer le draft comme traité
     draftProcessedRef.current = trimmedContent;
@@ -249,17 +310,23 @@ export default function FloatingChatWidget() {
         cleanContent = cleanContent.trim();
       }
 
-      addAssistantMessage(cleanContent, data.draftFinalConfig);
+      // En mode pack, ne jamais passer draftFinalConfig à addAssistantMessage
+      const configToUse = isPackMode(activePackKey) ? undefined : data.draftFinalConfig;
+      addAssistantMessage(cleanContent, configToUse);
       
       // Si on est en mode pack et qu'on a un reservationRequestDraft, le stocker
-      if (activePackKey && data.reservationRequestDraft) {
-        // Vérifier que activePackKey est bien l'un des types attendus
-        if (activePackKey === 'conference' || activePackKey === 'soiree' || activePackKey === 'mariage') {
-          setReservationRequestDraft({
-            pack_key: activePackKey,
-            payload: data.reservationRequestDraft.payload || {}
-          });
-        }
+      if (isPackMode(activePackKey) && data.reservationRequestDraft) {
+        setReservationRequestDraft({
+          pack_key: activePackKey!,
+          payload: data.reservationRequestDraft.payload || {}
+        });
+        console.log('[CHAT] reservationRequestDraft mis à jour en mode pack:', activePackKey);
+      }
+      
+      // 🛡️ GARDE-FOU : En mode pack, ignorer draftFinalConfig même si retourné
+      if (isPackMode(activePackKey) && data.draftFinalConfig) {
+        console.warn('[CHAT] 🛡️ draftFinalConfig reçu en mode pack, ignoré. packKey:', activePackKey);
+        // Ne pas utiliser draftFinalConfig en mode pack
       }
     } catch (error) {
       console.error('[CHAT] Erreur envoi message:', error);
@@ -269,7 +336,7 @@ export default function FloatingChatWidget() {
       setIsLoading(false);
       isSendingRef.current = false;
     }
-  }, [isLoading, addAssistantMessage, setIsLoading]);
+  }, [isLoading, addUserMessage, addAssistantMessage, setIsLoading, activePackKey, resetIdleTimers]);
 
   /**
    * Envoyer un message depuis l'input
@@ -293,15 +360,16 @@ export default function FloatingChatWidget() {
     resetIdleTimers();
   };
 
-  // Ajouter au panier
-  const handleAddToCart = async () => {
+  // Bloquer la date (créer réservation/hold et rediriger vers checkout)
+  const handleBlockDate = async () => {
     if (!draftConfig) return;
 
     resetIdleTimers(); // Action utilisateur → reset timer
 
-    console.log('[CHAT] Tentative ajout au panier', draftConfig);
+    console.log('[CHAT] Tentative de blocage de date', draftConfig);
 
     try {
+      // Utiliser la logique existante pour créer le panier (compatibilité backend)
       const result = await applyFinalConfigToCart(draftConfig);
       
       if (result.ok && result.cart && result.cart.items && result.cart.items.length > 0) {
@@ -318,33 +386,36 @@ export default function FloatingChatWidget() {
           return item;
         });
         
-        // Ajouter tous les items au panier en une seule fois (batch)
-        // Cela évite d'ouvrir le mini cart plusieurs fois
+        // Ajouter tous les items au panier (nécessaire pour le backend)
         for (const item of itemsWithImages) {
           const result = await addToCart(item);
           if (!result.success) {
-            console.warn('Erreur ajout au panier:', result.error);
-            // Ne pas bloquer l'utilisateur pour les erreurs de panier dans le widget
+            console.warn('Erreur ajout:', result.error);
           }
         }
         
-        console.log(`[CHAT] ${itemsWithImages.length} items ajoutés au panier avec succès`);
+        console.log(`[CHAT] ${itemsWithImages.length} items préparés avec succès`);
         
-        // Dispatcher immédiatement l'événement pour mettre à jour le compteur sans délai
-        // Le mini cart s'ouvrira automatiquement via l'événement productAddedToCart
+        // Dispatcher l'événement pour mettre à jour le compteur
         window.dispatchEvent(new CustomEvent('productAddedToCart'));
         
-        // Seulement maintenant on confirme
-        addAssistantMessage('C\'est dans ton panier. Tu peux passer commande depuis l\'icône panier en haut.');
+        // Message de confirmation orienté service
+        addAssistantMessage('Parfait ! Je prépare votre solution. Vous allez être redirigé pour bloquer votre date avec un acompte de 30%.');
         setDraftConfig(null);
+        
+        // Rediriger vers le panier qui mènera au checkout (compatibilité backend)
+        // Note: Le panier est utilisé en interne mais l'utilisateur ne le voit pas comme un "panier e-commerce"
+        setTimeout(() => {
+          window.location.href = '/panier';
+        }, 1500);
       } else {
-        console.error('[CHAT] Échec ajout panier:', result.error);
-        addAssistantMessage('Je n\'ai pas réussi à l\'ajouter. Je réessaie ?');
+        console.error('[CHAT] Échec préparation:', result.error);
+        addAssistantMessage('Je n\'ai pas réussi à préparer votre solution. Je réessaie ?');
         // Garder le draftConfig pour permettre le retry
       }
     } catch (error) {
-      console.error('[CHAT] Erreur ajout panier:', error);
-      addAssistantMessage('Je n\'ai pas réussi à l\'ajouter. Je réessaie ?');
+      console.error('[CHAT] Erreur préparation:', error);
+      addAssistantMessage('Je n\'ai pas réussi à préparer votre solution. Je réessaie ?');
     }
   };
 
@@ -381,22 +452,32 @@ export default function FloatingChatWidget() {
     messagesRef.current = messages;
   }, [messages]);
 
-  // Synchroniser productContextRef avec les événements
+    // Synchroniser productContextRef avec les événements
   useEffect(() => {
     const handleOpenChatWithDraft = (event: CustomEvent) => {
       const message = event.detail?.message;
       const scenarioId = event.detail?.scenarioId;
-        const productContext = event.detail?.productContext;
-        const packKey = event.detail?.packKey;
-        
-        console.log('[CHAT] Événement openChatWithDraft reçu:', { message, scenarioId, productContext, packKey });
-        
-        // Stocker le contexte produit si fourni
-        if (productContext) {
-          productContextRef.current = productContext;
-        }
-        
-        openChatWithDraft(message, scenarioId, packKey);
+      const productContext = event.detail?.productContext;
+      const packKey = event.detail?.packKey;
+      
+      // Anti-doublon : ignorer si même packKey dans les 500ms
+      if (packKey && lastPackKeyRef.current && lastPackKeyRef.current.packKey === packKey && Date.now() - lastPackKeyRef.current.timestamp < 500) {
+        console.log('[CHAT] Événement openChatWithDraft ignoré (doublon packKey):', packKey);
+        return;
+      }
+      
+      if (packKey) {
+        lastPackKeyRef.current = { packKey, timestamp: Date.now() };
+      }
+      
+      console.log('[CHAT] Événement openChatWithDraft reçu:', { message, scenarioId, productContext, packKey });
+      
+      // Stocker le contexte produit si fourni
+      if (productContext) {
+        productContextRef.current = productContext;
+      }
+      
+      openChatWithDraft(message, scenarioId, packKey);
     };
 
     const handleChatDraftMessage = async (event: CustomEvent) => {
@@ -405,42 +486,45 @@ export default function FloatingChatWidget() {
       const productContext = event.detail?.productContext;
       const packKey = event.detail?.packKey;
       
-      if (message && message.trim() && isOpen && !isSendingRef.current) {
-        const trimmedMessage = message.trim();
-        
-        // ONE-SHOT : vérifier que ce message n'a pas déjà été traité
-        if (draftProcessedRef.current === trimmedMessage) {
-          console.log('[CHAT] Draft message déjà traité (one-shot), ignoré');
-          return;
-        }
-        
-        // Marquer comme traité IMMÉDIATEMENT (one-shot)
-        draftProcessedRef.current = trimmedMessage;
-        
-        // Si scenarioId fourni, le stocker dans la ref ET synchroniser avec useChat
-        if (scenarioId) {
-          scenarioIdRef.current = scenarioId;
-          console.log('[CHAT] ScenarioId stocké:', scenarioId);
-        }
-        
-        // Si productContext fourni, le stocker dans la ref
-        if (productContext) {
-          productContextRef.current = productContext;
-          console.log('[CHAT] ProductContext stocké:', productContext);
-        }
-        
-        // Si packKey fourni, il sera géré par useChat via openChatWithDraft
-        if (packKey) {
-          console.log('[CHAT] PackKey reçu:', packKey);
-        }
-        
-        console.log('[CHAT] Traitement draft message (one-shot):', trimmedMessage);
-        
-        // Attendre un peu pour s'assurer que le welcome est supprimé et le state est à jour
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
-        await sendMessage(trimmedMessage);
+      if (!message || !message.trim() || !isOpen || isSendingRef.current) {
+        return;
       }
+      
+      const trimmedMessage = message.trim();
+      
+      // ONE-SHOT : vérifier que ce message n'a pas déjà été traité (anti-doublon renforcé)
+      if (draftProcessedRef.current === trimmedMessage && lastDraftRef.current === trimmedMessage) {
+        console.log('[CHAT] Draft message déjà traité (one-shot), ignoré:', trimmedMessage.substring(0, 50));
+        return;
+      }
+      
+      // Marquer comme traité IMMÉDIATEMENT (one-shot)
+      draftProcessedRef.current = trimmedMessage;
+      lastDraftRef.current = trimmedMessage;
+      
+      // Si scenarioId fourni, le stocker dans la ref
+      if (scenarioId) {
+        scenarioIdRef.current = scenarioId;
+        console.log('[CHAT] ScenarioId stocké:', scenarioId);
+      }
+      
+      // Si productContext fourni, le stocker dans la ref
+      if (productContext) {
+        productContextRef.current = productContext;
+        console.log('[CHAT] ProductContext stocké:', productContext);
+      }
+      
+      // Si packKey fourni, log pour debugging
+      if (packKey) {
+        console.log('[CHAT] PackKey reçu dans draft message:', packKey);
+      }
+      
+      console.log('[CHAT] Traitement draft message (one-shot):', trimmedMessage.substring(0, 50));
+      
+      // Attendre un peu pour s'assurer que le welcome est supprimé et le state est à jour
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      await sendMessage(trimmedMessage);
     };
 
     // Wrappers pour convertir Event en CustomEvent
@@ -543,6 +627,8 @@ export default function FloatingChatWidget() {
                   onClick={() => {
                     resetIdleTimers();
                     resetChat();
+                    setTrackingUrl(null); // V1.5 - Réinitialiser l'URL de suivi
+                    lastPackKeyRef.current = null; // Réinitialiser le packKey ref
                   }}
                   className="cursor-pointer"
                 >
@@ -588,17 +674,41 @@ export default function FloatingChatWidget() {
                   </Card>
                 </div>
               )}
+
+              {/* V1.5 - Bouton "Suivre ma demande" après création */}
+              {trackingUrl && (
+                <div className="flex justify-start mb-3">
+                  <Card className="bg-green-50 border border-green-200 rounded-[18px] px-4 py-3 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-green-900 mb-1">Suivre votre demande</p>
+                        <p className="text-xs text-green-700">Consultez l'avancement de votre demande de réservation</p>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          window.open(trackingUrl, '_blank');
+                          setTrackingUrl(null); // Masquer après ouverture
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 h-auto"
+                        size="sm"
+                      >
+                        Ouvrir
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              )}
               
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
         </div>
 
-        {/* Récap et bouton Ajouter au panier / Envoyer la demande - Style Apple avec glass */}
-        {draftConfig && draftConfig.needsConfirmation && !activePackKey && (
+        {/* Récap et bouton Bloquer ma date - UNIQUEMENT en mode normal (pas pack) */}
+        {draftConfig && draftConfig.needsConfirmation && !isPackMode(activePackKey) && (
           <div className="px-6 py-4 border-t border-gray-100/50 bg-white/80 backdrop-blur-sm">
             <div className="mb-3">
-              <p className="text-sm font-semibold text-gray-900 mb-2.5">Récapitulatif</p>
+              <p className="text-sm font-semibold text-gray-900 mb-2.5">Récapitulatif de votre solution</p>
               <ul className="text-xs text-gray-600 space-y-1.5">
                 {draftConfig.selections.map((sel, idx) => (
                   <li key={idx} className="flex justify-between">
@@ -629,16 +739,16 @@ export default function FloatingChatWidget() {
               </ul>
             </div>
             <Button
-              onClick={handleAddToCart}
+              onClick={handleBlockDate}
               className="w-full bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-[14px] font-semibold shadow-sm hover:shadow-md active:scale-[0.98]"
             >
-              Ajouter au panier
+              Bloquer ma date (acompte 30%)
             </Button>
           </div>
         )}
         
-        {/* Mode pack : Récap et bouton Envoyer la demande */}
-        {activePackKey && reservationRequestDraft && (
+        {/* Mode pack : Récap et bouton Envoyer la demande / Confirmer & payer */}
+        {isPackMode(activePackKey) && reservationRequestDraft && (
           <div className="px-6 py-4 border-t border-gray-100/50 bg-white/80 backdrop-blur-sm">
             <div className="mb-3">
               <p className="text-sm font-semibold text-gray-900 mb-2.5">Récapitulatif de votre demande</p>
@@ -696,13 +806,85 @@ export default function FloatingChatWidget() {
               </p>
             </div>
             
-            <Button
-              onClick={async () => {
-                // Récupérer l'email depuis la session si disponible
+            {/* V1.2 availability check - Affichage du statut de disponibilité */}
+            {reservationRequestDraft.payload.startDate && reservationRequestDraft.payload.endDate && (
+              <div className="mb-3">
+                {availabilityStatus === 'checking' && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                    <p className="text-xs text-blue-700 font-medium">Vérification de la disponibilité…</p>
+                  </div>
+                )}
+                {availabilityStatus === 'available' && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                    <span className="text-green-600 text-sm">✅</span>
+                    <p className="text-xs text-green-700 font-medium">
+                      Disponible à cette date
+                      {availabilityDetails?.remaining !== undefined && availabilityDetails.remaining > 0 && (
+                        <span className="ml-1 text-green-600">
+                          ({availabilityDetails.remaining} disponible{availabilityDetails.remaining > 1 ? 's' : ''})
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
+                {availabilityStatus === 'unavailable' && (
+                  <div className="flex items-start gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+                    <span className="text-red-600 text-sm mt-0.5">❌</span>
+                    <div className="flex-1">
+                      <p className="text-xs text-red-700 font-medium">
+                        Indisponible à cette date
+                      </p>
+                      {availabilityDetails?.reason && (
+                        <p className="text-xs text-red-600 mt-1">{availabilityDetails.reason}</p>
+                      )}
+                      <p className="text-xs text-red-600 mt-1">
+                        Veuillez choisir une autre date ou contacter le support pour des alternatives.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {availabilityStatus === 'error' && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <span className="text-yellow-600 text-sm">⚠️</span>
+                    <p className="text-xs text-yellow-700">
+                      {availabilityDetails?.reason || 'Impossible de vérifier la disponibilité pour le moment'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* V1.3 Instant Booking - Bouton conditionnel */}
+            {(() => {
+              const instantEligible = isInstantBookingEligible();
+              
+              // Vérifier si tous les champs requis sont présents
+              const hasRequiredFields = hasRequiredPackFields(reservationRequestDraft);
+              
+              const isDisabled = 
+                availabilityStatus === 'unavailable' ||
+                availabilityStatus === 'checking' ||
+                isCreatingInstantReservation ||
+                !hasRequiredFields ||
+                (!customerPhoneInput && !reservationRequestDraft.payload.customerPhone);
+              
+              // Debug logs minimaux
+              if (instantEligible || !hasRequiredFields) {
+                console.log('[INSTANT] État bouton:', {
+                  instantEligible,
+                  hasRequiredFields,
+                  availabilityStatus,
+                  isDisabled
+                });
+              }
+
+              // Fonction partagée pour récupérer les infos client
+              const getCustomerInfo = async () => {
                 let customerEmail = '';
                 let customerName = '';
                 let customerPhone = customerPhoneInput || reservationRequestDraft.payload.customerPhone || '';
-                
+
                 try {
                   const { supabase } = await import('@/lib/supabase');
                   if (supabase) {
@@ -715,41 +897,248 @@ export default function FloatingChatWidget() {
                 } catch (e) {
                   console.error('Erreur récupération user:', e);
                 }
-                
-                // Utiliser l'email du payload si pas de session
+
                 if (!customerEmail && reservationRequestDraft.payload.customerEmail) {
                   customerEmail = reservationRequestDraft.payload.customerEmail;
                 }
                 if (!customerName && reservationRequestDraft.payload.customerName) {
                   customerName = reservationRequestDraft.payload.customerName;
                 }
+
+                return { customerEmail, customerName, customerPhone };
+              };
+
+              // Handler pour instant booking
+              const handleInstantBooking = async () => {
+                console.log('[INSTANT] Début handleInstantBooking');
+                console.log('[INSTANT] activePackKey:', activePackKey);
+                console.log('[INSTANT] reservationRequestDraft:', reservationRequestDraft);
+                console.log('[INSTANT] availabilityStatus:', availabilityStatus);
                 
-                // Validation téléphone obligatoire
+                const { customerEmail, customerName, customerPhone } = await getCustomerInfo();
+                console.log('[INSTANT] Infos client:', { customerEmail, customerName, customerPhone });
+                console.log('[INSTANT] customerPhone type:', typeof customerPhone, 'value:', customerPhone, 'trimmed:', customerPhone?.trim());
+
+                // Validations
                 if (!customerPhone || customerPhone.trim() === '') {
-                  addAssistantMessage('Veuillez renseigner votre numéro de téléphone pour finaliser votre demande. Il est nécessaire pour coordonner la livraison et l\'installation.');
+                  console.log('[INSTANT] ❌ ERREUR: téléphone manquant - customerPhone:', customerPhone);
+                  setIsCreatingInstantReservation(false);
+                  addAssistantMessage('❌ Veuillez renseigner votre numéro de téléphone dans le champ ci-dessus pour finaliser votre réservation.');
+                  setTimeout(() => {
+                    if (messagesEndRef.current) {
+                      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }, 100);
+                  return;
+                }
+
+                const phoneDigits = customerPhone.replace(/\D/g, '');
+                console.log('[INSTANT] phoneDigits:', phoneDigits, 'length:', phoneDigits.length);
+                // Accepter les numéros français (9 chiffres minimum, 10 idéalement)
+                // Format: 06XXXXXXXX ou 07XXXXXXXX (10 chiffres) ou variantes avec 9 chiffres
+                if (phoneDigits.length < 9) {
+                  console.log('[INSTANT] ❌ ERREUR: téléphone invalide - moins de 9 chiffres');
+                  setIsCreatingInstantReservation(false);
+                  addAssistantMessage('❌ Veuillez renseigner un numéro de téléphone valide (au moins 9 chiffres).');
+                  setTimeout(() => {
+                    if (messagesEndRef.current) {
+                      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }, 100);
                   return;
                 }
                 
-                // Validation format téléphone basique (au moins 10 caractères)
+                // Avertissement si moins de 10 chiffres mais on accepte quand même
+                if (phoneDigits.length < 10) {
+                  console.log('[INSTANT] ⚠️ Téléphone avec 9 chiffres seulement - accepté mais idéalement 10 chiffres');
+                }
+                
+                console.log('[INSTANT] ✅ Validation téléphone OK');
+
+                // Note: L'email n'est pas obligatoire pour l'instant booking
+                // Stripe demandera l'email dans le checkout si nécessaire
+                // On affiche juste un message informatif si l'email manque
+                if (!customerEmail || customerEmail.trim() === '') {
+                  console.log('[INSTANT] Email non fourni - Stripe demandera dans le checkout');
+                  // Message informatif (non bloquant, envoyé en arrière-plan)
+                  // On ne bloque pas le flux pour cela
+                } else {
+                  console.log('[INSTANT] ✅ Email fourni:', customerEmail);
+                }
+
+                console.log('[INSTANT] Vérification dates - activePackKey:', activePackKey, 'startDate:', reservationRequestDraft?.payload?.startDate, 'endDate:', reservationRequestDraft?.payload?.endDate);
+                if (!activePackKey || !reservationRequestDraft?.payload?.startDate || !reservationRequestDraft?.payload?.endDate) {
+                  console.log('[INSTANT] ❌ ERREUR: informations manquantes', { activePackKey, startDate: reservationRequestDraft?.payload?.startDate, endDate: reservationRequestDraft?.payload?.endDate });
+                  setIsCreatingInstantReservation(false);
+                  addAssistantMessage('❌ Erreur: informations manquantes (dates). Veuillez réessayer ou envoyer une demande de réservation.');
+                  setTimeout(() => {
+                    if (messagesEndRef.current) {
+                      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }, 100);
+                  return;
+                }
+
+                console.log('[INSTANT] ✅ Toutes les validations passées, création réservation...');
+                console.log('[INSTANT] Email client:', customerEmail || '(sera demandé par Stripe)');
+                setIsCreatingInstantReservation(true);
+
+                try {
+                  // HOLD v1 - Étape 1: Créer un hold avant de créer la réservation
+                  const payload = reservationRequestDraft.payload;
+                  
+                  // Validation des dates avant création Date
+                  if (!payload.startDate || !payload.endDate) {
+                    throw new Error('Dates de début et de fin requises');
+                  }
+                  
+                  const startAt = new Date(payload.startDate);
+                  const endAt = new Date(payload.endDate);
+                  
+                  // Ajouter les heures si disponibles
+                  if (payload.startTime) {
+                    const [hours, minutes] = payload.startTime.split(/[h:]/).map(Number);
+                    startAt.setHours(hours || 0, minutes || 0, 0, 0);
+                  }
+                  if (payload.endTime) {
+                    const [hours, minutes] = payload.endTime.split(/[h:]/).map(Number);
+                    endAt.setHours(hours || 0, minutes || 0, 0, 0);
+                  }
+
+                  // Créer le hold (blocage temporaire 10 minutes)
+                  let holdId: string | null = null;
+                  try {
+                    const holdResponse = await fetch('/api/holds', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        pack_key: activePackKey,
+                        start_at: startAt.toISOString(),
+                        end_at: endAt.toISOString(),
+                        contact_phone: customerPhone.trim(),
+                        contact_email: customerEmail,
+                        source: 'chat',
+                      }),
+                    });
+
+                    if (!holdResponse.ok) {
+                      const holdErrorData = await holdResponse.json();
+                      // Si conflit (409), le créneau est déjà bloqué
+                      if (holdResponse.status === 409) {
+                        throw new Error('Ce créneau est temporairement indisponible. Veuillez choisir une autre date ou envoyer une demande de réservation.');
+                      }
+                      // Autre erreur : continuer mais logger
+                      console.warn('[INSTANT] Erreur création hold (non bloquant):', holdErrorData);
+                    } else {
+                      const holdData = await holdResponse.json();
+                      holdId = holdData.hold_id;
+                    }
+                  } catch (holdError) {
+                    // Si erreur de hold, proposer fallback vers demande
+                    if (holdError instanceof Error && holdError.message.includes('indisponible')) {
+                      throw holdError; // Relancer l'erreur pour afficher le message
+                    }
+                    // Autre erreur : continuer mais logger
+                    console.warn('[INSTANT] Erreur création hold (non bloquant):', holdError);
+                  }
+
+                  // HOLD v1 - Étape 2: Créer la réservation instantanée
+                  const instantResponse = await fetch('/api/instant-reservations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      pack_key: activePackKey,
+                      start_at: startAt.toISOString(),
+                      end_at: endAt.toISOString(),
+                      address: payload.address || null,
+                      customer_email: customerEmail,
+                      customer_phone: customerPhone.trim(),
+                      customer_name: customerName || null,
+                      payload: payload,
+                      hold_id: holdId, // Passer le hold_id pour consommation
+                    }),
+                  });
+
+                  if (!instantResponse.ok) {
+                    const errorData = await instantResponse.json();
+                    throw new Error(errorData.error || 'Erreur lors de la création de la réservation');
+                  }
+
+                  const { reservation_id } = await instantResponse.json();
+
+                  // HOLD v1 - Étape 3: Créer la session Stripe Checkout avec hold_id
+                  console.log('[INSTANT] Création session Stripe pour reservation_id:', reservation_id, 'hold_id:', holdId);
+                  const checkoutResponse = await fetch('/api/payments/create-checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                      reservation_id,
+                      ...(holdId && { hold_id: holdId }), // Passer hold_id si disponible
+                    }),
+                  });
+
+                  console.log('[INSTANT] Réponse checkout:', checkoutResponse.status, checkoutResponse.ok);
+
+                  if (!checkoutResponse.ok) {
+                    const errorData = await checkoutResponse.json().catch(() => ({ error: 'Erreur inconnue' }));
+                    console.error('[INSTANT] Erreur checkout:', errorData);
+                    throw new Error(errorData.error || 'Erreur lors de la création de la session de paiement');
+                  }
+
+                  const checkoutData = await checkoutResponse.json();
+                  console.log('[INSTANT] Données checkout:', checkoutData);
+
+                  const url = checkoutData.url || checkoutData.checkoutUrl;
+                  console.log('[INSTANT] URL Stripe:', url);
+
+                  // 3. Rediriger vers Stripe Checkout
+                  if (url) {
+                    console.log('[INSTANT] Redirection vers Stripe...');
+                    window.location.href = url;
+                  } else {
+                    console.error('[INSTANT] Pas d\'URL dans la réponse:', checkoutData);
+                    throw new Error('URL de paiement non reçue');
+                  }
+                } catch (error) {
+                  console.error('[INSTANT] Erreur instant booking:', error);
+                  setIsCreatingInstantReservation(false);
+                  // Message d'erreur visible avec proposition de fallback
+                  const errorMessage = error instanceof Error 
+                    ? `❌ Erreur: ${error.message}\n\n💡 Vous pouvez envoyer une demande de réservation à la place en cliquant sur "Envoyer la demande".`
+                    : '❌ Erreur lors de la confirmation.\n\n💡 Vous pouvez envoyer une demande de réservation à la place en cliquant sur "Envoyer la demande".';
+                  setTimeout(() => {
+                    addAssistantMessage(errorMessage);
+                  }, 100);
+                }
+              };
+
+              // Handler pour demande normale
+              const handleNormalRequest = async () => {
+                const { customerEmail, customerName, customerPhone } = await getCustomerInfo();
+
+                // Validations
+                if (!customerPhone || customerPhone.trim() === '') {
+                  addAssistantMessage('Veuillez renseigner votre numéro de téléphone pour finaliser votre demande.');
+                  return;
+                }
+
                 const phoneDigits = customerPhone.replace(/\D/g, '');
                 if (phoneDigits.length < 10) {
                   addAssistantMessage('Veuillez renseigner un numéro de téléphone valide (au moins 10 chiffres).');
                   return;
                 }
-                
+
                 if (!customerEmail) {
                   addAssistantMessage('Veuillez fournir votre email pour envoyer la demande. Vous pouvez me le donner maintenant ou vous connecter.');
                   return;
                 }
-                
-                // Envoyer la demande de réservation
+
+                if (!isPackMode(activePackKey)) {
+                  addAssistantMessage('Erreur: type de pack invalide. Veuillez réessayer.');
+                  return;
+                }
+
                 try {
-                  // Vérifier que activePackKey est bien l'un des types attendus
-                  if (!activePackKey || (activePackKey !== 'conference' && activePackKey !== 'soiree' && activePackKey !== 'mariage')) {
-                    addAssistantMessage('Erreur: type de pack invalide. Veuillez réessayer.');
-                    return;
-                  }
-                  
                   const response = await fetch('/api/reservation-requests', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -761,9 +1150,24 @@ export default function FloatingChatWidget() {
                       customer_name: customerName || null,
                     }),
                   });
-                  
+
                   if (response.ok) {
+                    const responseData = await response.json();
                     addAssistantMessage('Votre demande a été envoyée avec succès ! Nous vous recontacterons rapidement par email.');
+                    
+                    // V1.5 - Afficher le bouton "Suivre ma demande" si publicTrackingUrl disponible
+                    if (responseData.publicTrackingUrl) {
+                      // Ajouter un message avec le bouton de suivi
+                      setTimeout(() => {
+                        addAssistantMessage('Vous pouvez suivre l\'avancement de votre demande en cliquant sur le bouton ci-dessous.');
+                        // Stocker l'URL de suivi pour affichage dans le UI
+                        window.dispatchEvent(new CustomEvent('reservationRequestCreated', { 
+                          detail: { trackingUrl: responseData.publicTrackingUrl } 
+                        }));
+                      }, 500);
+                    }
+                    
+                    // Réinitialiser les états après envoi réussi
                     setReservationRequestDraft(null);
                     setDraftConfig(null);
                     setCustomerPhoneInput('');
@@ -775,12 +1179,33 @@ export default function FloatingChatWidget() {
                   console.error('Erreur envoi demande:', error);
                   addAssistantMessage('Erreur lors de l\'envoi de la demande. Veuillez réessayer.');
                 }
-              }}
-              disabled={!customerPhoneInput && !reservationRequestDraft.payload.customerPhone}
-              className="w-full bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-[14px] font-semibold shadow-sm hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Envoyer la demande
-            </Button>
+              };
+
+              return instantEligible ? (
+                <Button
+                  onClick={() => {
+                    console.log('[INSTANT] Bouton cliqué');
+                    console.log('[INSTANT] isDisabled:', isDisabled);
+                    console.log('[INSTANT] instantEligible:', instantEligible);
+                    handleInstantBooking();
+                  }}
+                  disabled={isDisabled}
+                  className="w-full bg-green-600 text-white hover:bg-green-700 rounded-[14px] font-semibold shadow-sm hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCreatingInstantReservation ? 'Traitement...' : 'Bloquer ma date (acompte 30%)'}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNormalRequest}
+                  disabled={isDisabled}
+                  className="w-full bg-[#F2431E] text-white hover:bg-[#E63A1A] rounded-[14px] font-semibold shadow-sm hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {availabilityStatus === 'checking' && 'Vérification...'}
+                  {availabilityStatus === 'unavailable' && 'Indisponible à cette date'}
+                  {availabilityStatus !== 'checking' && availabilityStatus !== 'unavailable' && 'Bloquer ma date (acompte 30%)'}
+                </Button>
+              );
+            })()}
           </div>
         )}
 

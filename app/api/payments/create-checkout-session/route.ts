@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { reservation_id } = body;
+    const { reservation_id, hold_id } = body; // HOLD v1 - hold_id optionnel
 
     if (!reservation_id) {
       return NextResponse.json({ error: 'reservation_id requis' }, { status: 400 });
@@ -198,28 +198,37 @@ export async function POST(req: NextRequest) {
       ];
     }
     
-    // Calculer le montant de la caution en centimes
-    const depositAmountInCents = reservation.deposit_amount 
-      ? Math.round(parseFloat(reservation.deposit_amount.toString()) * 100)
-      : 0;
+    // Calculer le montant de l'acompte (30% du total)
+    const depositAmount = Math.round(parseFloat(reservation.price_total.toString()) * 0.3 * 100);
     
-    // Créer la session Stripe
+    // Créer une session Stripe UNIQUEMENT pour l'acompte (30%)
+    // Le solde et la caution seront payés plus tard via des sessions séparées
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: lineItems,
+      line_items: [
+        {
+          price_data: {
+            currency: 'eur',
+            product_data: {
+              name: 'Acompte - Blocage de date',
+              description: `Acompte de 30% pour bloquer votre date (${Math.round(parseFloat(reservation.price_total.toString()) * 0.3)}€). Le solde restant sera demandé 5 jours avant votre événement.`,
+            },
+            unit_amount: depositAmount,
+          },
+          quantity: 1,
+        },
+      ],
       mode: 'payment',
-      // Rediriger vers l'API de création de session caution après succès du paiement principal
-      success_url: depositAmountInCents > 0
-        ? `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/payments/create-deposit-session?session_id={CHECKOUT_SESSION_ID}&deposit=${depositAmountInCents}&reservation_id=${reservation.id}`
-        : `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard?payment=success&reservation_id=${reservation.id}`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard?payment=success&reservation_id=${reservation.id}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard?payment=cancelled`,
-      customer_email: userEmail,
+      ...(userEmail && { customer_email: userEmail }), // Ne pas inclure customer_email si null/undefined (Stripe demandera dans le checkout)
       metadata: {
-        type: 'client_reservation',
+        type: 'client_reservation_deposit', // Acompte uniquement
         reservation_id: reservation.id,
         pack_key: reservation.pack_key,
         price_total: reservation.price_total.toString(),
-        deposit_amount: reservation.deposit_amount.toString(),
+        deposit_amount: (depositAmount / 100).toString(),
+        ...(hold_id && { hold_id }), // HOLD v1 - Ajouter hold_id dans metadata si fourni
       },
     });
 

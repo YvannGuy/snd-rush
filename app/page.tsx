@@ -165,7 +165,6 @@ export default function Home() {
         <SectionAnimation delay={0.1}>
           <SolutionsSection 
             language={language}
-            onReservePack={handleReservePack}
           />
         </SectionAnimation>
 

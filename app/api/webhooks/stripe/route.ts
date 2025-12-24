@@ -79,13 +79,13 @@ export async function POST(req: NextRequest) {
         try {
           // Récupérer les métadonnées de la session
           const metadata = session.metadata || {};
-          const paymentType = metadata.type || 'cart'; // 'cart' pour paiement principal, 'deposit' pour caution, 'client_reservation' pour demande de réservation
+          const paymentType = metadata.type || 'cart'; // 'cart' pour paiement principal, 'deposit' pour caution, 'client_reservation_deposit' pour acompte, 'client_reservation_balance' pour solde, 'client_reservation_security_deposit' pour caution
           
           console.log('🔍 Type de paiement détecté:', paymentType);
           console.log('🔍 Métadonnées complètes:', JSON.stringify(metadata, null, 2));
           
-          // Si c'est un paiement de client_reservation (demande de réservation)
-          if (paymentType === 'client_reservation') {
+          // Si c'est un paiement d'acompte (30%) pour client_reservation
+          if (paymentType === 'client_reservation_deposit') {
             const reservationId = metadata.reservation_id;
             
             console.log('📋 Webhook client_reservation reçu:', {
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
             // Vérifier d'abord si la réservation existe
             const { data: existingReservation, error: fetchError } = await supabaseClient
               .from('client_reservations')
-              .select('id, status, stripe_session_id')
+              .select('id, status, stripe_session_id, customer_email')
               .eq('id', reservationId)
               .single();
             
@@ -130,13 +130,24 @@ export async function POST(req: NextRequest) {
               return NextResponse.json({ received: true, alreadyPaid: true });
             }
             
-            // Mettre à jour le statut de la réservation à PAID après paiement réussi
+            // Préparer les données de mise à jour pour l'ACOMPTE (30%)
+            const updateData: any = {
+              status: 'AWAITING_BALANCE', // Nouveau statut : attend le solde
+              stripe_session_id: session.id, // Session de l'acompte
+              deposit_paid_at: new Date().toISOString(), // Date de paiement de l'acompte
+            };
+            
+            // Mettre à jour l'email si la réservation n'en a pas encore et que Stripe en a fourni un
+            const customerEmailFromStripe = session.customer_email || session.customer_details?.email;
+            if (customerEmailFromStripe && !existingReservation.customer_email) {
+              console.log('📧 Mise à jour email client depuis Stripe:', customerEmailFromStripe);
+              updateData.customer_email = customerEmailFromStripe;
+            }
+            
+            // Mettre à jour la réservation après paiement de l'acompte
             const { data: updatedReservation, error: updateError } = await supabaseClient
               .from('client_reservations')
-              .update({
-                status: 'PAID',
-                stripe_session_id: session.id,
-              })
+              .update(updateData)
               .eq('id', reservationId)
               .select()
               .single();
@@ -158,11 +169,243 @@ export async function POST(req: NextRequest) {
             console.log('✅ Nouveau statut:', updatedReservation.status);
             console.log('✅ Nouveau session_id:', updatedReservation.stripe_session_id);
             
-            return NextResponse.json({ received: true, success: true, status: updatedReservation.status });
+            // HOLD v1 - Consommer le hold si présent dans les métadonnées
+            const holdId = metadata.hold_id;
+            if (holdId) {
+              try {
+                console.log('🔄 Consommation du hold:', holdId);
+                const { error: consumeHoldError } = await supabaseClient
+                  .from('reservation_holds')
+                  .update({
+                    status: 'CONSUMED',
+                    reservation_id: reservationId,
+                  })
+                  .eq('id', holdId)
+                  .eq('status', 'ACTIVE'); // Seulement si encore actif
+
+                if (consumeHoldError) {
+                  // Ne pas faire échouer le webhook si la consommation échoue
+                  console.warn('⚠️ Erreur consommation hold (non bloquant):', consumeHoldError);
+                } else {
+                  console.log('✅ Hold consommé avec succès:', holdId);
+                }
+              } catch (holdError) {
+                // Ne pas faire échouer le webhook si erreur
+                console.warn('⚠️ Erreur consommation hold (non bloquant):', holdError);
+              }
+            }
+            
+            // Créer un order pour l'acompte payé
+            try {
+              const depositAmount = parseFloat(reservation.price_total.toString()) * 0.3;
+              const orderData = {
+                stripe_session_id: session.id,
+                stripe_payment_intent_id: session.payment_intent ? (typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent.id) : null,
+                customer_email: updatedReservation.customer_email || session.customer_email || '',
+                customer_name: updatedReservation.customer_name || '',
+                customer_phone: null,
+                delivery_address: updatedReservation.address || '',
+                delivery_option: null,
+                delivery_fee: 0,
+                subtotal: depositAmount,
+                total: depositAmount,
+                deposit_total: 0,
+                status: 'PAID',
+                client_reservation_id: reservationId, // Lier à client_reservations
+                metadata: {
+                  type: 'client_reservation_deposit',
+                  reservation_id: reservationId,
+                  pack_key: updatedReservation.pack_key,
+                  paymentType: 'deposit',
+                },
+              };
+              
+              const { error: orderError } = await supabaseClient
+                .from('orders')
+                .insert(orderData);
+              
+              if (orderError) {
+                console.warn('⚠️ Erreur création order pour acompte (non bloquant):', orderError);
+              } else {
+                console.log('✅ Order créé pour acompte:', reservationId);
+              }
+            } catch (orderErr) {
+              console.warn('⚠️ Erreur création order pour acompte (non bloquant):', orderErr);
+            }
+            
+            console.log('✅ Acompte payé avec succès:', reservationId);
+            return NextResponse.json({ received: true, success: true, status: updatedReservation.status, paymentType: 'deposit' });
           }
           
-          // Si c'est un paiement de caution, traiter différemment
-          if (paymentType === 'deposit') {
+          // Si c'est un paiement de SOLDE (70%) pour client_reservation
+          if (paymentType === 'client_reservation_balance') {
+            const reservationId = metadata.reservation_id;
+            
+            console.log('💰 Webhook solde reçu:', {
+              sessionId: session.id,
+              reservationId,
+              paymentStatus: session.payment_status,
+            });
+            
+            if (!reservationId) {
+              console.warn('⚠️ reservation_id manquant dans les métadonnées');
+              return NextResponse.json({ received: true, warning: 'reservation_id manquant' });
+            }
+            
+            if (session.payment_status !== 'paid') {
+              console.warn('⚠️ Paiement solde non complété, statut:', session.payment_status);
+              return NextResponse.json({ received: true, warning: 'Paiement non complété' });
+            }
+            
+            // Mettre à jour la réservation avec le paiement du solde
+            const { data: updatedReservation, error: updateError } = await supabaseClient
+              .from('client_reservations')
+              .update({
+                balance_paid_at: new Date().toISOString(),
+                balance_session_id: session.id,
+                status: 'CONFIRMED', // Réservation confirmée après paiement du solde
+              })
+              .eq('id', reservationId)
+              .select()
+              .single();
+            
+            if (updateError) {
+              console.error('❌ Erreur mise à jour solde:', updateError);
+              return NextResponse.json({ received: true, error: 'Erreur mise à jour' });
+            }
+            
+            // Créer un order pour le solde payé
+            try {
+              const balanceAmount = updatedReservation.balance_amount 
+                ? parseFloat(updatedReservation.balance_amount.toString())
+                : parseFloat(updatedReservation.price_total.toString()) * 0.7;
+              
+              const orderData = {
+                stripe_session_id: session.id,
+                stripe_payment_intent_id: session.payment_intent ? (typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent.id) : null,
+                customer_email: updatedReservation.customer_email || session.customer_email || '',
+                customer_name: updatedReservation.customer_name || '',
+                customer_phone: null,
+                delivery_address: updatedReservation.address || '',
+                delivery_option: null,
+                delivery_fee: 0,
+                subtotal: balanceAmount,
+                total: balanceAmount,
+                deposit_total: 0,
+                status: 'PAID',
+                client_reservation_id: reservationId, // Lier à client_reservations
+                metadata: {
+                  type: 'client_reservation_balance',
+                  reservation_id: reservationId,
+                  pack_key: updatedReservation.pack_key,
+                  paymentType: 'balance',
+                },
+              };
+              
+              const { error: orderError } = await supabaseClient
+                .from('orders')
+                .insert(orderData);
+              
+              if (orderError) {
+                console.warn('⚠️ Erreur création order pour solde (non bloquant):', orderError);
+              } else {
+                console.log('✅ Order créé pour solde:', reservationId);
+              }
+            } catch (orderErr) {
+              console.warn('⚠️ Erreur création order pour solde (non bloquant):', orderErr);
+            }
+            
+            console.log('✅ Solde payé avec succès:', reservationId);
+            return NextResponse.json({ received: true, success: true, status: updatedReservation.status, paymentType: 'balance' });
+          }
+          
+          // Si c'est un paiement de CAUTION pour client_reservation
+          if (paymentType === 'client_reservation_security_deposit') {
+            const reservationId = metadata.reservation_id;
+            
+            console.log('🔒 Webhook caution reçu:', {
+              sessionId: session.id,
+              reservationId,
+              paymentStatus: session.payment_status,
+            });
+            
+            if (!reservationId) {
+              console.warn('⚠️ reservation_id manquant dans les métadonnées');
+              return NextResponse.json({ received: true, warning: 'reservation_id manquant' });
+            }
+            
+            // Pour la caution, on peut utiliser setup_intent ou payment_intent selon le mode
+            // Si c'est une autorisation (non débitée), le statut peut être 'unpaid'
+            if (session.payment_status !== 'paid' && session.payment_status !== 'unpaid') {
+              console.warn('⚠️ Paiement caution non complété, statut:', session.payment_status);
+              return NextResponse.json({ received: true, warning: 'Paiement non complété' });
+            }
+            
+            // Mettre à jour la réservation avec le paiement de la caution
+            const { data: updatedReservation, error: updateError } = await supabaseClient
+              .from('client_reservations')
+              .update({
+                deposit_session_id: session.id,
+                // Note: deposit_paid_at peut rester null si c'est juste une autorisation
+              })
+              .eq('id', reservationId)
+              .select()
+              .single();
+
+            if (updateError) {
+              console.error('❌ Erreur mise à jour caution:', updateError);
+              return NextResponse.json({ received: true, error: 'Erreur mise à jour' });
+            }
+
+            // Créer un order pour la caution (si payée, pas seulement autorisée)
+            if (session.payment_status === 'paid' && updatedReservation) {
+              try {
+                const depositAmount = parseFloat(updatedReservation.deposit_amount?.toString() || '0');
+                
+                if (depositAmount > 0) {
+                  const orderData = {
+                    stripe_session_id: session.id,
+                    stripe_payment_intent_id: session.payment_intent ? (typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent.id) : null,
+                    customer_email: updatedReservation.customer_email || session.customer_email || '',
+                    customer_name: updatedReservation.customer_name || '',
+                    customer_phone: null,
+                    delivery_address: updatedReservation.address || '',
+                    delivery_option: null,
+                    delivery_fee: 0,
+                    subtotal: depositAmount,
+                    total: depositAmount,
+                    deposit_total: 0,
+                    status: 'PAID',
+                    client_reservation_id: reservationId, // Lier à client_reservations
+                    metadata: {
+                      type: 'client_reservation_security_deposit',
+                      reservation_id: reservationId,
+                      pack_key: updatedReservation.pack_key,
+                      paymentType: 'security_deposit',
+                    },
+                  };
+                  
+                  const { error: orderError } = await supabaseClient
+                    .from('orders')
+                    .insert(orderData);
+                  
+                  if (orderError) {
+                    console.warn('⚠️ Erreur création order pour caution (non bloquant):', orderError);
+                  } else {
+                    console.log('✅ Order créé pour caution:', reservationId);
+                  }
+                }
+              } catch (orderErr) {
+                console.warn('⚠️ Erreur création order pour caution (non bloquant):', orderErr);
+              }
+            }
+
+            console.log('✅ Caution enregistrée avec succès:', reservationId);
+            return NextResponse.json({ received: true, success: true, paymentType: 'security_deposit' });
+          }
+          
+          // Ancien format pour compatibilité (deprecated)
+          if (paymentType === 'client_reservation' || paymentType === 'deposit') {
           const reservationId = metadata.reservationId;
           const mainSessionId = metadata.mainSessionId;
           
@@ -515,7 +758,30 @@ export async function POST(req: NextRequest) {
         }
 
         // Créer l'order dans Supabase
-        const orderData = {
+        // Déterminer si c'est une client_reservation ou une ancienne reservation
+        let clientReservationId = null;
+        let oldReservationId = reservationId;
+        
+        // Si reservationId pointe vers client_reservations (vérifier via metadata ou via l'existence)
+        if (reservationId) {
+          try {
+            const { data: clientReservation } = await supabaseClient
+              .from('client_reservations')
+              .select('id')
+              .eq('id', reservationId)
+              .single();
+            
+            if (clientReservation) {
+              clientReservationId = reservationId;
+              oldReservationId = null; // Ne pas utiliser reservation_id pour les nouvelles réservations
+            }
+          } catch (e) {
+            // Si erreur, c'est probablement une ancienne reservation, garder oldReservationId
+            console.log('Réservation non trouvée dans client_reservations, utilisation ancienne table');
+          }
+        }
+        
+        const orderData: any = {
           stripe_session_id: session.id,
           stripe_payment_intent_id: paymentIntentId,
           customer_email: customerEmail,
@@ -534,6 +800,13 @@ export async function POST(req: NextRequest) {
             sessionMetadata: metadata,
           },
         };
+        
+        // Ajouter le bon ID selon le type de réservation
+        if (clientReservationId) {
+          orderData.client_reservation_id = clientReservationId;
+        } else if (oldReservationId) {
+          orderData.reservation_id = oldReservationId;
+        }
 
         console.log('📦 Création de l\'order avec les données:', {
           customer_email: customerEmail,
@@ -799,6 +1072,35 @@ export async function POST(req: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log('❌ Paiement asynchrone échoué - Session ID:', session.id);
         // Notifier le client que le paiement a échoué
+        break;
+      }
+
+      case 'checkout.session.expired': {
+        // HOLD v1 - Annuler le hold si la session Stripe expire
+        const session = event.data.object as Stripe.Checkout.Session;
+        const metadata = session.metadata || {};
+        const holdId = metadata.hold_id;
+
+        if (holdId && supabaseAdmin) {
+          try {
+            console.log('⏰ Session Stripe expirée, annulation du hold:', holdId);
+            const { error: cancelHoldError } = await supabaseAdmin
+              .from('reservation_holds')
+              .update({
+                status: 'CANCELLED',
+              })
+              .eq('id', holdId)
+              .eq('status', 'ACTIVE'); // Seulement si encore actif
+
+            if (cancelHoldError) {
+              console.warn('⚠️ Erreur annulation hold (non bloquant):', cancelHoldError);
+            } else {
+              console.log('✅ Hold annulé avec succès:', holdId);
+            }
+          } catch (holdError) {
+            console.warn('⚠️ Erreur annulation hold (non bloquant):', holdError);
+          }
+        }
         break;
       }
 

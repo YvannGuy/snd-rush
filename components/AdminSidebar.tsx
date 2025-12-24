@@ -4,9 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/hooks/useUser';
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState, useEffect, useRef } from 'react';
+import { adminFetch } from '@/lib/adminApiClient';
 import UserIconWithName from '@/components/UserIconWithName';
 
 interface AdminSidebarProps {
@@ -24,6 +23,7 @@ interface AdminSidebarProps {
     pendingModifications?: number;
     pendingProRequests?: number;
     pendingReservationRequests?: number;
+    newInvoices?: number;
   };
 }
 
@@ -31,7 +31,6 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
   const pathname = usePathname();
   const { signOut } = useAuth();
   const router = useRouter();
-  const { user } = useUser();
   const [localPendingActions, setLocalPendingActions] = useState({
     pendingReservations: 0,
     contractsToSign: 0,
@@ -41,7 +40,10 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
     pendingModifications: 0,
     pendingProRequests: 0,
     pendingReservationRequests: 0,
+    newInvoices: 0,
   });
+  const [loadingBadges, setLoadingBadges] = useState(false);
+  const hasLoggedNoSession = useRef(false);
 
   const texts = {
     fr: {
@@ -93,195 +95,72 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
     return pathname?.startsWith(path);
   };
 
-  const getUserName = () => {
-    if (user?.user_metadata?.first_name && user?.user_metadata?.last_name) {
-      return `${user.user_metadata.first_name} ${user.user_metadata.last_name}`;
-    }
-    if (user?.email) {
-      return user.email.split('@')[0];
-    }
-    return 'Admin';
-  };
 
-  const getUserInitials = () => {
-    const name = getUserName();
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-
-  // Utiliser les props si fournies, sinon calculer localement
+  // Utiliser les props si fournies, sinon fetch via API
   const pendingActions = propsPendingActions || localPendingActions;
 
-  // Calculer les compteurs si pas fournis en props
+  // Fetch badges via API si pas fournis en props
   useEffect(() => {
-    if (propsPendingActions || !user || !supabase) return;
+    if (propsPendingActions) return;
 
-    const calculatePendingActions = async () => {
+    const fetchPendingActions = async () => {
+      setLoadingBadges(true);
+      
       try {
-        // Réservations en attente (non vues)
-        const viewedReservations = typeof window !== 'undefined'
-          ? JSON.parse(localStorage.getItem('admin_viewed_reservations') || '[]')
-          : [];
-        
-        const { data: pendingReservationsData } = await supabase
-          .from('reservations')
-          .select('id, status')
-          .eq('status', 'PENDING');
-        
-        const pendingReservations = (pendingReservationsData || []).filter(
-          (r) => !viewedReservations.includes(r.id)
-        ).length;
-
-        // Contrats à signer par les clients
-        const viewedContracts = typeof window !== 'undefined'
-          ? JSON.parse(localStorage.getItem('admin_viewed_contracts') || '[]')
-          : [];
-        
-        const { data: contractsData } = await supabase
-          .from('reservations')
-          .select('id, status, client_signature')
-          .in('status', ['CONFIRMED', 'CONTRACT_PENDING', 'confirmed'])
-          .or('client_signature.is.null,client_signature.eq.');
-        
-        const contractsToSign = (contractsData || []).filter(
-          (r) => (!r.client_signature || r.client_signature.trim() === '')
-            && !viewedContracts.includes(r.id)
-        ).length;
-
-        // États des lieux à traiter
-        const viewedConditionReports = typeof window !== 'undefined'
-          ? JSON.parse(localStorage.getItem('admin_viewed_condition_reports') || '[]')
-          : [];
-        
-        const { data: etatsLieuxData } = await supabase
-          .from('etat_lieux')
-          .select('id, status')
-          .in('status', ['livraison_complete', 'reprise_complete']);
-        
-        const conditionReportsToReview = (etatsLieuxData || []).filter(
-          (el) => !viewedConditionReports.includes(el.id)
-        ).length;
-
-        // Livraisons en cours
-        const viewedDeliveries = typeof window !== 'undefined'
-          ? JSON.parse(localStorage.getItem('admin_viewed_deliveries') || '[]')
-          : [];
-        
-        const { data: deliveriesData } = await supabase
-          .from('reservations')
-          .select('id, status, delivery_status')
-          .in('status', ['CONFIRMED', 'confirmed', 'IN_PROGRESS', 'in_progress'])
-          .not('delivery_status', 'is', null)
-          .neq('delivery_status', 'termine');
-        
-        const deliveriesInProgress = (deliveriesData || []).filter(
-          (r) => !viewedDeliveries.includes(r.id)
-        ).length;
-
-        // Demandes d'annulation en attente (non vues)
-        const viewedCancellations = typeof window !== 'undefined'
-          ? JSON.parse(localStorage.getItem('admin_viewed_cancellations') || '[]')
-          : [];
-        
-        const { data: cancellationsData } = await supabase
-          .from('reservations')
-          .select('id, status')
-          .in('status', ['CANCEL_REQUESTED', 'cancel_requested']);
-        
-        const pendingCancellations = (cancellationsData || []).filter(
-          (r) => !viewedCancellations.includes(r.id)
-        ).length;
-
-        // Demandes de modification en attente (non vues)
-        const viewedModifications = typeof window !== 'undefined'
-          ? JSON.parse(localStorage.getItem('admin_viewed_modifications') || '[]')
-          : [];
-        
-        const { data: modificationsData } = await supabase
-          .from('reservations')
-          .select('id, status')
-          .in('status', ['CHANGE_REQUESTED', 'change_requested']);
-        
-        const pendingModifications = (modificationsData || []).filter(
-          (r) => !viewedModifications.includes(r.id)
-        ).length;
-
-        // Charger le nombre de demandes pro en attente
-        let pendingProRequests = 0;
-        try {
-          const response = await fetch('/api/admin/pro-requests');
-          if (response.ok) {
-            const data = await response.json();
-            pendingProRequests = (data.requests || []).filter((r: any) => r.pro_status === 'pending').length;
-          }
-        } catch (error) {
-          // Erreur silencieuse
-        }
-
-        // Demandes de réservation non vues (NEW ou PENDING_REVIEW)
-        const viewedReservationRequests = typeof window !== 'undefined'
-          ? JSON.parse(localStorage.getItem('admin_viewed_reservation_requests') || '[]')
-          : [];
-        
-        let pendingReservationRequests = 0;
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            const response = await fetch('/api/admin/reservation-requests', {
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-              },
-            });
-            if (response.ok) {
-              const data = await response.json();
-              const newRequests = (data.requests || []).filter(
-                (r: any) => (r.status === 'NEW' || r.status === 'PENDING_REVIEW')
-                  && !viewedReservationRequests.includes(r.id)
-              );
-              pendingReservationRequests = newRequests.length;
-            }
-          }
-        } catch (error) {
-          // Erreur silencieuse
-        }
+        const data = await adminFetch<{
+          reservations: { pending: number; cancellations: number; modifications: number; total: number };
+          payments: { balance_due: number; deposit_due: number; total: number };
+          documents: { contracts_unsigned: number; new_invoices: number; total: number };
+          inbound: { reservation_requests_new: number; pro_requests_pending: number; total: number };
+          operations: { deliveries_in_progress: number; condition_reports_to_review: number };
+        }>('/api/admin/pending-actions');
 
         setLocalPendingActions({
-          pendingReservations,
-          contractsToSign,
-          conditionReportsToReview,
-          deliveriesInProgress,
-          pendingCancellations,
-          pendingModifications,
-          pendingProRequests,
-          pendingReservationRequests,
+          pendingReservations: data.reservations?.pending || 0,
+          contractsToSign: data.documents?.contracts_unsigned || 0,
+          conditionReportsToReview: data.operations?.condition_reports_to_review || 0,
+          deliveriesInProgress: data.operations?.deliveries_in_progress || 0,
+          pendingCancellations: data.reservations?.cancellations || 0,
+          pendingModifications: data.reservations?.modifications || 0,
+          pendingProRequests: data.inbound?.pro_requests_pending || 0,
+          pendingReservationRequests: data.inbound?.reservation_requests_new || 0,
+          newInvoices: data.documents?.new_invoices || 0,
         });
-      } catch (error) {
-        // Erreur silencieuse
+        // Reset le flag si succès
+        hasLoggedNoSession.current = false;
+      } catch (error: any) {
+        if (error.message === 'NO_SESSION') {
+          if (!hasLoggedNoSession.current) {
+            console.warn('[AdminSidebar] Pas de session, badges non chargés');
+            hasLoggedNoSession.current = true;
+          }
+          // En cas d'erreur NO_SESSION, garder les valeurs par défaut (0)
+        } else {
+          console.error('[AdminSidebar] Erreur chargement badges:', error);
+        }
+        // En cas d'erreur, garder les valeurs par défaut (0)
+      } finally {
+        setLoadingBadges(false);
       }
     };
 
-    calculatePendingActions();
+    fetchPendingActions();
 
     // Écouter les changements
-    const handleStorageChange = () => {
-      calculatePendingActions();
+    const handlePendingActionsUpdated = () => {
+      fetchPendingActions();
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('pendingActionsUpdated', handleStorageChange);
+    window.addEventListener('pendingActionsUpdated', handlePendingActionsUpdated);
 
     // Recharger toutes les 30 secondes
-    const interval = setInterval(calculatePendingActions, 30000);
+    const interval = setInterval(fetchPendingActions, 30000);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('pendingActionsUpdated', handleStorageChange);
+      window.removeEventListener('pendingActionsUpdated', handlePendingActionsUpdated);
       clearInterval(interval);
     };
-  }, [user, supabase, propsPendingActions]);
+  }, [propsPendingActions]);
 
   return (
     <>
@@ -499,9 +378,9 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           {!isCollapsed && (
             <span className="flex-1">{currentTexts.proAccess}</span>
           )}
-          {((localPendingActions.pendingProRequests ?? 0) + (propsPendingActions?.pendingProRequests ?? 0)) > 0 && (
+          {(pendingActions.pendingProRequests ?? 0) > 0 && (
             <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
-              {(localPendingActions.pendingProRequests ?? 0) + (propsPendingActions?.pendingProRequests ?? 0)}
+              {pendingActions.pendingProRequests}
             </span>
           )}
           {isCollapsed && (
@@ -513,7 +392,7 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
         <Link
           href="/admin/factures"
           onClick={onClose}
-          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors ${
+          className={`flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
             isActive('/admin/factures')
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
@@ -523,7 +402,19 @@ export default function AdminSidebar({ language = 'fr', isOpen = false, onClose,
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          {!isCollapsed && <span>{currentTexts.invoices}</span>}
+          {!isCollapsed && (
+            <span className="flex-1">{currentTexts.invoices}</span>
+          )}
+          {(pendingActions.newInvoices ?? 0) > 0 && (
+            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
+              {pendingActions.newInvoices}
+            </span>
+          )}
+          {isCollapsed && (
+            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              {currentTexts.invoices}
+            </div>
+          )}
         </Link>
         <Link
           href="/admin/contrats"

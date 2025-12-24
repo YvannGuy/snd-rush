@@ -295,137 +295,82 @@ export default function DashboardSidebar({ language = 'fr', isOpen = false, onCl
           )}
         </Link>
         <Link
-          href="/mes-reservations"
+          href="/dashboard/prestation"
           onClick={onClose}
           className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
-            isActive('/mes-reservations')
+            isActive('/dashboard/prestation')
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
-          title={isCollapsed ? currentTexts.myReservations : undefined}
+          title={isCollapsed ? 'Ma prestation' : undefined}
         >
           <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
           </svg>
-          {!isCollapsed && (
-            <span className="flex-1">{currentTexts.myReservations}</span>
-          )}
-          {(pendingActions.reservationsWithContractsToSign ?? 0) > 0 && (
-            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
-              {pendingActions.reservationsWithContractsToSign}
-            </span>
-          )}
+          {!isCollapsed && <span>Ma prestation</span>}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-              {currentTexts.myReservations}
+              Ma prestation
             </div>
           )}
         </Link>
         <Link
-          href="/mes-livraisons"
+          href="/dashboard/paiements"
           onClick={onClose}
           className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
-            isActive('/mes-livraisons')
+            isActive('/dashboard/paiements')
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
-          title={isCollapsed ? currentTexts.myDeliveries : undefined}
+          title={isCollapsed ? 'Paiements' : undefined}
         >
           <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          {!isCollapsed && (
-            <span className="flex-1">{currentTexts.myDeliveries}</span>
-          )}
-          {(pendingActions.deliveriesNotReturned ?? 0) > 0 && (
-            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
-              {pendingActions.deliveriesNotReturned}
-            </span>
-          )}
+          {!isCollapsed && <span>Paiements</span>}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-              {currentTexts.myDeliveries}
+              Paiements
             </div>
           )}
         </Link>
         <Link
-          href="/mes-etats-lieux"
+          href="/dashboard/documents"
           onClick={onClose}
           className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
-            isActive('/mes-etats-lieux')
+            isActive('/dashboard/documents')
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
-          title={isCollapsed ? currentTexts.myEtatsLieux : undefined}
+          title={isCollapsed ? 'Documents' : undefined}
         >
           <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          {!isCollapsed && (
-            <span className="flex-1">{currentTexts.myEtatsLieux}</span>
-          )}
-          {(pendingActions.conditionReportsToReview ?? 0) > 0 && (
-            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
-              {pendingActions.conditionReportsToReview}
-            </span>
-          )}
+          {!isCollapsed && <span>Documents</span>}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-              {currentTexts.myEtatsLieux}
+              Documents
             </div>
           )}
         </Link>
         <Link
-          href="/mes-factures"
+          href="/dashboard/support"
           onClick={onClose}
           className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
-            isActive('/mes-factures')
+            isActive('/dashboard/support')
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
-          title={isCollapsed ? currentTexts.documentsInvoices : undefined}
+          title={isCollapsed ? 'Support' : undefined}
         >
           <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
-          {!isCollapsed && (
-            <span className="flex-1">{currentTexts.documentsInvoices}</span>
-          )}
-          {(pendingActions.newInvoices ?? 0) > 0 && (
-            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
-              {pendingActions.newInvoices}
-            </span>
-          )}
+          {!isCollapsed && <span>Support</span>}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-              {currentTexts.documentsInvoices}
-            </div>
-          )}
-        </Link>
-        <Link
-          href="/mes-contrats"
-          onClick={onClose}
-          className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
-            isActive('/mes-contrats')
-              ? 'bg-[#F2431E] text-white'
-              : 'text-gray-700 hover:bg-gray-100'
-          }`}
-          title={isCollapsed ? currentTexts.myContracts : undefined}
-        >
-          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {!isCollapsed && (
-            <span className="flex-1">{currentTexts.myContracts}</span>
-          )}
-          {(pendingActions.contractsToSign ?? 0) > 0 && (
-            <span className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center`}>
-              {pendingActions.contractsToSign}
-            </span>
-          )}
-          {isCollapsed && (
-            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-              {currentTexts.myContracts}
+              Support
             </div>
           )}
         </Link>

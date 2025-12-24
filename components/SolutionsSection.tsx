@@ -1,111 +1,110 @@
 'use client';
 
-import Link from 'next/link';
+import Image from 'next/image';
 
 interface SolutionsSectionProps {
   language: 'fr' | 'en';
-  onReservePack?: (packId: number) => void;
 }
 
-export default function SolutionsSection({ language, onReservePack }: SolutionsSectionProps) {
+export default function SolutionsSection({ language }: SolutionsSectionProps) {
   const texts = {
     fr: {
       sectionTitle: 'NOS SOLUTIONS',
-      title: 'Des solutions adaptées à chaque type d\'événement',
-      intro: 'Chaque événement est différent. Nos solutions sont conçues pour garantir un son clair, une installation fiable et une tranquillité totale le jour J.',
+      title: 'Des solutions clé en main pour votre événement',
+      intro: 'Nous gérons tout : livraison, installation, support et récupération. Vous vous concentrez sur votre événement, nous nous occupons du reste.',
       packs: [
         {
           id: 1,
           image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop',
-          name: 'Pack Conférence',
+          name: 'Solution Conférence',
           description: 'Pour réunions, conférences, prises de parole, cultes et événements institutionnels.',
           features: [
-            'Sonorisation claire et équilibrée',
-            'Micros adaptés à la voix',
-            'Livraison, installation et récupération incluses'
+            'Livraison et installation par nos techniciens',
+            'Support disponible pendant votre événement',
+            'Récupération après l\'événement'
           ],
           price: '279 €',
           priceNote: 'solution clé en main',
-          cta: 'Demande de réservation'
+          cta: 'Préparer mon événement'
         },
         {
           id: 2,
           image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=600&fit=crop',
-          name: 'Pack Soirée',
+          name: 'Solution Soirée',
           recommended: true,
           description: 'Pour soirées privées, anniversaires et événements festifs.',
           features: [
-            'Son puissant et homogène',
-            'Ambiance maîtrisée',
-            'Livraison, installation et récupération incluses'
+            'Livraison et installation par nos techniciens',
+            'Support disponible pendant votre événement',
+            'Récupération après l\'événement'
           ],
           price: '329 €',
           priceNote: 'solution clé en main',
-          cta: 'Demande de réservation'
+          cta: 'Préparer mon événement'
         },
         {
           id: 3,
           image: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&h=600&fit=crop',
-          name: 'Pack Mariage',
+          name: 'Solution Mariage',
           description: 'Pour mariages, soirées DJ et événements à fort enjeu.',
           features: [
-            'Son haute puissance',
-            'Gestion des basses et de l\'équilibre sonore',
-            'Livraison, installation et récupération incluses'
+            'Livraison et installation par nos techniciens',
+            'Support disponible pendant votre événement',
+            'Récupération après l\'événement'
           ],
           price: '449 €',
           priceNote: 'solution clé en main',
-          cta: 'Demande de réservation'
+          cta: 'Préparer mon événement'
         }
       ]
     },
     en: {
       sectionTitle: 'OUR SOLUTIONS',
-      title: 'Solutions adapted to each type of event',
-      intro: 'Every event is different. Our solutions are designed to guarantee clear sound, reliable installation and complete peace of mind on the big day.',
+      title: 'Turnkey solutions for your event',
+      intro: 'We handle everything: delivery, installation, support and pickup. You focus on your event, we take care of the rest.',
       packs: [
         {
           id: 1,
           image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop',
-          name: 'Conference Pack',
+          name: 'Conference Solution',
           description: 'For meetings, conferences, speeches, services and institutional events.',
           features: [
-            'Clear and balanced sound system',
-            'Voice-adapted microphones',
-            'Delivery, installation and pickup included'
+            'Delivery and installation by our technicians',
+            'Support available during your event',
+            'Pickup after the event'
           ],
           price: '€279',
           priceNote: 'turnkey solution',
-          cta: 'Reservation request'
+          cta: 'Prepare my event'
         },
         {
           id: 2,
           image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=600&fit=crop',
-          name: 'Party Pack',
+          name: 'Party Solution',
           recommended: true,
           description: 'For private parties, birthdays and festive events.',
           features: [
-            'Powerful and homogeneous sound',
-            'Controlled atmosphere',
-            'Delivery, installation and pickup included'
+            'Delivery and installation by our technicians',
+            'Support available during your event',
+            'Pickup after the event'
           ],
           price: '€329',
           priceNote: 'turnkey solution',
-          cta: 'Reservation request'
+          cta: 'Prepare my event'
         },
         {
           id: 3,
           image: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&h=600&fit=crop',
-          name: 'Wedding Pack',
+          name: 'Wedding Solution',
           description: 'For weddings, DJ parties and high-stakes events.',
           features: [
-            'High-power sound',
-            'Bass and sound balance management',
-            'Delivery, installation and pickup included'
+            'Delivery and installation by our technicians',
+            'Support available during your event',
+            'Pickup after the event'
           ],
           price: '€449',
           priceNote: 'turnkey solution',
-          cta: 'Reservation request'
+          cta: 'Prepare my event'
         }
       ]
     }
@@ -114,13 +113,35 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
   const currentTexts = texts[language];
 
   const handleReservationRequest = (packKey: 'conference' | 'soiree' | 'mariage') => {
-    // Ouvrir le chat avec le packKey correspondant
-    window.dispatchEvent(new CustomEvent('openChatWithDraft', { 
-      detail: { 
-        message: `Je souhaite faire une demande de réservation pour le ${packKey === 'conference' ? 'Pack Conférence' : packKey === 'soiree' ? 'Pack Soirée' : 'Pack Mariage'}.`,
-        packKey: packKey
-      } 
-    }));
+    // Vérifier que le packKey est valide
+    if (!['conference', 'soiree', 'mariage'].includes(packKey)) {
+      console.error('[SolutionsSection] PackKey invalide:', packKey);
+      return;
+    }
+    
+    // Nouveau système simplifié : ouvrir directement avec packKey
+    if (process.env.NEXT_PUBLIC_USE_SIMPLIFIED_CHAT === 'true') {
+      window.dispatchEvent(new CustomEvent('openChatWithPack', { 
+        detail: { packKey } 
+      }));
+    } else {
+      // Ancien système (fallback)
+      const packNameMap: Record<string, string> = {
+        'conference': 'Pack Conférence',
+        'soiree': 'Pack Soirée',
+        'mariage': 'Pack Mariage'
+      };
+      
+      const packName = packNameMap[packKey];
+      const message = `Je souhaite faire une demande de réservation pour le ${packName}.`;
+      
+      window.dispatchEvent(new CustomEvent('openChatWithDraft', { 
+        detail: { 
+          message,
+          packKey: packKey
+        } 
+      }));
+    }
   };
 
   return (
@@ -136,17 +157,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
         {/* Main Title */}
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
-            {language === 'fr' ? (
-              <>
-                Des solutions adaptées{' '}
-                <span className="text-[#F2431E]">à chaque type d'événement</span>
-              </>
-            ) : (
-              <>
-                Solutions adapted{' '}
-                <span className="text-[#F2431E]">to each type of event</span>
-              </>
-            )}
+            {currentTexts.title}
           </h2>
         </div>
 
@@ -175,11 +186,13 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
               )}
 
               {/* Image */}
-              <div className="mb-6 -mx-8 lg:-mx-10 -mt-8 lg:-mt-10 rounded-t-2xl overflow-hidden">
-                <img 
+              <div className="mb-6 -mx-8 lg:-mx-10 -mt-8 lg:-mt-10 rounded-t-2xl overflow-hidden relative w-full h-48">
+                <Image 
                   src={pack.image} 
                   alt={pack.name}
-                  className="w-full h-48 object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 33vw"
                 />
               </div>
 
@@ -208,7 +221,10 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
               {/* Price - More visible */}
               <div className="mb-4">
                 <div className="text-xl lg:text-2xl font-bold text-[#F2431E]">
-                  À partir de {pack.price}
+                  {language === 'fr' ? 'À partir de' : 'From'} {pack.price}
+                </div>
+                <div className="text-sm text-gray-500 mt-1">
+                  {language === 'fr' ? 'Acompte 30% pour bloquer votre date' : '30% deposit to secure your date'}
                 </div>
               </div>
 
@@ -228,7 +244,7 @@ export default function SolutionsSection({ language, onReservePack }: SolutionsS
                 }}
                 className="w-full bg-[#F2431E] text-white px-6 py-4 rounded-xl font-semibold hover:bg-[#E63A1A] transition-all duration-300 mt-auto flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 mb-2"
               >
-                <span>👉</span>
+                <span>✨</span>
                 {pack.cta}
               </button>
 

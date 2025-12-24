@@ -127,6 +127,42 @@ async function checkAvailability(
     );
   }
 
+  // HOLD v1 - Vérifier aussi les réservations dans client_reservations (nouvelle table)
+  // Uniquement pour les packs avec pack_key (actualPackId peut être 'conference', 'soiree', 'mariage')
+  if (actualPackId && !actualProductId && ['conference', 'soiree', 'mariage'].includes(actualPackId)) {
+    try {
+      const { data: clientReservations, error: clientReservationsError } = await supabase
+        .from('client_reservations')
+        .select('start_at, end_at, status')
+        .eq('pack_key', actualPackId)
+        .in('status', ['AWAITING_PAYMENT', 'PAID', 'CONFIRMED']) // Statuts bloquants
+        .lt('start_at', endDate) // start_at < endDate (demande)
+        .gt('end_at', startDate); // end_at > startDate (demande)
+
+      if (!clientReservationsError && clientReservations) {
+        // Convertir les timestamps en dates/heures pour comparaison avec timeRangesOverlap
+        for (const res of clientReservations) {
+          const resStartDate = new Date(res.start_at).toISOString().split('T')[0];
+          const resEndDate = new Date(res.end_at).toISOString().split('T')[0];
+          const resStartTime = new Date(res.start_at).toTimeString().slice(0, 5); // HH:mm
+          const resEndTime = new Date(res.end_at).toTimeString().slice(0, 5); // HH:mm
+
+          const hasOverlap = timeRangesOverlap(
+            startDate, endDate, startTime, endTime,
+            resStartDate, resEndDate, resStartTime, resEndTime
+          );
+
+          if (hasOverlap) {
+            bookedQuantity += 1; // Une réservation bloque le pack
+          }
+        }
+      }
+    } catch (error) {
+      // En cas d'erreur, ne pas bloquer complètement
+      console.warn('[AVAILABILITY] Erreur vérification client_reservations (non bloquant):', error);
+    }
+  }
+
   // Fonction helper pour convertir une heure (HH:MM) en minutes
   function timeToMinutes(time: string): number {
     const [hours, minutes] = time.split(':').map(Number);
@@ -221,6 +257,48 @@ async function checkAvailability(
       if (hasOverlap) {
         bookedQuantity += res.quantity;
       }
+    }
+  }
+
+  // HOLD v1 - Vérifier les holds actifs qui bloquent ce créneau
+  // Uniquement pour les packs (actualPackId)
+  if (actualPackId && !actualProductId) {
+    try {
+      // Récupérer les holds actifs et non expirés qui se chevauchent
+      const { data: activeHolds, error: holdsError } = await supabase
+        .from('reservation_holds')
+        .select('start_at, end_at')
+        .eq('pack_key', actualPackId)
+        .eq('status', 'ACTIVE')
+        .gt('expires_at', new Date().toISOString()) // Non expiré
+        .lt('start_at', endDate) // start_at < endDate (demande)
+        .gt('end_at', startDate); // end_at > startDate (demande)
+
+      if (!holdsError && activeHolds && activeHolds.length > 0) {
+        // Vérifier le chevauchement précis avec les heures si disponibles
+        for (const hold of activeHolds) {
+          // Convertir les timestamps en dates/heures pour comparaison
+          const holdStartDate = new Date(hold.start_at).toISOString().split('T')[0];
+          const holdEndDate = new Date(hold.end_at).toISOString().split('T')[0];
+          const holdStartTime = new Date(hold.start_at).toTimeString().slice(0, 5); // HH:mm
+          const holdEndTime = new Date(hold.end_at).toTimeString().slice(0, 5); // HH:mm
+
+          const hasOverlap = timeRangesOverlap(
+            startDate, endDate, startTime, endTime,
+            holdStartDate, holdEndDate, holdStartTime, holdEndTime
+          );
+
+          if (hasOverlap) {
+            // Un hold actif bloque complètement le créneau (équivalent à 1 réservation)
+            bookedQuantity += 1;
+            break; // Un seul hold suffit à bloquer
+          }
+        }
+      }
+    } catch (error) {
+      // En cas d'erreur sur les holds, ne pas bloquer complètement
+      // Logger mais continuer le calcul de disponibilité
+      console.warn('[AVAILABILITY] Erreur vérification holds (non bloquant):', error);
     }
   }
 
