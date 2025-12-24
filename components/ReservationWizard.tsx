@@ -254,18 +254,18 @@ export default function ReservationWizard({
   const cautionAmount = Math.round(baseCaution * tierMultipliers[tier]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-2xl mx-auto px-2 sm:px-0">
       {/* Header avec progression */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 text-center px-2">
           {currentTexts.title}
         </h2>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 px-2 sm:px-0">
           {Array.from({ length: totalSteps }).map((_, index) => (
             <div key={index} className="flex items-center flex-1">
               <div className="flex flex-col items-center flex-1">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
+                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-semibold text-xs sm:text-base transition-colors ${
                     step > index + 1
                       ? 'bg-green-500 text-white'
                       : step === index + 1
@@ -273,9 +273,9 @@ export default function ReservationWizard({
                       : 'bg-gray-200 text-gray-500'
                   }`}
                 >
-                  {step > index + 1 ? <CheckCircle2 className="h-6 w-6" /> : index + 1}
+                  {step > index + 1 ? <CheckCircle2 className="h-4 w-4 sm:h-6 sm:w-6" /> : index + 1}
                 </div>
-                <span className="text-xs mt-2 text-gray-600 hidden sm:block">
+                <span className="text-xs mt-1 sm:mt-2 text-gray-600 hidden sm:block text-center">
                   {index === 0 && currentTexts.step1}
                   {index === 1 && currentTexts.step2}
                   {index === 2 && currentTexts.step3}
@@ -285,7 +285,7 @@ export default function ReservationWizard({
               </div>
               {index < totalSteps - 1 && (
                 <div
-                  className={`h-1 flex-1 mx-2 transition-colors ${
+                  className={`h-1 flex-1 mx-1 sm:mx-2 transition-colors ${
                     step > index + 1 ? 'bg-green-500' : 'bg-gray-200'
                   }`}
                 />
@@ -458,12 +458,12 @@ export default function ReservationWizard({
               <h3 className="text-xl font-bold text-gray-900 mb-4">{currentTexts.step4}</h3>
               {tierAdjustment && (tierAdjustment.tier === 'M' || tierAdjustment.tier === 'L') ? (
                 <>
-                  <div className="flex gap-2 mb-4">
+                  <div className="flex flex-col sm:flex-row gap-2 mb-4">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => handleAddMicro('filaire')}
-                      className="flex-1 border-gray-300 hover:bg-gray-50"
+                      className="flex-1 border-gray-300 hover:bg-gray-50 text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3"
                     >
                       {currentTexts.microFilaire}
                     </Button>
@@ -471,7 +471,7 @@ export default function ReservationWizard({
                       type="button"
                       variant="outline"
                       onClick={() => handleAddMicro('sans-fil')}
-                      className="flex-1 border-gray-300 hover:bg-gray-50"
+                      className="flex-1 border-gray-300 hover:bg-gray-50 text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3"
                     >
                       {currentTexts.microSansFil}
                     </Button>
@@ -592,12 +592,12 @@ export default function ReservationWizard({
       </Card>
 
       {/* Navigation */}
-      <div className="flex justify-between gap-4">
+      <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4">
         <Button
           variant="outline"
           onClick={handlePrevious}
           disabled={step === 1}
-          className="flex items-center gap-2"
+          className="flex items-center justify-center gap-2 w-full sm:w-auto order-2 sm:order-1"
         >
           <ChevronLeft className="h-4 w-4" />
           {currentTexts.previous}
@@ -605,7 +605,7 @@ export default function ReservationWizard({
         <Button
           onClick={handleNext}
           disabled={!canProceed() || isProcessing || (step === 5 && availabilityStatus !== 'available')}
-          className="flex items-center gap-2 bg-[#F2431E] text-white hover:bg-[#E63A1A]"
+          className="flex items-center justify-center gap-2 bg-[#F2431E] text-white hover:bg-[#E63A1A] w-full sm:w-auto order-1 sm:order-2"
         >
           {step === totalSteps ? (
             <>
