@@ -117,7 +117,7 @@ export async function GET(req: NextRequest) {
       }
 
       const ordersPromises = chunks.map(chunk =>
-        supabaseAdmin
+        supabaseAdmin!
           .from('orders')
           .select('*')
           .or(`client_reservation_id.in.(${chunk.join(',')}),reservation_id.in.(${chunk.join(',')})`)

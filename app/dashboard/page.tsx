@@ -114,6 +114,7 @@ export default function DashboardPage() {
       const maxAttempts = 15; // 15 tentatives sur 30 secondes
       
       const pollReservationStatus = async () => {
+        if (!supabase) return;
         try {
           console.log(`🔄 Tentative ${attempts + 1}/${maxAttempts} - Vérification statut réservation ${reservationId}`);
           

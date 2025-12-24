@@ -671,7 +671,7 @@ export default function ProCataloguePage() {
                         const endDate = tomorrow.toISOString().split('T')[0];
                         
                         const result = await addToCart({
-                          productId: product.id,
+                          productId: String(product.id),
                           productName: product.name,
                           productSlug: product.slug || product.id,
                           quantity: 1,

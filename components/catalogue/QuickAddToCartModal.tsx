@@ -103,8 +103,6 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
         'pack-6': 'pack_dj_essentiel',
         'pack-7': 'pack_dj_performance',
         'pack-8': 'pack_dj_premium',
-        'pack-3': 'pack_grand',
-        'pack-5': 'pack_maxi',
       };
       productId = packMapping[productId] || productId;
       
@@ -143,7 +141,6 @@ export default function QuickAddToCartModal({ isOpen, onClose, product, language
           deposit: packDeposit,
           addons: [],
           images: packImages[productId] ? [packImages[productId]] : [product.image],
-          eventType: 'event',
           startTime,
           endTime,
         };

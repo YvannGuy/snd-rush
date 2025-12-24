@@ -53,45 +53,6 @@ export default function AdminReservationsPage() {
     }
   }, [isAdmin, checkingAdmin, user, router]);
 
-  // Marquer comme "viewé" quand le modal s'ouvre
-  useEffect(() => {
-    // Extraire les primitives stables au début
-    const reservationId = selectedReservation?.id;
-    const status = selectedReservation?.status;
-
-    // Garde-fous : si modal fermé ou données manquantes -> return
-    if (!isDetailModalOpen || !reservationId || !status) {
-      return;
-    }
-
-    const markAsViewed = () => {
-      // Marquer selon le type
-      if (status === 'PENDING' || status === 'pending') {
-        const viewed = JSON.parse(localStorage.getItem('admin_viewed_reservations') || '[]');
-        if (!viewed.includes(reservationId)) {
-          viewed.push(reservationId);
-          localStorage.setItem('admin_viewed_reservations', JSON.stringify(viewed));
-        }
-      } else if (status === 'CANCEL_REQUESTED' || status === 'cancel_requested') {
-        const viewed = JSON.parse(localStorage.getItem('admin_viewed_cancellations') || '[]');
-        if (!viewed.includes(reservationId)) {
-          viewed.push(reservationId);
-          localStorage.setItem('admin_viewed_cancellations', JSON.stringify(viewed));
-        }
-      } else if (status === 'CHANGE_REQUESTED' || status === 'change_requested') {
-        const viewed = JSON.parse(localStorage.getItem('admin_viewed_modifications') || '[]');
-        if (!viewed.includes(reservationId)) {
-          viewed.push(reservationId);
-          localStorage.setItem('admin_viewed_modifications', JSON.stringify(viewed));
-        }
-      }
-
-      // Dispatcher l'événement pour mettre à jour les compteurs
-      window.dispatchEvent(new Event('pendingActionsUpdated'));
-    };
-
-    markAsViewed();
-  }, [isDetailModalOpen, selectedReservation?.id, selectedReservation?.status]);
 
   // Charger les documents pour la réservation sélectionnée via API
   useEffect(() => {
@@ -157,20 +118,8 @@ export default function AdminReservationsPage() {
           total: number;
         }>(`/api/admin/reservations?${params.toString()}`);
 
-        // Adapter les réservations pour compatibilité avec le rendu existant
-        const adaptedReservations = (data.data || []).map((r: any) => ({
-          ...r,
-          // Adapter les champs pour compatibilité
-          start_date: r.start_at || r.created_at,
-          end_date: r.end_at || r.created_at,
-          total_price: r.price_total,
-          pack_id: r.pack_key,
-          type: r.source === 'client_reservation' ? 'client_reservation' : 'reservation',
-          customerName: r.customer_name || 'Client',
-          customerEmail: r.customer_email || '',
-        }));
-
-        setReservations(adaptedReservations);
+        // Utiliser directement les données de l'API (pas de mapping legacy)
+        setReservations(data.data || []);
         setTotalPages(Math.ceil((data.total || 0) / itemsPerPage));
       } catch (error: any) {
         console.error('❌ Erreur chargement réservations:', error);
@@ -324,11 +273,7 @@ export default function AdminReservationsPage() {
       <div className="flex flex-1 pt-[112px] lg:flex-row">
         {/* Sidebar - Fixed, ne prend pas d'espace dans le flux */}
         <div className="hidden lg:block flex-shrink-0 transition-all duration-300 w-64"></div>
-        <AdminSidebar 
-          language={language} 
-          isOpen={isSidebarOpen} 
-          onClose={() => setIsSidebarOpen(false)}
-        />
+        <AdminSidebar language={language} />
         <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
           {/* Mobile Header */}
           <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">
@@ -397,7 +342,7 @@ export default function AdminReservationsPage() {
                   <div className="space-y-4 mb-6">
                     {paginatedReservations.map((reservation) => {
                       const statusUI = getReservationStatusUI(reservation.status, language);
-                      const dateRange = `${formatDate(reservation.start_date)} - ${formatDate(reservation.end_date)}`;
+                      const dateRange = `${formatDate(reservation.start_at || reservation.created_at)} - ${formatDate(reservation.end_at || reservation.created_at)}`;
                       
                       // Couleurs du badge selon le statut
                       const getStatusBadgeColor = (status: string) => {
@@ -438,12 +383,12 @@ export default function AdminReservationsPage() {
                                 
                                 {/* Nom du client */}
                                 <h3 className="font-bold text-gray-900 text-lg mb-2">
-                                  {reservation.customerName || 'Client'}
+                                  {reservation.customer_name || 'Client'}
                                 </h3>
                                 
                                 {/* Email */}
-                                {reservation.customerEmail && (
-                                  <p className="text-sm text-gray-600 mb-3">{reservation.customerEmail}</p>
+                                {reservation.customer_email && (
+                                  <p className="text-sm text-gray-600 mb-3">{reservation.customer_email}</p>
                                 )}
                                 
                                 {/* Date avec icône calendrier */}
@@ -479,9 +424,9 @@ export default function AdminReservationsPage() {
                                 )}
                                 
                                 {/* Total */}
-                                {(reservation.total_price || reservation.order?.total) && (
+                                {reservation.price_total && (
                                   <div className="text-sm font-semibold text-gray-900 mt-2">
-                                    {reservation.total_price ? `${reservation.total_price}€` : `${reservation.order.total}€`}
+                                    {reservation.price_total}€
                                   </div>
                                 )}
                               </div>
@@ -546,7 +491,7 @@ export default function AdminReservationsPage() {
               <DialogHeader>
                 <DialogTitle>{currentTexts.reservationDetails}</DialogTitle>
                 <DialogDescription>
-                  {selectedReservation.customerName} - {formatDate(selectedReservation.start_date)} au {formatDate(selectedReservation.end_date)}
+                  {selectedReservation.customer_name || 'Client'} - {formatDate(selectedReservation.start_at || selectedReservation.created_at)} au {formatDate(selectedReservation.end_at || selectedReservation.created_at)}
                 </DialogDescription>
               </DialogHeader>
 
@@ -555,8 +500,8 @@ export default function AdminReservationsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-semibold text-gray-700">{currentTexts.customer}</label>
-                    <p className="text-sm text-gray-900">{selectedReservation.customerName || 'N/A'}</p>
-                    <p className="text-xs text-gray-500">{selectedReservation.customerEmail || 'N/A'}</p>
+                    <p className="text-sm text-gray-900">{selectedReservation.customer_name || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">{selectedReservation.customer_email || 'N/A'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-gray-700">{currentTexts.status}</label>
@@ -577,13 +522,13 @@ export default function AdminReservationsPage() {
                   <div>
                     <label className="text-sm font-semibold text-gray-700">{currentTexts.dates}</label>
                     <p className="text-sm text-gray-900">
-                      {formatDate(selectedReservation.start_date)} - {formatDate(selectedReservation.end_date)}
+                      {formatDate(selectedReservation.start_at || selectedReservation.created_at)} - {formatDate(selectedReservation.end_at || selectedReservation.created_at)}
                     </p>
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-gray-700">{currentTexts.total}</label>
                     <p className="text-sm text-gray-900">
-                      {selectedReservation.total_price ? `${selectedReservation.total_price}€` : 'N/A'}
+                      {selectedReservation.price_total ? `${selectedReservation.price_total}€` : 'N/A'}
                     </p>
                   </div>
                 </div>

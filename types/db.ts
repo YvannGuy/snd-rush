@@ -62,3 +62,80 @@ export interface ClientReservation {
   created_at: string;
   updated_at: string;
 }
+
+/**
+ * Item dans le panier
+ */
+export interface CartItem {
+  productId: string;
+  productName: string;
+  productSlug: string;
+  quantity: number;
+  rentalDays: number;
+  startDate: string | null;
+  endDate: string | null;
+  startTime?: string | undefined;
+  endTime?: string | undefined;
+  dailyPrice: number;
+  deposit: number;
+  addons: Array<{ id: string; name: string; price: number }>;
+  images?: string[];
+}
+
+/**
+ * Panier complet
+ */
+export interface Cart {
+  items: CartItem[];
+  total: number;
+  depositTotal: number;
+}
+
+/**
+ * Produit du catalogue
+ */
+export interface Product {
+  id: string | number;
+  name: string;
+  slug?: string;
+  category?: string | null;
+  description?: string | null;
+  long_description?: string | null;
+  daily_price_ttc?: number;
+  deposit?: number;
+  quantity?: number;
+  images?: string[] | null;
+  specs?: any;
+  tags?: string[] | null;
+  features?: string[] | null;
+  [key: string]: any; // Permettre d'autres propriétés dynamiques
+}
+
+/**
+ * Réponse de disponibilité
+ */
+export interface AvailabilityResponse {
+  available: boolean;
+  remaining: number;
+  bookedQuantity: number;
+  totalQuantity: number;
+}
+
+/**
+ * Plage de dates désactivées dans le calendrier
+ */
+export interface CalendarDisabledRange {
+  start: string;
+  end: string;
+  reason?: string;
+}
+
+/**
+ * Addon produit
+ */
+export interface ProductAddon {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+}

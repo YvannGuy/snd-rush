@@ -246,13 +246,7 @@ useEffect(() => {
       <div className="flex flex-1 pt-[112px] lg:flex-row">
         {/* Sidebar - Fixed, ne prend pas d'espace dans le flux */}
         <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
-        <AdminSidebar 
-          language={language} 
-          isOpen={isSidebarOpen} 
-          onClose={() => setIsSidebarOpen(false)}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        />
+        <AdminSidebar language={language} />
         <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
           {/* Mobile Header */}
           <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">

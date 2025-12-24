@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
             
             // Créer un order pour l'acompte payé
             try {
-              const depositAmount = parseFloat(reservation.price_total.toString()) * 0.3;
+              const depositAmount = parseFloat(updatedReservation.price_total.toString()) * 0.3;
               const orderData = {
                 stripe_session_id: session.id,
                 stripe_payment_intent_id: session.payment_intent ? (typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent.id) : null,
@@ -759,8 +759,8 @@ export async function POST(req: NextRequest) {
 
         // Créer l'order dans Supabase
         // Déterminer si c'est une client_reservation ou une ancienne reservation
-        let clientReservationId = null;
-        let oldReservationId = reservationId;
+        let clientReservationId: string | null = null;
+        let oldReservationId: string | null = reservationId;
         
         // Si reservationId pointe vers client_reservations (vérifier via metadata ou via l'existence)
         if (reservationId) {

@@ -157,6 +157,7 @@ function PageEtatMaterielContent() {
     const loadReservationData = async () => {
       try {
         // Charger la réservation
+        if (!supabase) return;
         const { data: reservation, error } = await supabase
           .from('reservations')
           .select('*')
@@ -1309,19 +1310,6 @@ function PageEtatMaterielContent() {
           } else {
             console.log('✅ Rapport de livraison sauvegardé dans Supabase:', savedData);
           }
-        }
-
-        if (dbError) {
-          console.error('Erreur sauvegarde Supabase:', {
-            message: dbError.message,
-            details: dbError.details,
-            hint: dbError.hint,
-            code: dbError.code,
-            fullError: dbError
-          });
-          alert(`⚠️ Erreur lors de la sauvegarde dans la base de données: ${dbError.message || 'Erreur inconnue'}. Le PDF sera quand même généré.`);
-        } else {
-          console.log('✅ Rapport de livraison sauvegardé dans Supabase:', savedData);
         }
       } else {
         console.log('ℹ️ Supabase non configuré, sauvegarde seulement en PDF');

@@ -569,9 +569,9 @@ export default function GuidePage() {
               if (section.type === 'list') {
                 return (
                   <ul key={index} className="list-disc list-inside mb-6 space-y-2 text-gray-700 text-lg">
-                    {section.items?.map((item, itemIndex) => (
+                    {'items' in section && section.items ? section.items.map((item, itemIndex) => (
                       <li key={itemIndex}>{item}</li>
-                    ))}
+                    )) : null}
                   </ul>
                 );
               }

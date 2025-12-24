@@ -42,17 +42,6 @@ export default function AdminDashboardPage() {
   const [balanceDueReservations, setBalanceDueReservations] = useState<any[]>([]); // Solde à payer J-5
   const [depositDueReservations, setDepositDueReservations] = useState<any[]>([]); // Caution à demander J-2
   const [weekEvents, setWeekEvents] = useState<any[]>([]); // Événements de la semaine
-  const [pendingActions, setPendingActions] = useState({
-    pendingReservations: 0,
-    contractsToSign: 0,
-    conditionReportsToReview: 0,
-    deliveriesInProgress: 0,
-    pendingCancellations: 0,
-    pendingModifications: 0,
-    pendingProRequests: 0,
-    pendingReservationRequests: 0,
-  });
-  const [showReservationRequestNotification, setShowReservationRequestNotification] = useState(false);
   const [loadingDashboard, setLoadingDashboard] = useState(true);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
 
@@ -147,13 +136,9 @@ export default function AdminDashboardPage() {
         setDepositDueReservations(data.automation?.deposit_due || []);
         setWeekEvents(data.automation?.week_events || []);
 
-        // Pending actions depuis l'API pending-actions (si disponible dans dashboard)
-        // Sinon, AdminSidebar les chargera lui-même
-        // Pour l'instant, on ne met pas à jour pendingActions ici car AdminSidebar le fait
-
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('❌ Erreur chargement dashboard admin:', error);
-        setDashboardError(error.message || 'Erreur lors du chargement');
+        setDashboardError(error instanceof Error ? error.message : 'Erreur lors du chargement');
         // En cas d'erreur, initialiser les états vides pour éviter les crashes
         setUpcomingReservations([]);
         setStats({
@@ -421,12 +406,7 @@ export default function AdminDashboardPage() {
       <div className="flex flex-1 pt-[112px] lg:flex-row">
         {/* Sidebar - Fixed, ne prend pas d'espace dans le flux */}
         <div className="hidden lg:block flex-shrink-0 transition-all duration-300 w-64"></div>
-        <AdminSidebar 
-          language={language} 
-          isOpen={isSidebarOpen} 
-          onClose={() => setIsSidebarOpen(false)}
-          pendingActions={undefined}
-        />
+        <AdminSidebar language={language} />
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
@@ -477,43 +457,6 @@ export default function AdminDashboardPage() {
                 </div>
               )}
 
-              {/* Notification pour nouvelles demandes de réservation */}
-              {showReservationRequestNotification && pendingActions.pendingReservationRequests > 0 && (
-                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold">{pendingActions.pendingReservationRequests}</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        Vous avez {pendingActions.pendingReservationRequests} nouvelle{pendingActions.pendingReservationRequests > 1 ? 's' : ''} demande{pendingActions.pendingReservationRequests > 1 ? 's' : ''} de réservation
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Cliquez pour voir les détails
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href="/admin/reservation-requests"
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                      onClick={() => setShowReservationRequestNotification(false)}
-                    >
-                      Voir les demandes
-                    </Link>
-                    <button
-                      onClick={() => setShowReservationRequestNotification(false)}
-                      className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
-                      aria-label="Fermer la notification"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              )}
-              
               {/* Bouton Nouvelle réservation - Uniquement sur le tableau de bord */}
               {!loadingDashboard && !dashboardError && (
                 <div className="mb-6 flex justify-end">

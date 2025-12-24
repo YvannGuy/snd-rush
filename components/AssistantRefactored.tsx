@@ -855,7 +855,7 @@ export default function AssistantRefactored({
     setShowReservationModal(true);
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     const recommendation = recommendPack(answers);
     if (!recommendation) {
       return;
@@ -1146,19 +1146,8 @@ export default function AssistantRefactored({
       deposit: packInfo.deposit,
       addons: addons,
       images: [packInfo.image],
-      // Détails de l'événement
-      eventType: answers.eventType,
       startTime: answers.startTime,
       endTime: answers.endTime,
-      zone: answers.zone,
-      metadata: {
-        guests: answers.guests,
-        environment: answers.environment,
-        needs: answers.needs,
-        urgency: isUrgentEvent,
-        urgencySurcharge: urgencySurcharge, // Montant de la majoration pour affichage
-        breakdown: recommendation.breakdown,
-      },
     };
 
     const packResult = await addToCart(cartItem);
@@ -1506,7 +1495,7 @@ export default function AssistantRefactored({
                         handleAnswerChange(step.id, 'no');
                       }}
                       className={`w-full px-6 py-4 rounded-xl border-2 transition-all ${
-                        answers.morePower === 'no'
+                        (typeof answers.morePower === 'string' && answers.morePower === 'no') || answers.morePower === false
                           ? 'border-[#F2431E] bg-[#F2431E]/10 text-[#F2431E]'
                           : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                       }`}
@@ -1757,7 +1746,7 @@ export default function AssistantRefactored({
             />
           )}
 
-          {step.type === 'time' && (
+          {(step.id === 'startTime' || step.id === 'endTime') && (
             <div className="space-y-2">
               <select
                 value={value as string || ''}

@@ -48,6 +48,7 @@ export default function CartPage() {
     const loadUserProfile = async () => {
       try {
         // Charger le profil utilisateur
+        if (!supabase) return;
         const { data: profile, error } = await supabase
           .from('user_profiles')
           .select('*')
@@ -465,7 +466,7 @@ export default function CartPage() {
           ? item.addons.reduce((sum, addon) => sum + addon.price, 0)
           : 0;
         // La majoration d'urgence devrait être incluse dans dailyPrice, mais on ajoute pour compatibilité
-        const urgencySurcharge = item.metadata?.urgencySurcharge || 0;
+        const urgencySurcharge = 0; // metadata n'est plus utilisé dans CartItem
         return {
           name: item.productName,
           quantity: item.quantity,
@@ -553,7 +554,7 @@ export default function CartPage() {
   const installationSelected = !!installationItem;
 
   // Handler pour ajouter/retirer l'installation
-  const handleRequestInstallation = () => {
+  const handleRequestInstallation = async () => {
     if (installationPrice === null) {
       if (language === 'fr') {
         alert('Installation sur devis. Veuillez nous contacter.');
@@ -565,7 +566,7 @@ export default function CartPage() {
 
     if (installationSelected) {
       // Retirer l'installation du panier
-      removeFromCart('installation-service', installationItem!.startDate, installationItem!.endDate);
+      removeFromCart('installation-service', installationItem!.startDate || undefined, installationItem!.endDate || undefined);
     } else {
       // Ajouter l'installation au panier
       const firstItem = cart.items[0];
@@ -667,7 +668,7 @@ export default function CartPage() {
                   ? item.addons.reduce((sum, addon) => sum + addon.price, 0)
                   : 0;
                 // La majoration d'urgence devrait être incluse dans dailyPrice, mais on ajoute pour compatibilité
-                const urgencySurcharge = item.metadata?.urgencySurcharge || 0;
+                const urgencySurcharge = 0; // metadata n'est plus utilisé dans CartItem
                 const itemTotal = baseItemTotal + addonsTotal + urgencySurcharge;
                 
                 return (
@@ -707,51 +708,16 @@ export default function CartPage() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                                 <span className="text-sm font-medium text-gray-700">
-                                  {new Date(item.startDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                  {item.startDate ? new Date(item.startDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
                                   {item.startTime && ` à ${item.startTime}`}
                                 </span>
                                 <span className="text-gray-400">→</span>
                                 <span className="text-sm font-medium text-gray-700">
-                                  {new Date(item.endDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                  {item.endDate ? new Date(item.endDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
                                   {item.endTime && ` à ${item.endTime}`}
                                 </span>
                               </div>
-                              {/* Type d'événement et zone si disponibles */}
-                              {(item.eventType || item.zone) && (
-                                <div className="flex items-center gap-3 flex-wrap text-xs text-gray-600">
-                                  {item.eventType && (
-                                    <span className="flex items-center gap-1">
-                                      <span className="text-gray-400">📅</span>
-                                      <span className="capitalize">
-                                        {item.eventType === 'mariage' ? (language === 'fr' ? 'Mariage' : 'Wedding') :
-                                         item.eventType === 'anniversaire' ? (language === 'fr' ? 'Anniversaire' : 'Birthday') :
-                                         item.eventType === 'corporate' ? (language === 'fr' ? 'Corporate' : 'Corporate') :
-                                         item.eventType === 'soiree' ? (language === 'fr' ? 'Soirée' : 'Party') :
-                                         item.eventType === 'eglise' ? (language === 'fr' ? 'Église' : 'Church') :
-                                         item.eventType === 'association' ? (language === 'fr' ? 'Association' : 'Association') :
-                                         item.eventType}
-                                      </span>
-                                    </span>
-                                  )}
-                                  {item.zone && item.zone !== 'retrait' && (
-                                    <span className="flex items-center gap-1">
-                                      <span className="text-gray-400">📍</span>
-                                      <span>
-                                        {item.zone === 'paris' ? 'Paris' :
-                                         item.zone === 'petite' ? (language === 'fr' ? 'Petite Couronne' : 'Inner suburbs') :
-                                         item.zone === 'grande' ? (language === 'fr' ? 'Grande Couronne' : 'Outer suburbs') :
-                                         item.zone}
-                                      </span>
-                                    </span>
-                                  )}
-                                  {item.metadata?.urgency && (
-                                    <span className="flex items-center gap-1 text-orange-600 font-semibold">
-                                      <span>⚡</span>
-                                      <span>{language === 'fr' ? 'Urgence +20%' : 'Urgency +20%'}</span>
-                                    </span>
-                                  )}
-                                </div>
-                              )}
+                              {/* eventType, zone, metadata ne sont plus dans CartItem - section supprimée */}
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
@@ -773,7 +739,7 @@ export default function CartPage() {
                             <span className="text-sm text-gray-600">{currentTexts.quantity}:</span>
                             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
                               <button
-                                onClick={() => decreaseQuantity(item.productId, item.startDate, item.endDate)}
+                                onClick={() => decreaseQuantity(item.productId, item.startDate || undefined, item.endDate || undefined)}
                                 className="px-3 py-1.5 hover:bg-gray-50 transition-colors font-semibold text-gray-700"
                               >
                                 −
@@ -781,7 +747,7 @@ export default function CartPage() {
                               <span className="px-4 py-1.5 font-semibold text-gray-900 min-w-[3rem] text-center">{item.quantity}</span>
                               <button
                                 onClick={async () => {
-                                  const result = await increaseQuantity(item.productId, item.startDate, item.endDate);
+                                  const result = await increaseQuantity(item.productId, item.startDate || undefined, item.endDate || undefined);
                                   if (!result.success) {
                                     alert(result.error || (language === 'fr' 
                                       ? 'Stock insuffisant' 
@@ -809,7 +775,7 @@ export default function CartPage() {
                         
                         {/* Bouton retirer */}
                         <button
-                          onClick={() => removeFromCart(item.productId, item.startDate, item.endDate)}
+                                onClick={() => removeFromCart(item.productId, item.startDate || undefined, item.endDate || undefined)}
                           className="mt-3 text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
                         >
                           {currentTexts.remove}
@@ -845,11 +811,11 @@ export default function CartPage() {
                             <button
                               key={option.id}
                               type="button"
-                              onClick={() => {
+                              onClick={async () => {
                                 if (isSelected) {
                                   // Retirer la livraison du panier
                                   if (deliveryItem) {
-                                    removeFromCart(deliveryItem.productId, deliveryItem.startDate, deliveryItem.endDate);
+                                    removeFromCart(deliveryItem.productId, deliveryItem.startDate || undefined, deliveryItem.endDate || undefined);
                                   }
                                 } else {
                                   // Ajouter la livraison au panier
@@ -859,7 +825,7 @@ export default function CartPage() {
                                   
                                   // Retirer l'ancienne livraison si elle existe
                                   if (deliveryItem) {
-                                    removeFromCart(deliveryItem.productId, deliveryItem.startDate, deliveryItem.endDate);
+                                    removeFromCart(deliveryItem.productId, deliveryItem.startDate || undefined, deliveryItem.endDate || undefined);
                                   }
                                   
                                   const deliveryCartItem: CartItem = {
@@ -957,7 +923,6 @@ export default function CartPage() {
                   <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
                     <div className="flex gap-3 min-w-max">
                       {recommendedProducts.map((product) => {
-                    {recommendedProducts.map((product) => {
                       const productImage = product.images && product.images.length > 0 
                         ? (Array.isArray(product.images) ? product.images[0] : typeof product.images === 'string' ? product.images : '/placeholder-product.png')
                         : '/placeholder-product.png';
@@ -973,9 +938,9 @@ export default function CartPage() {
 
                       const handleAddProduct = async () => {
                         const cartItem: CartItem = {
-                          productId: product.id,
+                          productId: String(product.id),
                           productName: product.name,
-                          productSlug: product.slug || product.id,
+                          productSlug: product.slug || String(product.id),
                           quantity: 1,
                           rentalDays,
                           startDate,
@@ -1076,7 +1041,7 @@ export default function CartPage() {
                       const addonsTotal = (item.addons && Array.isArray(item.addons))
                         ? item.addons.reduce((addonSum, addon) => addonSum + addon.price, 0)
                         : 0;
-                      const urgencySurcharge = item.metadata?.urgencySurcharge || 0;
+                      const urgencySurcharge = 0; // metadata n'est plus dans CartItem
                       return sum + itemTotal + addonsTotal + urgencySurcharge;
                     }, 0);
                     

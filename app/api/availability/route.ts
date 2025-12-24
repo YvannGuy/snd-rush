@@ -127,6 +127,10 @@ async function checkAvailability(
     );
   }
 
+  // 3. Calculer la quantité déjà réservée
+  // Si les heures sont fournies, vérifier les chevauchements temporels précis
+  let bookedQuantity = 0;
+
   // HOLD v1 - Vérifier aussi les réservations dans client_reservations (nouvelle table)
   // Uniquement pour les packs avec pack_key (actualPackId peut être 'conference', 'soiree', 'mariage')
   if (actualPackId && !actualProductId && ['conference', 'soiree', 'mariage'].includes(actualPackId)) {
@@ -228,10 +232,6 @@ async function checkAvailability(
     return true;
   }
 
-  // 3. Calculer la quantité déjà réservée
-  // Si les heures sont fournies, vérifier les chevauchements temporels précis
-  let bookedQuantity = 0;
-  
   if (reservations) {
     for (const res of reservations) {
       // Récupérer les heures de la réservation depuis les notes

@@ -1099,6 +1099,7 @@ export default function MesReservationsPage() {
                                       
                                       setIsSavingTimes(true);
                                       try {
+                                        if (!supabase) return;
                                         const { error } = await supabase
                                           .from('reservations')
                                           .update({

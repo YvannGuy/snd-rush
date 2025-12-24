@@ -59,6 +59,7 @@ export default function MesFacturesPage() {
     if (!user || !supabase || typeof window === 'undefined') return;
     
     const markAsViewed = async () => {
+      if (!supabase) return;
       try {
         const { data: ordersData } = await supabase
           .from('orders')

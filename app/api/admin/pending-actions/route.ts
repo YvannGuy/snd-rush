@@ -26,10 +26,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: authError || 'Accès refusé' }, { status: 403 });
     }
 
-    const now = new Date().toISOString();
-
     // Helper pour exécuter une requête count avec gestion d'erreur
-    const safeCount = async (query: Promise<{ count: number | null; error: any }>): Promise<number> => {
+    const safeCount = async (query: any): Promise<number> => {
       try {
         const { count, error } = await query;
         if (error) {
@@ -42,64 +40,27 @@ export async function GET(req: NextRequest) {
           return 0;
         }
         return count || 0;
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const error = e instanceof Error ? e : { message: String(e) };
+        const code = typeof e === 'object' && e !== null && 'code' in e ? (e as any).code : undefined;
         console.error('[pending-actions] Exception requête:', {
-          message: e?.message,
-          code: e?.code,
+          message: error.message,
+          code,
         });
         return 0;
       }
     };
 
-    // 1. Réservations (client_reservations uniquement)
-    const pendingCount = await safeCount(
+    // 1. Réservations en attente (client_reservations uniquement)
+    const pendingReservations = await safeCount(
       supabaseAdmin
         .from('client_reservations')
         .select('*', { count: 'exact', head: true })
         .in('status', ['AWAITING_PAYMENT', 'AWAITING_BALANCE'])
     );
 
-    const cancellationsCount = await safeCount(
-      supabaseAdmin
-        .from('client_reservations')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'CANCEL_REQUESTED')
-    );
-
-    // Modifications (si status CHANGE_REQUESTED existe, sinon 0)
-    const modificationsCount = await safeCount(
-      supabaseAdmin
-        .from('client_reservations')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'CHANGE_REQUESTED')
-    );
-
-    // 2. Paiements
-    // Solde à payer (J-5 atteint)
-    const balanceDueCount = await safeCount(
-      supabaseAdmin
-        .from('client_reservations')
-        .select('*', { count: 'exact', head: true })
-        .not('deposit_paid_at', 'is', null)
-        .is('balance_paid_at', null)
-        .not('balance_due_at', 'is', null)
-        .lte('balance_due_at', now)
-    );
-
-    // Caution à demander (J-2 atteint) - avec try-catch car colonnes peuvent ne pas exister
-    const depositDueCount = await safeCount(
-      supabaseAdmin
-        .from('client_reservations')
-        .select('*', { count: 'exact', head: true })
-        .not('deposit_requested_at', 'is', null)
-        .lte('deposit_requested_at', now)
-        .is('deposit_session_id', null)
-        .in('status', ['AWAITING_BALANCE', 'CONFIRMED'])
-    );
-
-    // 3. Documents
-    // Contrats non signés
-    const contractsUnsignedCount = await safeCount(
+    // 2. Contrats non signés
+    const contractsUnsigned = await safeCount(
       supabaseAdmin
         .from('client_reservations')
         .select('*', { count: 'exact', head: true })
@@ -107,77 +68,30 @@ export async function GET(req: NextRequest) {
         .is('client_signature', null)
     );
 
-    // Nouvelles factures (dernières 24h)
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const newInvoicesCount = await safeCount(
-      supabaseAdmin
-        .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', yesterday.toISOString())
-    );
-
-    // 4. Flux entrants
-    // Demandes de réservation NEW/PENDING_REVIEW
-    const reservationRequestsNewCount = await safeCount(
-      supabaseAdmin
-        .from('reservation_requests')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['NEW', 'PENDING_REVIEW'])
-    );
-
-    // Demandes Pro en attente (si colonne existe)
-    const proRequestsPendingCount = await safeCount(
-      supabaseAdmin
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('pro_status', 'pending')
-    );
-
-    // 5. Opérations
-    // Livraisons en cours (legacy reservations)
-    const deliveriesInProgressCount = await safeCount(
+    // 3. Livraisons en cours (legacy reservations)
+    const deliveriesInProgress = await safeCount(
       supabaseAdmin
         .from('reservations')
         .select('*', { count: 'exact', head: true })
         .eq('delivery_status', 'en_cours')
     );
 
-    // États des lieux à traiter (legacy)
-    const conditionReportsToReviewCount = await safeCount(
+    // 4. Nouvelles factures (dernières 24h)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const newInvoices = await safeCount(
       supabaseAdmin
-        .from('etat_lieux')
+        .from('orders')
         .select('*', { count: 'exact', head: true })
-        .in('status', ['livraison_complete', 'reprise_complete'])
+        .gte('created_at', yesterday.toISOString())
     );
 
-    // Construire la réponse avec toutes les variables déclarées
+    // Construire la réponse simplifiée avec uniquement les 4 compteurs utilisés
     const response = {
-      reservations: {
-        pending: pendingCount,
-        cancellations: cancellationsCount,
-        modifications: modificationsCount,
-        total: pendingCount + cancellationsCount + modificationsCount,
-      },
-      payments: {
-        balance_due: balanceDueCount,
-        deposit_due: depositDueCount,
-        total: balanceDueCount + depositDueCount,
-      },
-      documents: {
-        contracts_unsigned: contractsUnsignedCount,
-        new_invoices: newInvoicesCount,
-        total: contractsUnsignedCount + newInvoicesCount,
-      },
-      inbound: {
-        reservation_requests_new: reservationRequestsNewCount,
-        pro_requests_pending: proRequestsPendingCount,
-        total: reservationRequestsNewCount + proRequestsPendingCount,
-      },
-      operations: {
-        deliveries_in_progress: deliveriesInProgressCount,
-        condition_reports_to_review: conditionReportsToReviewCount,
-      },
+      pending_reservations: pendingReservations,
+      contracts_unsigned: contractsUnsigned,
+      deliveries_in_progress: deliveriesInProgress,
+      new_invoices: newInvoices,
     };
 
     return NextResponse.json(response, {

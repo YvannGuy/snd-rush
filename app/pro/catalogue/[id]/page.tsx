@@ -445,7 +445,7 @@ export default function ProProductDetailPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            productId: product.id,
+            productId: String(product.id),
             startDate,
             endDate,
             startTime: startTime || null,
@@ -523,17 +523,17 @@ export default function ProProductDetailPage() {
     }
 
     const cartItem: CartItem = {
-      productId: product.id,
+      productId: String(product.id),
       productName: product.name,
-      productSlug: product.slug,
+      productSlug: product.slug || String(product.id),
       quantity,
       rentalDays,
       startDate,
       endDate,
       startTime: startTime || undefined,
       endTime: endTime || undefined,
-      dailyPrice: product.daily_price_ttc,
-      deposit: product.deposit,
+      dailyPrice: product.daily_price_ttc || 0,
+      deposit: product.deposit || 0,
       addons: selectedAddons,
       images: product.images || [],
     };
@@ -549,7 +549,7 @@ export default function ProProductDetailPage() {
 
   const calculateTotal = () => {
     if (!product || !startDate || !endDate) return 0;
-    const basePrice = product.daily_price_ttc * quantity * rentalDays;
+    const basePrice = (product.daily_price_ttc || 0) * quantity * rentalDays;
     const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
     return basePrice + addonsTotal;
   };
@@ -643,11 +643,6 @@ export default function ProProductDetailPage() {
       deposit: 0,
       addons: [],
       images: ['/installation.jpg'],
-      metadata: {
-        type: 'installation',
-        relatedProductId: product.id,
-        relatedProductName: product.name,
-      },
     };
 
     // L'installation n'a pas de stock, on peut l'ajouter sans vérification
@@ -695,12 +690,6 @@ export default function ProProductDetailPage() {
       deposit: 0,
       addons: [],
       images: ['/livraison.jpg'],
-      zone: zone,
-      metadata: {
-        type: 'delivery',
-        relatedProductId: product.id,
-        relatedProductName: product.name,
-      },
     };
 
     // La livraison n'a pas de stock, on peut l'ajouter sans vérification
@@ -1813,9 +1802,10 @@ export default function ProProductDetailPage() {
                   
                   const handleAddRecommended = async () => {
                     const cartItem: CartItem = {
-                      productId: recProduct.id,
+                      productId: String(recProduct.id),
                       productName: recProduct.name,
-                      dailyPrice: parseFloat(recProduct.daily_price_ttc.toString()),
+                      productSlug: recProduct.slug || String(recProduct.id),
+                      dailyPrice: recProduct.daily_price_ttc ? parseFloat(recProduct.daily_price_ttc.toString()) : 0,
                       quantity: 1,
                       rentalDays: 1,
                       startDate: null,
@@ -1823,7 +1813,8 @@ export default function ProProductDetailPage() {
                       startTime: '',
                       endTime: '',
                       deposit: parseFloat(recProduct.deposit?.toString() || '0'),
-                      image: productImage,
+                      addons: [],
+                      images: productImage ? [productImage] : [],
                     };
                     const result = await addToCart(cartItem);
                     if (!result.success) {

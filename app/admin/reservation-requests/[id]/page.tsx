@@ -251,13 +251,7 @@ export default function AdminReservationRequestDetailPage() {
       <Header language={language} onLanguageChange={setLanguage} />
       
       <div className="flex flex-1 pt-[112px]">
-        <AdminSidebar 
-          language={language} 
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        />
+        <AdminSidebar language={language} />
         
         <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
           <div className="max-w-4xl mx-auto px-6 py-8">

@@ -55,6 +55,7 @@ export default function MesLivraisonsPage() {
     if (!user || !supabase || typeof window === 'undefined') return;
     
     const markAsViewed = async () => {
+      if (!supabase) return;
       try {
         const { data: reservationsData } = await supabase
           .from('reservations')
@@ -81,6 +82,7 @@ export default function MesLivraisonsPage() {
 
     const loadData = async () => {
       try {
+        if (!supabase) return;
         // Charger les réservations confirmées de l'utilisateur
         const { data: reservationsData, error: reservationsError } = await supabase
           .from('reservations')

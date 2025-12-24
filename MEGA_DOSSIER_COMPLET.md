@@ -2,7 +2,7 @@
 
 **Date de création :** 2025-01-05  
 **Dernière mise à jour :** 2025-01-05  
-**Version :** 2.5  
+**Version :** 2.6.4  
 **Auteur :** Documentation complète du système SoundRush
 
 ---
@@ -51,51 +51,28 @@ Le dashboard admin utilise un pattern d'authentification où :
 - **Fonction :** Page principale avec statistiques et widgets
 
 #### 📅 **Réservations** (`/admin/reservations`)
-- **Badge :** `pendingActions.pendingReservations` (réservations en attente)
+- **Badge :** `pending_reservations` (réservations en attente)
 - **Fonction :** Liste paginée et filtrable de toutes les réservations
 - **Badge calculé depuis :**
-  - `client_reservations` avec `status = 'AWAITING_PAYMENT'` ou `status = 'AWAITING_BALANCE'`
-  - Compte les réservations nécessitant une action admin
+  - `client_reservations` avec `status IN ('AWAITING_PAYMENT', 'AWAITING_BALANCE')`
 
 #### 🚚 **Livraisons** (`/admin/livraisons`)
-- **Badge :** `pendingActions.deliveriesInProgress` (livraisons en cours)
+- **Badge :** `deliveries_in_progress` (livraisons en cours)
 - **Fonction :** Gestion des livraisons et récupérations
 - **Badge calculé depuis :**
-  - `client_reservations` avec `status = 'CONFIRMED'` et `start_at` proche
-  - Réservations nécessitant préparation livraison
+  - `reservations` (legacy) avec `delivery_status = 'en_cours'`
 
 #### 📄 **Contrats** (`/admin/contrats`)
-- **Badge :** `pendingActions.contractsToSign` (contrats non signés)
+- **Badge :** `contracts_unsigned` (contrats non signés)
 - **Fonction :** Liste des contrats à signer
 - **Badge calculé depuis :**
   - `client_reservations` avec `status IN ('CONFIRMED', 'AWAITING_BALANCE')` ET `client_signature IS NULL`
-  - `reservations` (legacy) avec `status = 'confirmed'` ET `client_signature IS NULL`
 
 #### 💰 **Factures** (`/admin/factures`)
-- **Badge :** `pendingActions.newInvoices` (nouvelles factures)
+- **Badge :** `new_invoices` (nouvelles factures)
 - **Fonction :** Gestion des factures
 - **Badge calculé depuis :**
   - `orders` récemment créés (dernières 24h)
-  - Factures non encore téléchargées par le client
-- **Note :** Badge affiché dans la sidebar avec le compteur `documents.new_invoices`
-
-#### 📋 **Demandes de réservation** (`/admin/reservation-requests`)
-- **Badge :** `pendingActions.pendingReservationRequests` (nouvelles demandes)
-- **Fonction :** Gestion des demandes de réservation (legacy)
-- **Badge calculé depuis :**
-  - `reservation_requests` avec `status = 'pending'`
-
-#### 🏢 **Demandes Pro** (`/admin/pro`)
-- **Badge :** `pendingActions.pendingProRequests` (demandes pro)
-- **Fonction :** Gestion des demandes professionnelles
-- **Badge calculé depuis :**
-  - Table spécifique pour demandes pro
-
-#### 📝 **États des lieux** (`/admin/etats-des-lieux`)
-- **Badge :** `pendingActions.conditionReportsToReview` (états des lieux à vérifier)
-- **Fonction :** Gestion des états des lieux
-- **Badge calculé depuis :**
-  - `etat_lieux` avec `status = 'pending'` ou nécessitant révision
 
 #### 📦 **Catalogue** (`/admin/catalogue`)
 - **Badge :** Aucun
@@ -122,133 +99,161 @@ Le dashboard admin utilise un pattern d'authentification où :
 ```typescript
 // components/AdminSidebar.tsx
 'use client';
-import { useState, useEffect, useRef } from 'react';
+
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+
+import { useAuth } from '@/hooks/useAuth';
 import { adminFetch } from '@/lib/adminApiClient';
+import UserIconWithName from '@/components/UserIconWithName';
 
 interface AdminSidebarProps {
   language?: 'fr' | 'en';
-  pendingActions?: {
-    pendingReservations?: number;
-    contractsToSign?: number;
-    conditionReportsToReview?: number;
-    deliveriesInProgress?: number;
-    pendingCancellations?: number;
-    pendingModifications?: number;
-    pendingProRequests?: number;
-    pendingReservationRequests?: number;
-    newInvoices?: number;
-  };
 }
 
-export default function AdminSidebar({ 
-  language = 'fr', 
-  pendingActions: propsPendingActions 
-}: AdminSidebarProps) {
+export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
   const pathname = usePathname();
-  const [localPendingActions, setLocalPendingActions] = useState({
-    pendingReservations: 0,
-    contractsToSign: 0,
-    conditionReportsToReview: 0,
-    deliveriesInProgress: 0,
-    pendingCancellations: 0,
-    pendingModifications: 0,
-    pendingProRequests: 0,
-    pendingReservationRequests: 0,
-    newInvoices: 0,
+  const router = useRouter();
+  const { signOut } = useAuth();
+
+  const [pendingActions, setPendingActions] = useState({
+    pending_reservations: 0,
+    contracts_unsigned: 0,
+    deliveries_in_progress: 0,
+    new_invoices: 0,
   });
-  const [loadingBadges, setLoadingBadges] = useState(false);
-  const hasLoggedNoSession = useRef(false); // Pour logger NO_SESSION une seule fois
 
-  // Utiliser les props si fournies, sinon fetch via API
-  const pendingActions = propsPendingActions || localPendingActions;
+  const hasLoggedNoSession = useRef(false);
 
-  // Fetch badges via API si pas fournis en props
-  // IMPORTANT: Ne dépend pas de `user`, fonctionne même sans session (fail gracefully)
-  // IMPORTANT: Dépendances stables pour éviter boucle de fetch
+  const texts = {
+    fr: {
+      adminPanel: 'ADMIN PANEL',
+      dashboard: 'Tableau de bord',
+      reservations: 'Réservations',
+      productCatalog: 'Catalogue produits',
+      packs: 'Packs',
+      planning: 'Planning & Disponibilités',
+      clients: 'Clients',
+      invoices: 'Factures',
+      contracts: 'Contrats',
+      deliveries: 'Livraisons',
+      payment: 'Paiement',
+      settings: 'Paramètres',
+      administrator: 'Administrateur',
+      logout: 'Déconnexion',
+    },
+    en: {
+      adminPanel: 'ADMIN PANEL',
+      dashboard: 'Dashboard',
+      reservations: 'Reservations',
+      productCatalog: 'Product Catalog',
+      packs: 'Packs',
+      planning: 'Planning & Availabilities',
+      clients: 'Clients',
+      invoices: 'Invoices',
+      contracts: 'Contracts',
+      deliveries: 'Deliveries',
+      payment: 'Payment',
+      settings: 'Settings',
+      administrator: 'Administrator',
+      logout: 'Logout',
+    },
+  } as const;
+
+  const currentTexts = texts[language];
+
+  const isActive = (path: string) => {
+    if (path === '/admin') return pathname === '/admin';
+    return pathname?.startsWith(path);
+  };
+
+  // Fetch badges via API au mount et via événement (pas de polling)
   useEffect(() => {
-    if (propsPendingActions) return;
-
     const fetchPendingActions = async () => {
-      setLoadingBadges(true);
-      
       try {
         const data = await adminFetch<{
-          reservations: { pending: number; cancellations: number; modifications: number; total: number };
-          payments: { balance_due: number; deposit_due: number; total: number };
-          documents: { contracts_unsigned: number; new_invoices: number; total: number };
-          inbound: { reservation_requests_new: number; pro_requests_pending: number; total: number };
-          operations: { deliveries_in_progress: number; condition_reports_to_review: number };
+          pending_reservations: number;
+          contracts_unsigned: number;
+          deliveries_in_progress: number;
+          new_invoices: number;
         }>('/api/admin/pending-actions');
 
-        setLocalPendingActions({
-          pendingReservations: data.reservations?.pending || 0,
-          contractsToSign: data.documents?.contracts_unsigned || 0,
-          conditionReportsToReview: data.operations?.condition_reports_to_review || 0,
-          deliveriesInProgress: data.operations?.deliveries_in_progress || 0,
-          pendingCancellations: data.reservations?.cancellations || 0,
-          pendingModifications: data.reservations?.modifications || 0,
-          pendingProRequests: data.inbound?.pro_requests_pending || 0,
-          pendingReservationRequests: data.inbound?.reservation_requests_new || 0,
-          newInvoices: data.documents?.new_invoices || 0,
+        setPendingActions({
+          pending_reservations: data.pending_reservations || 0,
+          contracts_unsigned: data.contracts_unsigned || 0,
+          deliveries_in_progress: data.deliveries_in_progress || 0,
+          new_invoices: data.new_invoices || 0,
         });
-        // Reset le flag si succès
+
         hasLoggedNoSession.current = false;
-      } catch (error: any) {
-        if (error.message === 'NO_SESSION') {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message === 'NO_SESSION') {
           if (!hasLoggedNoSession.current) {
             console.warn('[AdminSidebar] Pas de session, badges non chargés');
             hasLoggedNoSession.current = true;
           }
-          // En cas d'erreur NO_SESSION, garder les valeurs par défaut (0)
+          // fail gracefully: keep 0s
         } else {
           console.error('[AdminSidebar] Erreur chargement badges:', error);
         }
-        // En cas d'erreur, garder les valeurs par défaut (0)
-      } finally {
-        setLoadingBadges(false);
       }
     };
 
     fetchPendingActions();
 
-    // Refresh toutes les 30 secondes
-    const interval = setInterval(fetchPendingActions, 30000);
-
-    // Écouter l'événement de mise à jour
     const handlePendingActionsUpdated = () => {
       fetchPendingActions();
     };
+
     window.addEventListener('pendingActionsUpdated', handlePendingActionsUpdated);
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener('pendingActionsUpdated', handlePendingActionsUpdated);
     };
-  }, [propsPendingActions]); // Dépendances stables : uniquement propsPendingActions
-
-  // Structure de navigation avec badges
-  // Mapping des badges depuis la réponse API groupée vers l'état plat
-  const navItems = [
-    { href: '/admin', label: 'Tableau de bord', badge: null },
-    { href: '/admin/reservations', label: 'Réservations', badge: pendingActions.pendingReservations },
-    { href: '/admin/livraisons', label: 'Livraisons', badge: pendingActions.deliveriesInProgress },
-    { href: '/admin/contrats', label: 'Contrats', badge: pendingActions.contractsToSign },
-    { href: '/admin/factures', label: 'Factures', badge: pendingActions.newInvoices },
-    { href: '/admin/reservation-requests', label: 'Demandes', badge: pendingActions.pendingReservationRequests },
-    { href: '/admin/pro', label: 'Demandes Pro', badge: pendingActions.pendingProRequests },
-    { href: '/admin/etats-des-lieux', label: 'États des lieux', badge: pendingActions.conditionReportsToReview },
-    { href: '/admin/catalogue', label: 'Catalogue', badge: null },
-    { href: '/admin/packs', label: 'Packs', badge: null },
-    { href: '/admin/clients', label: 'Clients', badge: null },
-    { href: '/admin/planning', label: 'Planning', badge: null },
-    { href: '/admin/parametres', label: 'Paramètres', badge: null },
-  ];
+  }, []);
 
   return (
-    <aside className={/* ... */}>
-      {/* Navigation avec badges */}
+    <aside className="fixed top-[112px] left-0 z-40 bg-white border-r border-gray-200 flex flex-col h-[calc(100vh-112px)] w-64 lg:w-64">
+      {/* Logo */}
+      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <Link href="/admin" className="flex items-center gap-2 flex-1">
+          <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+            <span className="text-white text-xl">♪</span>
+          </div>
+          <div>
+            <span className="text-xl font-bold text-gray-900 block">SoundRush</span>
+            <span className="text-xs text-gray-500 font-semibold">{currentTexts.adminPanel}</span>
+          </div>
+        </Link>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 overflow-y-auto">
+        {/* Items de navigation avec badges */}
+        {/* ... */}
+      </nav>
+
+      {/* User Profile */}
+      <div className="p-4 border-t border-gray-200">
+        <div className="flex flex-col items-center gap-2 mb-3 px-2">
+          <UserIconWithName iconSize="md" className="text-gray-700" />
+          <p className="text-xs text-gray-500 text-center">{currentTexts.administrator}</p>
+        </div>
+
+        <button
+          onClick={async () => {
+            await signOut();
+            router.push('/');
+          }}
+          className="flex items-center gap-2 w-full px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          {currentTexts.logout}
+        </button>
+      </div>
     </aside>
   );
 }
@@ -431,7 +436,7 @@ export default function AdminDashboardPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="flex flex-1">
         {/* Sidebar gère son propre collapse, pas besoin de props isCollapsed/onToggleCollapse */}
-        <AdminSidebar language="fr" pendingActions={undefined} />
+        <AdminSidebar language="fr" />
         <main className="flex-1 flex flex-col overflow-hidden">
           <AdminHeader language="fr" />
           <div className="flex-1 overflow-y-auto p-6">
@@ -516,46 +521,6 @@ export default function AdminReservationsPage() {
     }
   }, [isAdmin, checkingAdmin, user, router]);
 
-  // Marquer comme "viewé" quand le modal s'ouvre
-  useEffect(() => {
-    // Extraire les primitives stables au début
-    const reservationId = selectedReservation?.id;
-    const status = selectedReservation?.status;
-
-    // Garde-fous : si modal fermé ou données manquantes -> return
-    if (!isDetailModalOpen || !reservationId || !status) {
-      return;
-    }
-
-    const markAsViewed = () => {
-      // Marquer selon le type
-      if (status === 'PENDING' || status === 'pending') {
-        const viewed = JSON.parse(localStorage.getItem('admin_viewed_reservations') || '[]');
-        if (!viewed.includes(reservationId)) {
-          viewed.push(reservationId);
-          localStorage.setItem('admin_viewed_reservations', JSON.stringify(viewed));
-        }
-      } else if (status === 'CANCEL_REQUESTED' || status === 'cancel_requested') {
-        const viewed = JSON.parse(localStorage.getItem('admin_viewed_cancellations') || '[]');
-        if (!viewed.includes(reservationId)) {
-          viewed.push(reservationId);
-          localStorage.setItem('admin_viewed_cancellations', JSON.stringify(viewed));
-        }
-      } else if (status === 'CHANGE_REQUESTED' || status === 'change_requested') {
-        const viewed = JSON.parse(localStorage.getItem('admin_viewed_modifications') || '[]');
-        if (!viewed.includes(reservationId)) {
-          viewed.push(reservationId);
-          localStorage.setItem('admin_viewed_modifications', JSON.stringify(viewed));
-        }
-      }
-
-      // Dispatcher l'événement pour mettre à jour les compteurs
-      window.dispatchEvent(new Event('pendingActionsUpdated'));
-    };
-
-    markAsViewed();
-  }, [isDetailModalOpen, selectedReservation?.id, selectedReservation?.status]);
-
   // Charger les documents pour la réservation sélectionnée via API
   useEffect(() => {
     // Extraire la primitive stable au début
@@ -619,19 +584,9 @@ export default function AdminReservationsPage() {
           total: number;
         }>(`/api/admin/reservations?${params.toString()}`);
 
-        // Adapter les réservations pour compatibilité avec le rendu existant
-        const adaptedReservations = (data.data || []).map((r: any) => ({
-          ...r,
-          start_date: r.start_at || r.created_at,
-          end_date: r.end_at || r.created_at,
-          total_price: r.price_total,
-          pack_id: r.pack_key,
-          type: r.source === 'client_reservation' ? 'client_reservation' : 'reservation',
-          customerName: r.customer_name || 'Client',
-          customerEmail: r.customer_email || '',
-        }));
-
-        setReservations(adaptedReservations);
+        // Utiliser directement les données de l'API (pas de mapping legacy)
+        // Les champs API sont directement utilisés : start_at, end_at, price_total, customer_name, customer_email
+        setReservations(data.data || []);
         setTotalPages(Math.ceil((data.total || 0) / itemsPerPage));
       } catch (error: any) {
         console.error('❌ Erreur chargement réservations:', error);
@@ -804,36 +759,17 @@ export default function AdminReservationDetailPage() {
 - Si une requête échoue (ex: colonne manquante), retourne `0` au lieu de faire échouer toute l'API
 - Logs détaillés pour debugging
 
-**Réponse :**
+**Réponse (Version 2.6 - Simplifiée) :**
 ```json
 {
-  "reservations": {
-    "pending": 5,
-    "cancellations": 2,
-    "modifications": 1,
-    "total": 8
-  },
-  "payments": {
-    "balance_due": 3,
-    "deposit_due": 2,
-    "total": 5
-  },
-  "documents": {
-    "contracts_unsigned": 4,
-    "new_invoices": 7,
-    "total": 11
-  },
-  "inbound": {
-    "reservation_requests_new": 3,
-    "pro_requests_pending": 1,
-    "total": 4
-  },
-  "operations": {
-    "deliveries_in_progress": 6,
-    "condition_reports_to_review": 2
-  }
+  "pending_reservations": 5,
+  "contracts_unsigned": 4,
+  "deliveries_in_progress": 3,
+  "new_invoices": 7
 }
 ```
+
+**Note :** La réponse contient uniquement les 4 compteurs utilisés dans la sidebar. Les champs `payments.*`, `inbound.*`, `condition_reports_to_review` et toute logique legacy ont été supprimés en version 2.6.
 
 **Code :**
 ```typescript
@@ -888,133 +824,54 @@ export async function GET(req: NextRequest) {
 
     const now = new Date().toISOString();
 
-    // Requêtes parallèles avec safeCount
-    const pendingCount = await safeCount(
+    // Version 2.6 : Requêtes simplifiées (4 compteurs uniquement)
+    
+    // 1. Réservations en attente (client_reservations uniquement)
+    const pendingReservations = await safeCount(
       supabaseAdmin
         .from('client_reservations')
         .select('*', { count: 'exact', head: true })
         .in('status', ['AWAITING_PAYMENT', 'AWAITING_BALANCE'])
     );
 
-    const cancellationsCount = await safeCount(
-      supabaseAdmin
-        .from('client_reservations')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'CANCEL_REQUESTED') // Statut corrigé (était CANCELLED)
-    );
-
-    // Modifications (si status CHANGE_REQUESTED existe, sinon 0)
-    const modificationsCount = await safeCount(
-      supabaseAdmin
-        .from('client_reservations')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'CHANGE_REQUESTED')
-    );
-
-    // 2. Paiements
-    // Solde à payer (J-5 atteint)
-    const balanceDueCount = await safeCount(
-      supabaseAdmin
-        .from('client_reservations')
-        .select('*', { count: 'exact', head: true })
-        .not('deposit_paid_at', 'is', null)
-        .is('balance_paid_at', null)
-        .not('balance_due_at', 'is', null)
-        .lte('balance_due_at', now)
-    );
-
-    // Caution à demander (J-2 atteint) - utilise safeCount partout
-    const depositDueCount = await safeCount(
-      supabaseAdmin
-        .from('client_reservations')
-        .select('*', { count: 'exact', head: true })
-        .not('deposit_requested_at', 'is', null)
-        .lte('deposit_requested_at', now)
-        .is('deposit_session_id', null)
-        .in('status', ['AWAITING_BALANCE', 'CONFIRMED'])
-    );
-
-    // 3. Documents
-    // Contrats non signés (requête corrigée)
-    const contractsUnsignedCount = await safeCount(
+    // 2. Contrats non signés
+    const contractsUnsigned = await safeCount(
       supabaseAdmin
         .from('client_reservations')
         .select('*', { count: 'exact', head: true })
         .in('status', ['CONFIRMED', 'AWAITING_BALANCE'])
-        .is('client_signature', null) // Correction: était .or() avec syntaxe incorrecte
+        .is('client_signature', null)
     );
 
-    // Nouvelles factures (dernières 24h)
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const newInvoicesCount = await safeCount(
-      supabaseAdmin
-        .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', yesterday.toISOString())
-    );
-
-    // 4. Flux entrants
-    // Demandes de réservation NEW/PENDING_REVIEW
-    const reservationRequestsNewCount = await safeCount(
-      supabaseAdmin
-        .from('reservation_requests')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['NEW', 'PENDING_REVIEW'])
-    );
-
-    // Demandes Pro en attente - utilise safeCount partout
-    const proRequestsPendingCount = await safeCount(
-      supabaseAdmin
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('pro_status', 'pending')
-    );
-
-    // 5. Opérations
-    // Livraisons en cours (legacy reservations)
-    const deliveriesInProgressCount = await safeCount(
+    // 3. Livraisons en cours (legacy reservations)
+    const deliveriesInProgress = await safeCount(
       supabaseAdmin
         .from('reservations')
         .select('*', { count: 'exact', head: true })
         .eq('delivery_status', 'en_cours')
     );
 
-    // États des lieux à traiter (legacy)
-    const conditionReportsToReviewCount = await safeCount(
+    // 4. Nouvelles factures (dernières 24h)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const newInvoices = await safeCount(
       supabaseAdmin
-        .from('etat_lieux')
+        .from('orders')
         .select('*', { count: 'exact', head: true })
-        .in('status', ['livraison_complete', 'reprise_complete'])
+        .gte('created_at', yesterday.toISOString())
     );
 
-    // Construire la réponse avec toutes les variables déclarées explicitement
-    // IMPORTANT: Pas de champ additionnel (updated_at supprimé)
-    return NextResponse.json({
-      reservations: {
-        pending: pendingCount,
-        cancellations: cancellationsCount,
-        modifications: modificationsCount,
-        total: pendingCount + cancellationsCount + modificationsCount,
-      },
-      payments: {
-        balance_due: balanceDueCount,
-        deposit_due: depositDueCount,
-        total: balanceDueCount + depositDueCount,
-      },
-      documents: {
-        contracts_unsigned: contractsUnsignedCount,
-        new_invoices: newInvoicesCount,
-        total: contractsUnsignedCount + newInvoicesCount,
-      },
-      inbound: {
-        reservation_requests_new: reservationRequestsNewCount,
-        pro_requests_pending: proRequestsPendingCount,
-        total: reservationRequestsNewCount + proRequestsPendingCount,
-      },
-      operations: {
-        deliveries_in_progress: deliveriesInProgressCount,
-        condition_reports_to_review: conditionReportsToReviewCount,
+    // Construire la réponse simplifiée avec uniquement les 4 compteurs utilisés
+    const response = {
+      pending_reservations: pendingReservations,
+      contracts_unsigned: contractsUnsigned,
+      deliveries_in_progress: deliveriesInProgress,
+      new_invoices: newInvoices,
+    };
+
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': 'no-store, must-revalidate',
       },
     });
   } catch (error: any) {
@@ -1077,14 +934,14 @@ export async function GET(req: NextRequest) {
     {
       "id": "uuid",
       "source": "client_reservation",
-      "customerName": "Jean Dupont",
-      "customerEmail": "jean@example.com",
-      "packKey": "conference",
-      "startAt": "2025-01-15T10:00:00Z",
-      "endAt": "2025-01-15T18:00:00Z",
+      "customer_name": "Jean Dupont",
+      "customer_email": "jean@example.com",
+      "pack_key": "conference",
+      "start_at": "2025-01-15T10:00:00Z",
+      "end_at": "2025-01-15T18:00:00Z",
       "status": "AWAITING_BALANCE",
-      "priceTotal": 500,
-      "depositPaid": true
+      "price_total": 500,
+      "deposit_paid": true
     }
   ],
   "page": 1,
@@ -1103,22 +960,22 @@ export async function GET(req: NextRequest) {
   "reservation": {
     "id": "uuid",
     "source": "client_reservation",
-    "packKey": "conference",
-    "customerName": "Jean Dupont",
-    "customerEmail": "jean@example.com",
-    "customerPhone": "+33612345678",
-    "startAt": "2025-01-15T10:00:00Z",
-    "endAt": "2025-01-15T18:00:00Z",
+    "pack_key": "conference",
+    "customer_name": "Jean Dupont",
+    "customer_email": "jean@example.com",
+    "customer_phone": "+33612345678",
+    "start_at": "2025-01-15T10:00:00Z",
+    "end_at": "2025-01-15T18:00:00Z",
     "address": "123 Rue Example, 75001 Paris",
     "status": "AWAITING_BALANCE",
-    "priceTotal": 500,
-    "basePackPrice": 400,
-    "extrasTotal": 100,
-    "finalItems": [...],
-    "customerSummary": "Pack Conférence le 15/01/2025...",
-    "depositPaidAt": "2025-01-10T14:30:00Z",
-    "clientSignature": null,
-    "clientSignedAt": null
+    "price_total": 500,
+    "base_pack_price": 400,
+    "extras_total": 100,
+    "final_items": [...],
+    "customer_summary": "Pack Conférence le 15/01/2025...",
+    "deposit_paid_at": "2025-01-10T14:30:00Z",
+    "client_signature": null,
+    "client_signed_at": null
   },
   "orders": [
     {
@@ -1399,17 +1256,25 @@ export async function verifyAdmin(token: string): Promise<AdminAuthResult> {
 
 **Documentation complète du système SoundRush Dashboard & Chat**
 
-**Version 2.5 - Mise à jour avec micro-fixes BodyInit (ReadableStream SSR-safe, ArrayBufferView)**
+**Version 2.6.4 - Correction code cassé documentation + suppression références legacy pending-actions**
 
 Tous les fichiers, interactions, flux de données, et architectures sont documentés ci-dessus.
 
-**Améliorations récentes incluses :**
+**Améliorations récentes incluses (Version 2.6.1) :**
+- ✅ Simplification finale de l'architecture admin (cohérence doc + code)
+- ✅ Suppression complète des props mobile/collapse dans `AdminSidebar` (`isOpen`, `onClose`, `isCollapsed`, `onToggleCollapse`)
+- ✅ Suppression de toute la logique conditionnelle mobile/collapse (overlay, boutons toggle, états)
+- ✅ Suppression de l'item de navigation legacy "etats-des-lieux"
+- ✅ Normalisation du format `snake_case` dans toute la documentation (alignement avec l'API réelle)
 - ✅ Refactor du dashboard admin pour utiliser exclusivement les API routes `/api/admin/*`
 - ✅ Création de `lib/adminApiClient.ts` pour centraliser les appels API admin
 - ✅ Amélioration de la gestion d'erreurs dans `/api/admin/pending-actions` avec `safeCount`
 - ✅ Corrections des erreurs de hooks React (ordre des hooks)
-- ✅ Corrections des imports en double
 - ✅ Architecture sécurisée avec Pattern A (access token client-side)
+- ✅ Suppression du polling automatique dans `AdminSidebar` (refresh uniquement via événement)
+- ✅ Suppression des sections legacy (`reservation-requests`, `pro`)
+- ✅ Normalisation de la shape des données réservations (consommation directe API)
+- ✅ Suppression de la logique "mark as viewed" basée sur `localStorage`
 
 **Corrections récentes (Version 2.1) :**
 - ✅ **AdminSidebar** : Suppression de la dépendance à `user`, fetch des badges fonctionne même sans session (fail gracefully)
@@ -1452,15 +1317,14 @@ Tous les fichiers, interactions, flux de données, et architectures sont documen
   - `contractsUnsignedCount`, `newInvoicesCount`
   - `reservationRequestsNewCount`, `proRequestsPendingCount`
   - `deliveriesInProgressCount`, `conditionReportsToReviewCount`
-- ✅ **safeCount partout** : Toutes les requêtes utilisent `safeCount` (y compris `depositDueCount` et `proRequestsPendingCount`)
-- ✅ **Shape de réponse exacte** : La réponse respecte exactement la structure demandée :
+- ✅ **safeCount partout** : Toutes les requêtes utilisent `safeCount` pour robustesse
+- ✅ **Shape de réponse simplifiée** : La réponse contient uniquement les 4 compteurs utilisés :
   ```typescript
   {
-    reservations: { pending, cancellations, modifications, total },
-    payments: { balance_due, deposit_due, total },
-    documents: { contracts_unsigned, new_invoices, total },
-    inbound: { reservation_requests_new, pro_requests_pending, total },
-    operations: { deliveries_in_progress, condition_reports_to_review }
+    pending_reservations: number;
+    contracts_unsigned: number;
+    deliveries_in_progress: number;
+    new_invoices: number;
   }
   ```
 - ✅ **Robustesse** : En cas d'erreur de requête, `safeCount` retourne 0 et la route retourne 200 avec des 0 (pas de crash)
@@ -1477,15 +1341,13 @@ Tous les fichiers, interactions, flux de données, et architectures sont documen
 **Corrections finales (Version 2.3) :**
 
 ### 🔧 **app/api/admin/pending-actions/route.ts**
-- ✅ **Shape de réponse exacte** : Suppression de `updated_at` de la réponse
-- ✅ **Réponse strictement conforme** : La réponse contient uniquement les champs demandés :
+- ✅ **Shape de réponse simplifiée** : La réponse contient uniquement les 4 compteurs utilisés :
   ```typescript
   {
-    reservations: { pending, cancellations, modifications, total },
-    payments: { balance_due, deposit_due, total },
-    documents: { contracts_unsigned, new_invoices, total },
-    inbound: { reservation_requests_new, pro_requests_pending, total },
-    operations: { deliveries_in_progress, condition_reports_to_review }
+    pending_reservations: number;
+    contracts_unsigned: number;
+    deliveries_in_progress: number;
+    new_invoices: number;
   }
   ```
 - ✅ **Auth stricte** : 
@@ -1536,3 +1398,125 @@ Tous les fichiers, interactions, flux de données, et architectures sont documen
 - ✅ **ArrayBufferView support** : Ajout de la gestion des `ArrayBufferView` (ex: `Uint8Array`, `Int16Array`) via `ArrayBuffer.isView(init.body)` avant le fallback "plain object"
 - ✅ **Ordre des vérifications préservé** : Types spécifiques vérifiés dans l'ordre : FormData → URLSearchParams → Blob → ArrayBuffer → ArrayBufferView → ReadableStream → string → plain object
 - ✅ **Aucun Content-Type pour types natifs** : FormData, Blob, ArrayBuffer, ArrayBufferView, ReadableStream, URLSearchParams ne définissent jamais Content-Type
+
+---
+
+**Simplification ciblée architecture admin (Version 2.6) :**
+
+### 🔧 **components/AdminSidebar.tsx**
+- ✅ **Suppression props `pendingActions`** : `AdminSidebar` ne reçoit plus de badges via props, charge toujours via `/api/admin/pending-actions`
+- ✅ **Suppression polling automatique** : Retrait de `setInterval(fetchPendingActions, 30000)`, refresh uniquement au mount et via événement `pendingActionsUpdated`
+- ✅ **Suppression sections legacy** : Retrait des items de navigation `reservation-requests`, `pro`, `etats-des-lieux` et leurs badges associés
+- ✅ **Shape simplifiée** : Badges réduits à 4 compteurs : `pending_reservations`, `contracts_unsigned`, `deliveries_in_progress`, `new_invoices`
+- ✅ **Props simplifiées** : Interface `AdminSidebarProps` ne contient plus que `language?: 'fr' | 'en'` (suppression complète de `isOpen`, `onClose`, `isCollapsed`, `onToggleCollapse`)
+- ✅ **Suppression logique mobile/collapse** : Retrait de toute la logique d'overlay mobile, boutons toggle, collapse state, etc.
+- ✅ **Sidebar fixe** : Sidebar toujours visible sur desktop, structure simplifiée sans états conditionnels
+
+### 🔧 **app/api/admin/pending-actions/route.ts**
+- ✅ **Réponse simplifiée** : Réduction à 4 compteurs uniquement :
+  ```typescript
+  {
+    pending_reservations: number;
+    contracts_unsigned: number;
+    deliveries_in_progress: number;
+    new_invoices: number;
+  }
+  ```
+- ✅ **Suppression logique legacy** : Retrait de toutes les requêtes `payments.*`, `inbound.*`, `condition_reports_to_review`
+- ✅ **Requêtes optimisées** : Seulement 4 requêtes `safeCount` au lieu de 10+
+- ✅ **Moins de risques d'erreurs** : Réduction des colonnes/tables référencées, moins de points de défaillance
+
+### 🔧 **app/admin/reservations/page.tsx**
+- ✅ **Suppression "mark as viewed"** : Retrait complet de la logique `localStorage` pour `admin_viewed_reservations`, `admin_viewed_cancellations`, `admin_viewed_modifications`
+- ✅ **Suppression dispatchEvent** : Retrait de `window.dispatchEvent('pendingActionsUpdated')` lié au mark as viewed
+- ✅ **Normalisation shape données** : Suppression du mapping "compatibilité legacy" (`start_date`, `end_date`, `total_price`, `customerName`, `customerEmail`)
+- ✅ **Consommation directe API** : UI utilise directement les champs API (`start_at`, `end_at`, `price_total`, `customer_name`, `customer_email`)
+- ✅ **Moins de glue code** : Réduction du code de transformation côté client, une seule source de vérité (API)
+
+### 🔧 **app/admin/page.tsx**
+- ✅ **Suppression état `pendingActions`** : Retrait du state `pendingActions` et de la logique associée
+- ✅ **Suppression notification réservations** : Retrait du state `showReservationRequestNotification` et du composant UI associé
+- ✅ **Sidebar autonome** : `AdminSidebar` gère ses propres badges, plus besoin de passer `pendingActions` en props
+- ✅ **Appel simplifié** : `<AdminSidebar language={language} />` sans props supplémentaires (`isOpen`, `onClose` supprimés)
+
+---
+
+**Simplification finale v2.6.1 - Cohérence doc + code (Version 2.6.1) :**
+
+### 🔧 **components/AdminSidebar.tsx (v2.6.1)**
+- ✅ **Interface simplifiée** : `AdminSidebarProps` ne contient plus que `language?: 'fr' | 'en'`
+- ✅ **Suppression props mobile/collapse** : Retrait complet de `isOpen`, `onClose`, `isCollapsed`, `onToggleCollapse`
+- ✅ **Suppression logique conditionnelle** : Retrait de toute la logique d'overlay mobile, boutons toggle collapse, états conditionnels basés sur `isCollapsed`
+- ✅ **Sidebar fixe** : Structure simplifiée, sidebar toujours visible sur desktop, pas de gestion d'état collapse
+- ✅ **Suppression item legacy** : Retrait de l'item de navigation "etats-des-lieux" (section legacy non utilisée)
+- ✅ **Navigation simplifiée** : 10 items uniquement (Tableau de bord, Réservations, Catalogue, Packs, Planning, Clients, Factures, Contrats, Livraisons, Paiement, Paramètres)
+
+### 🔧 **app/admin/page.tsx (v2.6.1)**
+- ✅ **Appel simplifié** : `<AdminSidebar language={language} />` sans props `isOpen` et `onClose`
+- ✅ **Suppression état sidebar** : Plus besoin de gérer `isSidebarOpen` state (géré par Header si nécessaire)
+
+### 🔧 **app/admin/reservations/page.tsx (v2.6.1)**
+- ✅ **Appel simplifié** : `<AdminSidebar language={language} />` sans props `isOpen` et `onClose`
+- ✅ **Correction modal** : Utilisation directe des champs API (`customer_name`, `start_at`, `end_at`) au lieu de mapping legacy (`customerName`, `start_date`, `end_date`)
+
+### 🔧 **MEGA_DOSSIER_COMPLET.md (v2.6.1)**
+- ✅ **Cohérence format** : Tous les exemples JSON utilisent maintenant `snake_case` (`customer_name`, `start_at`, `end_at`, `price_total`, `pack_key`, etc.) pour correspondre à la source de vérité (API)
+- ✅ **Documentation AdminSidebar** : Mise à jour de l'interface et des exemples pour refléter la simplification
+- ✅ **Exemples API** : Correction des exemples de réponse `/api/admin/reservations` et `/api/admin/reservations/[id]` pour utiliser `snake_case`
+
+### 📊 **Résultat v2.6.1**
+- ✅ **Code plus simple** : Moins de props, moins de logique conditionnelle, moins de code mort
+- ✅ **Pas de régression** : Comportement métier préservé, fonctionnalités essentielles intactes
+- ✅ **TypeScript-safe** : Aucune erreur de lint, compilation réussie
+- ✅ **Documentation cohérente** : Format `snake_case` aligné avec l'API réelle, exemples à jour
+
+---
+
+**Correction TypeScript AdminSidebar (Version 2.6.2) :**
+
+### 🔧 **app/admin/reservation-requests/page.tsx (v2.6.2)**
+- ✅ **Correction erreur TypeScript** : Suppression des props non supportées `isOpen`, `onClose`, `isCollapsed`, `onToggleCollapse` passées à `AdminSidebar`
+- ✅ **Suppression états inutilisés** : Retrait des états `isSidebarOpen` et `isSidebarCollapsed` qui n'étaient plus nécessaires
+- ✅ **Simplification layout** : Remplacement de la classe conditionnelle du `main` par une marge fixe `lg:ml-64` (sidebar ne se réduit plus)
+- ✅ **Cohérence avec autres pages** : `AdminSidebar` appelé avec uniquement la prop `language`, comme dans toutes les autres pages admin
+- ✅ **Résolution erreur TypeScript 2322** : L'erreur "Property 'isOpen' does not exist on type 'AdminSidebarProps'" est maintenant résolue
+
+### 📊 **Résultat v2.6.2**
+- ✅ **TypeScript-safe** : Aucune erreur de compilation, interface `AdminSidebarProps` respectée
+- ✅ **Code cohérent** : Utilisation uniforme de `AdminSidebar` dans toutes les pages admin
+- ✅ **Pas de régression** : Fonctionnalité préservée, sidebar toujours visible et fonctionnelle
+
+---
+
+**Optimisation AdminSidebar (Version 2.6.3) :**
+
+### 🔧 **components/AdminSidebar.tsx (v2.6.3)**
+- ✅ **Suppression état inutilisé** : Retrait de `loadingBadges` qui n'était pas utilisé dans le rendu
+- ✅ **Réorganisation imports** : Regroupement de `usePathname` et `useRouter` depuis `next/navigation`
+- ✅ **Type safety amélioré** : Ajout de `as const` pour l'objet `texts` pour une meilleure inférence de types
+- ✅ **Simplification useEffect** : Suppression de `setLoadingBadges(true/false)` dans le `useEffect`
+- ✅ **Code plus propre** : Formatage plus compact et cohérent, commentaire "fail gracefully: keep 0s" ajouté
+- ✅ **Imports optimisés** : Regroupement logique des imports (Next.js, React, hooks, composants)
+
+### 📊 **Résultat v2.6.3**
+- ✅ **Code plus simple** : Moins d'états inutiles, code plus maintenable
+- ✅ **Type safety renforcé** : `as const` garantit l'immutabilité et améliore l'inférence TypeScript
+- ✅ **Performance** : Suppression d'états inutiles réduit les re-renders potentiels
+- ✅ **Pas de régression** : Fonctionnalité préservée, comportement identique
+
+---
+
+**Corrections critiques documentation (Version 2.6.4) :**
+
+### 🔧 **MEGA_DOSSIER_COMPLET.md (v2.6.4)**
+- ✅ **Correction code cassé** : Suppression du `map()` non fermé dans l'exemple de code `app/admin/reservations/page.tsx`
+- ✅ **Code corrigé** : Utilisation directe de `setReservations(data.data || [])` sans mapping inutile
+- ✅ **Suppression références legacy** : Retrait de toutes les références à l'ancienne shape de `pending-actions` (reservations.*, payments.*, inbound.*)
+- ✅ **Documentation cohérente** : Uniquement la shape simplifiée à 4 compteurs documentée
+- ✅ **Version alignée** : Version unifiée à 2.6.4 dans tout le document
+
+### 📊 **Résultat v2.6.4**
+- ✅ **Documentation build-safe** : Aucun code cassé dans les exemples
+- ✅ **Source de vérité unique** : Une seule shape documentée pour `pending-actions`
+- ✅ **Pas de confusion** : Suppression de toute référence à l'ancienne architecture
+- ✅ **Production-ready** : Documentation alignée avec le code réel

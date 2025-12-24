@@ -35,6 +35,7 @@ export default function ReservationDetailPage() {
     if (!user || !supabase || !reservationId) return;
 
     const loadReservation = async () => {
+      if (!supabase) return;
       try {
         const { data, error } = await supabase
           .from('reservations')

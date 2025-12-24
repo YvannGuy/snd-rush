@@ -194,6 +194,7 @@ export default function AdjustReservationModal({
 
       // Récupérer le token d'authentification
       const { supabase } = await import('@/lib/supabase');
+      if (!supabase) throw new Error('Supabase non configuré');
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.access_token) {

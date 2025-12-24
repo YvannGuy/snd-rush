@@ -60,6 +60,7 @@ export default function MesContratsPage() {
     
     const markAsViewed = async () => {
       try {
+        if (!supabase) return;
         // Marquer TOUS les contrats (signés ou non) comme consultés
         const { data: reservationsData } = await supabase
           .from('reservations')

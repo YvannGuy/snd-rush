@@ -317,19 +317,19 @@ export default function ReservationModal({
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
                   <Input
                     type="date"
-                    value={formData.date || answers.date || ''}
-                    onChange={(val) => handleInputChange('date', val)}
-                    error={errors.date}
+                    value={formData.startDate || answers.startDate || ''}
+                    onChange={(val) => handleInputChange('startDate', val)}
+                    error={errors.startDate}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Horaire *</label>
                   <Input
                     type="text"
-                    value={formData.time}
-                    onChange={(val) => handleInputChange('time', val)}
+                    value={formData.startTime}
+                    onChange={(val) => handleInputChange('startTime', val)}
                     placeholder="Ex: 19h00"
-                    error={errors.time}
+                    error={errors.startTime}
                   />
                 </div>
                 <div>

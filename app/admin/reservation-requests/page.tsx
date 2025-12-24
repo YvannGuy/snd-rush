@@ -43,8 +43,6 @@ export default function AdminReservationRequestsPage() {
   const [requests, setRequests] = useState<ReservationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'NEW' | 'PENDING_REVIEW'>('all');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<ReservationRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [action, setAction] = useState<'approve' | 'adjust' | 'reject' | null>(null);
@@ -516,15 +514,9 @@ export default function AdminReservationRequestsPage() {
       <Header language={language} onLanguageChange={setLanguage} />
       
       <div className="flex flex-1 pt-[112px]">
-        <AdminSidebar 
-          language={language} 
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        />
+        <AdminSidebar language={language} />
         
-        <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
+        <main className="flex-1 overflow-y-auto lg:ml-64">
           <div className="max-w-7xl mx-auto px-6 py-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">
               Demandes de réservation

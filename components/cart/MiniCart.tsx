@@ -190,7 +190,7 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
                           <span>{language === 'fr' ? 'Qté:' : 'Qty:'}</span>
                           <div className="flex items-center gap-1.5 border border-gray-300 rounded-md">
                             <button
-                              onClick={() => decreaseQuantity(item.productId, item.startDate, item.endDate)}
+                              onClick={() => decreaseQuantity(item.productId, item.startDate || undefined, item.endDate || undefined)}
                               className="px-2 py-0.5 hover:bg-gray-100 transition-colors text-gray-700 font-semibold"
                               aria-label={language === 'fr' ? 'Diminuer quantité' : 'Decrease quantity'}
                             >
@@ -201,7 +201,7 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
                             </span>
                             <button
                               onClick={async () => {
-                                const result = await increaseQuantity(item.productId, item.startDate, item.endDate);
+                                const result = await increaseQuantity(item.productId, item.startDate || undefined, item.endDate || undefined);
                                 if (!result.success) {
                                   alert(result.error || (language === 'fr' 
                                     ? 'Stock insuffisant' 
@@ -225,7 +225,7 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
                           {isNaN(itemTotal) ? '0.00' : itemTotal.toFixed(2)}€
                         </span>
                         <button
-                          onClick={() => removeFromCart(item.productId, item.startDate, item.endDate)}
+                          onClick={() => removeFromCart(item.productId, item.startDate || undefined, item.endDate || undefined)}
                           className="text-red-600 hover:text-red-700 text-xs font-medium"
                         >
                           {currentTexts.remove}

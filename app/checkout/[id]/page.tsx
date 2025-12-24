@@ -30,7 +30,7 @@ export default async function CheckoutPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const reservationId = params.id;
   const token = searchParams.token;
-  const paymentType = searchParams.type || 'deposit'; // 'deposit' pour acompte, 'balance' pour solde
+  const paymentType: 'deposit' | 'balance' = (searchParams.type === 'balance' ? 'balance' : 'deposit'); // 'deposit' pour acompte, 'balance' pour solde
 
   if (!supabaseAdmin) {
     return <CheckoutError message="Configuration serveur manquante" />;

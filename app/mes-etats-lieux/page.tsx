@@ -66,6 +66,7 @@ export default function MesEtatsLieuxPage() {
     
     const markAsViewed = async () => {
       try {
+        if (!supabase) return;
         // D'abord charger les réservations de l'utilisateur
         const { data: reservationsData } = await supabase
           .from('reservations')
@@ -99,6 +100,7 @@ export default function MesEtatsLieuxPage() {
 
     const loadData = async () => {
       try {
+        if (!supabase) return;
         // Charger les réservations confirmées de l'utilisateur
         const { data: reservationsData, error: reservationsError } = await supabase
           .from('reservations')

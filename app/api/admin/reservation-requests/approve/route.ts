@@ -124,8 +124,9 @@ export async function POST(req: NextRequest) {
     // Vérifier si l'utilisateur existe déjà
     let userExists = false;
     try {
-      const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(request.customer_email);
-      userExists = !!existingUser?.user;
+      const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
+      const existingUser = users.find(u => u.email?.toLowerCase() === request.customer_email.toLowerCase());
+      userExists = !!existingUser;
     } catch (e) {
       // Si erreur, considérer que l'utilisateur n'existe pas
       userExists = false;

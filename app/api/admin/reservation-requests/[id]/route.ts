@@ -10,7 +10,7 @@ const supabaseAdmin = (supabaseUrl && supabaseServiceKey && supabaseUrl.trim() !
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!supabaseAdmin) {
@@ -38,10 +38,11 @@ export async function GET(
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
+    const { id } = await params;
     const { data, error } = await supabaseAdmin
       .from('reservation_requests')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (error || !data) {

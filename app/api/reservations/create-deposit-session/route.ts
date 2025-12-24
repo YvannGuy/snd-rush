@@ -12,7 +12,7 @@ const supabaseAdmin = (supabaseUrl && supabaseServiceKey && supabaseUrl.trim() !
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null;
 
-const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2024-12-18.acacia' }) : null;
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2025-08-27.basil' as any }) : null;
 
 /**
  * Endpoint pour créer une réservation + Stripe checkout (acompte 30%)
@@ -142,7 +142,6 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      amount_total: Math.round(depositAmount * 100),
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {

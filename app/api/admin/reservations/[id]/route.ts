@@ -3,7 +3,7 @@ import { verifyAdmin, supabaseAdmin } from '@/lib/adminAuth';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!supabaseAdmin) {
@@ -23,7 +23,7 @@ export async function GET(
       return NextResponse.json({ error: authError || 'Accès refusé' }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const { searchParams } = new URL(req.url);
     const source = searchParams.get('source') || 'auto'; // 'client' | 'legacy' | 'auto'
 

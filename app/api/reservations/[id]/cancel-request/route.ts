@@ -24,7 +24,7 @@ export async function POST(
     if (!supabase) {
       return NextResponse.json({ error: 'Supabase non configuré' }, { status: 500 });
     }
-    const { data: reservation, error: fetchError } = await supabase
+    const { data: reservation, error: fetchError } = await supabase!
       .from('reservations')
       .select('*, user_id')
       .eq('id', reservationId)
