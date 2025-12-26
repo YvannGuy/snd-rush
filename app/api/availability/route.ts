@@ -132,6 +132,7 @@ async function checkAvailability(
   let bookedQuantity = 0;
 
   // HOLD v1 - Vérifier aussi les réservations dans client_reservations (nouvelle table)
+  // IMPORTANT: AWAITING_PAYMENT ne bloque PAS la disponibilité (seulement AWAITING_BALANCE, PAID, CONFIRMED)
   // Uniquement pour les packs avec pack_key (actualPackId peut être 'conference', 'soiree', 'mariage')
   if (actualPackId && !actualProductId && ['conference', 'soiree', 'mariage'].includes(actualPackId)) {
     try {
@@ -139,7 +140,9 @@ async function checkAvailability(
         .from('client_reservations')
         .select('start_at, end_at, status')
         .eq('pack_key', actualPackId)
-        .in('status', ['AWAITING_PAYMENT', 'PAID', 'CONFIRMED']) // Statuts bloquants
+        .in('status', ['AWAITING_BALANCE', 'PAID', 'CONFIRMED']) // Statuts bloquants (AWAITING_PAYMENT exclu)
+        .not('start_at', 'is', null) // start_at doit être défini
+        .not('end_at', 'is', null) // end_at doit être défini
         .lt('start_at', endDate) // start_at < endDate (demande)
         .gt('end_at', startDate); // end_at > startDate (demande)
 

@@ -7,6 +7,7 @@ import { calculatePackTier, getPackTierDescription, PackTierAdjustment } from '@
 import { detectZoneFromText, getDeliveryPrice } from '@/lib/zone-detection';
 import { getInstallationPrice } from '@/lib/pack-options';
 import { calculatePickupJPlus1Price } from '@/lib/time-rules';
+import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -41,8 +42,25 @@ export default function BookPageContent() {
   const [availabilityError, setAvailabilityError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [tierAdjustment, setTierAdjustment] = useState<PackTierAdjustment | null>(null);
+  const [customerEmail, setCustomerEmail] = useState<string>('');
 
   const pack = packKey ? getBasePack(packKey) : null;
+
+  // Récupérer l'email de l'utilisateur connecté (si disponible)
+  useEffect(() => {
+    const getUserEmail = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
+          setCustomerEmail(user.email);
+        }
+      } catch (error) {
+        // L'utilisateur n'est pas connecté, l'email sera récupéré depuis Stripe
+        console.log('Utilisateur non connecté, email sera récupéré depuis Stripe');
+      }
+    };
+    getUserEmail();
+  }, []);
 
   // Lire les query params du wizard et de PackSolutionContent
   useEffect(() => {
@@ -333,7 +351,16 @@ export default function BookPageContent() {
       const pickupJPlus1Price = dataToUse.endTime && zone ? calculatePickupJPlus1Price(dataToUse.endTime, zone) : 0;
       const finalPrice = basePackPrice + additionalMicsPrice + deliveryPrice + installationPrice + pickupJPlus1Price;
 
-      // Créer le hold et ouvrir Stripe Checkout
+      // Calculer les montants
+      const depositAmount = Math.round(finalPrice * 0.3); // 30% d'acompte
+      const balanceAmount = finalPrice - depositAmount; // Solde restant
+
+      // Récupérer l'email client (depuis l'auth ou valeur temporaire)
+      // Note: L'email sera mis à jour depuis Stripe lors du paiement si non fourni
+      const emailToUse = customerEmail || 'pending@stripe.com';
+
+      // Créer le hold et ouvrir Stripe Checkout (appel atomique côté serveur)
+      // Le hold n'est créé QUE maintenant, pas avant le clic sur "Payer l'acompte"
       const response = await fetch('/api/book/direct-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -341,18 +368,35 @@ export default function BookPageContent() {
           pack_key: packKey,
           start_at: new Date(startISO).toISOString(),
           end_at: new Date(endISO).toISOString(),
+          customer_email: emailToUse,
+          contact_phone: null, // TODO: Ajouter si disponible dans le wizard
+          contact_email: emailToUse,
+          price_total: finalPrice,
+          deposit_amount: depositAmount,
+          balance_amount: balanceAmount,
           city: dataToUse.city || null,
           postal_code: dataToUse.postalCode || null,
-          delivery_installation: true,
-          // Passer le prix ajusté si différent du prix de base
-          price_override: finalPrice !== pack.basePrice ? finalPrice : null,
+          final_items: displayItems as any, // Convertir en format attendu par PostgreSQL
+          source: 'direct_solution',
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de la création de la réservation');
+        // Gérer les erreurs spécifiques
+        if (response.status === 409) {
+          // Conflit : créneau déjà réservé ou en cours de réservation
+          const errorMessage = data.reason === 'SLOT_HELD' 
+            ? (language === 'fr' 
+                ? 'Ce créneau est temporairement indisponible (en cours de réservation). Veuillez réessayer dans quelques instants.'
+                : 'This time slot is temporarily unavailable (being reserved). Please try again in a few moments.')
+            : (language === 'fr'
+                ? 'Ce créneau est déjà réservé. Veuillez choisir une autre date.'
+                : 'This time slot is already booked. Please choose another date.');
+          throw new Error(errorMessage);
+        }
+        throw new Error(data.error || (language === 'fr' ? 'Erreur lors de la création de la réservation' : 'Error creating reservation'));
       }
 
       // Rediriger vers Stripe Checkout

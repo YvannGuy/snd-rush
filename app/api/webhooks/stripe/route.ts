@@ -1076,29 +1076,53 @@ export async function POST(req: NextRequest) {
       }
 
       case 'checkout.session.expired': {
-        // HOLD v1 - Annuler le hold si la session Stripe expire
+        // HOLD v1 - Marquer le hold comme EXPIRED si la session Stripe expire
         const session = event.data.object as Stripe.Checkout.Session;
         const metadata = session.metadata || {};
         const holdId = metadata.hold_id;
+        const reservationId = metadata.reservation_id;
 
         if (holdId && supabaseAdmin) {
           try {
-            console.log('⏰ Session Stripe expirée, annulation du hold:', holdId);
-            const { error: cancelHoldError } = await supabaseAdmin
+            console.log('⏰ Session Stripe expirée, expiration du hold:', holdId);
+            
+            // Marquer le hold comme EXPIRED (seulement si encore ACTIVE)
+            const { error: expireHoldError } = await supabaseAdmin
               .from('reservation_holds')
               .update({
-                status: 'CANCELLED',
+                status: 'EXPIRED',
+                updated_at: new Date().toISOString(),
               })
               .eq('id', holdId)
               .eq('status', 'ACTIVE'); // Seulement si encore actif
 
-            if (cancelHoldError) {
-              console.warn('⚠️ Erreur annulation hold (non bloquant):', cancelHoldError);
+            if (expireHoldError) {
+              console.warn('⚠️ Erreur expiration hold (non bloquant):', expireHoldError);
             } else {
-              console.log('✅ Hold annulé avec succès:', holdId);
+              console.log('✅ Hold marqué comme EXPIRED:', holdId);
+            }
+
+            // Optionnel : Marquer la réservation comme CANCELLED si elle est toujours AWAITING_PAYMENT
+            // et plus ancienne que X heures (par exemple 12 heures)
+            if (reservationId) {
+              const { error: cancelReservationError } = await supabaseAdmin
+                .from('client_reservations')
+                .update({
+                  status: 'CANCELLED',
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', reservationId)
+                .eq('status', 'AWAITING_PAYMENT')
+                .lt('created_at', new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()); // Plus de 12h
+
+              if (cancelReservationError) {
+                console.warn('⚠️ Erreur annulation réservation expirée (non bloquant):', cancelReservationError);
+              } else {
+                console.log('✅ Réservation expirée annulée:', reservationId);
+              }
             }
           } catch (holdError) {
-            console.warn('⚠️ Erreur annulation hold (non bloquant):', holdError);
+            console.warn('⚠️ Erreur gestion expiration hold (non bloquant):', holdError);
           }
         }
         break;
