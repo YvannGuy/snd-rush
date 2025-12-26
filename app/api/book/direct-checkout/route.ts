@@ -201,6 +201,18 @@ export async function POST(req: NextRequest) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
+    // Valider et nettoyer l'email
+    const emailToUse = customer_email?.trim() || null;
+    if (!emailToUse || emailToUse === 'pending@stripe.com') {
+      console.error('[DIRECT-CHECKOUT] Email invalide reçu:', customer_email);
+      return NextResponse.json(
+        { error: 'Email invalide ou manquant. Veuillez fournir un email valide.' },
+        { status: 400 }
+      );
+    }
+
+    console.log('[DIRECT-CHECKOUT] Création session Stripe avec email:', emailToUse);
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -217,10 +229,10 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: 'payment',
-      customer_email: customer_email,
-      success_url: `${siteUrl}/dashboard?payment=success&reservation_id=${reservation_id}`,
+      customer_email: emailToUse,
+      success_url: `${siteUrl}/book/success?reservation_id=${reservation_id}`,
       cancel_url: `${siteUrl}/book/${pack_key}?cancelled=true`,
-      expires_at: Math.floor(Date.now() / 1000) + (10 * 60), // Expire dans 10 minutes (même durée que le hold)
+      expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // Expire dans 30 minutes (minimum requis par Stripe, le hold expire après 10 min mais la session Stripe peut rester plus longtemps)
       metadata: {
         // MÉTADONNÉES OBLIGATOIRES pour le webhook
         type: 'client_reservation_deposit',
@@ -256,9 +268,48 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('[DIRECT-CHECKOUT] Erreur API:', error);
+    
+    // Logger les détails complets de l'erreur
+    if (error instanceof Error) {
+      console.error('[DIRECT-CHECKOUT] Message:', error.message);
+      console.error('[DIRECT-CHECKOUT] Stack:', error.stack);
+      console.error('[DIRECT-CHECKOUT] Name:', error.name);
+    }
+    
+    // Gérer les erreurs spécifiques
+    let errorMessage = 'Erreur serveur';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      // Erreur Stripe spécifique
+      if (error.message.includes('expires_at') && error.message.includes('30 minutes')) {
+        errorMessage = 'Erreur de configuration du paiement. Veuillez réessayer.';
+        statusCode = 500;
+      }
+      // Autres erreurs Stripe
+      else if (error.message.includes('Stripe') || error.message.includes('stripe') || (error as any).type === 'StripeInvalidRequestError') {
+        errorMessage = 'Erreur lors de la création de la session de paiement. Veuillez réessayer.';
+        statusCode = 500;
+      }
+      // Erreur Supabase
+      else if (error.message.includes('Supabase') || error.message.includes('supabase') || error.message.includes('database')) {
+        errorMessage = 'Erreur de connexion à la base de données. Veuillez réessayer.';
+        statusCode = 500;
+      }
+      // Autres erreurs
+      else {
+        errorMessage = error.message || 'Erreur serveur';
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Erreur serveur', details: error instanceof Error ? error.message : 'Erreur inconnue' },
-      { status: 500 }
+      { 
+        error: errorMessage, 
+        details: error instanceof Error ? error.message : 'Erreur inconnue',
+        // Ne pas exposer le stack en production, mais utile pour le debug
+        ...(process.env.NODE_ENV === 'development' && error instanceof Error ? { stack: error.stack } : {})
+      },
+      { status: statusCode }
     );
   }
 }

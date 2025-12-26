@@ -303,10 +303,23 @@ export default function BookPageContent() {
     // Vérifier la disponibilité avant de procéder au paiement
     await checkAvailability(wizardData.startDate, wizardData.startTime, wizardData.endDate, wizardData.endTime);
     
-    // Attendre un peu pour que le statut se mette à jour
-    setTimeout(() => {
-      if (availabilityStatus === 'available') {
-        handlePayDeposit(wizardData);
+    // Attendre un peu pour que le statut se mette à jour, puis appeler handlePayDeposit avec toutes les données du wizard
+    // IMPORTANT: Passer directement wizardData.customerEmail pour éviter les problèmes de timing avec le state
+    setTimeout(async () => {
+      const currentStatus = availabilityStatus;
+      if (currentStatus === 'available') {
+        console.log('[BOOK] Appel handlePayDeposit avec email:', wizardData.customerEmail);
+        await handlePayDeposit({
+          startDate: wizardData.startDate,
+          startTime: wizardData.startTime,
+          endDate: wizardData.endDate,
+          endTime: wizardData.endTime,
+          city: wizardData.city,
+          postalCode: wizardData.postalCode,
+          peopleCount: wizardData.peopleCount,
+          additionalMics: wizardData.additionalMics,
+          customerEmail: wizardData.customerEmail, // Utiliser directement depuis wizardData
+        });
       }
     }, 500);
   };
@@ -320,6 +333,7 @@ export default function BookPageContent() {
     postalCode: string;
     peopleCount: number | null;
     additionalMics: Array<{ type: 'filaire' | 'sans-fil'; price: number }>;
+    customerEmail?: string;
   }) => {
     if (!pack || availabilityStatus !== 'available') return;
 
@@ -375,11 +389,29 @@ export default function BookPageContent() {
 
       // Récupérer l'email client (depuis le wizard, l'auth ou valeur temporaire)
       // Note: L'email sera mis à jour depuis Stripe lors du paiement si non fourni
-      let emailToUse = customerEmail;
-      if (!emailToUse) {
+      // Priorité : wizardData.customerEmail > state customerEmail > user email
+      let emailToUse = wizardData?.customerEmail || customerEmail;
+      
+      // Si pas d'email dans wizardData ni dans le state, essayer de récupérer depuis l'auth
+      if (!emailToUse || emailToUse.trim() === '' || emailToUse === 'pending@stripe.com') {
         const { data: { user } } = await supabase.auth.getUser();
-        emailToUse = user?.email || 'pending@stripe.com';
+        emailToUse = user?.email || null;
       }
+      
+      // Si toujours pas d'email valide, c'est une erreur car le champ est obligatoire dans le wizard
+      if (!emailToUse || emailToUse.trim() === '' || emailToUse === 'pending@stripe.com') {
+        console.error('[BOOK] Email manquant:', { 
+          wizardDataEmail: wizardData?.customerEmail, 
+          stateEmail: customerEmail,
+          emailToUse 
+        });
+        throw new Error(language === 'fr' 
+          ? 'Email requis pour finaliser la réservation. Veuillez remplir le champ email dans le récapitulatif.'
+          : 'Email required to complete reservation. Please fill in the email field in the summary.'
+        );
+      }
+      
+      console.log('[BOOK] Email utilisé pour Stripe:', emailToUse);
 
       // Créer le hold et ouvrir Stripe Checkout (appel atomique côté serveur)
       // Le hold n'est créé QUE maintenant, pas avant le clic sur "Payer l'acompte"

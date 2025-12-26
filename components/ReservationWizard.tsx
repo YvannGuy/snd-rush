@@ -279,6 +279,12 @@ export default function ReservationWizard({
     if (canProceed() && step < totalSteps) {
       setStep(step + 1);
     } else if (step === 5 && canProceed()) {
+      // Vérifier que l'email est bien présent avant de compléter
+      if (!customerEmail || customerEmail.trim() === '') {
+        console.error('[WIZARD] Email manquant avant completion:', customerEmail);
+        return;
+      }
+      console.log('[WIZARD] Completion avec email:', customerEmail);
       await onComplete({
         startDate,
         startTime,
