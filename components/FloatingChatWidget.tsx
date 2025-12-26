@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback, KeyboardEvent } from 'react';
 import { useChat } from '@/hooks/useChat';
+import { useUser } from '@/hooks/useUser';
 import { ChatMessage, DraftFinalConfig, ChatIntent } from '@/types/chat';
 import { useCart } from '@/contexts/CartContext';
 import { applyFinalConfigToCart } from '@/lib/cart-utils';
 import { isPackMode, hasRequiredPackFields } from '@/lib/pack-helpers';
+import { Mail } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,9 +41,12 @@ export default function FloatingChatWidget() {
     resetIdleTimers,
   } = useChat();
 
+  const { user, loading: userLoading } = useUser();
   const [inputValue, setInputValue] = useState('');
   const [cartItemsNames, setCartItemsNames] = useState<Record<string, string>>({});
   const [customerPhoneInput, setCustomerPhoneInput] = useState('');
+  const [customerEmailInput, setCustomerEmailInput] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [isCreatingInstantReservation, setIsCreatingInstantReservation] = useState(false);
   const [trackingUrl, setTrackingUrl] = useState<string | null>(null); // V1.5 - URL de suivi
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -61,6 +66,51 @@ export default function FloatingChatWidget() {
       window.removeEventListener('reservationRequestCreated', handleReservationRequestCreated as EventListener);
     };
   }, []);
+
+  // Initialiser l'email avec l'email de l'utilisateur connecté
+  useEffect(() => {
+    if (user?.email) {
+      setCustomerEmailInput(user.email);
+      // Mettre à jour aussi dans le payload
+      if (reservationRequestDraft) {
+        setReservationRequestDraft({
+          ...reservationRequestDraft,
+          payload: {
+            ...reservationRequestDraft.payload,
+            customerEmail: user.email,
+          },
+        });
+      }
+    }
+  }, [user]);
+
+  // Validation de l'email
+  const validateEmail = (emailValue: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(emailValue);
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    setCustomerEmailInput(email);
+    setEmailError(null);
+
+    if (email && !validateEmail(email)) {
+      setEmailError('Veuillez entrer une adresse email valide');
+    } else if (email && validateEmail(email)) {
+      setEmailError(null);
+      // Mettre à jour aussi dans le payload
+      if (reservationRequestDraft) {
+        setReservationRequestDraft({
+          ...reservationRequestDraft,
+          payload: {
+            ...reservationRequestDraft.payload,
+            customerEmail: email,
+          },
+        });
+      }
+    }
+  };
 
   /**
    * V1.3 Instant Booking - Vérifie si la réservation est éligible pour l'instant booking
@@ -805,6 +855,47 @@ export default function FloatingChatWidget() {
                 📞 Utilisé uniquement pour la logistique (coordination livraison/installation). Vos données sont protégées.
               </p>
             </div>
+
+            {/* Champ email obligatoire */}
+            <div className="mb-3">
+              <label htmlFor="customer-email" className="block text-xs font-semibold text-gray-900 mb-1.5">
+                Email <span className="text-red-500">*</span>
+              </label>
+              {userLoading ? (
+                <input
+                  id="customer-email"
+                  type="email"
+                  placeholder="Chargement..."
+                  disabled
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50"
+                />
+              ) : user?.email ? (
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                  <Mail className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-700">{user.email}</span>
+                </div>
+              ) : (
+                <>
+                  <input
+                    id="customer-email"
+                    type="email"
+                    value={customerEmailInput || reservationRequestDraft.payload.customerEmail || ''}
+                    onChange={handleEmailChange}
+                    placeholder="votre.email@exemple.com"
+                    required
+                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F2431E] focus:border-transparent ${
+                      emailError ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {emailError && (
+                    <p className="text-xs text-red-600 mt-1">{emailError}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    📧 Cet email sera utilisé pour recevoir la confirmation de paiement et les détails de votre réservation.
+                  </p>
+                </>
+              )}
+            </div>
             
             {/* V1.2 availability check - Affichage du statut de disponibilité */}
             {reservationRequestDraft.payload.startDate && reservationRequestDraft.payload.endDate && (
@@ -862,12 +953,17 @@ export default function FloatingChatWidget() {
               // Vérifier si tous les champs requis sont présents
               const hasRequiredFields = hasRequiredPackFields(reservationRequestDraft);
               
+              // Vérifier que l'email est valide
+              const currentEmail = customerEmailInput || reservationRequestDraft.payload.customerEmail || user?.email || '';
+              const isEmailValid = currentEmail && validateEmail(currentEmail);
+
               const isDisabled = 
                 availabilityStatus === 'unavailable' ||
                 availabilityStatus === 'checking' ||
                 isCreatingInstantReservation ||
                 !hasRequiredFields ||
-                (!customerPhoneInput && !reservationRequestDraft.payload.customerPhone);
+                (!customerPhoneInput && !reservationRequestDraft.payload.customerPhone) ||
+                !isEmailValid;
               
               // Debug logs minimaux
               if (instantEligible || !hasRequiredFields) {

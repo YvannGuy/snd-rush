@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { generateTokenWithHash } from '@/lib/token';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil',
@@ -204,14 +205,38 @@ export async function POST(req: NextRequest) {
     // Valider et nettoyer l'email
     const emailToUse = customer_email?.trim() || null;
     if (!emailToUse || emailToUse === 'pending@stripe.com') {
-      console.error('[DIRECT-CHECKOUT] Email invalide reçu:', customer_email);
+      console.error('[DIRECT-CHECKOUT] ❌ Email invalide reçu:', customer_email);
+      console.error('[DIRECT-CHECKOUT] ❌ Email après trim:', emailToUse);
       return NextResponse.json(
         { error: 'Email invalide ou manquant. Veuillez fournir un email valide.' },
         { status: 400 }
       );
     }
 
-    console.log('[DIRECT-CHECKOUT] Création session Stripe avec email:', emailToUse);
+    console.log('[DIRECT-CHECKOUT] ✅ Email valide reçu:', emailToUse);
+    console.log('[DIRECT-CHECKOUT] 📧 Création session Stripe avec email:', emailToUse);
+    console.log('[DIRECT-CHECKOUT] 📋 Réservation ID:', reservation_id);
+    console.log('[DIRECT-CHECKOUT] 📋 Hold ID:', hold_id);
+
+    // Générer un token public pour le checkout (AVANT de créer la session Stripe)
+    const { token: checkoutToken, hash: checkoutTokenHash, expiresAt: checkoutTokenExpiresAt } = generateTokenWithHash(7);
+    
+    // Mettre à jour la réservation avec le token
+    const { error: tokenUpdateError } = await supabaseAdmin
+      .from('client_reservations')
+      .update({
+        public_token_hash: checkoutTokenHash,
+        public_token_expires_at: checkoutTokenExpiresAt.toISOString(),
+      })
+      .eq('id', reservation_id);
+    
+    if (tokenUpdateError) {
+      console.error('[DIRECT-CHECKOUT] ❌ Erreur mise à jour token:', tokenUpdateError);
+      // Ne pas faire échouer la création de la session, le token sera généré dans le webhook
+    } else {
+      console.log('[DIRECT-CHECKOUT] ✅ Token généré et sauvegardé en DB');
+      console.log('[DIRECT-CHECKOUT] 📋 Token (premiers caractères):', checkoutToken.substring(0, 20) + '...');
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -229,7 +254,7 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: 'payment',
-      customer_email: emailToUse,
+      customer_email: emailToUse, // Email transmis à Stripe Checkout
       success_url: `${siteUrl}/book/success?reservation_id=${reservation_id}`,
       cancel_url: `${siteUrl}/book/${pack_key}?cancelled=true`,
       expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // Expire dans 30 minutes (minimum requis par Stripe, le hold expire après 10 min mais la session Stripe peut rester plus longtemps)
@@ -242,6 +267,8 @@ export async function POST(req: NextRequest) {
         reservation_id: reservation_id,
         price_total: price_total.toString(),
         deposit_amount: deposit_amount.toString(),
+        // Token pour le lien de checkout dans l'email (récupéré dans le webhook)
+        checkout_token: checkoutToken,
       },
       payment_intent_data: {
         metadata: {
@@ -254,12 +281,34 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Vérifier que l'email a bien été transmis à Stripe
+    console.log('[DIRECT-CHECKOUT] ✅ Session Stripe créée:', session.id);
+    console.log('[DIRECT-CHECKOUT] 📧 Email dans session Stripe:', session.customer_email || 'VIDE');
+    console.log('[DIRECT-CHECKOUT] 📧 Email transmis:', emailToUse);
+    
     // Mettre à jour la réservation avec le session_id
-    await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from('client_reservations')
       .update({ stripe_session_id: session.id })
       .eq('id', reservation_id)
       .eq('status', 'AWAITING_PAYMENT'); // Seulement si encore en attente
+    
+    if (updateError) {
+      console.error('[DIRECT-CHECKOUT] ❌ Erreur mise à jour session_id:', updateError);
+    } else {
+      console.log('[DIRECT-CHECKOUT] ✅ Session ID mis à jour dans réservation');
+    }
+    
+    // Vérifier que l'email est bien dans la réservation
+    const { data: reservationCheck, error: checkError } = await supabaseAdmin
+      .from('client_reservations')
+      .select('customer_email')
+      .eq('id', reservation_id)
+      .single();
+    
+    if (reservationCheck) {
+      console.log('[DIRECT-CHECKOUT] 📧 Email dans réservation DB:', reservationCheck.customer_email || 'VIDE');
+    }
 
     return NextResponse.json({
       checkout_url: session.url,

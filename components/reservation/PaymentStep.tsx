@@ -1,7 +1,11 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useUser } from '@/hooks/useUser';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Mail } from 'lucide-react';
 
 interface PaymentStepProps {
   language: 'fr' | 'en';
@@ -12,6 +16,7 @@ interface PaymentStepProps {
 }
 
 export default function PaymentStep({ language, selectedPack, personalInfo, onBack, onClose }: PaymentStepProps) {
+  const { user, loading: userLoading } = useUser();
   // Forcer l'acompte uniquement (pas de paiement intégral)
   const [paymentType] = useState<'deposit'>('deposit');
   // La caution sera demandée plus tard, pas maintenant
@@ -24,6 +29,8 @@ export default function PaymentStep({ language, selectedPack, personalInfo, onBa
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [customerEmail, setCustomerEmail] = useState(personalInfo?.email || '');
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const texts = {
     fr: {
@@ -120,6 +127,32 @@ export default function PaymentStep({ language, selectedPack, personalInfo, onBa
   const remainingAmount = packPrice - depositAmount;
   const cautionAmount = packPrice * 3;
 
+  // Initialiser l'email avec l'email de l'utilisateur connecté ou celui de personalInfo
+  useEffect(() => {
+    if (user?.email) {
+      setCustomerEmail(user.email);
+    } else if (personalInfo?.email) {
+      setCustomerEmail(personalInfo.email);
+    }
+  }, [user, personalInfo]);
+
+  const validateEmail = (emailValue: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(emailValue);
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setCustomerEmail(newEmail);
+    setEmailError(null);
+
+    if (newEmail && !validateEmail(newEmail)) {
+      setEmailError(language === 'fr' ? 'Veuillez entrer une adresse email valide' : 'Please enter a valid email address');
+    } else if (newEmail && validateEmail(newEmail)) {
+      setEmailError(null);
+    }
+  };
+
   const getPaymentAmount = () => {
     if (isQuoteRequired) return 0;
     
@@ -169,10 +202,13 @@ export default function PaymentStep({ language, selectedPack, personalInfo, onBa
   const isFormValid = () => {
     if (isQuoteRequired) return true;
     
-    return cardData.cardNumber.replace(/\s/g, '').length >= 16 &&
-           cardData.expiryDate.length === 5 &&
-           cardData.cvv.length === 3 &&
-           cardData.name.trim().length > 0;
+    const isEmailValid = customerEmail && validateEmail(customerEmail);
+    const isCardValid = cardData.cardNumber.replace(/\s/g, '').length >= 16 &&
+                        cardData.expiryDate.length === 5 &&
+                        cardData.cvv.length === 3 &&
+                        cardData.name.trim().length > 0;
+    
+    return isEmailValid && isCardValid;
   };
 
   // Si c'est un pack sur devis, afficher une interface différente
@@ -358,26 +394,71 @@ export default function PaymentStep({ language, selectedPack, personalInfo, onBa
               <h3 className="text-lg font-bold text-black mb-4">
                 {texts[language].customer}
               </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Nom:</span>
-                  <span className="font-medium">{personalInfo?.firstName || ''} {personalInfo?.lastName || ''}</span>
+              <div className="space-y-4">
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Nom:</span>
+                    <span className="font-medium">{personalInfo?.firstName || ''} {personalInfo?.lastName || ''}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Téléphone:</span>
+                    <span className="font-medium">{personalInfo?.phone || ''}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Adresse:</span>
+                    <span className="font-medium">{personalInfo?.address || ''}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Ville:</span>
+                    <span className="font-medium">{personalInfo?.city || ''} {personalInfo?.postalCode || ''}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Email:</span>
-                  <span className="font-medium">{personalInfo?.email || ''}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Téléphone:</span>
-                  <span className="font-medium">{personalInfo?.phone || ''}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Adresse:</span>
-                  <span className="font-medium">{personalInfo?.address || ''}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Ville:</span>
-                  <span className="font-medium">{personalInfo?.city || ''} {personalInfo?.postalCode || ''}</span>
+
+                {/* Champ email obligatoire */}
+                <div className="pt-4 border-t">
+                  {userLoading ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="email-checkout">Email</Label>
+                      <Input
+                        id="email-checkout"
+                        type="email"
+                        placeholder={language === 'fr' ? 'Chargement...' : 'Loading...'}
+                        disabled
+                        className="w-full"
+                      />
+                    </div>
+                  ) : user?.email ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="email-checkout">Email</Label>
+                      <div className="flex items-center gap-2 p-2 bg-white rounded-md border border-gray-200">
+                        <Mail className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-700">{user.email}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="email-checkout" className="text-gray-900">
+                        Email <span className="text-[#F2431E]">*</span>
+                      </Label>
+                      <Input
+                        id="email-checkout"
+                        type="email"
+                        placeholder={language === 'fr' ? 'votre.email@exemple.com' : 'your.email@example.com'}
+                        value={customerEmail}
+                        onChange={handleEmailChange}
+                        required
+                        className={`w-full ${emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                      />
+                      {emailError && (
+                        <p className="text-sm text-red-600">{emailError}</p>
+                      )}
+                      <p className="text-xs text-gray-600">
+                        {language === 'fr' 
+                          ? 'Cet email sera utilisé pour recevoir la confirmation de paiement et les détails de votre réservation.'
+                          : 'This email will be used to receive payment confirmation and reservation details.'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

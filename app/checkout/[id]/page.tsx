@@ -1,13 +1,13 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
-import { verifyToken } from '@/lib/token';
+import { verifyToken, hashToken } from '@/lib/token';
 import { getBasePack } from '@/lib/packs/basePacks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, XCircle, Clock, MapPin, Calendar, Users, Package } from 'lucide-react';
-import { CheckoutButton } from './CheckoutButton';
+import { XCircle } from 'lucide-react';
+import { CheckoutContent } from './CheckoutContent';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -78,12 +78,56 @@ export default async function CheckoutPage(props: PageProps) {
   }
 
   // Vérifier le hash du token
-  if (!verifyToken(token, reservation.public_token_hash)) {
+  // Le token base64url est déjà URL-safe, Next.js devrait le passer tel quel
+  // Mais si Next.js l'a encodé, on doit le décoder
+  let tokenToVerify = token;
+  
+  // Essayer de décoder si nécessaire (Next.js peut encoder automatiquement)
+  try {
+    const decoded = decodeURIComponent(token);
+    // Si le décodage change quelque chose, utiliser la version décodée
+    if (decoded !== token) {
+      tokenToVerify = decoded;
+    }
+  } catch (e) {
+    // Si erreur de décodage, utiliser le token tel quel
+    tokenToVerify = token;
+  }
+  
+  console.log('[CHECKOUT] Vérification token:');
+  console.log('[CHECKOUT]   - Token reçu (raw):', token.substring(0, 30) + '...');
+  console.log('[CHECKOUT]   - Token à vérifier:', tokenToVerify.substring(0, 30) + '...');
+  console.log('[CHECKOUT]   - Hash en DB:', reservation.public_token_hash?.substring(0, 30) + '...');
+  
+  // Essayer d'abord avec le token tel quel
+  let isValid = verifyToken(tokenToVerify, reservation.public_token_hash);
+  
+  // Si invalide, essayer avec le token original (au cas où Next.js l'aurait déjà décodé)
+  if (!isValid && tokenToVerify !== token) {
+    console.log('[CHECKOUT]   - Tentative avec token original...');
+    isValid = verifyToken(token, reservation.public_token_hash);
+    if (isValid) {
+      tokenToVerify = token;
+      console.log('[CHECKOUT] ✅ Token valide avec token original');
+    }
+  }
+  
+  if (!isValid) {
+    console.error('[CHECKOUT] ❌ Token invalide');
+    console.error('[CHECKOUT]   - Token utilisé:', tokenToVerify);
+    console.error('[CHECKOUT]   - Hash attendu:', reservation.public_token_hash);
+    
+    // Calculer le hash du token reçu pour déboguer
+    const computedHash = hashToken(tokenToVerify);
+    console.error('[CHECKOUT]   - Hash calculé:', computedHash);
+    
     return <CheckoutError 
       message="Lien invalide" 
       description="Le token de sécurité est invalide. Veuillez utiliser le lien reçu par email."
     />;
   }
+  
+  console.log('[CHECKOUT] ✅ Token valide');
 
   // Récupérer les informations du pack
   const basePack = getBasePack(reservation.pack_key);
@@ -131,9 +175,6 @@ export default async function CheckoutPage(props: PageProps) {
     ? new Date(reservation.end_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     : null;
 
-  const isPaid = reservation.status === 'PAID' || reservation.status === 'CONFIRMED';
-  const isAwaitingPayment = reservation.status === 'AWAITING_PAYMENT';
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
@@ -143,194 +184,18 @@ export default async function CheckoutPage(props: PageProps) {
           <p className="text-gray-600">Acompte 30% — Solde à régler plus tard</p>
         </div>
 
-        {/* Card principale */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl">{packName}</CardTitle>
-              <StatusBadge status={reservation.status} />
-            </div>
-            {reservation.customer_summary && (
-              <CardDescription className="text-base mt-2 italic text-gray-600">
-                {reservation.customer_summary}
-              </CardDescription>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Informations de l'événement */}
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-[#F2431E] mt-0.5 flex-shrink-0" />
-                <div>
-                  <div className="font-semibold text-gray-900">Date de début</div>
-                  <div className="text-gray-600">
-                    {startDate}
-                    {startTime && ` à ${startTime}`}
-                  </div>
-                </div>
-              </div>
-
-              {endDate && (
-                <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-[#F2431E] mt-0.5 flex-shrink-0" />
-                  <div>
-                    <div className="font-semibold text-gray-900">Date de fin</div>
-                    <div className="text-gray-600">
-                      {endDate}
-                      {endTime && ` à ${endTime}`}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {reservation.address && (
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-[#F2431E] mt-0.5 flex-shrink-0" />
-                  <div>
-                    <div className="font-semibold text-gray-900">Lieu</div>
-                    <div className="text-gray-600">{reservation.address}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Prestation incluse */}
-            {finalItems.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Package className="h-5 w-5 text-[#F2431E]" />
-                  <h3 className="font-semibold text-gray-900">Votre solution inclut</h3>
-                </div>
-                <ul className="space-y-2">
-                  {finalItems.map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-gray-700">
-                      <span className="text-[#F2431E]">•</span>
-                      <span>
-                        {item.qty} {item.label.toLowerCase()}{item.qty > 1 ? 's' : ''}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <Separator />
-
-            {/* Services inclus */}
-            {basePack && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  <span className="font-semibold text-green-900">Pack clé en main</span>
-                </div>
-                <ul className="text-sm text-green-800 space-y-1">
-                  {basePack.services.deliveryIncluded && <li>✓ Livraison incluse</li>}
-                  {basePack.services.installationIncluded && <li>✓ Installation incluse</li>}
-                  {basePack.services.pickupIncluded && <li>✓ Récupération incluse</li>}
-                </ul>
-              </div>
-            )}
-
-            <Separator />
-
-            {/* Paiement en 3 temps */}
-            <div className="space-y-3">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-gray-700 font-semibold">Total de la prestation</span>
-                  <span className="text-xl font-bold text-gray-900">
-                    {parseFloat(reservation.price_total.toString()).toFixed(2)}€
-                  </span>
-                </div>
-                <div className="text-xs text-gray-600 space-y-2">
-                  <p className="font-medium text-gray-700">Vous ne payez jamais tout d'un coup :</p>
-                  <div className="space-y-1.5">
-                    <p>✅ <strong>Acompte 30%</strong> — bloque définitivement votre date</p>
-                    <p>⏳ <strong>Solde restant</strong> — à régler automatiquement 5 jours avant l'événement</p>
-                    <p>🔒 <strong>Caution</strong> — demandée avant l'événement (non débitée sauf incident)</p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Acompte à payer maintenant */}
-              {isAwaitingPayment && (
-                <div className="bg-[#F2431E]/10 border-2 border-[#F2431E]/30 rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <div>
-                      <span className="font-bold text-gray-900 text-lg">Acompte à payer maintenant</span>
-                      <p className="text-xs text-gray-600 mt-1">30% — bloque définitivement votre date</p>
-                    </div>
-                    <span className="text-2xl font-bold text-[#F2431E]">
-                      {Math.round(parseFloat(reservation.price_total.toString()) * 0.3).toFixed(2)}€
-                    </span>
-                  </div>
-                </div>
-              )}
-              
-              {/* Solde à venir */}
-              {reservation.balance_due_at && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="text-sm font-semibold text-gray-900">Solde restant</span>
-                      <p className="text-xs text-gray-600 mt-0.5">
-                        À régler le {new Date(reservation.balance_due_at).toLocaleDateString('fr-FR', { 
-                          weekday: 'long', 
-                          day: 'numeric', 
-                          month: 'long' 
-                        })} (5 jours avant)
-                      </p>
-                    </div>
-                    <span className="text-lg font-bold text-gray-900">
-                      {reservation.balance_amount ? parseFloat(reservation.balance_amount.toString()).toFixed(2) : Math.round(parseFloat(reservation.price_total.toString()) * 0.7).toFixed(2)}€
-                    </span>
-                  </div>
-                </div>
-              )}
-              
-              {/* Caution */}
-              {reservation.deposit_amount && parseFloat(reservation.deposit_amount.toString()) > 0 && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="text-sm font-semibold text-gray-900">Caution</span>
-                      <p className="text-xs text-gray-600 mt-0.5">
-                        {reservation.deposit_requested_at 
-                          ? `Demandée le ${new Date(reservation.deposit_requested_at).toLocaleDateString('fr-FR', { 
-                              weekday: 'long', 
-                              day: 'numeric', 
-                              month: 'long' 
-                            })} (2 jours avant)`
-                          : 'Demandée avant l\'événement'}
-                        {' — non débitée sauf incident'}
-                      </p>
-                    </div>
-                    <span className="text-lg font-bold text-gray-900">
-                      {parseFloat(reservation.deposit_amount.toString()).toFixed(2)}€
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Bouton de paiement */}
-            {(isAwaitingPayment || paymentType === 'balance') && (
-              <CheckoutButton reservationId={reservation.id} paymentType={paymentType} />
-            )}
-
-            {isPaid && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                <p className="font-semibold text-green-900">Réservation payée</p>
-                <p className="text-sm text-green-700 mt-1">
-                  Votre paiement a été confirmé. Vous recevrez un email de confirmation sous peu.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Card principale avec composant client */}
+        <CheckoutContent
+          reservation={reservation}
+          basePack={basePack}
+          packName={packName}
+          startDate={startDate}
+          startTime={startTime}
+          endDate={endDate || undefined}
+          endTime={endTime || undefined}
+          finalItems={finalItems}
+          paymentType={paymentType}
+        />
 
         {/* Footer */}
         <div className="mt-6 text-center text-sm text-gray-600">
@@ -386,22 +251,3 @@ function CheckoutError({
   );
 }
 
-/**
- * Badge de statut
- */
-function StatusBadge({ status }: { status: string }) {
-  const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-    'AWAITING_PAYMENT': { label: 'En attente de paiement', variant: 'secondary' },
-    'PAID': { label: 'Payée', variant: 'default' },
-    'CONFIRMED': { label: 'Confirmée', variant: 'default' },
-    'CANCELLED': { label: 'Annulée', variant: 'destructive' },
-  };
-
-  const config = statusConfig[status] || { label: status, variant: 'outline' as const };
-
-  return (
-    <Badge variant={config.variant} className="text-sm">
-      {config.label}
-    </Badge>
-  );
-}

@@ -49,6 +49,7 @@ export default function BookPageContent() {
   // Récupérer l'email de l'utilisateur connecté (si disponible)
   useEffect(() => {
     const getUserEmail = async () => {
+      if (!supabase) return;
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.email) {
@@ -80,7 +81,7 @@ export default function BookPageContent() {
     if (postalCodeParam) setPostalCode(postalCodeParam);
   }, [searchParams]);
 
-  // Auto-complétion ville avec code postal
+  // Auto-complétion ville avec code postal - UNIQUEMENT Île-de-France
   useEffect(() => {
     if (city.length < 2) {
       setCitySuggestions([]);
@@ -90,24 +91,39 @@ export default function BookPageContent() {
 
     const searchCities = async () => {
       try {
+        // Recherche avec filtre géographique pour Île-de-France
+        // Île-de-France = départements 75, 77, 78, 91, 92, 93, 94, 95
         const response = await fetch(
-          `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(city)}&limit=5&type=municipality`
+          `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(city)}&limit=20&type=municipality&lat=48.8566&lon=2.3522&radius=50000`
         );
         const data = await response.json();
 
         if (data.features && data.features.length > 0) {
-          const suggestions = data.features.map((feature: any) => ({
-            city: feature.properties.city,
-            postcode: feature.properties.postcode,
-          }));
-          setCitySuggestions(suggestions);
-          setShowCitySuggestions(true);
+          // Filtrer pour ne garder que les villes d'Île-de-France (codes postaux 75xxx, 77xxx, 78xxx, 91xxx, 92xxx, 93xxx, 94xxx, 95xxx)
+          const idfPostcodes = ['75', '77', '78', '91', '92', '93', '94', '95'];
+          const idfSuggestions = data.features
+            .filter((feature: any) => {
+              const postcode = feature.properties.postcode;
+              if (!postcode) return false;
+              // Vérifier si le code postal commence par un département d'Île-de-France
+              return idfPostcodes.some(dept => postcode.startsWith(dept));
+            })
+            .map((feature: any) => ({
+              city: feature.properties.city,
+              postcode: feature.properties.postcode,
+            }))
+            .slice(0, 5); // Limiter à 5 résultats
+            
+          setCitySuggestions(idfSuggestions);
+          setShowCitySuggestions(idfSuggestions.length > 0);
         } else {
           setCitySuggestions([]);
           setShowCitySuggestions(false);
         }
       } catch (error) {
         console.error('Erreur recherche ville:', error);
+        setCitySuggestions([]);
+        setShowCitySuggestions(false);
       }
     };
 
@@ -393,14 +409,19 @@ export default function BookPageContent() {
       let emailToUse = wizardData?.customerEmail || customerEmail;
       
       // Si pas d'email dans wizardData ni dans le state, essayer de récupérer depuis l'auth
-      if (!emailToUse || emailToUse.trim() === '' || emailToUse === 'pending@stripe.com') {
+      if ((!emailToUse || emailToUse.trim() === '' || emailToUse === 'pending@stripe.com') && supabase) {
         const { data: { user } } = await supabase.auth.getUser();
         emailToUse = user?.email || null;
       }
       
       // Si toujours pas d'email valide, c'est une erreur car le champ est obligatoire dans le wizard
+      console.log('[BOOK] 🔍 Vérification email avant envoi:');
+      console.log('[BOOK]   - wizardData.customerEmail:', wizardData?.customerEmail || 'VIDE');
+      console.log('[BOOK]   - state customerEmail:', customerEmail || 'VIDE');
+      console.log('[BOOK]   - emailToUse final:', emailToUse || 'VIDE');
+      
       if (!emailToUse || emailToUse.trim() === '' || emailToUse === 'pending@stripe.com') {
-        console.error('[BOOK] Email manquant:', { 
+        console.error('[BOOK] ❌ Email manquant:', { 
           wizardDataEmail: wizardData?.customerEmail, 
           stateEmail: customerEmail,
           emailToUse 
@@ -415,24 +436,29 @@ export default function BookPageContent() {
 
       // Créer le hold et ouvrir Stripe Checkout (appel atomique côté serveur)
       // Le hold n'est créé QUE maintenant, pas avant le clic sur "Payer l'acompte"
+      const requestBody = {
+        pack_key: packKey,
+        start_at: new Date(startISO).toISOString(),
+        end_at: new Date(endISO).toISOString(),
+        customer_email: emailToUse,
+        contact_phone: null, // TODO: Ajouter si disponible dans le wizard
+        contact_email: emailToUse,
+        price_total: finalPrice,
+        deposit_amount: depositAmount,
+        balance_amount: balanceAmount,
+        city: dataToUse.city || null,
+        postal_code: dataToUse.postalCode || null,
+        final_items: displayItems as any, // Convertir en format attendu par PostgreSQL
+        source: 'direct_solution',
+      };
+      
+      console.log('[BOOK] 📤 Envoi requête direct-checkout avec email:', requestBody.customer_email);
+      console.log('[BOOK] 📋 Corps de la requête:', JSON.stringify({ ...requestBody, final_items: '[...]' }, null, 2));
+      
       const response = await fetch('/api/book/direct-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pack_key: packKey,
-          start_at: new Date(startISO).toISOString(),
-          end_at: new Date(endISO).toISOString(),
-          customer_email: emailToUse,
-          contact_phone: null, // TODO: Ajouter si disponible dans le wizard
-          contact_email: emailToUse,
-          price_total: finalPrice,
-          deposit_amount: depositAmount,
-          balance_amount: balanceAmount,
-          city: dataToUse.city || null,
-          postal_code: dataToUse.postalCode || null,
-          final_items: displayItems as any, // Convertir en format attendu par PostgreSQL
-          source: 'direct_solution',
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();

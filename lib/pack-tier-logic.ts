@@ -29,7 +29,7 @@ export function calculatePackTier(
       adjustedItems: basePack.defaultItems,
       adjustedPrice: basePack.basePrice,
       tier: 'S',
-      capacity: 'Jusqu\'à 30 personnes',
+      capacity: 'Jusqu\'à 50 personnes',
     };
   }
 
@@ -40,9 +40,9 @@ export function calculatePackTier(
   let capacity = '';
 
   // Paliers selon le pack et le nombre de personnes
-  if (peopleCount <= 30) {
+  if (peopleCount <= 50) {
     tier = 'S';
-    capacity = 'Jusqu\'à 30 personnes';
+    capacity = 'Jusqu\'à 50 personnes';
     
     // Configuration Pack S selon le type de pack
     if (basePack.key === 'conference') {
@@ -71,13 +71,13 @@ export function calculatePackTier(
         adjustedItems,
         adjustedPrice: 349,
         tier: 'S',
-        capacity: 'Jusqu\'à 30 personnes',
+        capacity: 'Jusqu\'à 50 personnes',
       };
     }
     priceMultiplier = 1; // Pas de multiplicateur pour pack S (prix fixe)
   } else if (peopleCount <= 70) {
     tier = 'M';
-    capacity = '30-70 personnes';
+    capacity = '50-70 personnes';
     
     // Configuration Pack M selon le type de pack
     if (basePack.key === 'conference') {
@@ -224,7 +224,7 @@ export function getPackTierDescription(
   
   // Description améliorée pour Pack Conférence S
   if (packKey === 'conference' && tier === 'S') {
-    return `Pack Conférence S - Idéal pour Jusqu'à 30 personnes. Configuration compacte et efficace.`;
+    return `Pack Conférence S - Idéal pour Jusqu'à 50 personnes. Configuration compacte et efficace.`;
   }
 
   return tierDescriptions[tier] || tierDescriptions.M;

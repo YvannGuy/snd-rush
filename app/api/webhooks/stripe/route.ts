@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { resend } from '@/lib/resend';
+import { ensureValidCheckoutToken, hashToken } from '@/lib/token';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil',
@@ -123,6 +124,9 @@ export async function POST(req: NextRequest) {
             
             console.log('📊 Statut actuel avant mise à jour:', existingReservation.status);
             console.log('📊 Session ID actuelle:', existingReservation.stripe_session_id);
+            console.log('📧 Email dans la réservation (avant):', existingReservation.customer_email || 'VIDE/NULL');
+            console.log('📧 Email dans la session Stripe:', session.customer_email || session.customer_details?.email || 'VIDE/NULL');
+            console.log('📧 customer_details complet:', JSON.stringify(session.customer_details || {}, null, 2));
             
             // Si déjà payée, ne pas refaire la mise à jour
             if (existingReservation.status === 'PAID' || existingReservation.status === 'paid') {
@@ -137,11 +141,32 @@ export async function POST(req: NextRequest) {
               deposit_paid_at: new Date().toISOString(), // Date de paiement de l'acompte
             };
             
-            // Mettre à jour l'email si la réservation n'en a pas encore et que Stripe en a fourni un
-            const customerEmailFromStripe = session.customer_email || session.customer_details?.email;
-            if (customerEmailFromStripe && !existingReservation.customer_email) {
-              console.log('📧 Mise à jour email client depuis Stripe:', customerEmailFromStripe);
+            // Mettre à jour l'email depuis Stripe si disponible et valide
+            // Priorité : toujours utiliser l'email de Stripe s'il est valide (même si la réservation en a déjà un)
+            const customerEmailFromStripe = session.customer_email || session.customer_details?.email || null;
+            const existingEmail = existingReservation.customer_email;
+            const isValidEmail = (email: string | null | undefined) => {
+              if (!email || email.trim() === '' || email === 'pending@stripe.com') return false;
+              return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            };
+            
+            console.log('🔍 Analyse email:');
+            console.log('  - Email Stripe:', customerEmailFromStripe || 'VIDE');
+            console.log('  - Email réservation:', existingEmail || 'VIDE');
+            console.log('  - Email Stripe valide?', isValidEmail(customerEmailFromStripe || ''));
+            console.log('  - Email réservation valide?', isValidEmail(existingEmail || ''));
+            
+            // Utiliser l'email de Stripe s'il est valide, sinon garder celui de la réservation s'il est valide
+            if (customerEmailFromStripe && isValidEmail(customerEmailFromStripe)) {
+              console.log('✅ Utilisation email Stripe:', customerEmailFromStripe);
               updateData.customer_email = customerEmailFromStripe;
+            } else if (existingEmail && isValidEmail(existingEmail)) {
+              console.log('✅ Utilisation email réservation existant:', existingEmail);
+              // Ne pas modifier, garder l'email existant
+            } else {
+              console.warn('⚠️ Aucun email valide trouvé !');
+              console.warn('  - Email Stripe:', customerEmailFromStripe || 'VIDE');
+              console.warn('  - Email réservation:', existingEmail || 'VIDE');
             }
             
             // Mettre à jour la réservation après paiement de l'acompte
@@ -234,6 +259,200 @@ export async function POST(req: NextRequest) {
             }
             
             console.log('✅ Acompte payé avec succès:', reservationId);
+            
+            // Envoyer un email de confirmation après paiement de l'acompte
+            try {
+              // Priorité : email mis à jour > email Stripe > email réservation
+              const customerEmail = updatedReservation.customer_email || session.customer_email || session.customer_details?.email || '';
+              
+              console.log('📧 Tentative envoi email de confirmation:');
+              console.log('  - Email final utilisé:', customerEmail || 'VIDE');
+              console.log('  - Email dans updatedReservation:', updatedReservation.customer_email || 'VIDE');
+              console.log('  - Email dans session.customer_email:', session.customer_email || 'VIDE');
+              console.log('  - Email dans session.customer_details:', session.customer_details?.email || 'VIDE');
+              console.log('  - RESEND_API_KEY présent?', !!process.env.RESEND_API_KEY);
+              console.log('  - RESEND_FROM présent?', !!process.env.RESEND_FROM);
+              
+              if (customerEmail && customerEmail !== 'pending@stripe.com' && customerEmail.trim() !== '' && process.env.RESEND_API_KEY && process.env.RESEND_FROM) {
+                // Récupérer le token depuis les métadonnées Stripe (généré lors de la création de la session)
+                // Si pas présent, générer un nouveau token
+                let checkoutToken: string = metadata.checkout_token || '';
+                
+                if (!checkoutToken) {
+                  // Si le token n'est pas dans les métadonnées, générer un nouveau token
+                  console.warn('⚠️ Token non trouvé dans métadonnées Stripe, génération d\'un nouveau token');
+                  try {
+                    checkoutToken = await ensureValidCheckoutToken(reservationId, supabaseClient);
+                    console.log('✅ Nouveau token checkout généré pour email');
+                  } catch (tokenError: any) {
+                    console.error('❌ Erreur génération token checkout:', tokenError);
+                    checkoutToken = '';
+                  }
+                } else {
+                  console.log('✅ Token récupéré depuis métadonnées Stripe');
+                  console.log('📋 Token (premiers caractères):', checkoutToken.substring(0, 20) + '...');
+                  
+                  // Vérifier que le token correspond au hash en DB
+                  const { data: tokenCheck } = await supabaseClient
+                    .from('client_reservations')
+                    .select('public_token_hash, public_token_expires_at')
+                    .eq('id', reservationId)
+                    .single();
+                  
+                  if (tokenCheck?.public_token_hash) {
+                    const expectedHash = hashToken(checkoutToken);
+                    if (tokenCheck.public_token_hash === expectedHash) {
+                      console.log('✅ Token vérifié et correspond au hash en DB');
+                    } else {
+                      console.error('❌ Token ne correspond PAS au hash en DB !');
+                      console.error('  - Hash attendu:', expectedHash);
+                      console.error('  - Hash en DB:', tokenCheck.public_token_hash);
+                      // Générer un nouveau token si le token ne correspond pas
+                      try {
+                        checkoutToken = await ensureValidCheckoutToken(reservationId, supabaseClient);
+                        console.log('✅ Nouveau token généré car ancien token invalide');
+                      } catch (tokenError: any) {
+                        console.error('❌ Erreur génération nouveau token:', tokenError);
+                        checkoutToken = '';
+                      }
+                    }
+                  } else {
+                    console.warn('⚠️ Hash token non trouvé en DB, utilisation du token des métadonnées');
+                  }
+                }
+                
+                const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sndrush.com';
+                // Le token base64url est déjà URL-safe, pas besoin d'encoder avec encodeURIComponent
+                // Cela pourrait modifier les caractères - et _ qui sont valides en base64url
+                const checkoutUrl = checkoutToken 
+                  ? `${baseUrl}/checkout/${reservationId}?token=${checkoutToken}`
+                  : `${baseUrl}/checkout/${reservationId}`;
+                
+                console.log('📧 Lien checkout généré:', checkoutUrl.substring(0, 100) + '...');
+                console.log('📧 Token dans URL:', checkoutToken.substring(0, 20) + '...');
+                const packNames: Record<string, string> = {
+                  'conference': 'Pack Conférence',
+                  'soiree': 'Pack Soirée',
+                  'mariage': 'Pack Mariage'
+                };
+                const packName = packNames[updatedReservation.pack_key] || updatedReservation.pack_key || 'Pack';
+                const depositAmount = parseFloat(updatedReservation.price_total.toString()) * 0.3;
+                const balanceAmount = parseFloat(updatedReservation.price_total.toString()) - depositAmount;
+                
+                const emailHtml = `
+                  <!DOCTYPE html>
+                  <html style="background-color: #ffffff;">
+                    <head>
+                      <meta charset="utf-8">
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #000000; background-color: #ffffff !important; margin: 0; padding: 0;">
+                      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff !important; padding: 40px 20px;">
+                        <!-- Header -->
+                        <div style="text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #F2431E;">
+                          <div style="background-color: #F2431E; color: #ffffff; padding: 20px; border-radius: 8px; display: inline-block; margin-bottom: 15px;">
+                            <h1 style="margin: 0; font-size: 32px; color: #ffffff; font-weight: bold; letter-spacing: 1px;">SoundRush Paris</h1>
+                          </div>
+                          <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">La location sono express à Paris en 2min</p>
+                        </div>
+                        
+                        <!-- Main Content -->
+                        <div style="background-color: #ffffff !important;">
+                          <div style="text-align: center; margin-bottom: 30px;">
+                            <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                            <h2 style="color: #F2431E; margin-top: 0; margin-bottom: 20px; font-size: 28px; font-weight: bold;">Acompte payé avec succès !</h2>
+                            <p style="color: #000000; font-size: 18px; margin-bottom: 30px;">
+                              Votre date est maintenant bloquée. Votre réservation pour <strong>${packName}</strong> est confirmée.
+                            </p>
+                          </div>
+                          
+                          <!-- Récapitulatif -->
+                          <div style="background-color: #f9fafb; border: 2px solid #e5e7eb; border-radius: 10px; padding: 25px; margin-bottom: 30px;">
+                            <h3 style="color: #111827; margin-top: 0; margin-bottom: 20px; font-size: 20px; font-weight: bold;">Récapitulatif de votre réservation</h3>
+                            <div style="color: #000000; font-size: 16px; line-height: 2;">
+                              <div style="margin-bottom: 10px;"><strong>Pack :</strong> ${packName}</div>
+                              <div style="margin-bottom: 10px;"><strong>Acompte payé (30%) :</strong> ${depositAmount.toFixed(2)}€</div>
+                              <div style="margin-bottom: 10px;"><strong>Solde restant (70%) :</strong> ${balanceAmount.toFixed(2)}€</div>
+                              <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;"><strong>Total :</strong> ${parseFloat(updatedReservation.price_total.toString()).toFixed(2)}€</div>
+                            </div>
+                          </div>
+                          
+                          <!-- Prochaines étapes -->
+                          <div style="background-color: #fff7ed; padding: 30px; border-radius: 10px; border: 3px solid #F2431E; margin-bottom: 30px;">
+                            <h3 style="color: #F2431E; margin-top: 0; margin-bottom: 20px; font-size: 22px; font-weight: bold;">📅 Prochaines étapes</h3>
+                            <ol style="color: #000000; font-size: 16px; line-height: 2; padding-left: 20px; margin: 0;">
+                              <li style="margin-bottom: 15px;">
+                                Le <strong>solde restant (${balanceAmount.toFixed(2)}€)</strong> sera demandé automatiquement <strong>5 jours avant</strong> votre événement
+                              </li>
+                              <li style="margin-bottom: 15px;">
+                                La <strong>caution</strong> sera demandée <strong>2 jours avant</strong> votre événement (non débitée sauf incident)
+                              </li>
+                              <li style="margin-bottom: 15px;">
+                                Vous recevrez un email de rappel avant chaque échéance
+                              </li>
+                            </ol>
+                          </div>
+                          
+                          <!-- Bouton CTA -->
+                          <div style="text-align: center; margin: 40px 0;">
+                            <a href="${checkoutUrl}" 
+                               style="display: inline-block; background-color: #F2431E; color: #ffffff; padding: 18px 40px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 18px; box-shadow: 0 6px 20px rgba(242, 67, 30, 0.4);">
+                              📋 Voir ma réservation
+                            </a>
+                          </div>
+                          
+                          <!-- Footer -->
+                          <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #F2431E;">
+                            <p style="color: #000000; font-size: 15px; text-align: center; margin-bottom: 20px; line-height: 1.6;">
+                              Nous sommes ravis de vous accompagner dans votre événement.<br>
+                              Notre équipe reste disponible pour toute question.
+                            </p>
+                            <div style="background-color: #ffffff; padding: 25px; border-radius: 8px; border: 2px solid #F2431E; margin-top: 20px;">
+                              <p style="color: #F2431E; font-size: 16px; font-weight: bold; text-align: center; margin: 0 0 15px 0;">L'équipe SoundRush Paris</p>
+                              <div style="text-align: center; color: #000000; font-size: 14px; line-height: 2;">
+                                <p style="margin: 5px 0;">
+                                  <strong style="color: #F2431E;">📧 Email :</strong> 
+                                  <a href="mailto:contact@guylocationevents.com" style="color: #0066cc; text-decoration: none;">contact@guylocationevents.com</a>
+                                </p>
+                                <p style="margin: 5px 0;">
+                                  <strong style="color: #F2431E;">📞 Téléphone :</strong> 
+                                  <a href="tel:+33651084994" style="color: #0066cc; text-decoration: none;">06 51 08 49 94</a>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </body>
+                  </html>
+                `;
+
+                await resend.emails.send({
+                  from: process.env.RESEND_FROM!,
+                  to: customerEmail,
+                  subject: `✅ Acompte payé - Votre réservation ${packName} est confirmée`,
+                  html: emailHtml,
+                });
+
+                console.log('✅ Email de confirmation d\'acompte envoyé à:', customerEmail);
+              } else {
+                console.warn('⚠️ Email non envoyé - Raisons:');
+                if (!customerEmail || customerEmail === 'pending@stripe.com' || customerEmail.trim() === '') {
+                  console.warn('  - Email invalide ou vide:', customerEmail || 'VIDE');
+                }
+                if (!process.env.RESEND_API_KEY) {
+                  console.warn('  - RESEND_API_KEY manquant');
+                }
+                if (!process.env.RESEND_FROM) {
+                  console.warn('  - RESEND_FROM manquant');
+                }
+              }
+            } catch (emailError: any) {
+              console.error('❌ Erreur envoi email de confirmation acompte:', emailError);
+              console.error('❌ Détails erreur:', JSON.stringify(emailError, null, 2));
+              // Ne pas faire échouer le webhook si l'email échoue
+            }
+            
             return NextResponse.json({ received: true, success: true, status: updatedReservation.status, paymentType: 'deposit' });
           }
           

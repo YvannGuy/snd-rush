@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { getReservationStatusUI } from '@/lib/reservationStatus';
-import { CheckCircle2, XCircle, AlertCircle, Calendar, MapPin, ChevronRight, Search, X, Clock, Settings } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Calendar, MapPin, ChevronRight, Search, X, Clock, Settings, Trash2 } from 'lucide-react';
 import DocumentsPanel from '@/components/DocumentsPanel';
 import AdjustReservationModal from '@/components/admin/AdjustReservationModal';
 
@@ -27,7 +27,6 @@ export default function AdminReservationsPage() {
   const { isAdmin, checkingAdmin } = useAdmin();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,6 +43,7 @@ export default function AdminReservationsPage() {
   const [loadingReservations, setLoadingReservations] = useState(true);
   const [reservationsError, setReservationsError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Rediriger si l'utilisateur n'est pas admin
   useEffect(() => {
@@ -144,28 +144,6 @@ export default function AdminReservationsPage() {
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  const getStatusColor = (status: string) => {
-    const colorMap: { [key: string]: string } = {
-      'CONFIRMED': 'bg-green-100 text-green-800',
-      'PENDING': 'bg-yellow-100 text-yellow-800',
-      'CANCELLED': 'bg-gray-100 text-gray-800',
-    };
-    return colorMap[status] || 'bg-gray-100 text-gray-800';
-  };
-
-  const getPackName = (packId: string | null) => {
-    if (!packId) return 'Réservation';
-    const packNames: { [key: string]: string } = {
-      'pack-1': 'Pack Essentiel',
-      'pack-2': 'Pack Standard',
-      'pack-3': 'Pack Premium',
-      'pack-4': 'Pack Événement',
-      'conference': 'Pack Conférence',
-      'soiree': 'Pack Soirée',
-      'mariage': 'Pack Mariage',
-    };
-    return packNames[packId] || `Pack ${packId}`;
-  };
 
   const paginatedReservations = reservations;
 
@@ -197,6 +175,9 @@ export default function AdminReservationsPage() {
       refundEstimate: 'Remboursement estimé',
       requestedAt: 'Demandé le',
       close: 'Fermer',
+      delete: 'Supprimer',
+      deleteConfirm: 'Êtes-vous sûr de vouloir supprimer cette réservation ? Cette action est irréversible.',
+      deleting: 'Suppression en cours...',
     },
     en: {
       title: 'Reservations',
@@ -225,6 +206,9 @@ export default function AdminReservationsPage() {
       refundEstimate: 'Estimated refund',
       requestedAt: 'Requested on',
       close: 'Close',
+      delete: 'Delete',
+      deleteConfirm: 'Are you sure you want to delete this reservation? This action is irreversible.',
+      deleting: 'Deleting...',
     },
   };
 
@@ -284,7 +268,7 @@ export default function AdminReservationsPage() {
               <span className="text-xl font-bold text-gray-900">SoundRush</span>
             </Link>
             <button 
-              onClick={() => setIsSidebarOpen(true)} 
+              onClick={() => {}} 
               className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -565,7 +549,7 @@ export default function AdminReservationsPage() {
                       isPickup = !isDelivery && 
                         (deliveryOption === 'retrait' || 
                          (!deliveryOption && !hasDeliveryItem));
-                    } catch (e) {
+                    } catch {
                       // Ignorer les erreurs de parsing
                     }
                   }
@@ -619,7 +603,7 @@ export default function AdminReservationsPage() {
                         ? JSON.parse(selectedReservation.notes) 
                         : selectedReservation.notes;
                       cancelRequest = notesData.cancelRequest;
-                    } catch (e) {
+                    } catch {
                       // Ignorer
                     }
                   }
@@ -736,7 +720,7 @@ export default function AdminReservationsPage() {
                         ? JSON.parse(selectedReservation.notes) 
                         : selectedReservation.notes;
                       changeRequest = notesData.changeRequest;
-                    } catch (e) {
+                    } catch {
                       // Ignorer
                     }
                   }
@@ -875,8 +859,43 @@ export default function AdminReservationsPage() {
                   </div>
                 )}
 
-                {/* Bouton fermer */}
-                <div className="flex justify-end pt-4 border-t">
+                {/* Boutons actions */}
+                <div className="flex justify-between pt-4 border-t">
+                  <Button
+                    onClick={async () => {
+                      if (!confirm(currentTexts.deleteConfirm)) {
+                        return;
+                      }
+                      setIsDeleting(true);
+                      try {
+                        const source = selectedReservation.start_at ? 'client' : 'legacy';
+                        const response = await adminFetch(`/api/admin/reservations/${selectedReservation.id}?source=${source}`, {
+                          method: 'DELETE',
+                        });
+                        
+                        if (response) {
+                          setIsDetailModalOpen(false);
+                          setSelectedReservation(null);
+                          // Recharger les réservations
+                          window.location.reload();
+                        }
+                      } catch (error: any) {
+                        console.error('Erreur suppression:', error);
+                        alert(language === 'fr' 
+                          ? 'Erreur lors de la suppression: ' + (error.message || 'Erreur inconnue')
+                          : 'Error deleting: ' + (error.message || 'Unknown error')
+                        );
+                      } finally {
+                        setIsDeleting(false);
+                      }
+                    }}
+                    disabled={isDeleting}
+                    variant="destructive"
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {isDeleting ? currentTexts.deleting : currentTexts.delete}
+                  </Button>
                   <Button
                     onClick={() => setIsDetailModalOpen(false)}
                     variant="outline"

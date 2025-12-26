@@ -7,12 +7,13 @@ import { Loader2 } from 'lucide-react';
 interface CheckoutButtonProps {
   reservationId: string;
   paymentType?: 'deposit' | 'balance'; // 'deposit' pour acompte, 'balance' pour solde
+  customerEmail?: string; // Email du client (obligatoire si non connecté)
 }
 
 /**
  * Composant client pour gérer le paiement Stripe (Phase suivante - Paiement en 3 temps)
  */
-export function CheckoutButton({ reservationId, paymentType = 'deposit' }: CheckoutButtonProps) {
+export function CheckoutButton({ reservationId, paymentType = 'deposit', customerEmail }: CheckoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +30,10 @@ export function CheckoutButton({ reservationId, paymentType = 'deposit' }: Check
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reservation_id: reservationId }),
+        body: JSON.stringify({ 
+          reservation_id: reservationId,
+          customer_email: customerEmail, // Passer l'email à l'API
+        }),
       });
 
       if (!response.ok) {
@@ -60,8 +64,8 @@ export function CheckoutButton({ reservationId, paymentType = 'deposit' }: Check
     <div className="space-y-2">
       <Button 
         onClick={handlePayment}
-        disabled={isLoading}
-        className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white text-lg py-6 font-semibold"
+        disabled={isLoading || !customerEmail}
+        className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white text-lg py-6 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         size="lg"
       >
         {isLoading ? (
@@ -73,6 +77,11 @@ export function CheckoutButton({ reservationId, paymentType = 'deposit' }: Check
           buttonText
         )}
       </Button>
+      {!customerEmail && (
+        <p className="text-sm text-red-600 text-center">
+          Veuillez entrer votre email pour continuer
+        </p>
+      )}
       {error && (
         <div className="text-sm text-red-600 text-center bg-red-50 border border-red-200 rounded-lg p-3">
           {error}

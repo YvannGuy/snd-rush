@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { reservation_id, token } = body; // token optionnel pour paiement public
+    const { reservation_id, token, customer_email } = body; // token optionnel pour paiement public, customer_email pour utilisateurs non connectés
 
     if (!reservation_id) {
       return NextResponse.json({ error: 'reservation_id requis' }, { status: 400 });
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard?payment=success&reservation_id=${reservation.id}&type=balance`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard?payment=cancelled`,
-      customer_email: reservation.customer_email || undefined,
+      customer_email: customer_email || reservation.customer_email || undefined, // Priorité à l'email fourni dans la requête
       metadata: {
         type: 'client_reservation_balance',
         reservation_id: reservation.id,

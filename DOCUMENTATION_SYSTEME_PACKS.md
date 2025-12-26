@@ -56,8 +56,8 @@ Le système de packs propose **3 types d’événements** (Conférence, Soirée,
 
 | Tier  | Personnes | Matériel Inclus                                                          | Prix Pack (base) |
 | ----- | --------: | ------------------------------------------------------------------------ | ---------------: |
-| **S** |      ≤ 30 | 1x Enceinte<br>2x Micro HF<br>1x Console de mixage                       |         **299€** |
-| **M** |     30–70 | 2x Enceintes<br>3x Micro HF<br>1x Console de mixage                      |         **389€** |
+| **S** |      ≤ 50 | 1x Enceinte<br>2x Micro HF<br>1x Console de mixage                       |         **299€** |
+| **M** |     50–70 | 2x Enceintes<br>3x Micro HF<br>1x Console de mixage                      |         **389€** |
 | **L** |    70–150 | 2x Enceintes façade<br>4x Micro HF<br>1x Console<br>+ 2x Enceintes delay |         **569€** |
 
 ---
@@ -66,8 +66,8 @@ Le système de packs propose **3 types d’événements** (Conférence, Soirée,
 
 | Tier  | Personnes | Matériel Inclus                           | Prix Pack (base) |
 | ----- | --------: | ----------------------------------------- | ---------------: |
-| **S** |      ≤ 30 | 1x Enceinte<br>1x Console de mixage       |         **249€** |
-| **M** |     30–70 | 2x Enceintes<br>1x Caisson<br>1x Console  |         **399€** |
+| **S** |      ≤ 50 | 1x Enceinte<br>1x Console de mixage       |         **249€** |
+| **M** |     50–70 | 2x Enceintes<br>1x Caisson<br>1x Console  |         **399€** |
 | **L** |    70–150 | 2x Enceintes<br>2x Caissons<br>1x Console |         **499€** |
 
 ---
@@ -76,8 +76,8 @@ Le système de packs propose **3 types d’événements** (Conférence, Soirée,
 
 | Tier  | Personnes | Matériel Inclus                                          | Prix Pack (base) |
 | ----- | --------: | -------------------------------------------------------- | ---------------: |
-| **S** |      ≤ 30 | 1x Enceinte<br>1x Caisson<br>2x Micro HF<br>1x Console   |         **349€** |
-| **M** |     30–70 | 2x Enceintes<br>1x Caisson<br>2x Micro HF<br>1x Console  |         **499€** |
+| **S** |      ≤ 50 | 1x Enceinte<br>1x Caisson<br>2x Micro HF<br>1x Console   |         **349€** |
+| **M** |     50–70 | 2x Enceintes<br>1x Caisson<br>2x Micro HF<br>1x Console  |         **499€** |
 | **L** |    70–150 | 2x Enceintes<br>2x Caissons<br>4x Micro HF<br>1x Console |         **649€** |
 
 ---

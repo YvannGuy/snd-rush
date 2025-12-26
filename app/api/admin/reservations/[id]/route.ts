@@ -162,3 +162,133 @@ export async function GET(
     );
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Configuration Supabase manquante' }, { status: 500 });
+    }
+
+    // Auth
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { isAdmin, error: authError } = await verifyAdmin(token);
+    
+    if (!isAdmin || authError) {
+      return NextResponse.json({ error: authError || 'Accès refusé' }, { status: 403 });
+    }
+
+    const { id } = await params;
+    const { searchParams } = new URL(req.url);
+    const source = searchParams.get('source') || 'auto';
+
+    // Détecter le type de réservation
+    let reservationSource: 'client_reservation' | 'reservation' | null = null;
+    
+    if (source === 'client' || source === 'auto') {
+      const { data: clientReservation } = await supabaseAdmin
+        .from('client_reservations')
+        .select('id')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (clientReservation) {
+        reservationSource = 'client_reservation';
+      }
+    }
+
+    if (!reservationSource && (source === 'legacy' || source === 'auto')) {
+      const { data: legacyReservation } = await supabaseAdmin
+        .from('reservations')
+        .select('id')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (legacyReservation) {
+        reservationSource = 'reservation';
+      }
+    }
+
+    if (!reservationSource) {
+      return NextResponse.json({ error: 'Réservation non trouvée' }, { status: 404 });
+    }
+
+    // Supprimer les données associées en premier (pour respecter les contraintes FK)
+    
+    // 1. Supprimer les orders associés
+    if (reservationSource === 'client_reservation') {
+      await supabaseAdmin
+        .from('orders')
+        .delete()
+        .eq('client_reservation_id', id);
+    } else {
+      // Legacy: supprimer par reservation_id
+      await supabaseAdmin
+        .from('orders')
+        .delete()
+        .eq('reservation_id', id);
+    }
+
+    // 2. Supprimer les reservation_holds associés
+    await supabaseAdmin
+      .from('reservation_holds')
+      .delete()
+      .eq('reservation_id', id);
+
+    // 3. Supprimer les états des lieux (legacy uniquement)
+    if (reservationSource === 'reservation') {
+      await supabaseAdmin
+        .from('etat_lieux')
+        .delete()
+        .eq('reservation_id', id);
+    }
+
+    // 4. Supprimer la réservation elle-même
+    if (reservationSource === 'client_reservation') {
+      const { error: deleteError } = await supabaseAdmin
+        .from('client_reservations')
+        .delete()
+        .eq('id', id);
+
+      if (deleteError) {
+        console.error('❌ Erreur suppression client_reservation:', deleteError);
+        return NextResponse.json(
+          { error: 'Erreur lors de la suppression', message: deleteError.message },
+          { status: 500 }
+        );
+      }
+    } else {
+      const { error: deleteError } = await supabaseAdmin
+        .from('reservations')
+        .delete()
+        .eq('id', id);
+
+      if (deleteError) {
+        console.error('❌ Erreur suppression reservation:', deleteError);
+        return NextResponse.json(
+          { error: 'Erreur lors de la suppression', message: deleteError.message },
+          { status: 500 }
+        );
+      }
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Réservation supprimée avec succès',
+      source: reservationSource
+    });
+  } catch (error: any) {
+    console.error('Erreur API suppression reservation:', error);
+    return NextResponse.json(
+      { error: 'Erreur serveur', message: error.message },
+      { status: 500 }
+    );
+  }
+}

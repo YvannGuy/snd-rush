@@ -1,27 +1,46 @@
 // Règles automatiques pour la récupération J+1 selon l'heure de fin
 
 /**
- * Détermine si la récupération J+1 est nécessaire selon l'heure de fin
- * Règle : Si l'heure de fin est après 02:00 (02h00 AM) → récupération J+1 automatique
+ * Détermine si la récupération J+1 est nécessaire selon les dates et l'heure de fin
+ * Règle : J+1 seulement si l'événement se termine après 02:00 du matin (02h00 AM) et avant 06:00
  * 
  * Explication :
- * - Si l'événement se termine avant 02h00 du matin (00:00 à 01:59) → même jour → PAS de J+1
- * - Si l'événement se termine après 02h00 du matin (02:00 à 23:59) → très tard dans la nuit → J+1 automatique
+ * - Si même jour (startDate === endDate) :
+ *   - Fin entre 00:00 et 01:59 → PAS de J+1 (fin tôt le matin, récupération le même jour)
+ *   - Fin entre 02:00 et 05:59 → J+1 automatique (fin très tôt le matin, récupération le lendemain)
+ *   - Fin entre 06:00 et 23:59 → PAS de J+1 (fin dans la journée/soirée, récupération le même jour)
+ * - Si jour différent (startDate !== endDate) :
+ *   - Toujours J+1 (événement sur plusieurs jours)
  * 
  * Exemple :
- * - Fin à 23:00 → avant 02h00 du matin du lendemain → PAS de J+1
- * - Fin à 02:00 → après 02h00 du matin → J+1 automatique
- * - Fin à 03:00 → après 02h00 du matin → J+1 automatique
+ * - Même jour, fin à 23:00 → PAS de J+1 (récupération le même jour avant minuit)
+ * - Même jour, fin à 01:00 → PAS de J+1 (récupération le même jour tôt le matin)
+ * - Même jour, fin à 02:00 → J+1 automatique (fin après 02h du matin, récupération le lendemain)
+ * - Même jour, fin à 03:00 → J+1 automatique (fin après 02h du matin, récupération le lendemain)
+ * - Même jour, fin à 05:00 → J+1 automatique (fin après 02h du matin, récupération le lendemain)
+ * - Même jour, fin à 06:00 → PAS de J+1 (récupération le même jour)
+ * - Jour différent → Toujours J+1
  */
-export function requiresPickupJPlus1(endTime: string): boolean {
+export function requiresPickupJPlus1(
+  endTime: string,
+  startDate?: string,
+  endDate?: string
+): boolean {
   if (!endTime) return false;
   
-  // Parser l'heure (format HH:MM)
-  const [hours, minutes] = endTime.split(':').map(Number);
+  // Si les dates sont différentes, toujours J+1
+  if (startDate && endDate && startDate !== endDate) {
+    return true;
+  }
   
-  // J+1 si l'événement se termine après 02h00 du matin (02:00 à 23:59)
-  // Pas de J+1 si l'événement se termine avant 02h00 (00:00 à 01:59)
-  if (hours >= 2) return true;
+  // Si même jour, vérifier l'heure de fin
+  // Parser l'heure (format HH:MM)
+  const [hours] = endTime.split(':').map(Number);
+  
+  // J+1 seulement si fin entre 02:00 et 05:59 (très tôt le matin, récupération le lendemain)
+  // Pas de J+1 si fin entre 00:00 et 01:59 (tôt le matin, récupération le même jour)
+  // Pas de J+1 si fin entre 06:00 et 23:59 (dans la journée/soirée, récupération le même jour)
+  if (hours >= 2 && hours < 6) return true;
   
   return false;
 }
@@ -32,9 +51,11 @@ export function requiresPickupJPlus1(endTime: string): boolean {
  */
 export function calculatePickupJPlus1Price(
   endTime: string,
-  zone: 'paris' | 'petite' | 'grande' | null
+  zone: 'paris' | 'petite' | 'grande' | null,
+  startDate?: string,
+  endDate?: string
 ): number {
-  if (!requiresPickupJPlus1(endTime) || !zone) return 0;
+  if (!requiresPickupJPlus1(endTime, startDate, endDate) || !zone) return 0;
   
   const prices = {
     paris: 45,

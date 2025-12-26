@@ -132,6 +132,7 @@ export default function ReservationWizard({
       email: 'Email',
       emailPlaceholder: 'votre.email@exemple.com',
       emailRequired: 'Email requis pour la confirmation',
+      zoneCoverage: 'Zone couverte : Île-de-France uniquement. Pour d\'autres zones, veuillez nous contacter.',
     },
     en: {
       title: '',
@@ -173,13 +174,14 @@ export default function ReservationWizard({
       email: 'Email',
       emailPlaceholder: 'your.email@example.com',
       emailRequired: 'Email required for confirmation',
+      zoneCoverage: 'Coverage area: Île-de-France only. For other areas, please contact us.',
     },
   };
 
   const currentTexts = texts[language];
   const totalSteps = 5;
 
-  // Auto-complétion ville
+  // Auto-complétion ville - UNIQUEMENT Île-de-France
   useEffect(() => {
     if (city.length < 2) {
       setCitySuggestions([]);
@@ -189,24 +191,39 @@ export default function ReservationWizard({
 
     const searchCities = async () => {
       try {
+        // Recherche avec filtre géographique pour Île-de-France
+        // Île-de-France = départements 75, 77, 78, 91, 92, 93, 94, 95
         const response = await fetch(
-          `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(city)}&limit=5&type=municipality`
+          `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(city)}&limit=20&type=municipality&lat=48.8566&lon=2.3522&radius=50000`
         );
         const data = await response.json();
 
         if (data.features && data.features.length > 0) {
-          const suggestions = data.features.map((feature: any) => ({
-            city: feature.properties.city,
-            postcode: feature.properties.postcode,
-          }));
-          setCitySuggestions(suggestions);
-          setShowCitySuggestions(true);
+          // Filtrer pour ne garder que les villes d'Île-de-France (codes postaux 75xxx, 77xxx, 78xxx, 91xxx, 92xxx, 93xxx, 94xxx, 95xxx)
+          const idfPostcodes = ['75', '77', '78', '91', '92', '93', '94', '95'];
+          const idfSuggestions = data.features
+            .filter((feature: any) => {
+              const postcode = feature.properties.postcode;
+              if (!postcode) return false;
+              // Vérifier si le code postal commence par un département d'Île-de-France
+              return idfPostcodes.some(dept => postcode.startsWith(dept));
+            })
+            .map((feature: any) => ({
+              city: feature.properties.city,
+              postcode: feature.properties.postcode,
+            }))
+            .slice(0, 5); // Limiter à 5 résultats
+            
+          setCitySuggestions(idfSuggestions);
+          setShowCitySuggestions(idfSuggestions.length > 0);
         } else {
           setCitySuggestions([]);
           setShowCitySuggestions(false);
         }
       } catch (error) {
         console.error('Erreur recherche ville:', error);
+        setCitySuggestions([]);
+        setShowCitySuggestions(false);
       }
     };
 
@@ -624,6 +641,11 @@ export default function ReservationWizard({
                 </div>
               </div>
               
+              {/* Message zone couverte */}
+              <div className="text-xs text-gray-500 text-center pt-2">
+                <p>{currentTexts.zoneCoverage}</p>
+              </div>
+              
               {/* Message J+1 si zone détectée et heure de fin après 02h00 (même jour) ou jour différent */}
               {postalCode && zone && endTime && startDate && endDate && requiresPickupJPlus1(endTime, startDate, endDate) && (
                 <Alert className="bg-amber-50 border-amber-200">
@@ -834,7 +856,7 @@ export default function ReservationWizard({
                       id="customerEmail"
                       type="email"
                       placeholder={currentTexts.emailPlaceholder}
-                      value={customerEmail}
+                      value={customerEmail || ''}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       className="h-12 text-base border-2 focus-visible:ring-2 focus-visible:ring-[#F2431E]"
                       required

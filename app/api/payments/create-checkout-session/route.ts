@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { reservation_id, hold_id } = body; // HOLD v1 - hold_id optionnel
+    const { reservation_id, hold_id, customer_email } = body; // HOLD v1 - hold_id optionnel, customer_email pour utilisateurs non connectés
 
     if (!reservation_id) {
       return NextResponse.json({ error: 'reservation_id requis' }, { status: 400 });
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     // Vérifier l'authentification (optionnel pour permettre le paiement via lien email)
     const authHeader = req.headers.get('authorization');
-    let userEmail = reservation.customer_email;
+    let userEmail = customer_email || reservation.customer_email; // Priorité à l'email fourni dans la requête
     let userId = reservation.user_id;
     
     if (authHeader && supabaseUrl && supabaseAnonKey) {
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         if (user) {
           // Vérifier que l'utilisateur a le droit de payer cette réservation
           if (user.email === reservation.customer_email || reservation.user_id === user.id) {
-            userEmail = user.email || reservation.customer_email;
+            userEmail = user.email || customer_email || reservation.customer_email;
             userId = user.id;
           }
           // Note: On ne bloque pas si l'email ne correspond pas exactement,
@@ -71,6 +71,11 @@ export async function POST(req: NextRequest) {
       } catch (authErr) {
         console.warn('Erreur vérification auth (non bloquant):', authErr);
       }
+    }
+
+    // Valider que l'email est présent (obligatoire pour Stripe)
+    if (!userEmail) {
+      return NextResponse.json({ error: 'Email requis pour le paiement' }, { status: 400 });
     }
 
     // Construire les line_items depuis final_items si disponible
@@ -221,7 +226,7 @@ export async function POST(req: NextRequest) {
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard?payment=success&reservation_id=${reservation.id}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard?payment=cancelled`,
-      ...(userEmail && { customer_email: userEmail }), // Ne pas inclure customer_email si null/undefined (Stripe demandera dans le checkout)
+      customer_email: userEmail, // Email obligatoire - utilisé pour Stripe Checkout et les emails de confirmation
       metadata: {
         type: 'client_reservation_deposit', // Acompte uniquement
         reservation_id: reservation.id,
