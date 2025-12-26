@@ -86,12 +86,22 @@ export async function GET(req: NextRequest) {
         .gte('created_at', yesterday.toISOString())
     );
 
-    // Construire la réponse simplifiée avec uniquement les 4 compteurs utilisés
+    // 5. Demandes Pro en attente
+    const pendingProRequests = await safeCount(
+      supabaseAdmin
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'pro')
+        .eq('pro_status', 'pending')
+    );
+
+    // Construire la réponse simplifiée avec les compteurs utilisés
     const response = {
       pending_reservations: pendingReservations,
       contracts_unsigned: contractsUnsigned,
       deliveries_in_progress: deliveriesInProgress,
       new_invoices: newInvoices,
+      pending_pro_requests: pendingProRequests,
     };
 
     return NextResponse.json(response, {

@@ -11,10 +11,9 @@ import AdminFooter from '@/components/AdminFooter';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, CheckCircle2, XCircle, Clock, User, Mail, Phone, Briefcase, FileText } from 'lucide-react';
+import { Search, CheckCircle2, XCircle, User, Briefcase, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export default function AdminProPage() {
@@ -23,8 +22,6 @@ export default function AdminProPage() {
   const { isAdmin, checkingAdmin } = useAdmin();
   const router = useRouter();
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [proRequests, setProRequests] = useState<any[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -363,7 +360,7 @@ export default function AdminProPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header language={language} onLanguageChange={setLanguage} />
       <div className="flex flex-1 pt-[112px] lg:flex-row">
-        <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+        <div className="hidden lg:block flex-shrink-0 transition-all duration-300 w-64"></div>
         <AdminSidebar language={language} />
         <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
           <div className="hidden lg:block">

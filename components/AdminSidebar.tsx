@@ -22,6 +22,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
     contracts_unsigned: 0,
     deliveries_in_progress: 0,
     new_invoices: 0,
+    pending_pro_requests: 0,
   });
 
   const hasLoggedNoSession = useRef(false);
@@ -35,6 +36,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
       packs: 'Packs',
       planning: 'Planning & Disponibilités',
       clients: 'Clients',
+      pro: 'Demandes Pro',
       invoices: 'Factures',
       contracts: 'Contrats',
       deliveries: 'Livraisons',
@@ -51,6 +53,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
       packs: 'Packs',
       planning: 'Planning & Availabilities',
       clients: 'Clients',
+      pro: 'Pro Requests',
       invoices: 'Invoices',
       contracts: 'Contracts',
       deliveries: 'Deliveries',
@@ -76,6 +79,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
           contracts_unsigned: number;
           deliveries_in_progress: number;
           new_invoices: number;
+          pending_pro_requests: number;
         }>('/api/admin/pending-actions');
 
         setPendingActions({
@@ -83,6 +87,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
           contracts_unsigned: data.contracts_unsigned || 0,
           deliveries_in_progress: data.deliveries_in_progress || 0,
           new_invoices: data.new_invoices || 0,
+          pending_pro_requests: data.pending_pro_requests || 0,
         });
 
         hasLoggedNoSession.current = false;
@@ -242,6 +247,30 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
             />
           </svg>
           <span>{currentTexts.clients}</span>
+        </Link>
+
+        <Link
+          href="/admin/pro"
+          className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors group relative ${
+            isActive('/admin/pro')
+              ? 'bg-[#F2431E] text-white'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+          <span className="flex-1">{currentTexts.pro}</span>
+          {(pendingActions.pending_pro_requests ?? 0) > 0 && (
+            <span className="bg-[#F2431E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {pendingActions.pending_pro_requests}
+            </span>
+          )}
         </Link>
 
         <Link
