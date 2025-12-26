@@ -195,7 +195,7 @@ export default function BookPageContent() {
         adjustedItems: pack.defaultItems,
         adjustedPrice: pack.basePrice,
         tier: 'S',
-        capacity: 'Jusqu\'à 30 personnes',
+        capacity: 'Jusqu\'à 50 personnes',
       });
     }
   }, [pack, peopleCount, packKey]);
@@ -287,6 +287,7 @@ export default function BookPageContent() {
     postalCode: string;
     peopleCount: number | null;
     additionalMics: Array<{ type: 'filaire' | 'sans-fil'; price: number }>;
+    customerEmail: string;
   }) => {
     // Mettre à jour les états avec les données du wizard
     setStartDate(wizardData.startDate);
@@ -297,6 +298,7 @@ export default function BookPageContent() {
     setPostalCode(wizardData.postalCode);
     setPeopleCount(wizardData.peopleCount);
     setAdditionalMics(wizardData.additionalMics);
+    setCustomerEmail(wizardData.customerEmail);
 
     // Vérifier la disponibilité avant de procéder au paiement
     await checkAvailability(wizardData.startDate, wizardData.startTime, wizardData.endDate, wizardData.endTime);
@@ -339,6 +341,22 @@ export default function BookPageContent() {
       const startISO = `${dataToUse.startDate}T${dataToUse.startTime}:00`;
       const endISO = `${dataToUse.endDate}T${dataToUse.endTime}:00`;
 
+      // Validation des dates avant l'envoi
+      const startAt = new Date(startISO);
+      const endAt = new Date(endISO);
+
+      if (isNaN(startAt.getTime()) || isNaN(endAt.getTime())) {
+        throw new Error(language === 'fr' ? 'Dates invalides' : 'Invalid dates');
+      }
+
+      if (endAt <= startAt) {
+        throw new Error(
+          language === 'fr' 
+            ? 'La date et heure de fin doivent être après la date et heure de début'
+            : 'End date and time must be after start date and time'
+        );
+      }
+
       // Prix du pack + micros supplémentaires + livraison + options automatiques
       const basePackPrice = tierAdjustment?.adjustedPrice || pack.basePrice;
       const additionalMicsPrice = dataToUse.additionalMics.reduce((sum, mic) => sum + mic.price, 0);
@@ -347,17 +365,21 @@ export default function BookPageContent() {
       const tier = tierAdjustment?.tier || 'S';
       // Installation automatique pour M et L
       const installationPrice = tier !== 'S' ? getInstallationPrice(tier) : 0;
-      // Récupération J+1 automatique selon l'heure de fin
-      const pickupJPlus1Price = dataToUse.endTime && zone ? calculatePickupJPlus1Price(dataToUse.endTime, zone) : 0;
+      // Récupération J+1 automatique selon l'heure de fin et les dates
+      const pickupJPlus1Price = dataToUse.endTime && zone ? calculatePickupJPlus1Price(dataToUse.endTime, zone, dataToUse.startDate, dataToUse.endDate) : 0;
       const finalPrice = basePackPrice + additionalMicsPrice + deliveryPrice + installationPrice + pickupJPlus1Price;
 
       // Calculer les montants
       const depositAmount = Math.round(finalPrice * 0.3); // 30% d'acompte
       const balanceAmount = finalPrice - depositAmount; // Solde restant
 
-      // Récupérer l'email client (depuis l'auth ou valeur temporaire)
+      // Récupérer l'email client (depuis le wizard, l'auth ou valeur temporaire)
       // Note: L'email sera mis à jour depuis Stripe lors du paiement si non fourni
-      const emailToUse = customerEmail || 'pending@stripe.com';
+      let emailToUse = customerEmail;
+      if (!emailToUse) {
+        const { data: { user } } = await supabase.auth.getUser();
+        emailToUse = user?.email || 'pending@stripe.com';
+      }
 
       // Créer le hold et ouvrir Stripe Checkout (appel atomique côté serveur)
       // Le hold n'est créé QUE maintenant, pas avant le clic sur "Payer l'acompte"
@@ -396,7 +418,16 @@ export default function BookPageContent() {
                 : 'This time slot is already booked. Please choose another date.');
           throw new Error(errorMessage);
         }
-        throw new Error(data.error || (language === 'fr' ? 'Erreur lors de la création de la réservation' : 'Error creating reservation'));
+        
+        // Afficher le message d'erreur détaillé si disponible
+        const errorMessage = data.error || data.details || (language === 'fr' ? 'Erreur lors de la création de la réservation' : 'Error creating reservation');
+        console.error('[BOOK] Erreur API:', {
+          status: response.status,
+          error: data.error,
+          details: data.details,
+          fullData: data
+        });
+        throw new Error(errorMessage);
       }
 
       // Rediriger vers Stripe Checkout
@@ -406,8 +437,12 @@ export default function BookPageContent() {
         throw new Error('URL de checkout non reçue');
       }
     } catch (error) {
-      console.error('Erreur paiement:', error);
-      setAvailabilityError(error instanceof Error ? error.message : 'Erreur lors du traitement');
+      console.error('[BOOK] Erreur paiement:', error);
+      if (error instanceof Error) {
+        console.error('[BOOK] Message:', error.message);
+        console.error('[BOOK] Stack:', error.stack);
+      }
+      setAvailabilityError(error instanceof Error ? error.message : (language === 'fr' ? 'Erreur lors du traitement' : 'Processing error'));
       setIsProcessing(false);
     }
   };
@@ -443,7 +478,7 @@ export default function BookPageContent() {
   // Installation automatique pour M et L
   const installationPrice = tier !== 'S' ? getInstallationPrice(tier) : 0;
   // Récupération J+1 automatique selon l'heure de fin
-  const pickupJPlus1Price = endTime && zone ? calculatePickupJPlus1Price(endTime, zone) : 0;
+  const pickupJPlus1Price = endTime && zone ? calculatePickupJPlus1Price(endTime, zone, startDate, endDate) : 0;
   const totalPrice = basePackPrice + additionalMicsPrice + deliveryPrice + installationPrice + pickupJPlus1Price;
   const depositAmount = Math.round(totalPrice * 0.3);
   const balanceAmount = totalPrice - depositAmount;

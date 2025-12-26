@@ -9,13 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, AlertCircle, Loader2, ChevronRight, ChevronLeft, Calendar, MapPin, Users, Package, Info, Sparkles } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, ChevronRight, ChevronLeft, Calendar, MapPin, Users, Package, Info, Sparkles, Mail } from 'lucide-react';
 import { PackTierAdjustment } from '@/lib/pack-tier-logic';
 import { detectZoneFromText, getDeliveryPrice } from '@/lib/zone-detection';
 import { BasePack, PackItem } from '@/lib/packs/basePacks';
 import { getPackTierDescription } from '@/lib/pack-tier-logic';
 import { getInstallationPrice } from '@/lib/pack-options';
 import { calculatePickupJPlus1Price, requiresPickupJPlus1 } from '@/lib/time-rules';
+import { supabase } from '@/lib/supabase';
 
 interface ReservationWizardProps {
   packKey: 'conference' | 'soiree' | 'mariage';
@@ -33,6 +34,7 @@ interface ReservationWizardProps {
     postalCode: string;
     peopleCount: number | null;
     additionalMics: Array<{ type: 'filaire' | 'sans-fil'; price: number }>;
+    customerEmail: string;
   }) => Promise<void>;
   availabilityStatus: 'idle' | 'checking' | 'available' | 'unavailable';
   availabilityError: string | null;
@@ -71,6 +73,23 @@ export default function ReservationWizard({
   const [additionalMics, setAdditionalMics] = useState<Array<{ type: 'filaire' | 'sans-fil'; price: number }>>([]);
   const [citySuggestions, setCitySuggestions] = useState<Array<{ city: string; postcode: string }>>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [customerEmail, setCustomerEmail] = useState<string>('');
+
+  // Récupérer l'email de l'utilisateur connecté (si disponible)
+  useEffect(() => {
+    const getUserEmail = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
+          setCustomerEmail(user.email);
+        }
+      } catch (error) {
+        // L'utilisateur n'est pas connecté, l'email sera saisi manuellement
+        console.log('Utilisateur non connecté, email à saisir manuellement');
+      }
+    };
+    getUserEmail();
+  }, []);
 
   const texts = {
     fr: {
@@ -110,6 +129,9 @@ export default function ReservationWizard({
       deliverySupplement: 'Supplément livraison',
       petiteCouronne: 'Petite couronne',
       grandeCouronne: 'Grande couronne',
+      email: 'Email',
+      emailPlaceholder: 'votre.email@exemple.com',
+      emailRequired: 'Email requis pour la confirmation',
     },
     en: {
       title: '',
@@ -148,6 +170,9 @@ export default function ReservationWizard({
       deliverySupplement: 'Delivery supplement',
       petiteCouronne: 'Small crown',
       grandeCouronne: 'Large crown',
+      email: 'Email',
+      emailPlaceholder: 'your.email@example.com',
+      emailRequired: 'Email required for confirmation',
     },
   };
 
@@ -210,13 +235,29 @@ export default function ReservationWizard({
       case 1:
         return true; // Étape 0 : présentation du pack, toujours disponible
       case 2:
-        return startDate && endDate && startTime && endTime;
+        // Vérifier que toutes les dates/heures sont remplies ET que la fin est après le début
+        if (!startDate || !endDate || !startTime || !endTime) {
+          return false;
+        }
+        // Validation : la date/heure de fin doit être après la date/heure de début
+        const startISO = `${startDate}T${startTime}:00`;
+        const endISO = `${endDate}T${endTime}:00`;
+        const startAt = new Date(startISO);
+        const endAt = new Date(endISO);
+        if (isNaN(startAt.getTime()) || isNaN(endAt.getTime())) {
+          return false;
+        }
+        return endAt > startAt;
       case 3:
         return city && postalCode;
       case 4:
         return peopleCount !== null && peopleCount > 0; // Obligatoire
       case 5:
-        return availabilityStatus === 'available';
+        // Vérifier que la disponibilité est OK et que l'email est valide
+        if (availabilityStatus !== 'available') return false;
+        if (!customerEmail) return false;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(customerEmail);
       default:
         return false;
     }
@@ -247,6 +288,7 @@ export default function ReservationWizard({
         postalCode,
         peopleCount,
         additionalMics,
+        customerEmail,
       });
     }
   };
@@ -267,8 +309,8 @@ export default function ReservationWizard({
   const tier = tierAdjustment?.tier || 'S';
   // Installation automatique pour M et L
   const installationPrice = tier !== 'S' ? getInstallationPrice(tier) : 0;
-  // Récupération J+1 automatique selon l'heure de fin
-  const pickupJPlus1Price = endTime && zone ? calculatePickupJPlus1Price(endTime, zone) : 0;
+  // Récupération J+1 automatique selon l'heure de fin et les dates
+  const pickupJPlus1Price = endTime && zone ? calculatePickupJPlus1Price(endTime, zone, startDate, endDate) : 0;
   const totalPrice = basePackPrice + additionalMicsPrice + deliveryPrice + installationPrice + pickupJPlus1Price;
   const depositAmount = Math.round(totalPrice * 0.3);
   const balanceAmount = totalPrice - depositAmount;
@@ -576,14 +618,14 @@ export default function ReservationWizard({
                 </div>
               </div>
               
-              {/* Message J+1 si zone détectée et heure de fin après 02h00 */}
-              {postalCode && zone && endTime && requiresPickupJPlus1(endTime) && (
+              {/* Message J+1 si zone détectée et heure de fin après 02h00 (même jour) ou jour différent */}
+              {postalCode && zone && endTime && startDate && endDate && requiresPickupJPlus1(endTime, startDate, endDate) && (
                 <Alert className="bg-amber-50 border-amber-200">
                   <Info className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-800">
                     {language === 'fr'
-                      ? `Récupération le lendemain (J+1) automatique (+${calculatePickupJPlus1Price(endTime, zone)}€)`
-                      : `Next day pickup (J+1) automatically applied (+${calculatePickupJPlus1Price(endTime, zone)}€)`
+                      ? `Récupération le lendemain (J+1) automatique (+${calculatePickupJPlus1Price(endTime, zone, startDate, endDate)}€)`
+                      : `Next day pickup (J+1) automatically applied (+${calculatePickupJPlus1Price(endTime, zone, startDate, endDate)}€)`
                     }
                   </AlertDescription>
                 </Alert>
@@ -764,6 +806,39 @@ export default function ReservationWizard({
                         <span className="font-semibold text-gray-900">{basePackPrice}€</span>
                       </div>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Champ email */}
+              <Card className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Mail className="h-5 w-5 text-[#F2431E]" />
+                    {currentTexts.email}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="customerEmail" className="text-base font-semibold flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      {currentTexts.email} <span className="text-[#F2431E]">*</span>
+                    </Label>
+                    <Input
+                      id="customerEmail"
+                      type="email"
+                      placeholder={currentTexts.emailPlaceholder}
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      className="h-12 text-base border-2 focus-visible:ring-2 focus-visible:ring-[#F2431E]"
+                      required
+                    />
+                    <p className="text-xs text-gray-600">
+                      {language === 'fr' 
+                        ? 'Cet email sera utilisé pour recevoir la confirmation de paiement et les détails de votre réservation.'
+                        : 'This email will be used to receive payment confirmation and your reservation details.'
+                      }
+                    </p>
                   </div>
                 </CardContent>
               </Card>
