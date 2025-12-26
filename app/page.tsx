@@ -170,10 +170,10 @@ export default function Home() {
           language={language}
         />
 
-        {/* Section IA */}
-        <SectionAnimation delay={0.05}>
+        {/* Section IA - Masquée */}
+        {/* <SectionAnimation delay={0.05}>
           <IASection language={language} />
-        </SectionAnimation>
+        </SectionAnimation> */}
 
         {/* Section Nos Solutions */}
         <SectionAnimation delay={0.1}>

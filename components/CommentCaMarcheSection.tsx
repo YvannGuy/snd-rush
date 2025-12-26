@@ -12,23 +12,23 @@ export default function CommentCaMarcheSection({ language }: CommentCaMarcheSect
       steps: [
         {
           number: 1,
-          title: 'Expliquez votre événement',
-          description: 'Via notre assistant intelligent ou un formulaire guidé.'
+          title: 'Choisissez votre pack',
+          description: 'Sélectionnez la solution adaptée à votre événement : Conférence, Soirée ou Mariage.'
         },
         {
           number: 2,
-          title: 'Validation & ajustement',
-          description: 'Nous vérifions la disponibilité et adaptons la solution si nécessaire.'
+          title: 'Remplissez votre réservation',
+          description: 'Indiquez vos dates, lieu, nombre de personnes et finalisez votre sélection.'
         },
         {
           number: 3,
-          title: 'Paiement & confirmation',
-          description: 'La date est sécurisée après paiement.'
+          title: 'Paiement de l\'acompte',
+          description: 'Sécurisez votre date avec un acompte de 30%. Le solde sera demandé 5 jours avant l\'événement.'
         },
         {
           number: 4,
           title: 'Installation & sérénité',
-          description: 'Nous livrons, installons et assurons le bon déroulement technique.'
+          description: 'Nous livrons, installons et assurons le bon déroulement technique de votre événement.'
         }
       ]
     },
@@ -38,23 +38,23 @@ export default function CommentCaMarcheSection({ language }: CommentCaMarcheSect
       steps: [
         {
           number: 1,
-          title: 'Explain your event',
-          description: 'Via our intelligent assistant or a guided form.'
+          title: 'Choose your pack',
+          description: 'Select the solution adapted to your event: Conference, Party or Wedding.'
         },
         {
           number: 2,
-          title: 'Validation & adjustment',
-          description: 'We check availability and adapt the solution if necessary.'
+          title: 'Complete your reservation',
+          description: 'Enter your dates, location, number of people and finalize your selection.'
         },
         {
           number: 3,
-          title: 'Payment & confirmation',
-          description: 'The date is secured after payment.'
+          title: 'Pay the deposit',
+          description: 'Secure your date with a 30% deposit. The balance will be requested 5 days before the event.'
         },
         {
           number: 4,
           title: 'Installation & peace of mind',
-          description: 'We deliver, install and ensure smooth technical execution.'
+          description: 'We deliver, install and ensure smooth technical execution of your event.'
         }
       ]
     }

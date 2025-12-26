@@ -162,7 +162,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
                 <div className="absolute -top-3 right-6 z-10">
                   <span className="bg-[#F2431E] text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
                     <span>⭐</span>
-                    <span>Recommandé</span>
+                    <span>{language === 'fr' ? 'Populaire' : 'Popular'}</span>
                   </span>
                 </div>
               )}
@@ -210,9 +210,8 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
                 </div>
               </div>
 
-              {/* Buttons - 2 CTA */}
-              <div className="mt-auto space-y-3">
-                {/* CTA Principal : Réserver maintenant */}
+              {/* Buttons - CTA Principal */}
+              <div className="mt-auto">
                 <button
                   onClick={() => {
                     // Mapper l'ID du pack au packKey
@@ -231,34 +230,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
                   <span>✨</span>
                   {language === 'fr' ? 'Réserver maintenant' : 'Book now'}
                 </button>
-
-                {/* CTA Secondaire : L'assistant me guide */}
-                <button
-                  onClick={() => {
-                    const packKeyMap: Record<number, 'conference' | 'soiree' | 'mariage'> = {
-                      1: 'conference',
-                      2: 'soiree',
-                      3: 'mariage'
-                    };
-                    const packKey = packKeyMap[pack.id];
-                    if (packKey) {
-                      // Ouvrir le wizard guidé
-                      window.dispatchEvent(new CustomEvent('openBookingWizard', { 
-                        detail: { packKey } 
-                      }));
-                    }
-                  }}
-                  className="w-full bg-white text-[#F2431E] border-2 border-[#F2431E] px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 flex items-center justify-center gap-2"
-                >
-                  <span>💬</span>
-                  {language === 'fr' ? 'L\'assistant me guide' : 'Get guided help'}
-                </button>
               </div>
-
-              {/* Price Note - Discreet */}
-              <p className="text-xs text-gray-500 text-center mt-3">
-                {pack.priceNote}
-              </p>
             </div>
           ))}
         </div>

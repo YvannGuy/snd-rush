@@ -20,16 +20,8 @@ export default function AboutSection({ language }: AboutSectionProps) {
           title: 'Solutions clé en main, sans bricolage'
         },
         {
-          icon: '🤖',
-          title: 'Assistant intelligent pour éviter les erreurs'
-        },
-        {
           icon: '⭐',
           title: 'Clients professionnels et particuliers exigeants'
-        },
-        {
-          icon: '🎯',
-          title: 'Matériel adapté à l\'événement, jamais imposé'
         }
       ]
     },
@@ -45,16 +37,8 @@ export default function AboutSection({ language }: AboutSectionProps) {
           title: 'Turnkey solutions, no DIY'
         },
         {
-          icon: '🤖',
-          title: 'Intelligent assistant to avoid mistakes'
-        },
-        {
           icon: '⭐',
           title: 'Professional and demanding private clients'
-        },
-        {
-          icon: '🎯',
-          title: 'Equipment adapted to the event, never imposed'
         }
       ]
     }
@@ -70,7 +54,7 @@ export default function AboutSection({ language }: AboutSectionProps) {
           {currentTexts.sectionTitle}
         </p>
 
-        {/* Features Cards Grid */}
+        {/* Features Cards Grid - Maximum 3 cartes */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {currentTexts.features.map((feature, index) => (
             <div

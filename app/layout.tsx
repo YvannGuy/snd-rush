@@ -5,7 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CartProvider } from "@/contexts/CartContext";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import CookieBanner from "@/components/CookieBanner";
-import ConditionalChatWidget from "@/components/ConditionalChatWidget";
+// import ConditionalChatWidget from "@/components/ConditionalChatWidget"; // Masqué
 import GlobalButtons from "@/components/GlobalButtons";
 import "./globals.css";
 
@@ -223,8 +223,8 @@ export default function RootLayout({
         <CartProvider>
           {children}
           
-          {/* Chatbox flottante - Apparaît sur toutes les pages sauf les dashboards */}
-          <ConditionalChatWidget />
+          {/* Chatbox flottante - Masquée */}
+          {/* <ConditionalChatWidget /> */}
           
           {/* Boutons globaux - WhatsApp et Retour en haut - Apparaissent sur toutes les pages */}
           <GlobalButtons />
