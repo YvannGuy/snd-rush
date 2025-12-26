@@ -234,7 +234,8 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
       simpleReservation: 'Réservation simple',
       depositReservation: 'Réservation avec acompte',
       simpleDescription: 'Réservation sans acompte',
-      depositDescription: 'Versement d\'un acompte de 30 % pour garantir et bloquer votre créneau'
+      depositDescription: 'Versement d\'un acompte de 30 % pour garantir et bloquer votre créneau',
+      errorPaymentCreation: 'Erreur lors de la création du paiement. Veuillez réessayer.'
     },
     en: {
       title: 'Your personal information',
@@ -278,9 +279,12 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
       simpleReservation: 'Simple reservation',
       depositReservation: 'Reservation with deposit',
       simpleDescription: 'Reservation without deposit',
-      depositDescription: 'Payment of a 30% deposit to guarantee and secure your slot'
+      depositDescription: 'Payment of a 30% deposit to guarantee and secure your slot',
+      errorPaymentCreation: 'Error creating payment. Please try again.'
     }
   };
+
+  const currentTexts = texts[language];
 
   const validateField = (name: string, value: string) => {
     switch (name) {
@@ -459,11 +463,11 @@ export default function PersonalInfoStep({ language, onSubmit, onBack, onClose, 
               }
             } else {
               console.error('Impossible de créer la session Stripe');
-              alert('Erreur lors de la création du paiement. Veuillez réessayer.');
+              alert(currentTexts.errorPaymentCreation);
             }
           } catch (error) {
             console.error('Erreur lors de la création de la session Stripe:', error);
-            alert('Erreur lors de la création du paiement. Veuillez réessayer.');
+            alert(currentTexts.errorPaymentCreation);
             }
           }
         }, 1500);

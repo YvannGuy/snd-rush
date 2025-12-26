@@ -11,9 +11,10 @@ interface PasswordSetupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  language?: 'fr' | 'en';
 }
 
-export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: PasswordSetupModalProps) {
+export default function PasswordSetupModal({ isOpen, onClose, onSuccess, language = 'fr' }: PasswordSetupModalProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -21,6 +22,47 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  const texts = {
+    fr: {
+      title: 'Créer votre mot de passe',
+      description: 'Votre compte a été créé automatiquement. Veuillez définir un mot de passe permanent pour sécuriser votre compte.',
+      newPassword: 'Nouveau mot de passe',
+      confirmPassword: 'Confirmer le mot de passe',
+      passwordPlaceholder: 'Minimum 8 caractères',
+      confirmPlaceholder: 'Répétez le mot de passe',
+      later: 'Plus tard',
+      creating: 'Création...',
+      created: '✅ Créé !',
+      createButton: 'Créer mon mot de passe',
+      successMessage: '✅ Mot de passe créé avec succès !',
+      errorPasswordLength: 'Le mot de passe doit contenir au moins 8 caractères',
+      errorPasswordMatch: 'Les mots de passe ne correspondent pas',
+      errorUpdate: 'Erreur lors de la mise à jour du mot de passe',
+      errorGeneric: 'Une erreur est survenue lors de la mise à jour du mot de passe',
+      errorSupabase: 'Supabase non initialisé'
+    },
+    en: {
+      title: 'Create your password',
+      description: 'Your account has been created automatically. Please set a permanent password to secure your account.',
+      newPassword: 'New password',
+      confirmPassword: 'Confirm password',
+      passwordPlaceholder: 'Minimum 8 characters',
+      confirmPlaceholder: 'Repeat password',
+      later: 'Later',
+      creating: 'Creating...',
+      created: '✅ Created!',
+      createButton: 'Create my password',
+      successMessage: '✅ Password created successfully!',
+      errorPasswordLength: 'Password must contain at least 8 characters',
+      errorPasswordMatch: 'Passwords do not match',
+      errorUpdate: 'Error updating password',
+      errorGeneric: 'An error occurred while updating the password',
+      errorSupabase: 'Supabase not initialized'
+    }
+  };
+
+  const currentTexts = texts[language];
 
   useEffect(() => {
     if (isOpen) {
@@ -38,12 +80,12 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
 
     // Validation
     if (!password || password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+      setError(currentTexts.errorPasswordLength);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setError(currentTexts.errorPasswordMatch);
       return;
     }
 
@@ -51,7 +93,7 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
 
     try {
       if (!supabase) {
-        throw new Error('Supabase non initialisé');
+        throw new Error(currentTexts.errorSupabase);
       }
 
       // Mettre à jour le mot de passe de l'utilisateur
@@ -60,7 +102,7 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
       });
 
       if (updateError) {
-        throw new Error(updateError.message || 'Erreur lors de la mise à jour du mot de passe');
+        throw new Error(updateError.message || currentTexts.errorUpdate);
       }
 
       // Mettre à jour les métadonnées pour indiquer que le mot de passe a été configuré
@@ -85,7 +127,7 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
       }, 1500);
     } catch (err: any) {
       console.error('Erreur mise à jour mot de passe:', err);
-      setError(err.message || 'Une erreur est survenue lors de la mise à jour du mot de passe');
+      setError(err.message || currentTexts.errorGeneric);
     } finally {
       setIsLoading(false);
     }
@@ -109,10 +151,10 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
             <Lock className="h-6 w-6 text-[#F2431E]" />
           </div>
           <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">
-            Créer votre mot de passe
+            {currentTexts.title}
           </h2>
           <p className="text-center text-gray-600 text-sm">
-            Votre compte a été créé automatiquement. Veuillez définir un mot de passe permanent pour sécuriser votre compte.
+            {currentTexts.description}
           </p>
         </div>
 
@@ -125,7 +167,7 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
         {success && (
           <Alert className="mb-4 bg-green-50 border-green-200">
             <AlertDescription className="text-green-800">
-              ✅ Mot de passe créé avec succès !
+              {currentTexts.successMessage}
             </AlertDescription>
           </Alert>
         )}
@@ -133,7 +175,7 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Nouveau mot de passe
+              {currentTexts.newPassword}
             </label>
             <div className="relative">
               <Input
@@ -141,7 +183,7 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimum 8 caractères"
+                placeholder={currentTexts.passwordPlaceholder}
                 className="pr-10"
                 disabled={isLoading || success}
                 required
@@ -159,7 +201,7 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
 
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-              Confirmer le mot de passe
+              {currentTexts.confirmPassword}
             </label>
             <div className="relative">
               <Input
@@ -167,7 +209,7 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Répétez le mot de passe"
+                placeholder={currentTexts.confirmPlaceholder}
                 className="pr-10"
                 disabled={isLoading || success}
                 required
@@ -191,7 +233,7 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
               disabled={isLoading || success}
               className="flex-1"
             >
-              Plus tard
+              {currentTexts.later}
             </Button>
             <Button
               type="submit"
@@ -201,12 +243,12 @@ export default function PasswordSetupModal({ isOpen, onClose, onSuccess }: Passw
               {isLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Création...
+                  {currentTexts.creating}
                 </>
               ) : success ? (
-                '✅ Créé !'
+                currentTexts.created
               ) : (
-                'Créer mon mot de passe'
+                currentTexts.createButton
               )}
             </Button>
           </div>

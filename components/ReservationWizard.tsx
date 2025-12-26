@@ -78,6 +78,7 @@ export default function ReservationWizard({
   // Récupérer l'email de l'utilisateur connecté (si disponible)
   useEffect(() => {
     const getUserEmail = async () => {
+      if (!supabase) return;
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.email) {

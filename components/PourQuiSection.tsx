@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-
 interface PourQuiSectionProps {
   language: 'fr' | 'en';
 }
@@ -100,8 +98,17 @@ export default function PourQuiSection({ language }: PourQuiSectionProps) {
 
         {/* Title */}
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-12 text-center">
-          <span className="text-black">On s'occupe de tout, pour tous vos </span>
-          <span className="text-[#F2431E]">événements</span>
+          {language === 'fr' ? (
+            <>
+              <span className="text-black">On s'occupe de tout, pour tous vos </span>
+              <span className="text-[#F2431E]">événements</span>
+            </>
+          ) : (
+            <>
+              <span className="text-black">We take care of everything, for all your </span>
+              <span className="text-[#F2431E]">events</span>
+            </>
+          )}
         </h2>
 
         {/* Categories Grid */}
@@ -130,16 +137,6 @@ export default function PourQuiSection({ language }: PourQuiSectionProps) {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* CTA */}
-        <div className="text-center">
-          <Link
-            href="/packs"
-            className="inline-block bg-[#F2431E] text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-[#E63A1A] transition-all transform hover:scale-105 shadow-lg"
-          >
-            {currentTexts.cta}
-          </Link>
         </div>
       </div>
     </section>

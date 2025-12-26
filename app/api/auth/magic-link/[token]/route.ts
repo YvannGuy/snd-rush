@@ -118,11 +118,10 @@ export async function GET(
     }
 
     // Créer un magic link Supabase pour connexion automatique
+    const redirectToUrl = new URL(redirectUrl.toString());
     console.log('[MAGIC-LINK] Génération magic link Supabase pour:', customerEmail);
     console.log('[MAGIC-LINK] RedirectTo:', redirectToUrl.toString());
     console.log('[MAGIC-LINK] IsNewUser:', isNewUser);
-    
-    const redirectToUrl = new URL(redirectUrl.toString());
     if (isNewUser) {
       redirectToUrl.searchParams.set('new_user', 'true');
       redirectToUrl.searchParams.set('setup_password', 'true');

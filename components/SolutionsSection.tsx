@@ -155,11 +155,11 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
           {currentTexts.packs.map((pack) => (
             <div
               key={pack.id}
-              className="bg-white rounded-2xl p-8 lg:p-10 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 flex flex-col h-full relative group"
+              className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 flex flex-col h-full relative group"
             >
               {/* Recommended Badge */}
               {pack.recommended && (
-                <div className="absolute -top-3 right-6 z-10">
+                <div className="absolute top-3 right-6 z-10">
                   <span className="bg-[#F2431E] text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
                     <span>⭐</span>
                     <span>{language === 'fr' ? 'Populaire' : 'Popular'}</span>
@@ -168,7 +168,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
               )}
 
               {/* Image */}
-              <div className="mb-6 -mx-8 lg:-mx-10 -mt-8 lg:-mt-10 rounded-t-2xl overflow-hidden relative w-full h-48">
+              <div className="relative w-full h-48 overflow-hidden">
                 <Image 
                   src={pack.image} 
                   alt={pack.name}
@@ -177,6 +177,9 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 33vw"
                 />
               </div>
+
+              {/* Content */}
+              <div className="p-8 lg:p-10 flex flex-col flex-grow">
 
               {/* Name */}
               <h3 className="text-xl lg:text-2xl font-bold text-[#F2431E] mb-4 leading-tight">
@@ -230,6 +233,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
                   <span>✨</span>
                   {language === 'fr' ? 'Réserver maintenant' : 'Book now'}
                 </button>
+              </div>
               </div>
             </div>
           ))}

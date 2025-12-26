@@ -51,7 +51,9 @@ export default function UrgencySection({ language }: UrgencySectionProps) {
                 </div>
                 {/* Texte "URGENCE" */}
                 <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-                  <span className="text-white font-bold text-2xl tracking-wider">URGENCE</span>
+                  <span className="text-white font-bold text-2xl tracking-wider">
+                    {language === 'fr' ? 'URGENCE' : 'URGENCY'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -86,15 +88,13 @@ export default function UrgencySection({ language }: UrgencySectionProps) {
             </div>
 
             {/* CTA Button */}
-            <button
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
-              }}
+            <a
+              href="tel:+33651084994"
               className="bg-white text-[#F2431E] px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-3 w-full sm:w-auto"
             >
               <span>🔴</span>
               {currentTexts.cta}
-            </button>
+            </a>
           </div>
         </div>
       </div>

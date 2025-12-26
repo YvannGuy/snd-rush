@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useAdmin } from '@/hooks/useAdmin';
-import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { adminFetch } from '@/lib/adminApiClient';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -11,7 +10,6 @@ import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 
@@ -19,10 +17,7 @@ export default function AdminDashboardPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
   const { isAdmin, checkingAdmin } = useAdmin();
-  const { signOut } = useAuth();
   const router = useRouter();
-  const [isSignModalOpen, setIsSignModalOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Stats
   const [stats, setStats] = useState({
@@ -229,10 +224,6 @@ export default function AdminDashboardPage() {
 
   const currentTexts = texts[language];
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-  };
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -366,29 +357,13 @@ export default function AdminDashboardPage() {
             <h1 className="text-4xl font-bold text-gray-900 mb-4">{currentTexts.signInRequired}</h1>
             <p className="text-xl text-gray-600 mb-8">{currentTexts.signInDescription}</p>
             <button
-              onClick={() => setIsSignModalOpen(true)}
+              onClick={() => router.push('/auth/admin/login')}
               className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
             >
               {currentTexts.signIn}
             </button>
           </div>
         </main>
-        <SignModal
-          isOpen={isSignModalOpen}
-          onClose={() => setIsSignModalOpen(false)}
-          language={language}
-          isAdmin={true}
-          onSuccess={() => {
-            setIsSignModalOpen(false);
-            // Recharger la page pour afficher le dashboard admin
-            window.location.reload();
-          }}
-          onOpenUserModal={() => {
-            setIsSignModalOpen(false);
-            // Rediriger vers le dashboard utilisateur pour ouvrir le modal utilisateur
-            router.push('/dashboard');
-          }}
-        />
       </div>
     );
   }
@@ -419,7 +394,7 @@ export default function AdminDashboardPage() {
               <span className="text-xl font-bold text-gray-900">SoundRush</span>
             </Link>
             <button 
-              onClick={() => setIsSidebarOpen(true)} 
+              onClick={() => {}} 
               className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

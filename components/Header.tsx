@@ -39,8 +39,8 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   const isDashboardPage = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/mes-');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
-  const [isSignModalOpen, setIsSignModalOpen] = useState(false);
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  // const [isSignModalOpen, setIsSignModalOpen] = useState(false); // Remplacé par redirection vers /auth/login
+  // const [isAdminModalOpen, setIsAdminModalOpen] = useState(false); // Remplacé par redirection vers /auth/admin/login
   const { getCartItemCount, cart } = useCart();
   const [cartCount, setCartCount] = useState(0);
   const { user } = useUser();
@@ -454,7 +454,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setIsSignModalOpen(true)}
+                    onClick={() => router.push('/auth/login')}
                     className="flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-2"
                     aria-label="Se connecter"
                   >
@@ -657,7 +657,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setIsSignModalOpen(true)}
+                    onClick={() => router.push('/auth/login')}
                     className="text-white hover:bg-white/10 rounded-lg flex-shrink-0"
                     aria-label="Se connecter"
                   >
@@ -830,38 +830,9 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
         />
       )}
 
-      {/* Sign Modal */}
-      <SignModal
-        isOpen={isSignModalOpen}
-        onClose={() => setIsSignModalOpen(false)}
-        language={language}
-        onSuccess={() => {
-          // Le panier sera attaché automatiquement via CartContext
-          setIsSignModalOpen(false);
-          // Rediriger vers le dashboard après connexion
-          router.push('/dashboard');
-        }}
-        onOpenAdminModal={() => {
-          setIsSignModalOpen(false);
-          setIsAdminModalOpen(true);
-        }}
-      />
+      {/* Sign Modal - Remplacé par redirection vers /auth/login */}
 
-      {/* Admin Sign Modal */}
-      <SignModal
-        isOpen={isAdminModalOpen}
-        onClose={() => setIsAdminModalOpen(false)}
-        language={language}
-        isAdmin={true}
-        onSuccess={() => {
-          setIsAdminModalOpen(false);
-          router.push('/admin');
-        }}
-        onOpenUserModal={() => {
-          setIsAdminModalOpen(false);
-          setIsSignModalOpen(true);
-        }}
-      />
+      {/* Admin Sign Modal - Remplacé par redirection vers /auth/admin/login */}
 
     </header>
   );

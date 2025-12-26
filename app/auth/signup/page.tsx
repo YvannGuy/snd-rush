@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import SignModal from '@/components/auth/SignModal';
 import { useUser } from '@/hooks/useUser';
+import { Loader2 } from 'lucide-react';
 
-export default function SignupPage() {
+function SignupContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const reservationId = searchParams.get('reservation_id');
@@ -101,6 +102,18 @@ export default function SignupPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-12 w-12 animate-spin text-[#F2431E] mx-auto" />
+      </div>
+    }>
+      <SignupContent />
+    </Suspense>
   );
 }
 

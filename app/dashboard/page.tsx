@@ -556,6 +556,7 @@ function DashboardContent() {
         onSuccess={() => {
           console.log('Mot de passe créé avec succès');
         }}
+        language={language}
       />
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}

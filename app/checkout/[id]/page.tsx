@@ -191,8 +191,8 @@ export default async function CheckoutPage(props: PageProps) {
           packName={packName}
           startDate={startDate}
           startTime={startTime}
-          endDate={endDate || undefined}
-          endTime={endTime || undefined}
+          endDate={endDate || null}
+          endTime={endTime || null}
           finalItems={finalItems}
           paymentType={paymentType}
         />

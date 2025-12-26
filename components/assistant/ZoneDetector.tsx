@@ -12,13 +12,15 @@ interface ZoneDetectorProps {
   onChange: (value: string) => void;
   onZoneDetected: (zone: string, price: number) => void;
   error?: string;
+  language?: 'fr' | 'en';
 }
 
 export default function ZoneDetector({ 
   value, 
   onChange, 
   onZoneDetected, 
-  error 
+  error,
+  language = 'fr'
 }: ZoneDetectorProps) {
   const [detectedZone, setDetectedZone] = useState<string | null>(null);
   const [showFallback, setShowFallback] = useState(false);
@@ -53,14 +55,35 @@ export default function ZoneDetector({
   };
 
   const getZoneLabel = (zone: string) => {
-    const labels: Record<string, string> = {
-      paris: 'Paris',
-      petite: 'Petite couronne',
-      grande: 'Grande couronne',
-      retrait: 'Retrait sur place',
+    const labels: Record<string, Record<string, string>> = {
+      paris: { fr: 'Paris', en: 'Paris' },
+      petite: { fr: 'Petite couronne', en: 'Small crown' },
+      grande: { fr: 'Grande couronne', en: 'Large crown' },
+      retrait: { fr: 'Retrait sur place', en: 'Pickup on site' },
     };
-    return labels[zone] || zone;
+    return labels[zone]?.[language] || zone;
   };
+
+  const texts = {
+    fr: {
+      detectZone: 'Détecter la zone',
+      zoneDetected: 'Zone détectée :',
+      deliveryAR: 'Livraison A/R :',
+      change: 'Changer',
+      zoneNotDetected: 'Zone non détectée. Veuillez sélectionner manuellement :',
+      placeholder: 'Ex: 123 rue de la Paix, 75015 Paris ou 75015'
+    },
+    en: {
+      detectZone: 'Detect zone',
+      zoneDetected: 'Zone detected:',
+      deliveryAR: 'Delivery R/T:',
+      change: 'Change',
+      zoneNotDetected: 'Zone not detected. Please select manually:',
+      placeholder: 'Ex: 123 Peace Street, 75015 Paris or 75015'
+    }
+  };
+
+  const currentTexts = texts[language];
 
   const getZonePrice = (zone: string) => {
     const prices: Record<string, number> = {
@@ -80,7 +103,7 @@ export default function ZoneDetector({
           type="text"
           value={value}
           onChange={onChange}
-          placeholder="Ex: 123 rue de la Paix, 75015 Paris ou 75015"
+          placeholder={currentTexts.placeholder}
           error={error}
         />
         
@@ -89,7 +112,7 @@ export default function ZoneDetector({
           disabled={!value.trim()}
           className="mt-3 w-full bg-[#e27431] text-white py-3 rounded-lg font-semibold hover:bg-[#e27431]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Détecter la zone
+          {currentTexts.detectZone}
         </button>
       </div>
 
@@ -99,17 +122,17 @@ export default function ZoneDetector({
           <div className="flex items-center justify-between">
             <div>
               <p className="font-semibold text-green-800">
-                Zone détectée : {getZoneLabel(detectedZone)}
+                {currentTexts.zoneDetected} {getZoneLabel(detectedZone)}
               </p>
               <p className="text-sm text-green-600">
-                Livraison A/R : {getZonePrice(detectedZone)} €
+                {currentTexts.deliveryAR} {getZonePrice(detectedZone)} €
               </p>
             </div>
             <button
               onClick={handleChangeZone}
               className="text-sm text-green-600 hover:text-green-800 underline"
             >
-              Changer
+              {currentTexts.change}
             </button>
           </div>
         </div>
@@ -119,20 +142,20 @@ export default function ZoneDetector({
       {showFallback && !detectedZone && (
         <div className="space-y-3">
           <p className="text-sm text-gray-600">
-            Zone non détectée. Veuillez sélectionner manuellement :
+            {currentTexts.zoneNotDetected}
           </p>
           
           <div className="space-y-3">
             {[
-              { value: 'paris', label: 'Paris (80 € A/R)', icon: '🏙️', price: 80 },
-              { value: 'petite', label: 'Petite couronne (120 € A/R)', icon: '🏘️', price: 120 },
-              { value: 'grande', label: 'Grande couronne (156 € A/R)', icon: '🌆', price: 156 },
-              { value: 'retrait', label: 'Retrait sur place (0 €)', icon: '🚗', price: 0 },
+              { value: 'paris', labelFr: 'Paris (80 € A/R)', labelEn: 'Paris (80 € R/T)', icon: '🏙️', price: 80 },
+              { value: 'petite', labelFr: 'Petite couronne (120 € A/R)', labelEn: 'Small crown (120 € R/T)', icon: '🏘️', price: 120 },
+              { value: 'grande', labelFr: 'Grande couronne (156 € A/R)', labelEn: 'Large crown (156 € R/T)', icon: '🌆', price: 156 },
+              { value: 'retrait', labelFr: 'Retrait sur place (0 €)', labelEn: 'Pickup on site (0 €)', icon: '🚗', price: 0 },
             ].map((option) => (
               <Radio
                 key={option.value}
                 value={option.value}
-                label={option.label}
+                label={language === 'fr' ? option.labelFr : option.labelEn}
                 icon={option.icon}
                 price={option.price}
                 selected={manualZone === option.value}

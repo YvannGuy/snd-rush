@@ -70,8 +70,17 @@ export default function GallerySection({ language }: GallerySectionProps) {
           {/* Header */}
           <div className="text-center mb-20">
             <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-black leading-tight mb-8">
-              <span className="text-black">Nos équipements </span>
-              <span className="text-[#F2431E]">en action.</span>
+              {language === 'fr' ? (
+                <>
+                  <span className="text-black">Nos équipements </span>
+                  <span className="text-[#F2431E]">en action.</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-black">Our equipment </span>
+                  <span className="text-[#F2431E]">in action.</span>
+                </>
+              )}
             </h2>
             <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
               {texts[language].description}

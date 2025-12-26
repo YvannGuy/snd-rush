@@ -406,7 +406,7 @@ export default function BookPageContent() {
       // Récupérer l'email client (depuis le wizard, l'auth ou valeur temporaire)
       // Note: L'email sera mis à jour depuis Stripe lors du paiement si non fourni
       // Priorité : wizardData.customerEmail > state customerEmail > user email
-      let emailToUse = wizardData?.customerEmail || customerEmail;
+      let emailToUse: string | null = wizardData?.customerEmail || customerEmail || null;
       
       // Si pas d'email dans wizardData ni dans le state, essayer de récupérer depuis l'auth
       if ((!emailToUse || emailToUse.trim() === '' || emailToUse === 'pending@stripe.com') && supabase) {
