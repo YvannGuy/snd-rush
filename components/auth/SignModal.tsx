@@ -549,7 +549,7 @@ export default function SignModal({
         setTimeout(() => {
           onClose();
           if (typeof window !== 'undefined') {
-            window.location.href = '/';
+            window.location.href = '/dashboard';
           }
         }, 3000);
       }
@@ -633,20 +633,20 @@ export default function SignModal({
               </div>
               <p className="mb-2">
                 {language === 'fr' 
-                  ? 'Nous vous avons envoyé un email de confirmation. Veuillez vérifier votre boîte de réception (et vos spams) et cliquer sur le lien pour valider votre compte.'
-                  : 'We have sent you a confirmation email. Please check your inbox (and spam folder) and click the link to validate your account.'}
+                  ? 'Votre compte est prêt. Vous pouvez maintenant accéder à votre dashboard.'
+                  : 'Your account is ready. You can now access your dashboard.'}
               </p>
               <button
                 onClick={() => {
                   setSignUpSuccess(false);
                   onClose();
                   if (typeof window !== 'undefined') {
-                    window.location.href = '/';
+                    window.location.href = '/dashboard';
                   }
                 }}
                 className="mt-2 w-full bg-[#F2431E] text-white py-2 px-4 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
               >
-                {language === 'fr' ? 'Retour à l\'accueil' : 'Back to home'}
+                {language === 'fr' ? 'Aller au dashboard' : 'Go to dashboard'}
               </button>
             </div>
           )}

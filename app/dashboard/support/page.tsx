@@ -65,13 +65,13 @@ export default function SupportPage() {
                   Appelez-nous directement pour toute question urgente.
                 </p>
                 <p className="text-2xl font-bold text-[#F2431E]">
-                  +33 6 12 34 56 78
+                  06 51 08 49 94
                 </p>
                 <Button
                   asChild
                   className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white"
                 >
-                  <a href="tel:+33612345678">
+                  <a href="tel:+33651084994">
                     <Phone className="w-4 h-4 mr-2" />
                     Appeler maintenant
                   </a>
@@ -95,7 +95,7 @@ export default function SupportPage() {
                   asChild
                   className="w-full bg-green-600 hover:bg-green-700 text-white"
                 >
-                  <a href="https://wa.me/33612345678" target="_blank" rel="noopener noreferrer">
+                  <a href="https://wa.me/33651084994" target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="w-4 h-4 mr-2" />
                     Ouvrir WhatsApp
                   </a>

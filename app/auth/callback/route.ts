@@ -64,7 +64,12 @@ export async function GET(req: NextRequest) {
       redirectUrl = 'http://localhost:3000';
     }
 
-    if (code) {
+    // Gérer le magic link avec code ou token (type=magiclink ou magic_link)
+    const token = requestUrl.searchParams.get('token');
+    const magicLinkType = requestUrl.searchParams.get('type') === 'magic_link' || requestUrl.searchParams.get('type') === 'magiclink';
+    const codeOrToken = code || token;
+
+    if (codeOrToken && (magicLinkType || code)) {
       const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
           persistSession: false,
@@ -73,7 +78,7 @@ export async function GET(req: NextRequest) {
           flowType: 'pkce',
         },
       });
-      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(codeOrToken);
       
       if (exchangeError) {
         console.error('❌ Erreur lors de l\'échange du code:', exchangeError);
@@ -94,7 +99,12 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(new URL('/reinitialiser-mot-de-passe', redirectUrl));
       }
 
-      // Rattacher les réservations à l'utilisateur si c'est une nouvelle inscription
+      // Gérer le magic link depuis l'email de confirmation de paiement
+      const reservationId = requestUrl.searchParams.get('reservation_id');
+      const isNewUser = requestUrl.searchParams.get('new_user') === 'true';
+      const setupPassword = requestUrl.searchParams.get('setup_password') === 'true';
+
+      // Rattacher les réservations à l'utilisateur si c'est une nouvelle inscription ou magic link
       if (data.user && data.user.email && supabaseAdmin) {
         try {
           // Rattacher les client_reservations qui correspondent à cet email mais n'ont pas encore de user_id
@@ -109,10 +119,23 @@ export async function GET(req: NextRequest) {
           } else {
             console.log(`✅ Réservations rattachées à l'utilisateur ${data.user.id}`);
           }
+
+          // Si une réservation spécifique est mentionnée, s'assurer qu'elle est rattachée
+          if (reservationId) {
+            await supabaseAdmin
+              .from('client_reservations')
+              .update({ user_id: data.user.id })
+              .eq('id', reservationId);
+          }
         } catch (attachError) {
           // Ne pas bloquer la redirection en cas d'erreur
           console.warn('Erreur rattachement réservations (non bloquant):', attachError);
         }
+      }
+
+      // Si c'est un magic link avec nouveau compte, rediriger vers le dashboard avec le flag setup_password
+      if (type === 'magic_link' && isNewUser && setupPassword) {
+        return NextResponse.redirect(new URL('/dashboard?setup_password=true&new_user=true', redirectUrl));
       }
 
       // Vérifier s'il y a un panier dans sessionStorage (géré côté client)

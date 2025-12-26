@@ -171,6 +171,35 @@ function BookSuccessContent() {
             setIsCheckingStatus(false);
             setIsLoading(false);
           } else {
+            // Si le statut est toujours AWAITING_PAYMENT après plusieurs tentatives,
+            // essayer de vérifier manuellement la session Stripe (utile en développement)
+            if (attempts >= 3 && data.stripe_session_id) {
+              console.log('[SUCCESS] Tentative vérification manuelle session Stripe:', data.stripe_session_id);
+              try {
+                const verifyResponse = await fetch('/api/payments/verify-session', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    session_id: data.stripe_session_id,
+                    reservation_id: reservationId,
+                  }),
+                });
+                
+                if (verifyResponse.ok) {
+                  const verifyData = await verifyResponse.json();
+                  if (verifyData.success && verifyData.status === 'PAID') {
+                    console.log('[SUCCESS] ✅ Paiement confirmé via vérification manuelle');
+                    setReservation({ ...data, status: 'PAID' });
+                    setIsCheckingStatus(false);
+                    setIsLoading(false);
+                    return;
+                  }
+                }
+              } catch (verifyError) {
+                console.warn('[SUCCESS] ⚠️ Erreur vérification manuelle:', verifyError);
+              }
+            }
+            
             // Réessayer dans 1 seconde (au lieu de 2)
             timeoutId = setTimeout(fetchReservation, 1000);
           }

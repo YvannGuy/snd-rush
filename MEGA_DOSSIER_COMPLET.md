@@ -1,8 +1,8 @@
 # 📚 MEGA DOSSIER COMPLET - SoundRush Dashboard & Chat System
 
 **Date de création :** 2025-01-05  
-**Dernière mise à jour :** 2025-01-05  
-**Version :** 2.6.4  
+**Dernière mise à jour :** 2025-01-06  
+**Version :** 2.7.0  
 **Auteur :** Documentation complète du système SoundRush
 
 ---
@@ -1520,3 +1520,207 @@ Tous les fichiers, interactions, flux de données, et architectures sont documen
 - ✅ **Source de vérité unique** : Une seule shape documentée pour `pending-actions`
 - ✅ **Pas de confusion** : Suppression de toute référence à l'ancienne architecture
 - ✅ **Production-ready** : Documentation alignée avec le code réel
+
+---
+
+**Système de Lien Magique avec Création Automatique de Compte (Version 2.7.0) :**
+
+### 🎯 **Nouvelle Fonctionnalité : Magic Link pour Réservations**
+
+#### **Objectif**
+Permettre aux utilisateurs non connectés qui paient un acompte de recevoir un lien magique dans leur email qui :
+1. Crée automatiquement un compte utilisateur (si n'existe pas)
+2. Connecte automatiquement l'utilisateur
+3. Redirige vers le dashboard avec un modal pour créer un mot de passe permanent
+
+#### **Fichiers Créés/Modifiés**
+
+##### **1. API Route : `/api/auth/magic-link/[token]/route.ts`**
+- **Fonction** : Vérifie le token de réservation, crée un compte si nécessaire, génère un magic link Supabase
+- **Flux** :
+  1. Vérifie le token de réservation (`public_token_hash`)
+  2. Récupère l'email depuis la réservation
+  3. Vérifie si l'utilisateur existe déjà
+  4. Si nouveau : crée un compte avec mot de passe temporaire et `needs_password_setup: true`
+  5. Rattache la réservation à l'utilisateur
+  6. Génère un magic link Supabase avec `generateLink({ type: 'magiclink' })`
+  7. Retourne l'URL du magic link dans le JSON
+
+**Code clé** :
+```typescript
+const { data: magicLinkData } = await supabaseAdmin.auth.admin.generateLink({
+  type: 'magiclink',
+  email: customerEmail,
+  options: {
+    redirectTo: isNewUser 
+      ? `${redirectTo}&new_user=true&setup_password=true`
+      : redirectTo,
+  },
+});
+return NextResponse.json({ 
+  success: true, 
+  redirectUrl: magicLinkData.properties?.action_link 
+});
+```
+
+##### **2. Page Client : `/app/auth/magic-link/[token]/page.tsx`**
+- **Fonction** : Page intermédiaire qui appelle l'API et redirige vers le magic link Supabase
+- **Flux** :
+  1. Appelle `/api/auth/magic-link/${token}`
+  2. Récupère l'URL de redirection depuis le JSON
+  3. Redirige automatiquement via un lien `<a>` cliqué programmatiquement
+
+**Code clé** :
+```typescript
+const data = await response.json();
+if (data.redirectUrl) {
+  const link = document.createElement('a');
+  link.href = data.redirectUrl;
+  link.target = '_self';
+  document.body.appendChild(link);
+  link.click();
+}
+```
+
+##### **3. Composant : `components/PasswordSetupModal.tsx`**
+- **Fonction** : Modal pour créer un mot de passe permanent après création automatique de compte
+- **Fonctionnalités** :
+  - Validation (minimum 8 caractères, confirmation)
+  - Affichage/masquage du mot de passe
+  - Mise à jour via `supabase.auth.updateUser({ password })`
+  - Mise à jour des métadonnées `needs_password_setup: false`
+
+**Utilisation** :
+```typescript
+<PasswordSetupModal
+  isOpen={showPasswordSetup}
+  onClose={() => setShowPasswordSetup(false)}
+  onSuccess={() => console.log('Mot de passe créé')}
+/>
+```
+
+##### **4. Modification : `app/auth/callback/route.ts`**
+- **Ajout** : Gestion du paramètre `type=magic_link` avec token
+- **Flux** :
+  1. Si `type=magic_link` et `token` présent, utilise `exchangeCodeForSession(token)`
+  2. Rattache les réservations à l'utilisateur
+  3. Redirige vers `/dashboard?setup_password=true&new_user=true` si nouveau compte
+
+**Code clé** :
+```typescript
+if (token && magicLinkType) {
+  const { data } = await supabase.auth.exchangeCodeForSession(token);
+  // Rattacher réservations...
+  if (isNewUser && setupPassword) {
+    return NextResponse.redirect('/dashboard?setup_password=true&new_user=true');
+  }
+}
+```
+
+##### **5. Modification : `app/api/webhooks/stripe/route.ts`**
+- **Changement** : Le lien dans l'email utilise maintenant `/auth/magic-link/${token}` au lieu de `/checkout/${id}?token=${token}`
+- **Bouton email** : "📋 Accéder à mon dashboard" au lieu de "📋 Voir ma réservation"
+
+**Code clé** :
+```typescript
+const magicLinkUrl = checkoutToken 
+  ? `${baseUrl}/auth/magic-link/${checkoutToken}`
+  : `${baseUrl}/checkout/${reservationId}`;
+
+// Dans l'email HTML :
+<a href="${magicLinkUrl}">📋 Accéder à mon dashboard</a>
+```
+
+##### **6. Modification : `app/dashboard/page.tsx`**
+- **Ajout** : Détection du paramètre `setup_password=true` et affichage automatique du modal
+- **Flux** :
+  1. Vérifie `searchParams.get('setup_password')` et `searchParams.get('new_user')`
+  2. Affiche `PasswordSetupModal` automatiquement
+  3. Nettoie les paramètres de l'URL après affichage
+
+**Code clé** :
+```typescript
+useEffect(() => {
+  const setupPassword = searchParams.get('setup_password');
+  const newUser = searchParams.get('new_user');
+  
+  if (setupPassword === 'true' && newUser === 'true' && user) {
+    setShowPasswordSetup(true);
+    // Nettoyer l'URL...
+  }
+}, [searchParams, user]);
+```
+
+##### **7. Nouvelle Route : `/api/payments/verify-session/route.ts`**
+- **Fonction** : Vérifie manuellement le statut d'une session Stripe (utile en développement)
+- **Utilisation** : Appelée depuis `/book/success` après 3 tentatives si le statut reste `AWAITING_PAYMENT`
+- **Actions** :
+  1. Vérifie `session.payment_status === 'paid'`
+  2. Met à jour la réservation à `PAID`
+  3. Crée l'order associé
+  4. Envoie l'email de confirmation avec le magic link
+
+**Code clé** :
+```typescript
+if (session.payment_status === 'paid' && session.status === 'complete') {
+  await supabaseAdmin
+    .from('client_reservations')
+    .update({ status: 'PAID' })
+    .eq('id', reservation_id);
+  // Envoyer email avec magic link...
+}
+```
+
+##### **8. Modification : `app/book/success/page.tsx`**
+- **Ajout** : Vérification manuelle après 3 tentatives si le webhook n'a pas encore traité
+- **Flux** :
+  1. Après 3 tentatives, si `stripe_session_id` existe
+  2. Appelle `/api/payments/verify-session`
+  3. Met à jour le statut localement si le paiement est confirmé
+
+**Code clé** :
+```typescript
+if (attempts >= 3 && reservation.stripe_session_id) {
+  const verifyResponse = await fetch('/api/payments/verify-session', {
+    method: 'POST',
+    body: JSON.stringify({
+      session_id: reservation.stripe_session_id,
+      reservation_id: reservationId,
+    }),
+  });
+}
+```
+
+#### **Flux Complet**
+
+1. **Paiement acompte** → Webhook Stripe reçoit `checkout.session.completed`
+2. **Webhook** → Met à jour réservation à `PAID`, génère token, envoie email avec magic link
+3. **Email** → Utilisateur clique sur "Accéder à mon dashboard"
+4. **Magic Link Page** → Appelle `/api/auth/magic-link/${token}`
+5. **API Magic Link** → Crée compte si nécessaire, génère magic link Supabase
+6. **Redirection** → Vers Supabase auth qui connecte automatiquement
+7. **Callback Auth** → Échange token pour session, rattache réservations, redirige dashboard
+8. **Dashboard** → Détecte `setup_password=true`, affiche modal
+9. **Modal** → Utilisateur crée mot de passe permanent
+
+#### **Avantages**
+
+- ✅ **Pas de connexion manuelle** : L'utilisateur est connecté automatiquement
+- ✅ **Création de compte transparente** : Le compte est créé sans intervention
+- ✅ **Accès direct au dashboard** : Après paiement, accès immédiat
+- ✅ **Sécurisé** : Token vérifié, expiration gérée, hash en DB
+- ✅ **Meilleure UX** : Flux fluide sans friction
+
+#### **Sécurité**
+
+- Token vérifié via `verifyToken()` avec hash SHA256
+- Expiration du token vérifiée (`public_token_expires_at`)
+- Token plaintext jamais stocké en DB (uniquement hash)
+- Magic link Supabase avec expiration automatique
+- Mot de passe temporaire généré avec `randomBytes(16)`
+
+### 📊 **Résultat v2.7.0**
+- ✅ **Expérience utilisateur améliorée** : Création de compte et connexion automatiques
+- ✅ **Réduction de friction** : Pas besoin de créer un compte manuellement
+- ✅ **Sécurité maintenue** : Tokens vérifiés, expiration gérée
+- ✅ **Production-ready** : Fonctionne en développement et production

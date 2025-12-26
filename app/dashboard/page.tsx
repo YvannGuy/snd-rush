@@ -38,6 +38,7 @@ import DocumentsPanel from '@/components/DocumentsPanel';
 import { loadDashboardData } from '@/lib/dashboardDataLoader';
 import { pickNextReservation, isOrderRelatedToReservation } from '@/lib/reservationViewMapper';
 import { ReservationView } from '@/types/reservationView';
+import PasswordSetupModal from '@/components/PasswordSetupModal';
 
 function DashboardContent() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
@@ -102,6 +103,26 @@ function DashboardContent() {
   }, [searchParams]);
 
   // Gérer le retour de paiement Stripe avec polling et vérification directe du statut Stripe
+  const [showPasswordSetup, setShowPasswordSetup] = useState(false);
+
+  useEffect(() => {
+    // Vérifier si on doit afficher le modal de création de mot de passe
+    const setupPassword = searchParams.get('setup_password');
+    const newUser = searchParams.get('new_user');
+    
+    if (setupPassword === 'true' && newUser === 'true' && user) {
+      setShowPasswordSetup(true);
+      // Retirer les paramètres de l'URL
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete('setup_password');
+      newSearchParams.delete('new_user');
+      const newUrl = newSearchParams.toString() 
+        ? `${window.location.pathname}?${newSearchParams.toString()}`
+        : window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchParams, user]);
+
   useEffect(() => {
     const payment = searchParams.get('payment');
     const reservationId = searchParams.get('reservation_id');
@@ -528,6 +549,14 @@ function DashboardContent() {
   }
 
   return (
+    <>
+      <PasswordSetupModal
+        isOpen={showPasswordSetup}
+        onClose={() => setShowPasswordSetup(false)}
+        onSuccess={() => {
+          console.log('Mot de passe créé avec succès');
+        }}
+      />
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <Header language={language} onLanguageChange={setLanguage} />
@@ -771,6 +800,7 @@ function DashboardContent() {
       {/* Footer */}
       <Footer language={language} />
     </div>
+    </>
   );
 }
 

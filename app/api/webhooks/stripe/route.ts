@@ -62,6 +62,11 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('✅ Webhook Stripe reçu:', event.type);
+    console.log('📋 Détails événement:', {
+      id: event.id,
+      type: event.type,
+      created: new Date(event.created * 1000).toISOString(),
+    });
 
     // Gérer les différents types d'événements
     switch (event.type) {
@@ -276,6 +281,7 @@ export async function POST(req: NextRequest) {
               if (customerEmail && customerEmail !== 'pending@stripe.com' && customerEmail.trim() !== '' && process.env.RESEND_API_KEY && process.env.RESEND_FROM) {
                 // Récupérer le token depuis les métadonnées Stripe (généré lors de la création de la session)
                 // Si pas présent, générer un nouveau token
+                const metadata = session.metadata || {};
                 let checkoutToken: string = metadata.checkout_token || '';
                 
                 if (!checkoutToken) {
@@ -322,14 +328,14 @@ export async function POST(req: NextRequest) {
                 }
                 
                 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sndrush.com';
-                // Le token base64url est déjà URL-safe, pas besoin d'encoder avec encodeURIComponent
-                // Cela pourrait modifier les caractères - et _ qui sont valides en base64url
-                const checkoutUrl = checkoutToken 
-                  ? `${baseUrl}/checkout/${reservationId}?token=${checkoutToken}`
-                  : `${baseUrl}/checkout/${reservationId}`;
+                // Utiliser le magic link au lieu du checkout : crée automatiquement le compte et redirige vers le dashboard
+                const signupUrl = `${baseUrl}/auth/signup?reservation_id=${reservationId}`;
+                const magicLinkUrl = checkoutToken 
+                  ? `${baseUrl}/auth/magic-link/${checkoutToken}` // Lien magique qui crée le compte et connecte automatiquement
+                  : signupUrl; // Fallback si pas de token
                 
-                console.log('📧 Lien checkout généré:', checkoutUrl.substring(0, 100) + '...');
-                console.log('📧 Token dans URL:', checkoutToken.substring(0, 20) + '...');
+                console.log('🔗 Lien d\'inscription généré pour email:', signupUrl.substring(0, 100) + '...');
+                console.log('🔗 Token dans URL:', checkoutToken.substring(0, 20) + '...');
                 const packNames: Record<string, string> = {
                   'conference': 'Pack Conférence',
                   'soiree': 'Pack Soirée',
@@ -395,9 +401,9 @@ export async function POST(req: NextRequest) {
                           
                           <!-- Bouton CTA -->
                           <div style="text-align: center; margin: 40px 0;">
-                            <a href="${checkoutUrl}" 
+                            <a href="${signupUrl}" 
                                style="display: inline-block; background-color: #F2431E; color: #ffffff; padding: 18px 40px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 18px; box-shadow: 0 6px 20px rgba(242, 67, 30, 0.4);">
-                              📋 Voir ma réservation
+                              🚀 Créer mon compte et voir ma réservation
                             </a>
                           </div>
                           
@@ -427,7 +433,13 @@ export async function POST(req: NextRequest) {
                   </html>
                 `;
 
-                await resend.emails.send({
+                console.log('📧 Tentative envoi email avec Resend:');
+                console.log('  - From:', process.env.RESEND_FROM);
+                console.log('  - To:', customerEmail);
+                console.log('  - Subject:', `✅ Acompte payé - Votre réservation ${packName} est confirmée`);
+                console.log('  - Magic Link URL:', magicLinkUrl);
+                
+                const emailResult = await resend.emails.send({
                   from: process.env.RESEND_FROM!,
                   to: customerEmail,
                   subject: `✅ Acompte payé - Votre réservation ${packName} est confirmée`,
@@ -435,6 +447,7 @@ export async function POST(req: NextRequest) {
                 });
 
                 console.log('✅ Email de confirmation d\'acompte envoyé à:', customerEmail);
+                console.log('✅ Résultat Resend:', JSON.stringify(emailResult, null, 2));
               } else {
                 console.warn('⚠️ Email non envoyé - Raisons:');
                 if (!customerEmail || customerEmail === 'pending@stripe.com' || customerEmail.trim() === '') {

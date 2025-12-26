@@ -106,11 +106,17 @@ export function useAuth() {
         console.warn('⚠️ URL de base invalide, utilisation de:', baseUrl);
       }
       
-      // IMPORTANT: Utiliser une URL simple sans paramètres de requête pour éviter les problèmes d'encodage
-      // Le paramètre has_cart sera géré via localStorage ou cookie dans le callback
-      // Cela évite les problèmes avec Supabase qui encode l'URL dans redirect_to
+      // Construire l'URL de redirection et y inclure reservation_id si présent dans l'URL actuelle
+      const currentSearch =
+        typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const reservationId = currentSearch?.get('reservation_id');
+
       const redirectPath = '/auth/callback';
-      let finalRedirectUrl = `${baseUrl}${redirectPath}`;
+      const redirectUrl = new URL(redirectPath, baseUrl);
+      if (reservationId) {
+        redirectUrl.searchParams.set('reservation_id', reservationId);
+      }
+      let finalRedirectUrl = redirectUrl.toString();
       
       // Si on a un panier, on le stockera dans un cookie ou localStorage
       // et le callback le récupérera automatiquement

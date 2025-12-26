@@ -208,10 +208,17 @@ async function generateInvoicePDF(order: any, clientReservation?: any): Promise<
   let items: any[] = [];
   
   // PRIORITÉ 1: Utiliser final_items depuis client_reservation si disponible
-  if (clientReservation && clientReservation.final_items && Array.isArray(clientReservation.final_items) && clientReservation.final_items.length > 0) {
+  const finalItemsRaw = clientReservation?.final_items;
+  const finalItemsArray = Array.isArray(finalItemsRaw)
+    ? finalItemsRaw
+    : Array.isArray(finalItemsRaw?.items)
+      ? finalItemsRaw.items
+      : [];
+
+  if (clientReservation && finalItemsArray.length > 0) {
     // Convertir final_items en format facture
-    const packItems = clientReservation.final_items.filter((item: any) => !item.isExtra);
-    const extras = clientReservation.final_items.filter((item: any) => item.isExtra);
+    const packItems = finalItemsArray.filter((item: any) => !item.isExtra);
+    const extras = finalItemsArray.filter((item: any) => item.isExtra);
     
     // Créer une ligne pour le pack de base
     if (clientReservation.base_pack_price && parseFloat(clientReservation.base_pack_price.toString()) > 0) {
@@ -255,6 +262,22 @@ async function generateInvoicePDF(order: any, clientReservation?: any): Promise<
       const cartItems = metadata.cartItems ? (typeof metadata.cartItems === 'string' ? JSON.parse(metadata.cartItems) : metadata.cartItems) : [];
       if (Array.isArray(cartItems) && cartItems.length > 0) {
         items = cartItems;
+      }
+      // Si toujours rien et on a une réservation avec pack_key, ajouter une ligne générique
+      if ((!items || items.length === 0) && clientReservation?.pack_key) {
+        const packNames: Record<string, string> = {
+          'conference': 'Pack Conférence',
+          'soiree': 'Pack Soirée',
+          'mariage': 'Pack Mariage'
+        };
+        const packName = packNames[clientReservation.pack_key] || `Pack ${clientReservation.pack_key}`;
+        const amount = order.total || clientReservation.deposit_amount || clientReservation.price_total || 0;
+        items = [{
+          product_name: packName,
+          quantity: 1,
+          daily_price: parseFloat(amount.toString()),
+          rental_days: 1,
+        }];
       }
     } catch (e) {
       console.error('Erreur parsing cartItems depuis metadata:', e);
@@ -325,6 +348,16 @@ async function generateInvoicePDF(order: any, clientReservation?: any): Promise<
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Dépôt de garantie : ${parseFloat(order.deposit_total).toFixed(2)}€`, pageWidth - margin - 2, yPos, { align: 'right' });
+    yPos += 8;
+  } else if (clientReservation && clientReservation.deposit_amount && parseFloat(clientReservation.deposit_amount.toString()) > 0) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(
+      `Caution prévue : ${parseFloat(clientReservation.deposit_amount).toFixed(2)}€ (à autoriser J-2)`,
+      pageWidth - margin - 2,
+      yPos,
+      { align: 'right' }
+    );
     yPos += 8;
   }
 
