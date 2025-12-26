@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { getBasePack } from '@/lib/packs/basePacks';
+import { detectZoneFromText, getDeliveryPrice } from '@/lib/zone-detection';
 
 interface PackSolutionContentProps {
   packId: string;
@@ -94,8 +95,10 @@ export default function PackSolutionContent({ packId, language }: PackSolutionCo
 
   // Calculer le prix selon la zone (mise à jour automatique)
   const basePrice = pack?.basePrice || 0;
-  // Prix fixe (sans supplément livraison)
-  const totalPrice = basePrice;
+  // Calculer le prix de livraison selon le code postal
+  const zone = postalCode ? detectZoneFromText(postalCode) : null;
+  const deliveryPrice = zone && zone !== 'paris' ? getDeliveryPrice(zone) : 0;
+  const totalPrice = basePrice + deliveryPrice;
   const depositAmount = Math.round(totalPrice * 0.3);
   const balanceAmount = totalPrice - depositAmount;
 
@@ -352,6 +355,28 @@ export default function PackSolutionContent({ packId, language }: PackSolutionCo
                 <span className="text-gray-700 font-medium">{currentTexts.total}</span>
                 <span className="text-3xl font-bold text-[#F2431E]">{totalPrice}€</span>
               </div>
+              
+              {/* Supplément livraison si applicable */}
+              {postalCode && zone && zone !== 'paris' && deliveryPrice > 0 && (
+                <div className="flex justify-between items-center text-sm text-gray-600 pt-2 border-t border-gray-200">
+                  <span>
+                    {currentTexts.deliverySupplement} – {
+                      zone === 'petite' ? currentTexts.petiteCouronne : currentTexts.grandeCouronne
+                    }
+                  </span>
+                  <span className="font-semibold">+{deliveryPrice}€</span>
+                </div>
+              )}
+              
+              {/* Message si Paris (livraison incluse) */}
+              {postalCode && zone === 'paris' && (
+                <div className="text-xs text-green-600 pt-2 border-t border-gray-200">
+                  {language === 'fr' 
+                    ? '✓ Livraison incluse (Paris)'
+                    : '✓ Delivery included (Paris)'
+                  }
+                </div>
+              )}
 
               <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-200">
                 <span className="text-gray-600">{currentTexts.deposit}</span>

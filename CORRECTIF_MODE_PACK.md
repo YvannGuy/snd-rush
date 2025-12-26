@@ -136,3 +136,4 @@ Ce correctif rend le chat "mode pack" robuste en :
 4. Valider que `reservationRequestDraft` est correctement traité côté front
 
 
+

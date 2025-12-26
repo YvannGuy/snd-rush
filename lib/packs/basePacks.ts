@@ -36,7 +36,7 @@ export const BASE_PACKS: Record<string, BasePack> = {
       installationIncluded: true,
       pickupIncluded: true,
     },
-    basePrice: 279,
+    basePrice: 299,
   },
   soiree: {
     key: 'soiree',
@@ -51,16 +51,16 @@ export const BASE_PACKS: Record<string, BasePack> = {
       installationIncluded: true,
       pickupIncluded: true,
     },
-    basePrice: 329,
+    basePrice: 249,
   },
   mariage: {
     key: 'mariage',
     title: 'Pack Mariage',
     description: 'Solution complète pour mariages et événements importants',
     defaultItems: [
-      { label: 'Enceinte', qty: 2 },
+      { label: 'Enceinte', qty: 1 },
       { label: 'Caisson de basses', qty: 1 },
-      { label: 'Micro', qty: 2 },
+      { label: 'Micro HF', qty: 2 },
       { label: 'Console de mixage', qty: 1 },
     ],
     services: {
@@ -68,7 +68,7 @@ export const BASE_PACKS: Record<string, BasePack> = {
       installationIncluded: true,
       pickupIncluded: true,
     },
-    basePrice: 449,
+    basePrice: 349,
   },
 };
 

@@ -22,26 +22,15 @@ export function calculatePackTier(
   ambiance: string = '',
   indoorOutdoor: string = ''
 ): PackTierAdjustment {
-  // Si pas de nombre de personnes, retourner le pack de base
-  // Pack Mariage commence en M, Conférence et Soirée en S
+  // Si pas de nombre de personnes, retourner le pack de base (Pack S pour tous)
   if (!peopleCount || peopleCount <= 0) {
-    if (basePack.key === 'mariage') {
-      // Pack Mariage commence directement en M
-      return {
-        adjustedItems: basePack.defaultItems, // Déjà configuré pour M
-        adjustedPrice: Math.round(basePack.basePrice * 1.1), // +10% pour pack M
-        tier: 'M',
-        capacity: '30-70 personnes',
-      };
-    } else {
-      // Pack Conférence et Soirée commencent en S
-      return {
-        adjustedItems: basePack.defaultItems,
-        adjustedPrice: basePack.basePrice,
-        tier: 'S',
-        capacity: 'Jusqu\'à 30 personnes',
-      };
-    }
+    // Tous les packs commencent en S par défaut
+    return {
+      adjustedItems: basePack.defaultItems,
+      adjustedPrice: basePack.basePrice,
+      tier: 'S',
+      capacity: 'Jusqu\'à 30 personnes',
+    };
   }
 
   // Logique de paliers selon le nombre de personnes (Pack S par défaut)
@@ -69,11 +58,23 @@ export function calculatePackTier(
         { label: 'Enceinte', qty: 1 },
         { label: 'Console de mixage', qty: 1 },
       ];
-    } else {
-      // Pack S Mariage (ne devrait pas arriver car mariage commence en M)
-      adjustedItems = basePack.defaultItems;
+    } else if (basePack.key === 'mariage') {
+      // Pack S Mariage : 1 enceinte + 1 caisson + 2 micros HF + console
+      adjustedItems = [
+        { label: 'Enceinte', qty: 1 },
+        { label: 'Caisson de basses', qty: 1 },
+        { label: 'Micro HF', qty: 2 },
+        { label: 'Console de mixage', qty: 1 },
+      ];
+      // Pack Mariage S : prix fixe 349€
+      return {
+        adjustedItems,
+        adjustedPrice: 349,
+        tier: 'S',
+        capacity: 'Jusqu\'à 30 personnes',
+      };
     }
-    priceMultiplier = 0.85; // -15% pour pack S
+    priceMultiplier = 1; // Pas de multiplicateur pour pack S (prix fixe)
   } else if (peopleCount <= 70) {
     tier = 'M';
     capacity = '30-70 personnes';
@@ -86,34 +87,93 @@ export function calculatePackTier(
         { label: 'Micro HF', qty: 3 },
         { label: 'Console de mixage', qty: 1 },
       ];
+      // Pack Conférence M : prix fixe 389€
+      return {
+        adjustedItems,
+        adjustedPrice: 389,
+        tier,
+        capacity,
+      };
     } else if (basePack.key === 'soiree') {
-      // Pack M Soirée : 2 enceintes + console
-      adjustedItems = [
-        { label: 'Enceinte', qty: 2 },
-        { label: 'Console de mixage', qty: 1 },
-      ];
-    } else if (basePack.key === 'mariage') {
-      // Pack M Mariage : 2 enceintes + caisson + console + 2 micros
+      // Pack M Soirée : 2 enceintes + 1 caisson + console
       adjustedItems = [
         { label: 'Enceinte', qty: 2 },
         { label: 'Caisson de basses', qty: 1 },
         { label: 'Console de mixage', qty: 1 },
-        { label: 'Micro', qty: 2 },
       ];
+      // Pack Soirée M : prix fixe 399€
+      return {
+        adjustedItems,
+        adjustedPrice: 399,
+        tier,
+        capacity,
+      };
+    } else if (basePack.key === 'mariage') {
+      // Pack M Mariage : 2 enceintes + caisson + console + 2 micros HF
+      adjustedItems = [
+        { label: 'Enceinte', qty: 2 },
+        { label: 'Caisson de basses', qty: 1 },
+        { label: 'Micro HF', qty: 2 },
+        { label: 'Console de mixage', qty: 1 },
+      ];
+      // Pack Mariage M : prix fixe 499€
+      return {
+        adjustedItems,
+        adjustedPrice: 499,
+        tier,
+        capacity,
+      };
     }
-    priceMultiplier = 1.1; // +10% pour pack M
   } else if (peopleCount <= 150) {
     tier = 'L';
     capacity = '70-150 personnes';
     
-    // Configuration Pack L standardisée : 2 enceintes + 2 caissons + 4 micros + console
-    adjustedItems = [
-      { label: 'Enceinte', qty: 2 },
-      { label: 'Caisson de basses', qty: 2 },
-      { label: 'Micro HF', qty: 4 },
-      { label: 'Console de mixage', qty: 1 },
-    ];
-    priceMultiplier = 1.25; // +25% pour pack L
+    // Configuration Pack L selon le type de pack
+    if (basePack.key === 'conference') {
+      // Pack L Conférence : 2 enceintes (façade) + 4 micros + console + 2 enceintes "Delay"
+      adjustedItems = [
+        { label: 'Enceinte', qty: 2 },
+        { label: 'Micro HF', qty: 4 },
+        { label: 'Console de mixage', qty: 1 },
+        { label: 'Enceinte "Delay"', qty: 2 },
+      ];
+      // Pack Conférence L : prix fixe 569€
+      return {
+        adjustedItems,
+        adjustedPrice: 569,
+        tier,
+        capacity,
+      };
+    } else if (basePack.key === 'soiree') {
+      // Pack L Soirée : 2 enceintes + 2 caissons + console
+      adjustedItems = [
+        { label: 'Enceinte', qty: 2 },
+        { label: 'Caisson de basses', qty: 2 },
+        { label: 'Console de mixage', qty: 1 },
+      ];
+      // Pack Soirée L : prix fixe 499€
+      return {
+        adjustedItems,
+        adjustedPrice: 499,
+        tier,
+        capacity,
+      };
+    } else if (basePack.key === 'mariage') {
+      // Pack L Mariage : 2 enceintes + 2 caissons + 4 micros HF + console
+      adjustedItems = [
+        { label: 'Enceinte', qty: 2 },
+        { label: 'Caisson de basses', qty: 2 },
+        { label: 'Micro HF', qty: 4 },
+        { label: 'Console de mixage', qty: 1 },
+      ];
+      // Pack Mariage L : prix fixe 649€
+      return {
+        adjustedItems,
+        adjustedPrice: 649,
+        tier,
+        capacity,
+      };
+    }
   } else {
     // Plus de 150 personnes : pack XL (sur devis)
     tier = 'L';
@@ -128,30 +188,7 @@ export function calculatePackTier(
     priceMultiplier = 1.5; // +50% pour pack XL
   }
 
-  // Ajustements selon l'ambiance (uniquement pour conférence et soirée, pas mariage qui a déjà un caisson)
-  if ((ambiance === 'fort' || ambiance === 'mixte') && basePack.key !== 'mariage') {
-    // Ajouter un caisson de basses si pas déjà présent
-    const hasSubwoofer = adjustedItems.some(item => 
-      item.label.toLowerCase().includes('caisson') || 
-      item.label.toLowerCase().includes('basse')
-    );
-    if (!hasSubwoofer && (tier === 'M' || tier === 'L')) {
-      adjustedItems.push({ label: 'Caisson de basses', qty: 1 });
-      priceMultiplier += 0.15; // +15% pour caisson
-    }
-  }
-
-  // Ajustements selon intérieur/extérieur
-  if (indoorOutdoor === 'exterieur') {
-    // Pour extérieur, augmenter légèrement les quantités
-    adjustedItems = adjustedItems.map(item => {
-      if (item.label === 'Enceinte') {
-        return { ...item, qty: item.qty + 1 };
-      }
-      return item;
-    });
-    priceMultiplier += 0.1; // +10% pour extérieur
-  }
+  // Ajustements selon l'ambiance et extérieur supprimés selon nouvelle documentation
 
   // Calculer le prix ajusté
   const adjustedPrice = Math.round(basePack.basePrice * priceMultiplier);

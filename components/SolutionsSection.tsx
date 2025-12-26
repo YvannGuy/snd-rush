@@ -26,7 +26,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
             'Support disponible pendant votre événement',
             'Récupération après l\'événement'
           ],
-          price: '279 €',
+          price: '299 €',
           priceNote: 'solution clé en main',
           cta: 'Préparer mon événement'
         },
@@ -41,7 +41,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
             'Support disponible pendant votre événement',
             'Récupération après l\'événement'
           ],
-          price: '329 €',
+          price: '249 €',
           priceNote: 'solution clé en main',
           cta: 'Préparer mon événement'
         },
@@ -76,7 +76,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
             'Support available during your event',
             'Pickup after the event'
           ],
-          price: '€279',
+          price: '€299',
           priceNote: 'turnkey solution',
           cta: 'Prepare my event'
         },
@@ -91,7 +91,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
             'Support available during your event',
             'Pickup after the event'
           ],
-          price: '€329',
+          price: '€249',
           priceNote: 'turnkey solution',
           cta: 'Prepare my event'
         },

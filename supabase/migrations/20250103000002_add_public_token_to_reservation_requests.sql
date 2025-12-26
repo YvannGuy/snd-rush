@@ -20,3 +20,4 @@ CREATE INDEX IF NOT EXISTS idx_reservation_requests_token_expires
 COMMENT ON COLUMN reservation_requests.public_token_hash IS 'Hash SHA256 du token public pour accès sécurisé au suivi sans compte';
 COMMENT ON COLUMN reservation_requests.public_token_expires_at IS 'Date d''expiration du token public (généralement 7 jours après création)';
 
+

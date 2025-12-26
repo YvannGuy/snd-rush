@@ -4,13 +4,17 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getBasePack } from '@/lib/packs/basePacks';
 import { calculatePackTier, getPackTierDescription, PackTierAdjustment } from '@/lib/pack-tier-logic';
+import { detectZoneFromText, getDeliveryPrice } from '@/lib/zone-detection';
+import { getInstallationPrice } from '@/lib/pack-options';
+import { calculatePickupJPlus1Price } from '@/lib/time-rules';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import ReservationWizard from '@/components/ReservationWizard';
+import Link from 'next/link';
 
 type PackKey = 'conference' | 'soiree' | 'mariage';
 
@@ -165,31 +169,18 @@ export default function BookPageContent() {
   // Calculer le tier ajusté quand le pack ou le nombre de personnes change
   useEffect(() => {
     if (pack && peopleCount) {
-      const ambiance = searchParams.get('ambiance') || '';
-      const location = searchParams.get('location') || '';
-      const adjustment = calculatePackTier(pack, peopleCount, ambiance, location);
+      const adjustment = calculatePackTier(pack, peopleCount);
       setTierAdjustment(adjustment);
     } else if (pack) {
-      // Pas de nombre de personnes : Pack S par défaut (sauf mariage qui commence en M)
-      if (packKey === 'mariage') {
-        // Pack Mariage commence directement en M
-        setTierAdjustment({
-          adjustedItems: pack.defaultItems, // Déjà configuré pour M
-          adjustedPrice: Math.round(pack.basePrice * 1.1), // +10% pour pack M
-          tier: 'M',
-          capacity: '30-70 personnes',
-        });
-      } else {
-        // Pack Conférence et Soirée commencent en S
-        setTierAdjustment({
-          adjustedItems: pack.defaultItems,
-          adjustedPrice: pack.basePrice,
-          tier: 'S',
-          capacity: 'Jusqu\'à 30 personnes',
-        });
-      }
+      // Pas de nombre de personnes : Pack S par défaut pour tous
+      setTierAdjustment({
+        adjustedItems: pack.defaultItems,
+        adjustedPrice: pack.basePrice,
+        tier: 'S',
+        capacity: 'Jusqu\'à 30 personnes',
+      });
     }
-  }, [pack, peopleCount, searchParams, packKey]);
+  }, [pack, peopleCount, packKey]);
 
   // Vérifier la disponibilité quand on arrive à l'étape 5 du wizard
   useEffect(() => {
@@ -200,7 +191,7 @@ export default function BookPageContent() {
 
   const texts = {
     fr: {
-      title: 'Réserver votre solution',
+      title: 'Réserver votre solution en 2min',
       subtitle: 'Remplissez le formulaire ci-dessous pour vérifier la disponibilité et réserver',
       startDate: 'Date de début',
       startTime: 'Heure de début',
@@ -228,9 +219,12 @@ export default function BookPageContent() {
       microSansFil: 'Micro sans fil (+20€)',
       additionalMics: 'Micros supplémentaires',
       remove: 'Retirer',
+      deliverySupplement: 'Supplément livraison',
+      petiteCouronne: 'Petite couronne',
+      grandeCouronne: 'Grande couronne',
     },
     en: {
-      title: 'Book your solution',
+      title: 'Book your solution in 2min',
       subtitle: 'Fill out the form below to check availability and book',
       startDate: 'Start date',
       startTime: 'Start time',
@@ -258,6 +252,9 @@ export default function BookPageContent() {
       microSansFil: 'Wireless microphone (+20€)',
       additionalMics: 'Additional microphones',
       remove: 'Remove',
+      deliverySupplement: 'Delivery supplement',
+      petiteCouronne: 'Small crown',
+      grandeCouronne: 'Large crown',
     },
   };
 
@@ -324,10 +321,17 @@ export default function BookPageContent() {
       const startISO = `${dataToUse.startDate}T${dataToUse.startTime}:00`;
       const endISO = `${dataToUse.endDate}T${dataToUse.endTime}:00`;
 
-      // Prix fixe (sans supplément livraison) + micros supplémentaires
+      // Prix du pack + micros supplémentaires + livraison + options automatiques
       const basePackPrice = tierAdjustment?.adjustedPrice || pack.basePrice;
       const additionalMicsPrice = dataToUse.additionalMics.reduce((sum, mic) => sum + mic.price, 0);
-      const finalPrice = basePackPrice + additionalMicsPrice;
+      const zone = dataToUse.postalCode ? detectZoneFromText(dataToUse.postalCode) : null;
+      const deliveryPrice = zone && zone !== 'paris' ? getDeliveryPrice(zone) : 0;
+      const tier = tierAdjustment?.tier || 'S';
+      // Installation automatique pour M et L
+      const installationPrice = tier !== 'S' ? getInstallationPrice(tier) : 0;
+      // Récupération J+1 automatique selon l'heure de fin
+      const pickupJPlus1Price = dataToUse.endTime && zone ? calculatePickupJPlus1Price(dataToUse.endTime, zone) : 0;
+      const finalPrice = basePackPrice + additionalMicsPrice + deliveryPrice + installationPrice + pickupJPlus1Price;
 
       // Créer le hold et ouvrir Stripe Checkout
       const response = await fetch('/api/book/direct-checkout', {
@@ -383,11 +387,20 @@ export default function BookPageContent() {
     );
   }
 
-  // Prix fixe (sans supplément livraison)
+  // Prix du pack ajusté selon tier
   const basePackPrice = tierAdjustment?.adjustedPrice || pack.basePrice;
   // Ajouter le prix des micros supplémentaires
   const additionalMicsPrice = additionalMics.reduce((sum, mic) => sum + mic.price, 0);
-  const totalPrice = basePackPrice + additionalMicsPrice;
+  // Calculer le prix de livraison selon le code postal
+  const zone = postalCode ? detectZoneFromText(postalCode) : null;
+  const deliveryPrice = zone && zone !== 'paris' ? getDeliveryPrice(zone) : 0;
+  // Calculer les options automatiques
+  const tier = tierAdjustment?.tier || 'S';
+  // Installation automatique pour M et L
+  const installationPrice = tier !== 'S' ? getInstallationPrice(tier) : 0;
+  // Récupération J+1 automatique selon l'heure de fin
+  const pickupJPlus1Price = endTime && zone ? calculatePickupJPlus1Price(endTime, zone) : 0;
+  const totalPrice = basePackPrice + additionalMicsPrice + deliveryPrice + installationPrice + pickupJPlus1Price;
   const depositAmount = Math.round(totalPrice * 0.3);
   const balanceAmount = totalPrice - depositAmount;
   const displayItems = tierAdjustment?.adjustedItems || pack.defaultItems;
@@ -399,7 +412,6 @@ export default function BookPageContent() {
     mariage: 1600,
   };
   const tierMultipliers = { S: 1, M: 1.2, L: 1.5 }; // +20% pour M, +50% pour L
-  const tier = tierAdjustment?.tier || 'S';
   const baseCaution = packKey ? baseCautionAmounts[packKey] || 0 : 0;
   const cautionAmount = Math.round(baseCaution * tierMultipliers[tier]);
   
@@ -418,6 +430,19 @@ export default function BookPageContent() {
       
       <main className="pt-[112px] pb-20">
         <div className="max-w-2xl mx-auto px-6 py-12">
+          {/* Bouton retour à l'accueil */}
+          <div className="mb-6">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-[#F2431E] transition-colors group"
+            >
+              <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+              <span className="font-medium">
+                {language === 'fr' ? 'Retour à l\'accueil' : 'Back to home'}
+              </span>
+            </Link>
+          </div>
+
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
@@ -431,46 +456,13 @@ export default function BookPageContent() {
             </p>
           </div>
 
-          {/* Pack Info Card */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>{pack.title}</CardTitle>
-              {tierAdjustment && (
-                <p className="text-sm text-[#F2431E] font-semibold mt-2">
-                  Pack {tierAdjustment.tier} - {tierAdjustment.capacity}
-                </p>
-              )}
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">{pack.description}</p>
-              {tierAdjustment && (
-                <p className="text-sm text-gray-500 mb-4 italic">
-                  {getPackTierDescription(packKey, tierAdjustment.tier, tierAdjustment.capacity)}
-                </p>
-              )}
-              <div className="space-y-2">
-                <p className="font-semibold text-gray-900">Matériel inclus :</p>
-                <ul className="list-disc list-inside space-y-1 text-gray-600">
-                  {displayItems.map((item, idx) => (
-                    <li key={idx}>
-                      {item.qty}x {item.label}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold">Services inclus :</span> Livraison, installation et récupération par nos techniciens
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Reservation Wizard */}
           <ReservationWizard
             packKey={packKey}
             packTitle={pack.title}
+            pack={pack}
             tierAdjustment={tierAdjustment}
+            displayItems={displayItems}
             language={language}
             onComplete={handleWizardComplete}
             availabilityStatus={availabilityStatus}
@@ -710,6 +702,28 @@ export default function BookPageContent() {
                   <span className="text-gray-700 font-medium">{currentTexts.total}</span>
                   <span className="text-2xl font-bold text-[#F2431E]">{totalPrice}€</span>
                 </div>
+                
+                {/* Supplément livraison si applicable */}
+                {postalCode && zone && zone !== 'paris' && deliveryPrice > 0 && (
+                  <div className="flex justify-between items-center text-sm text-gray-600 pt-2 border-t border-gray-200">
+                    <span>
+                      {currentTexts.deliverySupplement} – {
+                        zone === 'petite' ? currentTexts.petiteCouronne : currentTexts.grandeCouronne
+                      }
+                    </span>
+                    <span className="font-semibold">+{deliveryPrice}€</span>
+                  </div>
+                )}
+                
+                {/* Message si Paris (livraison incluse) */}
+                {postalCode && zone === 'paris' && (
+                  <div className="text-xs text-green-600 pt-2 border-t border-gray-200">
+                    ✓ {language === 'fr' 
+                      ? 'Livraison incluse (Paris)'
+                      : 'Delivery included (Paris)'
+                    }
+                  </div>
+                )}
                 
                 <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-200">
                   <span className="text-gray-600">{currentTexts.deposit}</span>

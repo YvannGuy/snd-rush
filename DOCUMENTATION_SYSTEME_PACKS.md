@@ -1,299 +1,223 @@
-# 📦 Documentation Complète du Système de Calcul et Taille des Packs
+# 📦 Documentation Complète du Système de Calcul et Taille des Packs (V3 — Auto par paliers)
 
 ## 🎯 Vue d'ensemble
 
-Le système de packs est basé sur **3 types de packs** (Conférence, Soirée, Mariage) avec **3 paliers de taille** (S, M, L) qui s'ajustent automatiquement selon le nombre de personnes. Le calcul est **100% frontend** et ne modifie pas le backend.
+Le système de packs propose **3 types d’événements** (Conférence, Soirée, Mariage) et **3 tiers** (S, M, L) déterminés automatiquement par le **nombre de personnes**.
+
+✅ Le prix final est calculé **100% côté frontend** et comprend :
+
+* le **prix du pack** (matériel)
+* la **livraison + récupération** selon la **zone (code postal)**
+* l’**installation** ajoutée automatiquement dès que le tier n’est plus S
+* le supplément **Récupération J+1** appliqué automatiquement selon l’**heure de fin** saisie dans le wizard
 
 ---
 
-## 💰 Prix de Base des Packs
+## ✅ Règles automatiques (sans options client)
 
-| Pack | Prix de Base | Description |
-|------|--------------|-------------|
-| **Pack Conférence** | **279€** | Solution complète pour conférences, réunions d'affaires, présentations |
-| **Pack Soirée** | **329€** | Sonorisation pour soirées et événements privés |
-| **Pack Mariage** | **449€** | Solution complète pour mariages et événements importants |
+### 1) Installation (AUTO)
 
----
+* **Tier S** → ✅ installation incluse (0€)
+* **Tier M / L** → ❌ installation non incluse → **surcoût ajouté automatiquement**
 
-## 📊 Paliers de Taille selon le Nombre de Personnes
+  * M : **+59€**
+  * L : **+89€**
 
-### Pack Conférence
+### 2) Livraison + récupération (AUTO) via code postal
 
-| Tier | Nombre de Personnes | Matériel Inclus | Multiplicateur Prix | Prix Final |
-|------|---------------------|-----------------|---------------------|------------|
-| **S** | ≤ 30 | 1x Enceinte<br>2x Micro HF<br>1x Console de mixage | **-15%** (×0.85) | **237€** |
-| **M** | 30-70 | 2x Enceinte<br>3x Micro HF<br>1x Console de mixage | **+10%** (×1.1) | **307€** |
-| **L** | 70-150 | 2x Enceinte<br>2x Caisson de basses<br>4x Micro HF<br>1x Console de mixage | **+25%** (×1.25) | **349€** |
-| **XL** | 150+ | 2x Enceinte<br>2x Caisson de basses<br>4x Micro HF<br>1x Console de mixage | **+50%** (×1.5) | **419€** |
+* **Paris (75xxx)** : **+0€**
+* **Petite couronne (92/93/94)** : **+60€**
+* **Grande couronne (77/78/91/95)** : **+90€**
 
-**Pack par défaut** : Pack S (si pas de nombre de personnes renseigné)
+### 3) Récupération J+1 (AUTO) via l’heure de fin (wizard)
 
----
+* Si la récupération peut se faire **le jour J** dans la fenêtre standard → **0€**
+* Si l’heure de fin implique une récupération **le lendemain (J+1)** → surcoût AUTO selon zone :
 
-### Pack Soirée
+  * Paris : **+45€**
+  * Petite couronne : **+70€**
+  * Grande couronne : **+110€**
 
-| Tier | Nombre de Personnes | Matériel Inclus | Multiplicateur Prix | Prix Final |
-|------|---------------------|-----------------|---------------------|------------|
-| **S** | ≤ 30 | 1x Enceinte<br>1x Console de mixage | **-15%** (×0.85) | **280€** |
-| **M** | 30-70 | 2x Enceinte<br>1x Console de mixage | **+10%** (×1.1) | **362€** |
-| **L** | 70-150 | 2x Enceinte<br>2x Caisson de basses<br>4x Micro HF<br>1x Console de mixage | **+25%** (×1.25) | **411€** |
-| **XL** | 150+ | 2x Enceinte<br>2x Caisson de basses<br>4x Micro HF<br>1x Console de mixage | **+50%** (×1.5) | **494€** |
-
-**Pack par défaut** : Pack S (si pas de nombre de personnes renseigné)
+> Règle recommandée (simple et compréhensible) :
+> **Si l’heure de fin est après 02:00 am → récupération J+1 automatique.**
 
 ---
 
-### Pack Mariage
+## 💰 Prix des Packs (matériel uniquement — “base Paris”)
 
-| Tier | Nombre de Personnes | Matériel Inclus | Multiplicateur Prix | Prix Final |
-|------|---------------------|-----------------|---------------------|------------|
-| **M** | 30-70 | 2x Enceinte<br>1x Caisson de basses<br>2x Micro<br>1x Console de mixage | **+10%** (×1.1) | **494€** |
-| **L** | 70-150 | 2x Enceinte<br>2x Caisson de basses<br>4x Micro HF<br>1x Console de mixage | **+25%** (×1.25) | **561€** |
-| **XL** | 150+ | 2x Enceinte<br>2x Caisson de basses<br>4x Micro HF<br>1x Console de mixage | **+50%** (×1.5) | **674€** |
-
-**⚠️ IMPORTANT** : Pack Mariage **commence directement en Pack M** (pas de Pack S disponible)
+> Les prix ci-dessous correspondent au **matériel**.
+> Ensuite le système ajoute automatiquement : **livraison zone + installation (si M/L) + J+1 (si applicable)**.
 
 ---
 
-## 🎚️ Options et Ajustements Supplémentaires
+## 📊 Packs & Tiers (V2 matos)
 
-### 1. Micros Supplémentaires (Packs M et L uniquement)
+### Pack Conférence (V2)
 
-Les utilisateurs peuvent ajouter des micros supplémentaires uniquement pour les packs M et L :
-
-| Type | Prix | Disponibilité |
-|------|------|--------------|
-| **Micro filaire** | **+10€** | Packs M et L uniquement |
-| **Micro sans fil** | **+20€** | Packs M et L uniquement |
-
-**Calcul** : `Prix final = Prix du pack ajusté + (nombre de micros × prix du micro)`
-
-**Exemple** :
-- Pack Conférence M : 307€
-- + 2 micros sans fil : +40€
-- **Total : 347€**
+| Tier  | Personnes | Matériel Inclus                                                          | Prix Pack (base) |
+| ----- | --------: | ------------------------------------------------------------------------ | ---------------: |
+| **S** |      ≤ 30 | 1x Enceinte<br>2x Micro HF<br>1x Console de mixage                       |         **299€** |
+| **M** |     30–70 | 2x Enceintes<br>3x Micro HF<br>1x Console de mixage                      |         **389€** |
+| **L** |    70–150 | 2x Enceintes façade<br>4x Micro HF<br>1x Console<br>+ 2x Enceintes delay |         **569€** |
 
 ---
 
-### 2. Ajustements selon l'Ambiance (Conférence et Soirée uniquement)
+### Pack Soirée (V2)
 
-Si l'utilisateur sélectionne une ambiance **"fort"** ou **"mixte"** :
-
-- **Ajout automatique** : 1x Caisson de basses (si pas déjà présent)
-- **Majoration** : **+15%** sur le prix du pack
-- **Condition** : Uniquement pour packs M et L
-- **Exception** : Pack Mariage (déjà équipé d'un caisson)
-
-**Exemple** :
-- Pack Conférence M : 307€
-- Ambiance "fort" → +1 caisson → +15% → **353€**
+| Tier  | Personnes | Matériel Inclus                           | Prix Pack (base) |
+| ----- | --------: | ----------------------------------------- | ---------------: |
+| **S** |      ≤ 30 | 1x Enceinte<br>1x Console de mixage       |         **249€** |
+| **M** |     30–70 | 2x Enceintes<br>1x Caisson<br>1x Console  |         **399€** |
+| **L** |    70–150 | 2x Enceintes<br>2x Caissons<br>1x Console |         **499€** |
 
 ---
 
-### 3. Ajustements selon Intérieur/Extérieur
+### Pack Mariage (V2)
 
-Si l'utilisateur sélectionne **"extérieur"** :
-
-- **Ajout automatique** : +1 Enceinte supplémentaire
-- **Majoration** : **+10%** sur le prix du pack
-
-**Exemple** :
-- Pack Conférence M : 307€
-- Extérieur → +1 enceinte → +10% → **338€**
+| Tier  | Personnes | Matériel Inclus                                          | Prix Pack (base) |
+| ----- | --------: | -------------------------------------------------------- | ---------------: |
+| **S** |      ≤ 30 | 1x Enceinte<br>1x Caisson<br>2x Micro HF<br>1x Console   |         **349€** |
+| **M** |     30–70 | 2x Enceintes<br>1x Caisson<br>2x Micro HF<br>1x Console  |         **499€** |
+| **L** |    70–150 | 2x Enceintes<br>2x Caissons<br>4x Micro HF<br>1x Console |         **649€** |
 
 ---
 
-## 💳 Système de Caution
+## 📍 Barème zone (AUTO) : livraison + récupération
 
-La caution est calculée selon le **type de pack** et le **tier** :
-
-### Caution de Base par Pack
-
-| Pack | Caution Base |
-|------|--------------|
-| **Conférence** | **700€** |
-| **Soirée** | **1100€** |
-| **Mariage** | **1600€** |
-
-### Multiplicateurs selon le Tier
-
-| Tier | Multiplicateur | Exemple Conférence |
-|------|----------------|-------------------|
-| **S** | ×1.0 (base) | 700€ |
-| **M** | ×1.2 (+20%) | **840€** |
-| **L** | ×1.5 (+50%) | **1050€** |
-
-**Formule** : `Caution = Caution de base × Multiplicateur tier`
-
-**Exemples** :
-- Pack Conférence S : 700€ × 1.0 = **700€**
-- Pack Conférence M : 700€ × 1.2 = **840€**
-- Pack Conférence L : 700€ × 1.5 = **1050€**
-- Pack Mariage M : 1600€ × 1.2 = **1920€**
-- Pack Mariage L : 1600€ × 1.5 = **2400€**
+| Zone                | Code Postal       | Surcoût Zone |
+| ------------------- | ----------------- | -----------: |
+| **Paris**           | 75xxx             |      **+0€** |
+| **Petite couronne** | 92 / 93 / 94      |     **+60€** |
+| **Grande couronne** | 77 / 78 / 91 / 95 |     **+90€** |
 
 ---
 
-## 📋 Calcul du Prix Final
+## 🛠️ Barème installation (AUTO)
 
-### Formule Complète
+| Tier  | Surcoût Installation |
+| ----- | -------------------: |
+| **S** |    **+0€** (incluse) |
+| **M** |             **+59€** |
+| **L** |             **+89€** |
+
+---
+
+## 🕒 Barème récupération J+1 (AUTO)
+
+### Déclencheur (wizard)
+
+* Si `endTime > 02:00` → récupération **J+1** automatiquement
+
+| Zone            | Surcoût J+1 |
+| --------------- | ----------: |
+| Paris           |    **+45€** |
+| Petite couronne |    **+70€** |
+| Grande couronne |   **+110€** |
+
+---
+
+## 📋 Calcul du Prix Final (Formule)
 
 ```
-Prix Final = (Prix de base × Multiplicateur tier) 
-           + (Ajustement ambiance si applicable) 
-           + (Ajustement extérieur si applicable)
-           + (Micros supplémentaires)
+PrixFinal =
+  PrixPackBase(pack, tier)
++ SurcoutZone(codePostal)
++ SurcoutInstallation(tier)          // S=0, M=+59, L=+89
++ SurcoutRecuperationJPlus1(endTime, zone)  // 0 ou J+1 selon règle
 ```
 
-### Exemple de Calcul Complet
+---
 
-**Scénario** : Pack Conférence pour 50 personnes, ambiance "fort", extérieur, +2 micros sans fil
+## 🧠 Logique de calcul (résumé)
 
-1. **Détermination du tier** : 50 personnes → Pack M
-2. **Prix de base ajusté** : 279€ × 1.1 = **307€**
-3. **Ajustement ambiance** : +15% (caisson) = 307€ × 1.15 = **353€**
-4. **Ajustement extérieur** : +10% = 353€ × 1.1 = **388€**
-5. **Micros supplémentaires** : +2 × 20€ = **+40€**
-6. **Prix final** : **428€**
+1. Déterminer le **tier** via nombre de personnes (S/M/L)
+2. Charger `PrixPackBase` + matériel correspondant
+3. Déterminer la **zone** via code postal → ajouter `SurcoutZone`
+4. Si tier M/L → ajouter automatiquement `SurcoutInstallation`
+5. Si `endTime > seuil` → ajouter automatiquement `SurcoutJ+1` selon zone
 
 ---
 
-## 🔄 Logique de Calcul (Code)
-
-### Fichier : `lib/pack-tier-logic.ts`
-
-```typescript
-function calculatePackTier(
-  basePack: BasePack,
-  peopleCount: number | null,
-  ambiance: string = '',
-  indoorOutdoor: string = ''
-): PackTierAdjustment
-```
-
-**Étapes de calcul** :
-
-1. **Si pas de nombre de personnes** :
-   - Conférence/Soirée → Pack S (prix de base)
-   - Mariage → Pack M (prix de base × 1.1)
-
-2. **Détermination du tier** :
-   - ≤ 30 pers → Tier S
-   - 30-70 pers → Tier M
-   - 70-150 pers → Tier L
-   - 150+ pers → Tier L avec prix ×1.5
-
-3. **Configuration matériel** selon pack + tier
-
-4. **Ajustements** :
-   - Ambiance "fort"/"mixte" → +caisson (+15%) si M ou L
-   - Extérieur → +1 enceinte (+10%)
-
-5. **Calcul prix final** : `basePrice × priceMultiplier`
-
----
-
-## 📍 Prix de Livraison (Désactivé)
-
-**⚠️ ACTUELLEMENT DÉSACTIVÉ** : Le prix est **fixe** et ne varie plus selon le code postal.
-
-Les prix de livraison existent dans le code mais ne sont **pas appliqués** :
-
-| Zone | Code Postal | Prix (non appliqué) |
-|------|-------------|---------------------|
-| **Paris** | 75xxx | 80€ |
-| **Petite couronne** | 92xxx, 93xxx, 94xxx | 60€ |
-| **Grande couronne** | 77xxx, 78xxx, 91xxx, 95xxx | 90€ |
-
----
-
-## 💰 Système de Paiement
+## 💳 Paiement
 
 ### Acompte
 
-- **30%** du prix final à payer immédiatement
-- **Formule** : `Acompte = Prix final × 0.3`
+* **30%** immédiatement
+  `Acompte = PrixFinal × 0.30`
 
 ### Solde
 
-- **70%** du prix final à régler **J-5** (5 jours avant l'événement)
-- **Formule** : `Solde = Prix final - Acompte`
+* **70%** à régler **J-5**
+  `Solde = PrixFinal - Acompte`
 
 ### Caution
 
-- Montant calculé selon pack + tier (voir section Caution)
-- Demandée **J-2** (2 jours avant l'événement)
-- **Bloquée** sur la carte mais **non débitée** sauf dommage/perte
+* Demandée **J-2**
+* Calcul selon pack + tier (voir section caution)
 
 ---
 
-## 📝 Exemples Complets
+## 💳 Caution
 
-### Exemple 1 : Pack Conférence Simple
+### Caution de base
 
-- **Nombre de personnes** : 25
-- **Pack déterminé** : Pack S
-- **Prix** : 279€ × 0.85 = **237€**
-- **Acompte** : 237€ × 0.3 = **71€**
-- **Solde** : 237€ - 71€ = **166€**
-- **Caution** : 700€ × 1.0 = **700€**
+| Pack       |  Base |
+| ---------- | ----: |
+| Conférence |  700€ |
+| Soirée     | 1100€ |
+| Mariage    | 1600€ |
 
----
+### Multiplicateur tier
 
-### Exemple 2 : Pack Mariage avec Options
+| Tier | Multiplicateur |
+| ---- | -------------- |
+| S    | ×1.0           |
+| M    | ×1.2           |
+| L    | ×1.5           |
 
-- **Nombre de personnes** : 100
-- **Pack déterminé** : Pack L
-- **Prix de base** : 449€ × 1.25 = **561€**
-- **+ 3 micros sans fil** : +60€
-- **Prix final** : **621€**
-- **Acompte** : 621€ × 0.3 = **186€**
-- **Solde** : 621€ - 186€ = **435€**
-- **Caution** : 1600€ × 1.5 = **2400€**
+`Caution = Base(pack) × Multiplicateur(tier)`
 
 ---
 
-### Exemple 3 : Pack Soirée Extérieur
+## 📝 Exemples (AUTO)
 
-- **Nombre de personnes** : 60
-- **Pack déterminé** : Pack M
-- **Prix de base** : 329€ × 1.1 = **362€**
-- **Extérieur** : +10% = **398€**
-- **Acompte** : 398€ × 0.3 = **119€**
-- **Solde** : 398€ - 119€ = **279€**
-- **Caution** : 1100€ × 1.2 = **1320€**
+### Exemple A — Soirée 60 pers, 92, fin 21:00
 
----
+* Tier M → installation auto +59€
+* Zone 92 → +60€
+* Fin 21:00 → J+1 = 0€
+  Prix = 399 + 60 + 59 = **518€**
 
-## 🎯 Règles Spéciales
+### Exemple B — Conférence 120 pers, 75, fin 23:30
 
-1. **Pack Mariage** : Commence toujours en Pack M (pas de Pack S)
-2. **Micros supplémentaires** : Disponibles uniquement pour packs M et L
-3. **Caisson automatique** : Ajouté pour ambiance "fort"/"mixte" (sauf Mariage)
-4. **Prix fixe** : Pas de variation selon code postal (livraison incluse)
-5. **Frontend-only** : Tous les calculs sont côté client, pas de modification backend
+* Tier L → installation auto +89€
+* Zone 75 → +0
+* Fin 23:30 → J+1 Paris +45€
+  Prix = 569 + 0 + 89 + 45 = **703€**
 
----
+### Exemple C — Mariage 25 pers, 95, fin 00:30
 
-## 📂 Fichiers Clés
-
-- **`lib/pack-tier-logic.ts`** : Logique de calcul des tiers et ajustements
-- **`lib/packs/basePacks.ts`** : Définition des packs de base et prix
-- **`lib/zone-detection.ts`** : Détection zone (non utilisée actuellement)
-- **`components/ReservationWizard.tsx`** : Interface wizard de réservation
-- **`app/book/[pack_key]/BookPageContent.tsx`** : Page de réservation avec calculs
+* Tier S → installation incluse (0€)
+* Zone 95 → +90€
+* Fin 00:30 → J+1 Grande couronne +110€
+  Prix = 349 + 90 + 0 + 110 = **549€**
 
 ---
 
-## 🔍 Points d'Attention
+## 📂 Fichiers clés
 
-1. **Prix arrondis** : Les prix sont arrondis avec `Math.round()`
-2. **Multiplicateurs cumulatifs** : Les ajustements s'additionnent (ex: +15% + 10% = +25%)
-3. **Pack L standardisé** : Tous les packs L ont la même configuration matériel
-4. **Caution tier-based** : La caution dépend du tier final, pas du pack de base
+* `lib/pack-tier-logic.ts` : tier S/M/L
+* `lib/packs/basePacks.ts` : prix base + contenu
+* `lib/zone-detection.ts` : zone via CP
+* `lib/time-rules.ts` : seuil J+1 via heure fin
+* `components/ReservationWizard.tsx` : collecte CP + heure + calcul
 
 ---
 
-*Documentation générée le : $(date)*
-*Version : 1.0*
+## ✅ Bloc “Aide” en fin de wizard
+
+Vous avez besoin de conseils ou souhaitez ajuster votre configuration ?
+Nos experts sont là pour vous accompagner.
+
+**Bouton :** Parler à un expert
+

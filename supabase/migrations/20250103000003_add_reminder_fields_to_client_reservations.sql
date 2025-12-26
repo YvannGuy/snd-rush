@@ -27,3 +27,4 @@ COMMENT ON COLUMN client_reservations.last_reminder_at IS 'Date de la dernière 
 COMMENT ON COLUMN client_reservations.reminder_j1_sent_at IS 'Date d''envoi du rappel J-1 (24h avant événement)';
 COMMENT ON COLUMN client_reservations.reminder_h3_sent_at IS 'Date d''envoi du rappel H-3 (3h avant événement)';
 
+

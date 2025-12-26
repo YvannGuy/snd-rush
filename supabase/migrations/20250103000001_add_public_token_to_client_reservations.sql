@@ -20,3 +20,4 @@ CREATE INDEX IF NOT EXISTS idx_client_reservations_token_expires
 COMMENT ON COLUMN client_reservations.public_token_hash IS 'Hash SHA256 du token public pour accès sécurisé au checkout sans compte';
 COMMENT ON COLUMN client_reservations.public_token_expires_at IS 'Date d''expiration du token public (généralement 7 jours après création)';
 
+
