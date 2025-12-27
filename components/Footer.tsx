@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import LegalNoticeModal from './LegalNoticeModal';
 
@@ -13,6 +14,12 @@ interface FooterProps {
 }
 
 export default function Footer({ language }: FooterProps) {
+  const pathname = usePathname();
+  const isDashboardPage = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/mes-');
+  
+  // Masquer le footer sur les pages admin/dashboard/mes-*
+  if (isDashboardPage) return null;
+  
   const [isLegalNoticeOpen, setIsLegalNoticeOpen] = useState(false);
 
   const texts = {

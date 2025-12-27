@@ -37,6 +37,10 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   
   // Ne pas afficher le bandeau noir sur les pages dashboard/admin et toutes les pages utilisateur (mes-*)
   const isDashboardPage = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/mes-');
+  
+  // Masquer le header sur les pages admin/dashboard/mes-*
+  if (isDashboardPage) return null;
+  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   // const [isSignModalOpen, setIsSignModalOpen] = useState(false); // Remplacé par redirection vers /auth/login

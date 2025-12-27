@@ -149,7 +149,7 @@ export default function AdminSidebar({
       <aside
         id="admin-sidebar"
         className={`
-          fixed top-[112px] left-0 z-50 bg-white border-r border-gray-200 flex flex-col h-[calc(100vh-112px)]
+          fixed top-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col h-screen
           w-64 transition-transform duration-300 transform
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:w-64 ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}

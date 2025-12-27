@@ -235,7 +235,7 @@ useEffect(() => {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header language={language} onLanguageChange={setLanguage} />
-        <div className="flex flex-1 pt-[112px] lg:flex-row">
+        <div className="flex flex-1 lg:flex-row">
           <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
           <AdminSidebar
             language={language}
@@ -268,7 +268,7 @@ useEffect(() => {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header language={language} onLanguageChange={setLanguage} />
-        <div className="flex flex-1 pt-[112px] lg:flex-row">
+        <div className="flex flex-1 lg:flex-row">
           <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
           <AdminSidebar
             language={language}
@@ -307,7 +307,7 @@ useEffect(() => {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header language={language} onLanguageChange={setLanguage} />
-        <div className="flex flex-1 pt-[112px] lg:flex-row">
+        <div className="flex flex-1 lg:flex-row">
           <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
           <AdminSidebar
             language={language}
@@ -333,7 +333,7 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header language={language} onLanguageChange={setLanguage} />
-      <div className="flex flex-1 pt-[112px] lg:flex-row">
+      <div className="flex flex-1 lg:flex-row">
         <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
         <AdminSidebar
           language={language}
