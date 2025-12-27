@@ -255,9 +255,9 @@ export default function MesLivraisonsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header language={language} onLanguageChange={setLanguage} />
-        <div className="flex flex-1 pt-[112px]">
+        <div className="flex flex-1">
           <DashboardSidebar language={language} />
-          <main className="flex-1 flex items-center justify-center">
+          <main className="flex-1 flex items-center justify-center lg:ml-64">
             <div className="text-center max-w-md mx-auto px-6">
               <div className="text-6xl mb-6">🔒</div>
               <h1 className="text-4xl font-bold text-gray-900 mb-4">Connexion requise</h1>

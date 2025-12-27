@@ -413,7 +413,7 @@ export default function MesReservationsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex">
         <DashboardSidebar language={language} />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center lg:ml-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F2431E] mx-auto"></div>
           </div>
@@ -426,7 +426,7 @@ export default function MesReservationsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex">
         <DashboardSidebar language={language} />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center lg:ml-64">
           <div className="text-center max-w-md mx-auto px-6">
             <div className="text-6xl mb-6">🔒</div>
             <h1 className="text-4xl font-bold text-gray-900 mb-4">{currentTexts.signInRequired}</h1>
@@ -451,7 +451,7 @@ export default function MesReservationsPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header language={language} onLanguageChange={setLanguage} />
-      <div className="flex flex-1 pt-[112px] lg:flex-row">
+      <div className="flex flex-1 lg:flex-row">
         <DashboardSidebar 
           language={language} 
           isOpen={isMobileMenuOpen} 

@@ -10,7 +10,7 @@ import SignModal from '@/components/auth/SignModal';
 import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import DocumentsPanel from '@/components/DocumentsPanel';
-import { FileText, Calendar } from 'lucide-react';
+import { FileText, Calendar, Menu } from 'lucide-react';
 import { loadDashboardData } from '@/lib/dashboardDataLoader';
 import { ReservationView } from '@/types/reservationView';
 import { pickNextReservation, isOrderRelatedToReservation } from '@/lib/reservationViewMapper';
@@ -73,7 +73,7 @@ export default function DocumentsPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header language={language} onLanguageChange={setLanguage} />
-      <div className="flex flex-1 pt-[112px]">
+      <div className="flex flex-1">
         <DashboardSidebar
           language={language}
           isOpen={isSidebarOpen}
@@ -81,7 +81,7 @@ export default function DocumentsPage() {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={handleToggleSidebar}
         />
-        <main className="flex-1 p-6 max-w-4xl mx-auto w-full">
+        <main className={`flex-1 p-6 max-w-4xl mx-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Mes documents</h1>
 
           {reservationViews.length === 0 ? (

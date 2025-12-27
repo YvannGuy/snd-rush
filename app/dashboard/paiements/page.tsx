@@ -11,7 +11,7 @@ import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, CheckCircle2, Clock } from 'lucide-react';
+import { DollarSign, CheckCircle2, Clock, Menu } from 'lucide-react';
 import { loadDashboardData } from '@/lib/dashboardDataLoader';
 import { ReservationView } from '@/types/reservationView';
 import { supabase } from '@/lib/supabase';
@@ -110,7 +110,7 @@ export default function PaiementsPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header language={language} onLanguageChange={setLanguage} />
-      <div className="flex flex-1 pt-[112px]">
+      <div className="flex flex-1">
         <DashboardSidebar
           language={language}
           isOpen={isSidebarOpen}
@@ -118,7 +118,18 @@ export default function PaiementsPage() {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={handleToggleSidebar}
         />
-        <main className="flex-1 p-6 max-w-4xl mx-auto w-full">
+        <main className={`flex-1 p-6 max-w-4xl mx-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between mb-6">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+          </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Mes paiements</h1>
 
           {paymentViews.length === 0 ? (

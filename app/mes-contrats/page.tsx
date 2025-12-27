@@ -306,7 +306,7 @@ export default function MesContratsPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header language={language} onLanguageChange={setLanguage} />
-      <div className="flex flex-1 pt-[112px] lg:flex-row">
+      <div className="flex flex-1 lg:flex-row">
         <DashboardSidebar 
           language={language}
           isCollapsed={isSidebarCollapsed}

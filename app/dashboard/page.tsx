@@ -562,7 +562,7 @@ function DashboardContent() {
       {/* Header */}
       <Header language={language} onLanguageChange={setLanguage} />
 
-      <div className="flex flex-1 pt-[112px]">
+      <div className="flex flex-1">
         {/* Sidebar */}
         <DashboardSidebar 
           language={language} 
