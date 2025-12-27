@@ -24,22 +24,27 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ requests: [] });
     }
 
-    // Récupérer les utilisateurs depuis auth
-    const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
-
-    if (usersError) {
-      console.error('Erreur récupération users:', usersError);
-      // Retourner quand même les profils sans emails
-      return NextResponse.json({ requests: profiles || [] });
-    }
-
-    // Créer un map user_id -> email
+    // OPTIMISATION: Récupérer uniquement les utilisateurs nécessaires au lieu de tous
     const emailMap = new Map<string, string>();
-    users.forEach(user => {
-      if (user.email) {
-        emailMap.set(user.id, user.email);
+    
+    // Récupérer les emails par batch (limite de 1000 par requête)
+    const batchSize = 1000;
+    for (let i = 0; i < userIds.length; i += batchSize) {
+      const batch = userIds.slice(i, i + batchSize);
+      try {
+        // Utiliser getUserById pour chaque utilisateur (plus efficace que listUsers)
+        const userPromises = batch.map(userId => 
+          supabaseAdmin.auth.admin.getUserById(userId).then(({ data, error }) => {
+            if (!error && data?.user?.email) {
+              emailMap.set(userId, data.user.email);
+            }
+          })
+        );
+        await Promise.all(userPromises);
+      } catch (error) {
+        console.error('Erreur récupération batch users:', error);
       }
-    });
+    }
 
     // Enrichir les profils avec les emails
     const enrichedProfiles = (profiles || []).map(profile => ({

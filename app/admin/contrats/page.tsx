@@ -39,112 +39,19 @@ export default function AdminContratsPage() {
   }, [isAdmin, checkingAdmin, user, router]);
 
 useEffect(() => {
-    if (!user || !supabase || !isAdmin) return;
+    if (!user || !isAdmin) return;
 
     const loadContracts = async () => {
-      if (!supabase) return;
       try {
-        // Récupérer toutes les réservations signées (ancienne table)
-        const { data: reservationsData, error: oldError } = await supabase
-          .from('reservations')
-          .select('*')
-          .not('client_signature', 'is', null)
-          .order('client_signed_at', { ascending: false });
-
-        if (oldError) {
-          console.error('Erreur chargement anciennes réservations:', oldError);
+        // Utiliser l'API admin pour récupérer les contrats avec le client admin
+        const response = await fetch('/api/admin/contrats');
+        
+        if (!response.ok) {
+          throw new Error(`Erreur HTTP: ${response.status}`);
         }
 
-        // Récupérer toutes les client_reservations signées (nouvelle table)
-        const { data: clientReservationsData, error: clientError } = await supabase
-          .from('client_reservations')
-          .select('*')
-          .not('client_signature', 'is', null)
-          .order('client_signed_at', { ascending: false });
-
-        if (clientError) {
-          console.error('Erreur chargement client_reservations:', clientError);
-        }
-
-        // Enrichir avec les informations des orders
-        const { data: allOrders } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        // Enrichir les anciennes réservations
-        const enrichedOldContracts = (reservationsData || []).map((reservation) => {
-          let customerName = 'Client';
-          let customerEmail = '';
-          let order = null;
-
-          // Chercher l'order associé
-          if (reservation.notes) {
-            try {
-              const notesData = JSON.parse(reservation.notes);
-              if (notesData.sessionId && allOrders) {
-                order = allOrders.find((o: any) => o.stripe_session_id === notesData.sessionId);
-              }
-              if (notesData.customerName) customerName = notesData.customerName;
-              if (notesData.customerEmail) customerEmail = notesData.customerEmail;
-            } catch (e) {
-              // Ignorer
-            }
-          }
-
-          if (order) {
-            customerName = order.customer_name || customerName;
-            customerEmail = order.customer_email || customerEmail;
-          }
-
-          return {
-            ...reservation,
-            customerName,
-            customerEmail,
-            order,
-            type: 'old_reservation',
-          };
-        });
-
-        // Enrichir les client_reservations
-        const enrichedClientContracts = (clientReservationsData || []).map((cr) => {
-          let customerName = cr.customer_name || 'Client';
-          let customerEmail = cr.customer_email || '';
-          let order = null;
-
-          // Chercher l'order associé via client_reservation_id
-          if (allOrders) {
-            order = allOrders.find((o: any) => o.client_reservation_id === cr.id);
-          }
-
-          if (order) {
-            customerName = order.customer_name || customerName;
-            customerEmail = order.customer_email || customerEmail;
-          }
-
-          return {
-            ...cr,
-            // Adapter les champs pour compatibilité avec l'affichage
-            start_date: cr.start_at || cr.created_at,
-            end_date: cr.end_at || cr.created_at,
-            total_price: cr.price_total,
-            pack_id: cr.pack_key,
-            customerName,
-            customerEmail,
-            order,
-            type: 'client_reservation',
-          };
-        });
-
-        // Combiner les deux listes
-        const allContracts = [
-          ...enrichedOldContracts,
-          ...enrichedClientContracts
-        ].sort((a, b) => {
-          const dateA = new Date(a.client_signed_at || 0).getTime();
-          const dateB = new Date(b.client_signed_at || 0).getTime();
-          return dateB - dateA; // Plus récent en premier
-        });
+        const data = await response.json();
+        const allContracts = data.contracts || [];
 
         setContracts(allContracts);
         setFilteredContracts(allContracts);

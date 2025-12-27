@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
       price_total,
       deposit_amount,
       balance_amount = 0,
+      security_deposit_amount, // Caution (sécurité matériel)
       city,
       postal_code,
       final_items,
@@ -112,6 +113,15 @@ export async function POST(req: NextRequest) {
       postal_code: postal_code || null,
     });
 
+    // Calculer la caution selon le pack et le tier (si disponible)
+    // Par défaut, utiliser les valeurs de base si security_deposit_amount n'est pas fourni
+    const baseCautionAmounts: Record<string, number> = {
+      conference: 700,
+      soiree: 1100,
+      mariage: 1600,
+    };
+    const securityDepositAmount = security_deposit_amount || baseCautionAmounts[pack_key] || 0;
+
     // ÉTAPE 1 : Appeler la fonction PostgreSQL atomique pour créer hold + réservation
     // Cette fonction utilise pg_advisory_xact_lock pour éviter les race conditions
     // Note: L'ordre des paramètres correspond à la signature de la fonction SQL
@@ -121,8 +131,9 @@ export async function POST(req: NextRequest) {
       p_end_at: endAt.toISOString(),
       p_customer_email: customer_email,
       p_price_total: price_total,
-      p_deposit_amount: deposit_amount,
+      p_deposit_amount: deposit_amount, // Acompte 30%
       p_balance_amount: balance_amount,
+      p_security_deposit_amount: securityDepositAmount, // Caution (sécurité matériel)
       p_address: address,
       p_notes: notes,
       p_final_items: final_items || null,
@@ -213,11 +224,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log('[DIRECT-CHECKOUT] ✅ Email valide reçu:', emailToUse);
-    console.log('[DIRECT-CHECKOUT] 📧 Création session Stripe avec email:', emailToUse);
-    console.log('[DIRECT-CHECKOUT] 📋 Réservation ID:', reservation_id);
-    console.log('[DIRECT-CHECKOUT] 📋 Hold ID:', hold_id);
-
     // Générer un token public pour le checkout (AVANT de créer la session Stripe)
     const { token: checkoutToken, hash: checkoutTokenHash, expiresAt: checkoutTokenExpiresAt } = generateTokenWithHash(7);
     
@@ -233,9 +239,6 @@ export async function POST(req: NextRequest) {
     if (tokenUpdateError) {
       console.error('[DIRECT-CHECKOUT] ❌ Erreur mise à jour token:', tokenUpdateError);
       // Ne pas faire échouer la création de la session, le token sera généré dans le webhook
-    } else {
-      console.log('[DIRECT-CHECKOUT] ✅ Token généré et sauvegardé en DB');
-      console.log('[DIRECT-CHECKOUT] 📋 Token (premiers caractères):', checkoutToken.substring(0, 20) + '...');
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -280,11 +283,6 @@ export async function POST(req: NextRequest) {
         },
       },
     });
-
-    // Vérifier que l'email a bien été transmis à Stripe
-    console.log('[DIRECT-CHECKOUT] ✅ Session Stripe créée:', session.id);
-    console.log('[DIRECT-CHECKOUT] 📧 Email dans session Stripe:', session.customer_email || 'VIDE');
-    console.log('[DIRECT-CHECKOUT] 📧 Email transmis:', emailToUse);
     
     // Mettre à jour la réservation avec le session_id
     const { error: updateError } = await supabaseAdmin
@@ -295,19 +293,6 @@ export async function POST(req: NextRequest) {
     
     if (updateError) {
       console.error('[DIRECT-CHECKOUT] ❌ Erreur mise à jour session_id:', updateError);
-    } else {
-      console.log('[DIRECT-CHECKOUT] ✅ Session ID mis à jour dans réservation');
-    }
-    
-    // Vérifier que l'email est bien dans la réservation
-    const { data: reservationCheck, error: checkError } = await supabaseAdmin
-      .from('client_reservations')
-      .select('customer_email')
-      .eq('id', reservation_id)
-      .single();
-    
-    if (reservationCheck) {
-      console.log('[DIRECT-CHECKOUT] 📧 Email dans réservation DB:', reservationCheck.customer_email || 'VIDE');
     }
 
     return NextResponse.json({

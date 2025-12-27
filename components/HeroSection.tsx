@@ -111,15 +111,19 @@ export default function HeroSection({ language }: HeroSectionProps) {
 
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 sm:mt-12">
-                  <button
-                    onClick={() => {
-                      // Ouvrir le chat avec le message draft (une seule source)
-                      window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
+                  <a
+                    href="#solutions"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const solutionsSection = document.getElementById('solutions');
+                      if (solutionsSection) {
+                        solutionsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
                     }}
-                    className="bg-[#F2431E] hover:bg-[#E63A1A] text-white font-semibold px-8 py-4 rounded-full text-lg sm:text-xl transition-colors shadow-lg hover:shadow-xl"
+                    className="bg-[#F2431E] hover:bg-[#E63A1A] text-white font-semibold px-8 py-4 rounded-full text-lg sm:text-xl transition-colors shadow-lg hover:shadow-xl inline-flex items-center justify-center"
                   >
                     {texts[language].cta}
-                  </button>
+                  </a>
                   
                   <a
                     href="tel:+33651084994"

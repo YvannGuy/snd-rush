@@ -172,12 +172,12 @@ export default function AdminProPage() {
         throw new Error(data.error || 'Erreur lors du blocage');
       }
 
-      // Recharger les demandes via API
-      const refreshResponse = await fetch('/api/admin/pro-requests');
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json();
-        setProRequests(refreshData.requests || []);
-      }
+      // OPTIMISATION: Mettre à jour l'état local au lieu de recharger toutes les données
+      setProRequests(prev => prev.map(req => 
+        req.user_id === userId 
+          ? { ...req, pro_status: 'blocked' }
+          : req
+      ));
       setIsDetailModalOpen(false);
     } catch (error: any) {
       console.error('Erreur blocage pro:', error);
@@ -216,12 +216,8 @@ export default function AdminProPage() {
         throw new Error(data.error || 'Erreur lors du refus');
       }
 
-      // Recharger les demandes via API
-      const refreshResponse = await fetch('/api/admin/pro-requests');
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json();
-        setProRequests(refreshData.requests || []);
-      }
+      // OPTIMISATION: Retirer la demande de la liste au lieu de recharger toutes les données
+      setProRequests(prev => prev.filter(req => req.user_id !== userId));
       setIsDetailModalOpen(false);
     } catch (error: any) {
       console.error('Erreur refus demande:', error);

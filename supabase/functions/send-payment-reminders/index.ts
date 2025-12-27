@@ -178,7 +178,7 @@ serve(async (req) => {
                     <div style="font-size:14px;color:#6b7280;margin-bottom:10px;">Montant à régler</div>
                     <div style="font-size:16px;line-height:1.6;color:#111827;">
                       <div><strong>Total :</strong> ${reservation.price_total}€</div>
-                      ${reservation.deposit_amount > 0 ? `<div style="margin-top:6px;font-size:14px;color:#6b7280;">Caution : ${reservation.deposit_amount}€ (30% du total)</div>` : ''}
+                      ${reservation.deposit_amount > 0 ? `<div style="margin-top:6px;font-size:14px;color:#6b7280;">Caution : ${reservation.deposit_amount}€</div>` : ''}
                     </div>
                   </td>
                 </tr>

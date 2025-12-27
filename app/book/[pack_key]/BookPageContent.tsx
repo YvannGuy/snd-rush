@@ -57,7 +57,6 @@ export default function BookPageContent() {
         }
       } catch (error) {
         // L'utilisateur n'est pas connecté, l'email sera récupéré depuis Stripe
-        console.log('Utilisateur non connecté, email sera récupéré depuis Stripe');
       }
     };
     getUserEmail();
@@ -324,7 +323,6 @@ export default function BookPageContent() {
     setTimeout(async () => {
       const currentStatus = availabilityStatus;
       if (currentStatus === 'available') {
-        console.log('[BOOK] Appel handlePayDeposit avec email:', wizardData.customerEmail);
         await handlePayDeposit({
           startDate: wizardData.startDate,
           startTime: wizardData.startTime,
@@ -415,11 +413,6 @@ export default function BookPageContent() {
       }
       
       // Si toujours pas d'email valide, c'est une erreur car le champ est obligatoire dans le wizard
-      console.log('[BOOK] 🔍 Vérification email avant envoi:');
-      console.log('[BOOK]   - wizardData.customerEmail:', wizardData?.customerEmail || 'VIDE');
-      console.log('[BOOK]   - state customerEmail:', customerEmail || 'VIDE');
-      console.log('[BOOK]   - emailToUse final:', emailToUse || 'VIDE');
-      
       if (!emailToUse || emailToUse.trim() === '' || emailToUse === 'pending@stripe.com') {
         console.error('[BOOK] ❌ Email manquant:', { 
           wizardDataEmail: wizardData?.customerEmail, 
@@ -431,8 +424,6 @@ export default function BookPageContent() {
           : 'Email required to complete reservation. Please fill in the email field in the summary.'
         );
       }
-      
-      console.log('[BOOK] Email utilisé pour Stripe:', emailToUse);
 
       // Créer le hold et ouvrir Stripe Checkout (appel atomique côté serveur)
       // Le hold n'est créé QUE maintenant, pas avant le clic sur "Payer l'acompte"
@@ -444,16 +435,14 @@ export default function BookPageContent() {
         contact_phone: null, // TODO: Ajouter si disponible dans le wizard
         contact_email: emailToUse,
         price_total: finalPrice,
-        deposit_amount: depositAmount,
+        deposit_amount: depositAmount, // Acompte 30%
         balance_amount: balanceAmount,
+        security_deposit_amount: cautionAmount, // Caution (sécurité matériel)
         city: dataToUse.city || null,
         postal_code: dataToUse.postalCode || null,
         final_items: displayItems as any, // Convertir en format attendu par PostgreSQL
         source: 'direct_solution',
       };
-      
-      console.log('[BOOK] 📤 Envoi requête direct-checkout avec email:', requestBody.customer_email);
-      console.log('[BOOK] 📋 Corps de la requête:', JSON.stringify({ ...requestBody, final_items: '[...]' }, null, 2));
       
       const response = await fetch('/api/book/direct-checkout', {
         method: 'POST',

@@ -277,7 +277,7 @@ export default function PackSolutionContent({ packId, language }: PackSolutionCo
               {pack.defaultItems.map((item, idx) => (
                 <li key={idx} className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-[#F2431E] flex-shrink-0" />
-                  <span>{item.qty}x {item.label}</span>
+                  <span>{item.label}</span>
                 </li>
               ))}
             </ul>

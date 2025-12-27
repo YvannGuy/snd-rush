@@ -462,9 +462,6 @@ export default function ReservationWizard({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {displayItems.map((item, idx) => (
                     <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-[#F2431E]/30 transition-colors">
-                      <Badge variant="outline" className="bg-[#F2431E]/10 text-[#F2431E] border-[#F2431E]/30 font-bold">
-                        {item.qty}x
-                      </Badge>
                       <span className="text-gray-700 font-medium">{item.label}</span>
                     </div>
                   ))}
@@ -817,9 +814,6 @@ export default function ReservationWizard({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {displayItems.map((item, idx) => (
                           <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                            <Badge variant="outline" className="bg-[#F2431E]/10 text-[#F2431E] border-[#F2431E]/30 font-bold text-xs">
-                              {item.qty}x
-                            </Badge>
                             <span>{item.label}</span>
                           </div>
                         ))}
