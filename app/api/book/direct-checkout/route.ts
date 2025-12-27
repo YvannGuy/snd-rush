@@ -61,12 +61,14 @@ export async function POST(req: NextRequest) {
       start_at,
       end_at,
       customer_email,
+      customer_name,
       contact_phone,
       contact_email,
       price_total,
       deposit_amount,
       balance_amount = 0,
       security_deposit_amount, // Caution (sécurité matériel)
+      address,
       city,
       postal_code,
       final_items,
@@ -105,8 +107,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'end_at doit être après start_at' }, { status: 400 });
     }
 
-    // Construire l'adresse si disponible
-    const address = city && postal_code ? `${city}, ${postal_code}` : (city || postal_code || null);
+    // Utiliser l'adresse complète fournie ou construire à partir de city/postal_code
+    const finalAddress = address || (city && postal_code ? `${city}, ${postal_code}` : (city || postal_code || null));
     const notes = JSON.stringify({
       flow: 'direct_solution',
       city: city || null,
@@ -134,7 +136,7 @@ export async function POST(req: NextRequest) {
       p_deposit_amount: deposit_amount, // Acompte 30%
       p_balance_amount: balance_amount,
       p_security_deposit_amount: securityDepositAmount, // Caution (sécurité matériel)
-      p_address: address,
+      p_address: finalAddress,
       p_notes: notes,
       p_final_items: final_items || null,
       p_source: source,
@@ -177,6 +179,18 @@ export async function POST(req: NextRequest) {
         { error: 'Erreur lors de la création du hold', details: 'IDs manquants' },
         { status: 500 }
       );
+    }
+
+    // Mettre à jour la réservation avec le nom du client et l'adresse complète si fournis
+    if (customer_name || finalAddress) {
+      const updateData: any = {};
+      if (customer_name) updateData.customer_name = customer_name;
+      if (finalAddress) updateData.address = finalAddress;
+      
+      await supabaseAdmin
+        .from('client_reservations')
+        .update(updateData)
+        .eq('id', reservation_id);
     }
 
     // Vérifier si une session Stripe existe déjà pour cette réservation (idempotency)

@@ -332,7 +332,10 @@ export default function BookPageContent() {
           postalCode: wizardData.postalCode,
           peopleCount: wizardData.peopleCount,
           additionalMics: wizardData.additionalMics,
-          customerEmail: wizardData.customerEmail, // Utiliser directement depuis wizardData
+          customerEmail: wizardData.customerEmail,
+          firstName: wizardData.firstName,
+          lastName: wizardData.lastName,
+          eventAddress: wizardData.eventAddress,
         });
       }
     }, 500);
@@ -348,6 +351,9 @@ export default function BookPageContent() {
     peopleCount: number | null;
     additionalMics: Array<{ type: 'filaire' | 'sans-fil'; price: number }>;
     customerEmail?: string;
+    firstName?: string;
+    lastName?: string;
+    eventAddress?: string;
   }) => {
     if (!pack || availabilityStatus !== 'available') return;
 
@@ -427,17 +433,26 @@ export default function BookPageContent() {
 
       // Créer le hold et ouvrir Stripe Checkout (appel atomique côté serveur)
       // Le hold n'est créé QUE maintenant, pas avant le clic sur "Payer l'acompte"
+      const customerName = dataToUse.firstName && dataToUse.lastName 
+        ? `${dataToUse.firstName} ${dataToUse.lastName}`.trim()
+        : null;
+      const fullAddress = dataToUse.eventAddress 
+        ? `${dataToUse.eventAddress}, ${dataToUse.city} ${dataToUse.postalCode}`.trim()
+        : (dataToUse.city && dataToUse.postalCode ? `${dataToUse.city}, ${dataToUse.postalCode}`.trim() : null);
+
       const requestBody = {
         pack_key: packKey,
         start_at: new Date(startISO).toISOString(),
         end_at: new Date(endISO).toISOString(),
         customer_email: emailToUse,
+        customer_name: customerName,
         contact_phone: null, // TODO: Ajouter si disponible dans le wizard
         contact_email: emailToUse,
         price_total: finalPrice,
         deposit_amount: depositAmount, // Acompte 30%
         balance_amount: balanceAmount,
         security_deposit_amount: cautionAmount, // Caution (sécurité matériel)
+        address: fullAddress,
         city: dataToUse.city || null,
         postal_code: dataToUse.postalCode || null,
         final_items: displayItems as any, // Convertir en format attendu par PostgreSQL

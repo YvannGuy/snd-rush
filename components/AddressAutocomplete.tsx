@@ -12,7 +12,7 @@ interface AddressSuggestion {
 
 interface AddressAutocompleteProps {
   value: string;
-  onChange: (address: string) => void;
+  onChange: (address: string, city?: string, postcode?: string) => void;
   placeholder?: string;
   className?: string;
   id?: string;
@@ -45,7 +45,7 @@ export default function AddressAutocomplete({
     };
   }, []);
 
-  // Rechercher des adresses avec l'API BAN
+  // Rechercher des adresses avec l'API BAN (uniquement Île-de-France)
   const searchAddresses = async (query: string) => {
     if (query.length < 3) {
       setSuggestions([]);
@@ -56,12 +56,20 @@ export default function AddressAutocomplete({
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5&type=housenumber&autocomplete=1`
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&type=housenumber&autocomplete=1`
       );
       const data = await response.json();
 
       if (data.features && data.features.length > 0) {
-        const formattedSuggestions: AddressSuggestion[] = data.features.map((feature: any) => {
+        // Filtrer uniquement les résultats d'Île-de-France (codes postaux 75xxx, 77xxx, 78xxx, 91xxx, 92xxx, 93xxx, 94xxx, 95xxx)
+        const idfPostcodes = ['75', '77', '78', '91', '92', '93', '94', '95'];
+        const idfFeatures = data.features.filter((feature: any) => {
+          const postcode = feature.properties.postcode;
+          if (!postcode) return false;
+          return idfPostcodes.some(dept => postcode.startsWith(dept));
+        });
+
+        const formattedSuggestions: AddressSuggestion[] = idfFeatures.slice(0, 5).map((feature: any) => {
           const properties = feature.properties;
           return {
             label: properties.label,
@@ -72,7 +80,7 @@ export default function AddressAutocomplete({
           };
         });
         setSuggestions(formattedSuggestions);
-        setShowSuggestions(true);
+        setShowSuggestions(formattedSuggestions.length > 0);
       } else {
         setSuggestions([]);
         setShowSuggestions(false);
@@ -89,13 +97,13 @@ export default function AddressAutocomplete({
   // Gérer le changement de texte
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    onChange(newValue);
+    onChange(newValue); // Pas de city/postcode lors de la saisie manuelle
     searchAddresses(newValue);
   };
 
   // Sélectionner une suggestion
   const handleSelectSuggestion = (suggestion: AddressSuggestion) => {
-    onChange(suggestion.value);
+    onChange(suggestion.value, suggestion.city, suggestion.postcode);
     setShowSuggestions(false);
     setSuggestions([]);
     inputRef.current?.blur();

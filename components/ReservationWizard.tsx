@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, AlertCircle, Loader2, ChevronRight, ChevronLeft, Calendar, MapPin, Users, Package, Info, Sparkles, Mail } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, ChevronRight, ChevronLeft, Calendar, MapPin, Users, Package, Info, Sparkles, Mail, User } from 'lucide-react';
+import AddressAutocomplete from '@/components/AddressAutocomplete';
 import { PackTierAdjustment } from '@/lib/pack-tier-logic';
 import { detectZoneFromText, getDeliveryPrice } from '@/lib/zone-detection';
 import { BasePack, PackItem } from '@/lib/packs/basePacks';
@@ -35,6 +36,9 @@ interface ReservationWizardProps {
     peopleCount: number | null;
     additionalMics: Array<{ type: 'filaire' | 'sans-fil'; price: number }>;
     customerEmail: string;
+    firstName: string;
+    lastName: string;
+    eventAddress: string;
   }) => Promise<void>;
   availabilityStatus: 'idle' | 'checking' | 'available' | 'unavailable';
   availabilityError: string | null;
@@ -74,6 +78,9 @@ export default function ReservationWizard({
   const [citySuggestions, setCitySuggestions] = useState<Array<{ city: string; postcode: string }>>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [customerEmail, setCustomerEmail] = useState<string>('');
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+  const [eventAddress, setEventAddress] = useState<string>('');
 
   // Récupérer l'email de l'utilisateur connecté (si disponible)
   useEffect(() => {
@@ -271,11 +278,13 @@ export default function ReservationWizard({
       case 4:
         return peopleCount !== null && peopleCount > 0; // Obligatoire
       case 5:
-        // Vérifier que la disponibilité est OK et que l'email est valide
+        // Vérifier que la disponibilité est OK, que l'email est valide et que les champs requis sont remplis
         if (availabilityStatus !== 'available') return false;
         if (!customerEmail) return false;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(customerEmail);
+        if (!emailRegex.test(customerEmail)) return false;
+        if (!firstName || !lastName || !eventAddress) return false;
+        return true;
       default:
         return false;
     }
@@ -302,7 +311,6 @@ export default function ReservationWizard({
         console.error('[WIZARD] Email manquant avant completion:', customerEmail);
         return;
       }
-      console.log('[WIZARD] Completion avec email:', customerEmail);
       await onComplete({
         startDate,
         startTime,
@@ -313,6 +321,9 @@ export default function ReservationWizard({
         peopleCount,
         additionalMics,
         customerEmail,
+        firstName,
+        lastName,
+        eventAddress,
       });
     }
   };
@@ -582,60 +593,89 @@ export default function ReservationWizard({
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900">{currentTexts.step2}</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="relative space-y-2">
-                  <Label htmlFor="city" className="text-base font-semibold flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    {currentTexts.city}
-                  </Label>
-                  <Input
-                    id="city"
-                    type="text"
-                    value={city}
-                    onChange={(e) => {
-                      setCity(e.target.value);
-                      setShowCitySuggestions(true);
-                    }}
-                    onFocus={() => {
-                      if (city.length >= 2 && citySuggestions.length > 0) {
-                        setShowCitySuggestions(true);
-                      }
-                    }}
-                    placeholder={currentTexts.cityPlaceholder}
-                    className="h-12 text-base border-2 focus-visible:ring-2 focus-visible:ring-[#F2431E]"
-                    required
-                  />
-                  {showCitySuggestions && citySuggestions.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                      {citySuggestions.map((suggestion, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => handleSelectCity(suggestion)}
-                          className="w-full px-4 py-3 text-left hover:bg-[#F2431E]/5 transition-colors border-b border-gray-100 last:border-b-0"
-                        >
-                          <div className="font-medium text-gray-900">{suggestion.city}</div>
-                          <div className="text-sm text-gray-500">{suggestion.postcode}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              <div className="space-y-6">
+                {/* Adresse de l'événement avec autocomplétion */}
                 <div className="space-y-2">
-                  <Label htmlFor="postalCode" className="text-base font-semibold flex items-center gap-2">
+                  <Label htmlFor="eventAddress" className="text-base font-semibold flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    {currentTexts.postalCode}
+                    {language === 'fr' ? 'Adresse de l\'événement' : 'Event address'} <span className="text-[#F2431E]">*</span>
                   </Label>
-                  <Input
-                    id="postalCode"
-                    type="text"
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                    placeholder="75011"
-                    maxLength={5}
-                    className="h-12 text-base border-2 focus-visible:ring-2 focus-visible:ring-[#F2431E]"
-                    required
+                  <AddressAutocomplete
+                    id="eventAddress"
+                    value={eventAddress}
+                    onChange={(address, cityName, postcode) => {
+                      setEventAddress(address);
+                      // La fonction onChange peut maintenant retourner city et postcode
+                      if (cityName) setCity(cityName);
+                      if (postcode) setPostalCode(postcode);
+                    }}
+                    placeholder={language === 'fr' ? 'Commencez à taper une adresse...' : 'Start typing an address...'}
+                    className="h-12 text-base border-2 focus-visible:ring-2 focus-visible:ring-[#F2431E] rounded-md px-3 w-full"
                   />
+                  <p className="text-xs text-gray-600">
+                    {language === 'fr' 
+                      ? 'Zone couverte : Île-de-France uniquement'
+                      : 'Coverage area: Île-de-France only'
+                    }
+                  </p>
+                </div>
+                
+                {/* Ville et code postal (pré-remplis depuis l'adresse) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="relative space-y-2">
+                    <Label htmlFor="city" className="text-base font-semibold flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {currentTexts.city}
+                    </Label>
+                    <Input
+                      id="city"
+                      type="text"
+                      value={city}
+                      onChange={(e) => {
+                        setCity(e.target.value);
+                        setShowCitySuggestions(true);
+                      }}
+                      onFocus={() => {
+                        if (city.length >= 2 && citySuggestions.length > 0) {
+                          setShowCitySuggestions(true);
+                        }
+                      }}
+                      placeholder={currentTexts.cityPlaceholder}
+                      className="h-12 text-base border-2 focus-visible:ring-2 focus-visible:ring-[#F2431E]"
+                      required
+                    />
+                    {showCitySuggestions && citySuggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                        {citySuggestions.map((suggestion, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleSelectCity(suggestion)}
+                            className="w-full px-4 py-3 text-left hover:bg-[#F2431E]/5 transition-colors border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="font-medium text-gray-900">{suggestion.city}</div>
+                            <div className="text-sm text-gray-500">{suggestion.postcode}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="postalCode" className="text-base font-semibold flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {currentTexts.postalCode}
+                    </Label>
+                    <Input
+                      id="postalCode"
+                      type="text"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                      placeholder="75011"
+                      maxLength={5}
+                      className="h-12 text-base border-2 focus-visible:ring-2 focus-visible:ring-[#F2431E]"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
               
@@ -774,8 +814,10 @@ export default function ReservationWizard({
                       <p className="font-semibold text-gray-900">{endDate} {endTime}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">{currentTexts.city}</p>
-                      <p className="font-semibold text-gray-900">{city} {postalCode}</p>
+                      <p className="text-sm text-muted-foreground">{language === 'fr' ? 'Adresse' : 'Address'}</p>
+                      <p className="font-semibold text-gray-900">
+                        {eventAddress ? `${eventAddress}, ${city} ${postalCode}` : `${city} ${postalCode}`}
+                      </p>
                     </div>
                     {peopleCount && (
                       <div className="space-y-1">
@@ -787,63 +829,47 @@ export default function ReservationWizard({
                 </CardContent>
               </Card>
 
-              {/* Pack détaillé */}
+              {/* Informations client */}
               <Card className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-[#F2431E]" />
-                    {language === 'fr' ? 'Pack sélectionné' : 'Selected pack'}
+                    <Users className="h-5 w-5 text-[#F2431E]" />
+                    {language === 'fr' ? 'Informations client' : 'Client information'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="font-bold text-lg text-gray-900 mb-1">{pack.title}</h4>
-                      {tierAdjustment && (
-                        <Badge variant="default" className="bg-[#F2431E] text-white">
-                          Pack {tierAdjustment.tier} - {tierAdjustment.capacity}
-                        </Badge>
-                      )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName" className="text-sm font-semibold">
+                        {language === 'fr' ? 'Prénom' : 'First name'} <span className="text-[#F2431E]">*</span>
+                      </Label>
+                      <Input
+                        id="firstName"
+                        type="text"
+                        placeholder={language === 'fr' ? 'Votre prénom' : 'Your first name'}
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="h-12 text-base border-2 focus-visible:ring-2 focus-visible:ring-[#F2431E]"
+                        required
+                      />
                     </div>
-                    
-                    {/* Matériel inclus */}
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700 mb-2">
-                        {language === 'fr' ? 'Matériel inclus :' : 'Included equipment :'}
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {displayItems.map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                            <span>{item.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Prix de base du pack */}
-                    <div className="pt-2 border-t border-gray-200">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">
-                          {language === 'fr' ? 'Prix de base du pack' : 'Base pack price'}
-                        </span>
-                        <span className="font-semibold text-gray-900">{basePackPrice}€</span>
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName" className="text-sm font-semibold">
+                        {language === 'fr' ? 'Nom' : 'Last name'} <span className="text-[#F2431E]">*</span>
+                      </Label>
+                      <Input
+                        id="lastName"
+                        type="text"
+                        placeholder={language === 'fr' ? 'Votre nom' : 'Your last name'}
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="h-12 text-base border-2 focus-visible:ring-2 focus-visible:ring-[#F2431E]"
+                        required
+                      />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Champ email */}
-              <Card className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5 text-[#F2431E]" />
-                    {currentTexts.email}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
                   <div className="space-y-2">
-                    <Label htmlFor="customerEmail" className="text-base font-semibold flex items-center gap-2">
+                    <Label htmlFor="customerEmail" className="text-sm font-semibold flex items-center gap-2">
                       <Mail className="h-4 w-4" />
                       {currentTexts.email} <span className="text-[#F2431E]">*</span>
                     </Label>
@@ -866,16 +892,52 @@ export default function ReservationWizard({
                 </CardContent>
               </Card>
 
-              {/* Prix */}
+              {/* Pack et Récapitulatif des prix */}
               <Card className="bg-gradient-to-br from-[#F2431E]/5 to-white border-2 border-[#F2431E]/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Package className="h-5 w-5 text-[#F2431E]" />
-                    {language === 'fr' ? 'Récapitulatif des prix' : 'Price summary'}
+                    {language === 'fr' ? 'Pack sélectionné et récapitulatif' : 'Selected pack and summary'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Prix de base */}
+                  {/* Pack sélectionné */}
+                  <div className="space-y-3 pb-4 border-b-2 border-gray-200">
+                    <div>
+                      <h4 className="font-bold text-lg text-gray-900 mb-1">{pack.title}</h4>
+                      {tierAdjustment && (
+                        <Badge variant="default" className="bg-[#F2431E] text-white">
+                          Pack {tierAdjustment.tier} - {tierAdjustment.capacity}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    {/* Matériel inclus */}
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 mb-2">
+                        {language === 'fr' ? 'Matériel inclus :' : 'Included equipment :'}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {displayItems.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
+                            <span>{item.qty}x {item.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Prix de base du pack */}
+                    <div className="pt-2 border-t border-gray-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">
+                          {language === 'fr' ? 'Prix de base du pack' : 'Base pack price'}
+                        </span>
+                        <span className="font-semibold text-gray-900">{basePackPrice}€</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Prix total */}
                   <div className="flex justify-between items-center pb-3 border-b-2">
                     <span className="text-lg font-semibold text-gray-900">{currentTexts.total}</span>
                     <span className="text-3xl font-bold text-[#F2431E]">{totalPrice}€</span>
