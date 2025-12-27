@@ -9,12 +9,15 @@ import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
 import SignModal from '@/components/auth/SignModal';
+import Link from 'next/link';
 
 export default function NouveauPackPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
   const { isAdmin, checkingAdmin } = useAdmin();
   const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -86,7 +89,12 @@ export default function NouveauPackPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <AdminSidebar language={language} />
+        <div className="hidden lg:block flex-shrink-0 transition-all duration-300 w-64"></div>
+        <AdminSidebar
+          language={language}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md mx-auto px-6">
             <div className="text-6xl mb-6">🔒</div>
@@ -114,10 +122,39 @@ export default function NouveauPackPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="flex flex-1">
-        <AdminSidebar language={language} />
-        <main className="flex-1 flex flex-col overflow-hidden">
-          <AdminHeader language={language} />
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
+        <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+        <AdminSidebar
+          language={language}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapsed={() => setIsSidebarCollapsed((v) => !v)}
+        />
+        <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">
+            <Link href="/admin" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">SoundRush</span>
+            </Link>
+            <button
+              onClick={() => setIsSidebarOpen((v) => !v)}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+              aria-expanded={isSidebarOpen}
+              aria-controls="admin-sidebar"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="hidden lg:block">
+            <AdminHeader language={language} />
+          </div>
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-4xl mx-auto px-6 lg:px-8 py-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-6">{currentTexts.title}</h1>

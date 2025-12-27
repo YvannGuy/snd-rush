@@ -8,6 +8,8 @@ import { adminFetch } from '@/lib/adminApiClient';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import SignModal from '@/components/auth/SignModal';
 import Link from 'next/link';
 import { PACKS } from '@/lib/packs';
@@ -21,6 +23,8 @@ export default function AdminReservationDetailPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { user, loading } = useUser();
   const { isAdmin, checkingAdmin } = useAdmin();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [reservation, setReservation] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingReservation, setLoadingReservation] = useState(true);
@@ -230,42 +234,63 @@ useEffect(() => {
   if (reservationError) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        <AdminSidebar language={language} />
-        <main className="flex-1 p-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-              <p className="text-red-800 font-semibold mb-2">Erreur de chargement</p>
-              <p className="text-red-600 text-sm mb-4">{reservationError}</p>
-              <button
-                onClick={() => router.push('/admin/reservations')}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Retour aux réservations
-              </button>
+        <Header language={language} onLanguageChange={setLanguage} />
+        <div className="flex flex-1 pt-[112px] lg:flex-row">
+          <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+          <AdminSidebar
+            language={language}
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapsed={() => setIsSidebarCollapsed((v) => !v)}
+          />
+          <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto p-6">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+                <p className="text-red-800 font-semibold mb-2">Erreur de chargement</p>
+                <p className="text-red-600 text-sm mb-4">{reservationError}</p>
+                <button
+                  onClick={() => router.push('/admin/reservations')}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Retour aux réservations
+                </button>
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
+        <Footer language={language} />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
-        <AdminSidebar language={language} />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-md mx-auto px-6">
-            <div className="text-6xl mb-6">🔒</div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Connexion requise</h1>
-            <p className="text-xl text-gray-600 mb-8">Connectez-vous pour accéder à cette page.</p>
-            <button
-              onClick={() => setIsSignModalOpen(true)}
-              className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
-            >
-              Se connecter
-            </button>
-          </div>
-        </main>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header language={language} onLanguageChange={setLanguage} />
+        <div className="flex flex-1 pt-[112px] lg:flex-row">
+          <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+          <AdminSidebar
+            language={language}
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapsed={() => setIsSidebarCollapsed((v) => !v)}
+          />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center max-w-md mx-auto px-6">
+              <div className="text-6xl mb-6">🔒</div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">Connexion requise</h1>
+              <p className="text-xl text-gray-600 mb-8">Connectez-vous pour accéder à cette page.</p>
+              <button
+                onClick={() => setIsSignModalOpen(true)}
+                className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#E63A1A] transition-colors"
+              >
+                Se connecter
+              </button>
+            </div>
+          </main>
+        </div>
         <SignModal
           isOpen={isSignModalOpen}
           onClose={() => setIsSignModalOpen(false)}
@@ -273,6 +298,7 @@ useEffect(() => {
           isAdmin={true}
           onSuccess={() => window.location.reload()}
         />
+        <Footer language={language} />
       </div>
     );
   }
@@ -280,25 +306,67 @@ useEffect(() => {
   if (!reservation) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        <AdminSidebar language={language} />
-        <main className="flex-1 p-6">
-          <div className="max-w-4xl mx-auto">
-            <p className="text-gray-600">{currentTexts.noReservation}</p>
-            <Link href="/admin/reservations" className="text-[#F2431E] hover:underline mt-4 inline-block">
-              {currentTexts.back}
-            </Link>
-          </div>
-        </main>
+        <Header language={language} onLanguageChange={setLanguage} />
+        <div className="flex flex-1 pt-[112px] lg:flex-row">
+          <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+          <AdminSidebar
+            language={language}
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapsed={() => setIsSidebarCollapsed((v) => !v)}
+          />
+          <main className="flex-1 p-6">
+            <div className="max-w-4xl mx-auto">
+              <p className="text-gray-600">{currentTexts.noReservation}</p>
+              <Link href="/admin/reservations" className="text-[#F2431E] hover:underline mt-4 inline-block">
+                {currentTexts.back}
+              </Link>
+            </div>
+          </main>
+        </div>
+        <Footer language={language} />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="flex flex-1">
-        <AdminSidebar language={language} />
-        <main className="flex-1 flex flex-col overflow-hidden">
-          <AdminHeader language={language} />
+      <Header language={language} onLanguageChange={setLanguage} />
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
+        <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+        <AdminSidebar
+          language={language}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapsed={() => setIsSidebarCollapsed((v) => !v)}
+        />
+        <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">
+            <Link href="/admin" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">SoundRush</span>
+            </Link>
+            <button
+              onClick={() => setIsSidebarOpen((v) => !v)}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+              aria-expanded={isSidebarOpen}
+              aria-controls="admin-sidebar"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Header Desktop */}
+          <div className="hidden lg:block">
+            <AdminHeader language={language} />
+          </div>
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-4xl mx-auto px-6 lg:px-8 py-8">
               {/* Header */}

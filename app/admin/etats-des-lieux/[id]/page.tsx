@@ -7,6 +7,7 @@ import { useUser } from '@/hooks/useUser';
 import { useAdmin } from '@/hooks/useAdmin';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
+import AdminFooter from '@/components/AdminFooter';
 import Link from 'next/link';
 // Shadcn UI components
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,8 @@ export default function AdminEtatDesLieuxDetailPage() {
   const router = useRouter();
   const params = useParams();
   const reservationId = params?.id as string;
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const [reservation, setReservation] = useState<any>(null);
   const [etatLieux, setEtatLieux] = useState<any>(null);
@@ -306,11 +309,18 @@ useEffect(() => {
 
   if (!reservation) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <AdminHeader language={language} />
-        <div className="flex">
-          <AdminSidebar language={language} />
-          <main className="flex-1 ml-64 p-8">
+        <div className="flex flex-1 pt-[112px] lg:flex-row">
+          <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+          <AdminSidebar
+            language={language}
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapsed={() => setIsSidebarCollapsed((v) => !v)}
+          />
+          <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto p-6">
             <Card>
               <CardContent className="text-center py-16">
                 <CardTitle>{language === 'fr' ? 'Réservation non trouvée' : 'Reservation not found'}</CardTitle>
@@ -323,6 +333,7 @@ useEffect(() => {
             </Card>
           </main>
         </div>
+        <AdminFooter language={language} />
       </div>
     );
   }
@@ -330,11 +341,42 @@ useEffect(() => {
   const reservationNumber = reservation.id.slice(0, 8).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <AdminHeader language={language} />
-      <div className="flex">
-        <AdminSidebar language={language} />
-        <main className="flex-1 ml-64 p-8">
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
+        <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+        <AdminSidebar
+          language={language}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapsed={() => setIsSidebarCollapsed((v) => !v)}
+        />
+        <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto p-8">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30 mb-4">
+            <Link href="/admin" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">SoundRush</span>
+            </Link>
+            <button
+              onClick={() => setIsSidebarOpen((v) => !v)}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+              aria-expanded={isSidebarOpen}
+              aria-controls="admin-sidebar"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="hidden lg:block mb-4">
+            <AdminHeader language={language} />
+          </div>
+
           <div className="mb-6">
             <Button variant="ghost" asChild>
               <Link href="/admin/etats-des-lieux">

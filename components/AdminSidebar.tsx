@@ -10,9 +10,19 @@ import UserIconWithName from '@/components/UserIconWithName';
 
 interface AdminSidebarProps {
   language?: 'fr' | 'en';
+  isOpen?: boolean;
+  onClose?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapsed?: () => void;
 }
 
-export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
+export default function AdminSidebar({
+  language = 'fr',
+  isOpen = false,
+  onClose,
+  isCollapsed = false,
+  onToggleCollapsed,
+}: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useAuth();
@@ -117,8 +127,35 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
     };
   }, []);
 
+  const closeSidebar = () => {
+    if (onClose) onClose();
+  };
+
+  const handleNavClick = () => {
+    if (onClose) onClose();
+  };
+
   return (
-    <aside className="fixed top-[112px] left-0 z-40 bg-white border-r border-gray-200 flex flex-col h-[calc(100vh-112px)] w-64 lg:w-64">
+    <>
+      {/* Overlay mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-40 z-40 lg:hidden"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        id="admin-sidebar"
+        className={`
+          fixed top-[112px] left-0 z-50 bg-white border-r border-gray-200 flex flex-col h-[calc(100vh-112px)]
+          w-64 transition-transform duration-300 transform
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0 lg:w-64 ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
+        `}
+        aria-hidden={!isOpen && typeof window !== 'undefined' ? undefined : undefined}
+      >
       {/* Logo */}
       <div className="p-6 border-b border-gray-200 flex items-center justify-between">
         <Link href="/admin" className="flex items-center gap-2 flex-1">
@@ -130,6 +167,32 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
             <span className="text-xs text-gray-500 font-semibold">{currentTexts.adminPanel}</span>
           </div>
         </Link>
+        {/* Bouton collapse desktop optionnel */}
+        {onToggleCollapsed && (
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            className="hidden lg:flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 ml-3"
+            aria-label={isCollapsed ? 'Développer la sidebar' : 'Réduire la sidebar'}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
+        {/* Bouton fermer mobile */}
+        {onClose && (
+          <button
+            type="button"
+            onClick={closeSidebar}
+            className="lg:hidden ml-3 p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+            aria-label="Fermer la sidebar"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -139,6 +202,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
             isActive('/admin') ? 'bg-[#F2431E] text-white' : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -158,6 +222,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -182,6 +247,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -199,6 +265,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
           className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-xl font-semibold transition-colors ${
             isActive('/admin/packs') ? 'bg-[#F2431E] text-white' : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -218,6 +285,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -237,6 +305,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -256,6 +325,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -280,6 +350,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -304,6 +375,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -328,6 +400,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -352,6 +425,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -371,6 +445,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
               ? 'bg-[#F2431E] text-white'
               : 'text-gray-700 hover:bg-gray-100'
           }`}
+          onClick={handleNavClick}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -396,6 +471,7 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
           onClick={async () => {
             await signOut();
             router.push('/');
+            closeSidebar();
           }}
           className="flex items-center gap-2 w-full px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold"
         >
@@ -406,5 +482,6 @@ export default function AdminSidebar({ language = 'fr' }: AdminSidebarProps) {
         </button>
       </div>
     </aside>
+    </>
   );
 }

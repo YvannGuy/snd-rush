@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,8 @@ export default function AdminReservationRequestsPage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const { isAdmin, checkingAdmin } = useAdmin();
   const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [requests, setRequests] = useState<ReservationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'NEW' | 'PENDING_REVIEW'>('all');
@@ -513,11 +516,39 @@ export default function AdminReservationRequestsPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header language={language} onLanguageChange={setLanguage} />
       
-      <div className="flex flex-1 pt-[112px]">
-        <AdminSidebar language={language} />
+      <div className="flex flex-1 pt-[112px] lg:flex-row">
+        <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}></div>
+        <AdminSidebar
+          language={language}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapsed={() => setIsSidebarCollapsed((v) => !v)}
+        />
         
-        <main className="flex-1 overflow-y-auto lg:ml-64">
-          <div className="max-w-7xl mx-auto px-6 py-8">
+        <main className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-30">
+            <Link href="/admin" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">SoundRush</span>
+            </Link>
+            <button
+              onClick={() => setIsSidebarOpen((v) => !v)}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+              aria-expanded={isSidebarOpen}
+              aria-controls="admin-sidebar"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-7xl mx-auto px-6 py-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">
               Demandes de réservation
             </h1>
@@ -609,6 +640,7 @@ export default function AdminReservationRequestsPage() {
                   );
                 })
               )}
+            </div>
             </div>
           </div>
         </main>
