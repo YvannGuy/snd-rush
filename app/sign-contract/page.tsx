@@ -98,7 +98,7 @@ function SignContractContent() {
       if (response.ok) {
         setIsSigned(true);
         setTimeout(() => {
-          router.push('/mes-reservations');
+          router.push('/dashboard/prestation');
         }, 3000);
       } else {
         console.error('Erreur API signature:', data);

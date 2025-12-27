@@ -28,6 +28,7 @@ export default function AdminLivraisonsPage() {
   const [deliveries, setDeliveries] = useState<any[]>([]);
   const [filteredDeliveries, setFilteredDeliveries] = useState<any[]>([]);
   const [reservationsData, setReservationsData] = useState<any[]>([]);
+  const [clientReservationsData, setClientReservationsData] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'livraison' | 'retrait'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,13 +56,20 @@ useEffect(() => {
 
         if (ordersError) throw ordersError;
 
-        // Récupérer les réservations associées
+        // Récupérer les réservations associées (ancienne table)
         const { data: reservationsData } = await supabase
           .from('reservations')
           .select('*')
           .order('start_date', { ascending: false });
 
+        // Récupérer les client_reservations (nouvelle table) avec l'adresse de l'événement
+        const { data: clientReservationsData } = await supabase
+          .from('client_reservations')
+          .select('*')
+          .order('start_at', { ascending: false });
+
         setReservationsData(reservationsData || []);
+        setClientReservationsData(clientReservationsData || []);
 
         // Créer la liste des livraisons/récupérations
         const deliveriesList: any[] = [];
@@ -69,34 +77,93 @@ useEffect(() => {
         
         (ordersData || []).forEach((order) => {
           if (order.delivery_option && order.delivery_option !== 'retrait') {
-            // Trouver la réservation associée
+            // Trouver la réservation associée (ancienne table)
             let reservation = null;
             if (order.metadata?.reservation_id && reservationsData) {
               reservation = reservationsData.find(r => r.id === order.metadata.reservation_id);
             }
 
+            // Trouver la client_reservation associée (nouvelle table) - priorité sur l'adresse de l'événement
+            let clientReservation = null;
+            if (order.metadata?.client_reservation_id && clientReservationsData) {
+              clientReservation = clientReservationsData.find(cr => cr.id === order.metadata.client_reservation_id);
+            } else if (order.customer_email && clientReservationsData) {
+              // Essayer de trouver par email si pas d'ID direct
+              clientReservation = clientReservationsData.find(cr => 
+                cr.customer_email?.toLowerCase() === order.customer_email?.toLowerCase()
+              );
+            }
+
+            // Prioriser l'adresse de l'événement depuis client_reservations
+            const eventAddress = clientReservation?.address || 
+                                 order.delivery_address || 
+                                 reservation?.address || 
+                                 'N/A';
+
             deliveriesList.push({
               id: `livraison_${order.id}`,
               type: 'livraison',
-              customer_name: order.customer_name || 'Client',
-              customer_email: order.customer_email,
-              customer_phone: order.customer_phone,
-              address: order.delivery_address || reservation?.address || 'N/A',
+              customer_name: clientReservation?.customer_name || order.customer_name || 'Client',
+              customer_email: clientReservation?.customer_email || order.customer_email,
+              customer_phone: clientReservation?.customer_phone || order.customer_phone,
+              address: eventAddress,
               delivery_option: order.delivery_option,
-              start_date: reservation?.start_date || null,
-              end_date: reservation?.end_date || null,
+              start_date: clientReservation?.start_at || reservation?.start_date || null,
+              end_date: clientReservation?.end_at || reservation?.end_date || null,
               created_at: order.created_at,
               order: order,
+              clientReservation: clientReservation,
             });
 
             // Marquer cette réservation comme traitée
             if (reservation?.id) {
               processedReservations.add(reservation.id);
             }
+            if (clientReservation?.id) {
+              processedReservations.add(`client_${clientReservation.id}`);
+            }
           }
         });
 
         // Pour les récupérations, on utilise la date de fin de réservation
+        // D'abord les client_reservations (nouvelle table)
+        if (clientReservationsData) {
+          clientReservationsData.forEach((clientReservation, index) => {
+            if (clientReservation.address && clientReservation.end_at) {
+              // Vérifier si on a déjà une livraison pour cette réservation
+              const hasDelivery = processedReservations.has(`client_${clientReservation.id}`);
+
+              if (!hasDelivery) {
+                // Récupérer l'order associé
+                let order = null;
+                if (clientReservation.source === 'direct_solution' && ordersData) {
+                  // Chercher l'order par email ou ID
+                  order = ordersData.find(o => 
+                    o.customer_email?.toLowerCase() === clientReservation.customer_email?.toLowerCase() ||
+                    o.metadata?.client_reservation_id === clientReservation.id
+                  );
+                }
+
+                deliveriesList.push({
+                  id: `recup_client_${clientReservation.id}_${index}`,
+                  type: 'récupération',
+                  customer_name: clientReservation.customer_name || order?.customer_name || 'Client',
+                  customer_email: clientReservation.customer_email || order?.customer_email || '',
+                  customer_phone: clientReservation.customer_phone || order?.customer_phone || '',
+                  address: clientReservation.address,
+                  delivery_option: order?.delivery_option || 'retrait',
+                  start_date: clientReservation.start_at,
+                  end_date: clientReservation.end_at,
+                  created_at: clientReservation.created_at,
+                  order: order,
+                  clientReservation: clientReservation,
+                });
+              }
+            }
+          });
+        }
+
+        // Ensuite les réservations (ancienne table)
         if (reservationsData) {
           reservationsData.forEach((reservation, index) => {
             if (reservation.address && reservation.end_date) {
@@ -389,7 +456,7 @@ useEffect(() => {
                 <>
                   <div className="space-y-4 mb-6">
                     {paginatedDeliveries.map((delivery) => {
-                      // Trouver la réservation associée
+                      // Trouver la réservation associée (ancienne table)
                       let reservation = delivery.reservation;
                       if (!reservation && delivery.order?.metadata?.reservation_id) {
                         reservation = reservationsData.find((r: any) => r.id === delivery.order.metadata.reservation_id);
@@ -407,7 +474,15 @@ useEffect(() => {
                           return false;
                         });
                       }
-                      const deliveryStatus = reservation?.delivery_status || null;
+                      
+                      // Trouver la client_reservation associée (nouvelle table)
+                      let clientReservation = delivery.clientReservation;
+                      if (!clientReservation && delivery.order?.metadata?.client_reservation_id && clientReservationsData) {
+                        clientReservation = clientReservationsData.find((cr: any) => cr.id === delivery.order.metadata.client_reservation_id);
+                      }
+                      
+                      // Prioriser le statut depuis client_reservation si disponible
+                      const deliveryStatus = clientReservation?.delivery_status || reservation?.delivery_status || null;
                       
                       const getStatusBadgeColor = (status: string | null) => {
                         if (status === 'termine') {

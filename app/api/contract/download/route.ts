@@ -159,7 +159,18 @@ export async function GET(req: NextRequest) {
     // Si toujours pas d'email, utiliser une valeur par défaut
     if (!customerEmail) {
       customerEmail = 'Non spécifié';
-      customerName = customerName || 'Client';
+    }
+    
+    // S'assurer que le nom du client est toujours spécifié
+    if (!customerName || customerName.trim() === '') {
+      // Essayer d'extraire le nom depuis l'email si disponible
+      if (customerEmail && customerEmail !== 'Non spécifié') {
+        const emailName = customerEmail.split('@')[0];
+        // Capitaliser la première lettre
+        customerName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+      } else {
+        customerName = 'Client';
+      }
     }
 
     // Générer le contrat PDF
@@ -249,10 +260,14 @@ async function generateContractPDF(reservation: any, customerName: string, custo
     year: 'numeric',
   });
 
-  // Calculer le nombre de jours
+  // Calculer le nombre de jours (basé sur les jours calendaires, pas les heures)
   const start = new Date(startDateField);
   const end = new Date(endDateField);
-  const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  // Normaliser les dates à minuit pour comparer uniquement les jours calendaires
+  const startMidnight = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const endMidnight = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  // Calculer la différence en jours calendaires
+  const daysDiff = Math.max(1, Math.round((endMidnight.getTime() - startMidnight.getTime()) / (1000 * 60 * 60 * 24)) + 1);
 
   // Charger la signature du prestataire
   const providerSignatureBase64 = await getProviderSignature();
