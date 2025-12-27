@@ -303,6 +303,9 @@ export default function BookPageContent() {
     peopleCount: number | null;
     additionalMics: Array<{ type: 'filaire' | 'sans-fil'; price: number }>;
     customerEmail: string;
+    firstName: string;
+    lastName: string;
+    eventAddress: string;
   }) => {
     // Mettre à jour les états avec les données du wizard
     setStartDate(wizardData.startDate);
