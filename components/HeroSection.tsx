@@ -29,7 +29,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
     fr: {
       title1Prefix: 'Solutions',
       title1Suffix: 'clé en main à paris',
-      title2: 'Intervention rapide et réservation assistée par IA',
+      title2: 'Intervention rapide et réservation simplifiée',
       subtitle: 'Conférences, événements, soirées, mariages. Nous livrons, installons et réglons une solution adaptée à votre événement, sans stress',
       cta: 'Préparer mon événement',
       ctaSecondary: 'Intervention urgente',
@@ -39,7 +39,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
     en: {
       title1Prefix: 'Turnkey',
       title1Suffix: 'solutions in Paris',
-      title2: 'Rapid intervention and AI-assisted booking',
+      title2: 'Rapid intervention and simplified booking',
       subtitle: 'Conferences, events, parties, weddings. We deliver, install and set up a solution adapted to your event, stress-free',
       cta: 'Prepare my event',
       ctaSecondary: 'Urgent intervention',
