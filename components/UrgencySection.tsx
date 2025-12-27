@@ -12,7 +12,7 @@ export default function UrgencySection({ language }: UrgencySectionProps) {
       description: 'Un problème technique de dernière minute ?',
       description2: 'Absence de son, micro défaillant, équipement manquant ?',
       description3: 'Nous intervenons rapidement sous réserve de disponibilité.',
-      description4: 'Service premium réservé aux situations urgentes.',
+      description4: 'Service premium réservé aux situations urgentes 24h/24 7j/7',
       cta: 'Demande urgente'
     },
     en: {
@@ -21,7 +21,7 @@ export default function UrgencySection({ language }: UrgencySectionProps) {
       description: 'A last-minute technical problem?',
       description2: 'No sound, faulty microphone, missing equipment?',
       description3: 'We intervene quickly subject to availability.',
-      description4: 'Premium service reserved for urgent situations.',
+      description4: 'Premium service reserved for urgent situations 24/7',
       cta: 'Urgent request'
     }
   };
