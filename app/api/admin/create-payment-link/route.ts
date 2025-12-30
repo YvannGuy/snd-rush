@@ -196,141 +196,327 @@ export async function POST(req: NextRequest) {
       return `${hours}h${minutes}`;
     };
 
-    // Créer le contenu HTML de l'email avec le lien vers la première session (produits ou caution)
-    const productsHtml = customProducts.length > 0
-      ? `
-        <div style="background-color: #ffffff !important; background: #ffffff !important; padding: 25px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #F2431E; box-shadow: 0 2px 8px rgba(242, 67, 30, 0.1);">
-          <h3 style="color: #F2431E; margin-top: 0; margin-bottom: 20px; font-size: 20px; font-weight: bold; padding-bottom: 10px; border-bottom: 2px solid #F2431E;">🛍️ Produits personnalisés</h3>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 0; background-color: #ffffff !important; background: #ffffff !important;">
-            <thead>
-              <tr>
-                <th style="padding: 12px; text-align: left; border: 2px solid #F2431E; background-color: #F2431E !important; background: #F2431E !important; color: #ffffff; font-weight: bold;">Produit</th>
-                <th style="padding: 12px; text-align: right; border: 2px solid #F2431E; background-color: #F2431E !important; background: #F2431E !important; color: #ffffff; font-weight: bold;">Prix</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${customProducts.map((product: { name: string; price: number }) => `
-                <tr style="background-color: #ffffff !important; background: #ffffff !important;">
-                  <td style="padding: 12px; border: 1px solid #F2431E; color: #000000; background-color: #ffffff !important; background: #ffffff !important;">${product.name}</td>
-                  <td style="padding: 12px; text-align: right; border: 1px solid #F2431E; color: #000000; background-color: #ffffff !important; background: #ffffff !important;">${product.price.toFixed(2)}€</td>
+    // Formater le nom du client (première lettre en majuscule)
+    const formatCustomerName = (name: string) => {
+      return name.toLowerCase().split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ');
+    };
+
+    // Générer le HTML des produits personnalisés pour le nouveau template
+    const productsRowsHtml = customProducts.length > 0
+      ? customProducts.map((product: { name: string; price: number }) => `
+                <tr class="product-row">
+                  <td style="padding:10px 0;color:#111111;font-weight:700;">${product.name}</td>
+                  <td align="right" style="padding:10px 0;color:#111111;font-weight:700;">${product.price.toFixed(2)}€</td>
                 </tr>
-              `).join('')}
-              <tr style="font-weight: bold; background-color: #ffffff !important; background: #ffffff !important;">
-                <td style="padding: 12px; border: 2px solid #F2431E; color: #F2431E; background-color: #ffffff !important; background: #ffffff !important;">Total produits</td>
-                <td style="padding: 12px; text-align: right; border: 2px solid #F2431E; color: #F2431E; background-color: #ffffff !important; background: #ffffff !important;">${productsTotal.toFixed(2)}€</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      `
+              `).join('') + `
+                <tr class="product-row" style="border-top:1px solid #f2f2f2;">
+                  <td style="padding:10px 0;color:#111111;font-weight:700;">Total produits</td>
+                  <td align="right" style="padding:10px 0;color:#e27431;font-weight:800;">${productsTotal.toFixed(2)}€</td>
+                </tr>
+              `
       : '';
 
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html style="background-color: #ffffff;">
+    const productsSectionHtml = customProducts.length > 0
+      ? `
+                <!-- Products Card -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:14px;background:#ffffff;border:1px solid #f2f2f2;border-radius:14px;">
+                  <tr>
+                    <td class="card-padding" style="padding:12px 12px 6px 12px;font-size:13px;color:#333333;">
+                      <div style="font-weight:700;color:#111111;margin-bottom:10px;font-size:14px;">🛍️ Produits personnalisés</div>
+                      <table role="presentation" class="product-table" width="100%" cellspacing="0" cellpadding="0" style="font-size:13px;border-collapse:collapse;">
+                        <tr class="product-header">
+                          <td style="padding:8px 0;color:#666666;border-bottom:1px solid #f2f2f2;font-weight:600;">Produit</td>
+                          <td align="right" style="padding:8px 0;color:#666666;border-bottom:1px solid #f2f2f2;font-weight:600;">Prix</td>
+                        </tr>
+                        ${productsRowsHtml}
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              `
+      : '';
+
+    const emailHtml = `<!doctype html>
+<html lang="fr">
         <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>SoundRush Paris - Récapitulatif réservation</title>
+    <style type="text/css">
+      /* Reset pour emails */
+      body, table, td, p, a, li, blockquote {
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+      table, td {
+        mso-table-lspace: 0pt;
+        mso-table-rspace: 0pt;
+      }
+      img {
+        -ms-interpolation-mode: bicubic;
+        border: 0;
+        height: auto;
+        line-height: 100%;
+        outline: none;
+        text-decoration: none;
+      }
+      /* Media queries pour mobile */
+      @media only screen and (max-width: 600px) {
+        .email-container {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        .email-content {
+          padding: 16px !important;
+        }
+        .header-padding {
+          padding: 16px !important;
+        }
+        .body-padding {
+          padding: 16px 16px 8px 16px !important;
+        }
+        .footer-padding {
+          padding: 12px 16px 16px 16px !important;
+        }
+        .card-padding {
+          padding: 12px 12px 6px 12px !important;
+        }
+        .title-text {
+          font-size: 18px !important;
+        }
+        .subtitle-text {
+          font-size: 13px !important;
+        }
+        .info-label {
+          width: 100% !important;
+          display: block !important;
+          margin-bottom: 4px !important;
+        }
+        .info-value {
+          width: 100% !important;
+          display: block !important;
+          margin-bottom: 8px !important;
+        }
+        .cta-button {
+          padding: 12px 16px !important;
+          font-size: 13px !important;
+          width: 100% !important;
+          display: block !important;
+          text-align: center !important;
+        }
+        .footer-info {
+          text-align: left !important;
+        }
+        .footer-badge {
+          margin-top: 12px !important;
+          text-align: left !important;
+        }
+        .header-title {
+          font-size: 16px !important;
+        }
+        .header-subtitle {
+          font-size: 11px !important;
+        }
+        .deposit-amount {
+          font-size: 24px !important;
+        }
+        .product-table {
+          width: 100% !important;
+        }
+        .product-row td {
+          display: block !important;
+          width: 100% !important;
+          text-align: left !important;
+          padding: 6px 0 !important;
+        }
+        .product-row td:first-child {
+          font-weight: 600 !important;
+          color: #666666 !important;
+        }
+        .product-row td:last-child {
+          font-weight: 700 !important;
+          color: #111111 !important;
+          margin-bottom: 8px !important;
+          padding-bottom: 8px !important;
+          border-bottom: 1px solid #f2f2f2 !important;
+        }
+        .product-header {
+          display: none !important;
+        }
+      }
+      /* Styles pour Outlook */
+      .outlook-group-fix {
+        width: 100% !important;
+      }
+    </style>
         </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #000000; background-color: #ffffff !important; margin: 0; padding: 0; background: #ffffff !important;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff !important; background: #ffffff !important; padding: 40px 20px;">
-            <!-- Header avec logo -->
-            <div style="text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #F2431E;">
-              <div style="background-color: #F2431E; color: #ffffff; padding: 20px; border-radius: 8px; display: inline-block; margin-bottom: 15px;">
-                <h1 style="margin: 0; font-size: 32px; color: #ffffff; font-weight: bold; letter-spacing: 1px;">SoundRush Paris</h1>
+  <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;">
+    <!-- Preheader (texte caché) -->
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px;max-width:0;max-height:0;mso-hide:all;">
+      Récapitulatif de votre réservation SoundRush Paris • Paiement sécurisé Stripe
               </div>
-              <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">La location sono express à Paris en 2min</p>
-            </div>
-            
-            <!-- Main Content -->
-            <div style="background-color: #ffffff !important; background: #ffffff !important;">
-              <h2 style="color: #F2431E; margin-top: 0; margin-bottom: 30px; font-size: 26px; text-align: center; font-weight: bold;">Récapitulatif de votre réservation</h2>
-              
-              <!-- Informations client -->
-              <div style="background-color: #ffffff !important; background: #ffffff !important; padding: 25px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #F2431E; box-shadow: 0 2px 8px rgba(242, 67, 30, 0.1);">
-                <h3 style="color: #F2431E; margin-top: 0; margin-bottom: 20px; font-size: 20px; font-weight: bold; padding-bottom: 10px; border-bottom: 2px solid #F2431E;">📋 Informations client</h3>
-                <div style="line-height: 1.8;">
-                  <p style="margin: 10px 0; color: #000000;"><strong style="color: #F2431E; display: inline-block; min-width: 180px;">Nom :</strong> <span style="color: #000000;">${customerName}</span></p>
-                  <p style="margin: 10px 0; color: #000000;"><strong style="color: #F2431E; display: inline-block; min-width: 180px;">Email :</strong> <a href="mailto:${customerEmail}" style="color: #0066cc; text-decoration: none;">${customerEmail}</a></p>
-                  <p style="margin: 10px 0; color: #000000;"><strong style="color: #F2431E; display: inline-block; min-width: 180px;">Adresse de l'événement :</strong> <span style="color: #000000;">${eventAddress}</span></p>
-                  ${participants ? `<p style="margin: 10px 0; color: #000000;"><strong style="color: #F2431E; display: inline-block; min-width: 180px;">Nombre de participants :</strong> <span style="color: #000000;">${participants}</span></p>` : ''}
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f5f5;margin:0;padding:0;">
+      <tr>
+        <td align="center" style="padding:12px;">
+          <table role="presentation" class="email-container" width="600" cellspacing="0" cellpadding="0" style="width:100%;max-width:600px;border:1px solid #f2f2f2;border-radius:16px;overflow:hidden;background:#ffffff;margin:0 auto;">
+            <!-- Header -->
+            <tr>
+              <td class="header-padding" style="background:#e27431;padding:16px 20px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td class="header-title" style="font-family:Arial,Helvetica,sans-serif;color:#ffffff;font-size:18px;font-weight:700;line-height:1.2;">
+                      SoundRush Paris
+                    </td>
+                    <td align="right" class="header-subtitle" style="font-family:Arial,Helvetica,sans-serif;color:#ffffff;font-size:12px;line-height:1.2;">
+                      Location sono express
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" class="header-subtitle" style="font-family:Arial,Helvetica,sans-serif;color:#fff3ea;font-size:12px;padding-top:6px;line-height:1.4;">
+                      La location sono express à Paris en 2min
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <!-- Body -->
+            <tr>
+              <td class="body-padding" style="padding:20px 20px 8px 20px;font-family:Arial,Helvetica,sans-serif;color:#111111;">
+                <div class="title-text" style="font-size:20px;font-weight:700;line-height:1.2;margin-bottom:8px;">
+                  Récapitulatif de votre réservation ✅
                 </div>
-              </div>
-
-              <!-- Dates et heures -->
-              <div style="background-color: #ffffff !important; background: #ffffff !important; padding: 25px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #F2431E; box-shadow: 0 2px 8px rgba(242, 67, 30, 0.1);">
-                <h3 style="color: #F2431E; margin-top: 0; margin-bottom: 20px; font-size: 20px; font-weight: bold; padding-bottom: 10px; border-bottom: 2px solid #F2431E;">📅 Dates et heures</h3>
-                <div style="line-height: 1.8;">
-                  <p style="margin: 10px 0; color: #000000;"><strong style="color: #F2431E; display: inline-block; min-width: 180px;">Date de début :</strong> <span style="color: #000000;">${formatDate(startDate)} à ${formatTime(startTime)}</span></p>
-                  <p style="margin: 10px 0; color: #000000;"><strong style="color: #F2431E; display: inline-block; min-width: 180px;">Date de fin :</strong> <span style="color: #000000;">${formatDate(endDate)} à ${formatTime(endTime)}</span></p>
+                <div class="subtitle-text" style="margin-top:10px;font-size:14px;line-height:1.6;color:#333333;">
+                  Merci de votre confiance. Voici le détail de votre réservation et le lien pour payer vos produits en toute sécurité.
                 </div>
-              </div>
-
-              ${productsHtml}
-
-              <!-- Caution -->
-              <div style="background-color: #fff7ed !important; background: #fff7ed !important; padding: 25px; border-radius: 10px; border: 3px solid #F2431E; margin-top: 24px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(242, 67, 30, 0.15);">
-                <h3 style="color: #F2431E; margin-top: 0; margin-bottom: 15px; font-size: 20px; font-weight: bold; padding-bottom: 10px; border-bottom: 2px solid #F2431E;">💰 Caution remboursable</h3>
-                <div style="text-align: center; margin: 20px 0;">
-                  <p style="font-size: 36px; font-weight: bold; margin: 0; color: #F2431E; letter-spacing: 1px;">${deposit.toFixed(2)}€</p>
-                </div>
-                <p style="margin-top: 15px; font-size: 14px; color: #000000; line-height: 1.7; text-align: center; background-color: #ffffff; padding: 15px; border-radius: 6px;">
-                  Cette autorisation de caution sert à garantir votre location d'équipement sono et vidéo. 
-                  Le montant n'est pas débité immédiatement, il reste simplement bloqué.
-                </p>
-                <div style="text-align: center; margin-top: 15px;">
-                  <p style="margin: 0; font-size: 12px; color: #666;">
-                    🔒 Paiement 100% sécurisé par Stripe
-                  </p>
-                </div>
-              </div>
-
-              <!-- Bouton CTA -->
-              <div style="text-align: center; margin-top: 40px; margin-bottom: 30px;">
-                <a href="${checkoutUrl}" 
-                   style="display: inline-block; background-color: #F2431E; color: #ffffff; padding: 20px 50px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 18px; box-shadow: 0 6px 20px rgba(242, 67, 30, 0.4); transition: all 0.3s ease;">
-                  ${customProducts.length > 0 && productsTotal > 0 ? '💳 Payer les produits maintenant' : '💳 Payer la caution maintenant'}
-                </a>
-                <div style="margin-top: 15px; text-align: center;">
-                  <p style="margin: 0; font-size: 12px; color: #666;">
-                    🔒 Paiement sécurisé
-                  </p>
-                </div>
-              </div>
-              ${customProducts.length > 0 && productsTotal > 0 ? '<p style="text-align: center; color: #F2431E; font-size: 15px; margin-top: 20px; font-weight: 600; padding: 15px; background-color: #fff7ed; border-radius: 8px; border-left: 4px solid #F2431E;">ℹ️ Après le paiement des produits, vous serez redirigé vers le paiement de la caution.</p>' : ''}
-
-              <!-- Footer -->
-              <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #F2431E;">
-                <p style="color: #000000; font-size: 15px; text-align: center; margin-bottom: 20px; line-height: 1.6;">
-                  Nous sommes ravis de vous accompagner dans votre événement.<br>
+                <!-- Client Info Card -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:16px;background:#fff7f1;border:1px solid #ffe1cf;border-radius:14px;">
+                  <tr>
+                    <td class="card-padding" style="padding:12px 12px 6px 12px;font-size:13px;color:#333333;">
+                      <div style="font-weight:700;color:#111111;margin-bottom:10px;font-size:14px;">📋 Informations client</div>
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:13px;">
+                        <tr>
+                          <td class="info-label" style="padding:6px 0;color:#666666;width:42%;vertical-align:top;">Nom</td>
+                          <td class="info-value" style="padding:6px 0;color:#111111;font-weight:700;word-break:break-word;">${formatCustomerName(customerName)}</td>
+                        </tr>
+                        <tr>
+                          <td class="info-label" style="padding:6px 0;color:#666666;width:42%;vertical-align:top;">Email</td>
+                          <td class="info-value" style="padding:6px 0;color:#111111;word-break:break-word;">
+                            <a href="mailto:${customerEmail}" style="color:#e27431;text-decoration:none;font-weight:700;">${customerEmail}</a>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="info-label" style="padding:6px 0;color:#666666;width:42%;vertical-align:top;">Adresse</td>
+                          <td class="info-value" style="padding:6px 0;color:#111111;font-weight:700;word-break:break-word;">${eventAddress}</td>
+                        </tr>
+                        ${participants ? `
+                        <tr>
+                          <td class="info-label" style="padding:6px 0;color:#666666;width:42%;vertical-align:top;">Participants</td>
+                          <td class="info-value" style="padding:6px 0;color:#111111;font-weight:700;">${participants}</td>
+                        </tr>
+                        ` : ''}
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+                <!-- Dates Card -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:14px;background:#ffffff;border:1px solid #f2f2f2;border-radius:14px;">
+                  <tr>
+                    <td class="card-padding" style="padding:12px 12px 6px 12px;font-size:13px;color:#333333;">
+                      <div style="font-weight:700;color:#111111;margin-bottom:10px;font-size:14px;">📅 Dates et heures</div>
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:13px;">
+                        <tr>
+                          <td class="info-label" style="padding:6px 0;color:#666666;width:42%;vertical-align:top;">Date de début</td>
+                          <td class="info-value" style="padding:6px 0;color:#111111;font-weight:700;word-break:break-word;">${formatDate(startDate)} à ${formatTime(startTime)}</td>
+                        </tr>
+                        <tr>
+                          <td class="info-label" style="padding:6px 0;color:#666666;width:42%;vertical-align:top;">Date de fin</td>
+                          <td class="info-value" style="padding:6px 0;color:#111111;font-weight:700;word-break:break-word;">${formatDate(endDate)} à ${formatTime(endTime)}</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+                ${productsSectionHtml}
+                <!-- Deposit Card -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:14px;background:#fff7f1;border:1px solid #ffe1cf;border-radius:14px;">
+                  <tr>
+                    <td class="card-padding" style="padding:12px 12px 6px 12px;font-size:13px;color:#333333;">
+                      <div style="font-weight:700;color:#111111;margin-bottom:10px;font-size:14px;">💰 Caution remboursable</div>
+                      <div class="deposit-amount" style="font-size:18px;font-weight:800;color:#e27431;margin-bottom:6px;line-height:1.2;">${deposit.toFixed(2)}€</div>
+                      <div style="font-size:13px;line-height:1.6;color:#333333;">
+                        Cette autorisation de caution sert à garantir votre location d'équipement sono et vidéo. 
+                        Le montant n'est pas débité immédiatement, il reste simplement bloqué.
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                <!-- CTA -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:18px;">
+                  <tr>
+                    <td align="center" style="padding:0;">
+                      <a href="${checkoutUrl}" 
+                         class="cta-button"
+                         style="display:inline-block;background:#e27431;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:800;padding:14px 18px;border-radius:12px;max-width:100%;word-break:break-word;">
+                        ${customProducts.length > 0 && productsTotal > 0 ? '💳 Payer les produits maintenant' : '💳 Payer la caution maintenant'}
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td align="center" style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#666666;line-height:1.6;">
+                      🔒 Paiement 100% sécurisé par Stripe<br/>
+                      ${customProducts.length > 0 && productsTotal > 0 ? 'ℹ️ Après le paiement des produits, vous serez redirigé vers le paiement de la caution.' : ''}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td align="center" style="padding-top:10px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#999999;line-height:1.5;word-break:break-all;">
+                      Si le bouton ne fonctionne pas, copiez-collez ce lien :<br/>
+                      <span style="color:#e27431;word-break:break-all;">${checkoutUrl}</span>
+                    </td>
+                  </tr>
+                </table>
+                <!-- Closing -->
+                <div style="margin-top:18px;font-size:14px;line-height:1.6;color:#333333;">
+                  Nous sommes ravis de vous accompagner dans votre événement.<br/>
                   Notre équipe reste disponible pour toute question.
-                </p>
-                <div style="background-color: #ffffff !important; background: #ffffff !important; padding: 25px; border-radius: 8px; border: 2px solid #F2431E; margin-top: 20px;">
-                  <p style="color: #F2431E; font-size: 16px; font-weight: bold; text-align: center; margin: 0 0 15px 0;">L'équipe SoundRush Paris</p>
-                  <div style="text-align: center; color: #000000; font-size: 14px; line-height: 2;">
-                    <p style="margin: 5px 0;">
-                      <strong style="color: #F2431E;">📧 Email :</strong> 
-                      <a href="mailto:contact@guylocationevents.com" style="color: #0066cc; text-decoration: none;">contact@guylocationevents.com</a>
-                    </p>
-                    <p style="margin: 5px 0;">
-                      <strong style="color: #F2431E;">📞 Téléphone :</strong> 
-                      <a href="tel:+33651084994" style="color: #0066cc; text-decoration: none;">06 51 08 49 94</a>
-                    </p>
-                    <p style="margin: 5px 0;">
-                      <strong style="color: #F2431E;">📍 Adresse :</strong> 
-                      <span style="color: #000000;">Paris, Île-de-France</span>
-                    </p>
-                    <p style="margin: 15px 0 5px 0; color: #666; font-size: 13px;">
-                      Service disponible 24h/24 - 7j/7
-                    </p>
-                  </div>
                 </div>
-              </div>
-            </div>
+                <div style="margin-top:12px;font-size:14px;font-weight:700;color:#111111;">
+                  L'équipe SoundRush Paris
+                </div>
+              </td>
+            </tr>
+            <!-- Footer -->
+            <tr>
+              <td class="footer-padding" style="padding:16px 20px 20px 20px;background:#ffffff;border-top:1px solid #f2f2f2;font-family:Arial,Helvetica,sans-serif;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td class="footer-info" style="font-size:12px;color:#666666;line-height:1.7;vertical-align:top;">
+                      📧 Email : <a href="mailto:contact@guylocationevents.com" style="color:#e27431;text-decoration:none;font-weight:700;word-break:break-all;">contact@guylocationevents.com</a><br/>
+                      📞 Téléphone : <a href="tel:+33651084994" style="color:#e27431;text-decoration:none;font-weight:700;">06 51 08 49 94</a><br/>
+                      📍 Adresse : Paris, Île-de-France<br/>
+                      <span style="color:#999999;">Service disponible 24h/24 - 7j/7</span>
+                    </td>
+                    <td align="right" class="footer-badge" style="font-size:12px;color:#999999;line-height:1.7;vertical-align:top;padding-left:12px;">
+                      <span style="display:inline-block;padding:6px 10px;border:1px solid #ffe1cf;border-radius:999px;color:#e27431;font-weight:700;background:#fff7f1;">
+                        Support express
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+          <!-- tiny note -->
+          <div style="max-width:600px;margin:10px auto 0 auto;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;color:#b0b0b0;text-align:center;">
+            Cet email vous a été envoyé suite à votre demande de réservation SoundRush Paris.
           </div>
+        </td>
+      </tr>
+    </table>
         </body>
-      </html>
-    `;
+</html>`;
 
     // Envoyer l'email au client
     let emailSent = false;
@@ -354,18 +540,18 @@ export async function POST(req: NextRequest) {
         console.log('📧 Longueur RESEND_API_KEY:', process.env.RESEND_API_KEY?.length || 0);
         console.log('📧 Premiers caractères API key:', process.env.RESEND_API_KEY?.substring(0, 7) || 'N/A');
         
-        const emailResult = await resend.emails.send({
-          from: process.env.RESEND_FROM!,
-          to: customerEmail,
-          subject: `Récapitulatif de votre réservation SoundRush - Paiement de la caution`,
-          html: emailHtml,
-        });
+    const emailResult = await resend.emails.send({
+      from: process.env.RESEND_FROM!,
+      to: customerEmail,
+      subject: `Récapitulatif de votre réservation SoundRush - Paiement de la caution`,
+      html: emailHtml,
+    });
 
         console.log('📧 Résultat complet Resend:', JSON.stringify(emailResult, null, 2));
         console.log('📧 Email ID:', emailResult.data?.id);
         console.log('📧 Email Error:', emailResult.error);
 
-        if (emailResult.error) {
+    if (emailResult.error) {
           console.error('❌ Erreur envoi email:', emailResult.error);
           console.error('❌ Détails erreur:', JSON.stringify(emailResult.error, null, 2));
           emailError = emailResult.error.message || JSON.stringify(emailResult.error) || 'Erreur inconnue lors de l\'envoi de l\'email';
