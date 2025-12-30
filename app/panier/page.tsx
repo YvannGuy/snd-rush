@@ -53,9 +53,14 @@ export default function CartPage() {
           .from('user_profiles')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle(); // Utiliser maybeSingle() pour éviter les erreurs 400
 
-        if (!error && profile) {
+        // Ignorer les erreurs PGRST116 (no rows returned) qui sont normales
+        if (error && error.code !== 'PGRST116') {
+          console.warn('⚠️ Panier - Erreur récupération user_profiles:', error.code);
+        }
+
+        if (profile) {
           // Pré-remplir l'email
           if (user.email && !customerEmail) {
             setCustomerEmail(user.email);

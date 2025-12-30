@@ -15,16 +15,23 @@ export function useUser() {
       return;
     }
 
-    console.time('⏱️ useUser - getSession');
+    // Utiliser un identifiant unique pour éviter les conflits de timers
+    const timerId = `useUser-${Date.now()}-${Math.random()}`;
+    console.time(timerId);
+    
     // Récupérer la session initiale
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.timeEnd('⏱️ useUser - getSession');
+      console.timeEnd(timerId);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     }).catch((error) => {
       console.error('❌ Erreur getSession:', error);
-      console.timeEnd('⏱️ useUser - getSession');
+      try {
+        console.timeEnd(timerId);
+      } catch (e) {
+        // Ignorer si le timer n'existe pas
+      }
       setLoading(false);
     });
 

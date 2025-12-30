@@ -26,11 +26,16 @@ export default function UserIconWithName({ className = '', iconSize = 'md', show
 
       try {
         // Essayer de récupérer depuis user_profiles
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('user_profiles')
           .select('first_name')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle(); // Utiliser maybeSingle() pour éviter les erreurs 400
+
+        // Ignorer les erreurs PGRST116 (no rows returned) qui sont normales
+        if (error && error.code !== 'PGRST116') {
+          console.warn('⚠️ UserIconWithName - Erreur récupération user_profiles:', error.code);
+        }
 
         if (profile?.first_name) {
           setFirstName(profile.first_name.toLowerCase());
@@ -40,8 +45,11 @@ export default function UserIconWithName({ className = '', iconSize = 'md', show
           // Fallback: utiliser la partie avant @ de l'email
           setFirstName(user.email.split('@')[0].toLowerCase());
         }
-      } catch (error) {
-        console.error('Erreur récupération prénom:', error);
+      } catch (error: any) {
+        // Ne logger que les vraies erreurs (pas les erreurs 400 normales)
+        if (error?.code !== 'PGRST116' && error?.code !== '42P01') {
+          console.error('Erreur récupération prénom:', error);
+        }
         // Fallback vers user_metadata ou email
         if (user.user_metadata?.first_name) {
           setFirstName(user.user_metadata.first_name.toLowerCase());

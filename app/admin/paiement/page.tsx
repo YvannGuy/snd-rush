@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, X, Send, Loader2 } from 'lucide-react';
+import { Plus, X, Send, Loader2, Copy, Check, MessageCircle } from 'lucide-react';
 
 interface CustomProduct {
   id: string;
@@ -48,6 +48,8 @@ export default function AdminPaiementPage() {
   const [newProductPrice, setNewProductPrice] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [showCancelled, setShowCancelled] = useState(false);
+  const [paymentLink, setPaymentLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const texts = {
     fr: {
@@ -77,6 +79,12 @@ export default function AdminPaiementPage() {
       signInRequired: 'Connexion requise',
       signInDescription: 'Connectez-vous pour accéder à cette page.',
       signIn: 'Se connecter',
+      linkGenerated: 'Lien de paiement généré',
+      copyLink: 'Copier le lien',
+      linkCopied: 'Lien copié !',
+      openWhatsApp: 'Ouvrir WhatsApp',
+      shareViaWhatsApp: 'Partager via WhatsApp',
+      linkDescription: 'Le lien de paiement a été créé. Vous pouvez le copier ou l\'envoyer via WhatsApp.',
     },
     en: {
       title: 'Create payment link',
@@ -105,6 +113,17 @@ export default function AdminPaiementPage() {
       signInRequired: 'Sign in required',
       signInDescription: 'Sign in to access this page.',
       signIn: 'Sign in',
+      linkGenerated: 'Payment link generated',
+      copyLink: 'Copy link',
+      linkCopied: 'Link copied!',
+      openWhatsApp: 'Open WhatsApp',
+      shareViaWhatsApp: 'Share via WhatsApp',
+      linkDescription: 'Payment link has been created. You can copy it or send it via WhatsApp.',
+      linkGenerated: 'Payment link generated',
+      copyLink: 'Copy link',
+      linkCopied: 'Link copied!',
+      openWhatsApp: 'Open WhatsApp',
+      shareViaWhatsApp: 'Share via WhatsApp',
     },
   };
 
@@ -130,6 +149,34 @@ export default function AdminPaiementPage() {
 
   const removeProduct = (id: string) => {
     setCustomProducts(customProducts.filter(p => p.id !== id));
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (error) {
+      console.error('Erreur copie:', error);
+      // Fallback pour navigateurs plus anciens
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }
+  };
+
+  const openWhatsApp = (link: string) => {
+    const message = language === 'fr' 
+      ? `Bonjour, voici le lien pour effectuer le paiement de votre réservation :\n\n${link}`
+      : `Hello, here is the link to make your reservation payment:\n\n${link}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -169,14 +216,33 @@ export default function AdminPaiementPage() {
       });
 
       const data = await response.json();
+      
+      console.log('📡 Réponse complète de l\'API:', data);
 
       if (!response.ok) {
+        console.error('❌ Erreur API:', data);
         throw new Error(data.error || 'Erreur lors de l\'envoi');
       }
 
-      alert(language === 'fr' 
-        ? 'Email envoyé avec succès au client !' 
-        : 'Email sent successfully to client!');
+      // Stocker le lien de paiement
+      if (data.url) {
+        setPaymentLink(data.url);
+      }
+
+      // Vérifier si l'email a bien été envoyé
+      if (data.emailSent) {
+        console.log('✅ Email envoyé avec succès côté client');
+        console.log('✅ Session ID:', data.sessionId);
+        console.log('✅ URL checkout:', data.url);
+        // Ne plus utiliser alert, on affiche le lien dans l'interface
+      } else {
+        console.error('❌ Erreur envoi email:', data.emailError);
+        console.error('❌ Données complètes:', JSON.stringify(data, null, 2));
+        const errorMessage = data.emailError || 'Inconnue';
+        alert(language === 'fr' 
+          ? `⚠️ Le lien de paiement a été créé mais l'email n'a pas pu être envoyé.\n\nErreur: ${errorMessage}\n\nLe lien est disponible ci-dessous pour l'envoyer manuellement.` 
+          : `⚠️ Payment link created but email could not be sent.\n\nError: ${errorMessage}\n\nThe link is available below to send manually.`);
+      }
       
       // Réinitialiser le formulaire
       setCustomerName('');
@@ -394,6 +460,81 @@ export default function AdminPaiementPage() {
                       >
                         <X className="w-5 h-5" />
                       </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Lien de paiement généré */}
+              {paymentLink && (
+                <Card className="mb-6 border-green-500 bg-green-50">
+                  <CardContent className="p-4">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Check className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-green-900">{currentTexts.linkGenerated}</h3>
+                          <p className="text-sm text-green-700">
+                            {language === 'fr' 
+                              ? 'Le lien de paiement a été créé. Vous pouvez le copier ou l\'envoyer via WhatsApp.'
+                              : 'Payment link has been created. You can copy it or send it via WhatsApp.'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setPaymentLink(null);
+                            setLinkCopied(false);
+                          }}
+                          className="text-green-700 hover:text-green-900"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                      
+                      <div className="bg-white rounded-lg p-4 border-2 border-green-200">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-sm font-semibold text-gray-700">
+                            {language === 'fr' ? 'Lien de paiement :' : 'Payment link:'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <input
+                            type="text"
+                            readOnly
+                            value={paymentLink}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm font-mono text-gray-800"
+                            onClick={(e) => (e.target as HTMLInputElement).select()}
+                          />
+                          <Button
+                            onClick={() => copyToClipboard(paymentLink)}
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-2"
+                          >
+                            {linkCopied ? (
+                              <>
+                                <Check className="w-4 h-4 text-green-600" />
+                                {currentTexts.linkCopied}
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-4 h-4" />
+                                {currentTexts.copyLink}
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        
+                        <Button
+                          onClick={() => openWhatsApp(paymentLink)}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          {currentTexts.shareViaWhatsApp}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

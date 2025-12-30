@@ -52,6 +52,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validation de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerEmail)) {
+      return NextResponse.json(
+        { success: false, error: 'Adresse email invalide' },
+        { status: 400 }
+      );
+    }
+
     const deposit = parseFloat(depositAmount);
     if (isNaN(deposit) || deposit <= 0) {
       return NextResponse.json(
@@ -324,23 +333,68 @@ export async function POST(req: NextRequest) {
     `;
 
     // Envoyer l'email au client
-    const emailResult = await resend.emails.send({
-      from: process.env.RESEND_FROM!,
-      to: customerEmail,
-      subject: `Récapitulatif de votre réservation SoundRush - Paiement de la caution`,
-      html: emailHtml,
-    });
+    let emailSent = false;
+    let emailError: string | null = null;
+    
+    // Vérifications préalables avant d'essayer d'envoyer
+    if (!process.env.RESEND_API_KEY) {
+      console.error('❌ RESEND_API_KEY manquante');
+      emailError = 'Configuration Resend manquante (RESEND_API_KEY)';
+    } else if (!process.env.RESEND_FROM) {
+      console.error('❌ RESEND_FROM manquante');
+      emailError = 'Configuration Resend manquante (RESEND_FROM)';
+    } else {
+      try {
+        const env = process.env.NODE_ENV || 'development';
+        console.log('📧 ===== DÉBUT ENVOI EMAIL =====');
+        console.log('📧 Environnement:', env);
+        console.log('📧 Tentative d\'envoi d\'email à:', customerEmail);
+        console.log('📧 From:', process.env.RESEND_FROM);
+        console.log('📧 RESEND_API_KEY présent:', !!process.env.RESEND_API_KEY);
+        console.log('📧 Longueur RESEND_API_KEY:', process.env.RESEND_API_KEY?.length || 0);
+        console.log('📧 Premiers caractères API key:', process.env.RESEND_API_KEY?.substring(0, 7) || 'N/A');
+        
+        const emailResult = await resend.emails.send({
+          from: process.env.RESEND_FROM!,
+          to: customerEmail,
+          subject: `Récapitulatif de votre réservation SoundRush - Paiement de la caution`,
+          html: emailHtml,
+        });
 
-    if (emailResult.error) {
-      console.error('Erreur envoi email:', emailResult.error);
-      // Ne pas échouer si l'email échoue, la session Stripe est créée
+        console.log('📧 Résultat complet Resend:', JSON.stringify(emailResult, null, 2));
+        console.log('📧 Email ID:', emailResult.data?.id);
+        console.log('📧 Email Error:', emailResult.error);
+
+        if (emailResult.error) {
+          console.error('❌ Erreur envoi email:', emailResult.error);
+          console.error('❌ Détails erreur:', JSON.stringify(emailResult.error, null, 2));
+          emailError = emailResult.error.message || JSON.stringify(emailResult.error) || 'Erreur inconnue lors de l\'envoi de l\'email';
+        } else if (emailResult.data?.id) {
+          console.log('✅ Email envoyé avec succès');
+          console.log('✅ ID email:', emailResult.data.id);
+          console.log('📧 IMPORTANT: Vérifiez dans Resend Dashboard (https://resend.com/emails) si l\'email apparaît');
+          console.log('📧 IMPORTANT: Vérifiez aussi les spams/indésirables du destinataire');
+          emailSent = true;
+        } else {
+          console.warn('⚠️ Résultat Resend sans ID ni erreur:', emailResult);
+          emailError = 'Résultat Resend inattendu - pas d\'ID ni d\'erreur';
+        }
+        console.log('📧 ===== FIN ENVOI EMAIL =====');
+      } catch (emailException: any) {
+        console.error('❌ Exception lors de l\'envoi de l\'email:', emailException);
+        console.error('❌ Type erreur:', typeof emailException);
+        console.error('❌ Message:', emailException.message);
+        console.error('❌ Stack trace:', emailException.stack);
+        emailError = emailException.message || JSON.stringify(emailException) || 'Exception lors de l\'envoi de l\'email';
+      }
     }
 
     return NextResponse.json({
       success: true,
       sessionId: mainSessionId,
       url: checkoutUrl,
-      emailSent: !emailResult.error,
+      emailSent,
+      emailError: emailError || undefined,
     });
   } catch (error: any) {
     console.error('Erreur création lien de paiement:', error);
