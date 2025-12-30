@@ -574,20 +574,31 @@ function DashboardContent() {
 
         {/* Main Content */}
         <main className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsSidebarOpen(v => !v)}
+              className="lg:hidden"
+              aria-expanded={isSidebarOpen}
+              aria-controls="dashboard-sidebar"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">SoundRush</span>
+            </Link>
+          </div>
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-          {/* Header Mobile-First */}
+          {/* Header Desktop */}
           <div className="mb-4 sm:mb-6 lg:mb-8">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                {/* Bouton menu hamburger mobile */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsSidebarOpen(true)}
-                  className="lg:hidden"
-                >
-                  <Menu className="h-6 w-6" />
-                </Button>
                 <div className="flex-1 min-w-0">
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 truncate">
                     {currentTexts.dashboard}

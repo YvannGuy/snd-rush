@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
-import IASection from '@/components/IASection';
 import SolutionsSection from '@/components/SolutionsSection';
 import UrgencySection from '@/components/UrgencySection';
 import CommentCaMarcheSection from '@/components/CommentCaMarcheSection';
@@ -20,7 +19,6 @@ import SectionAnimation from '@/components/SectionAnimation';
 import ReservationModal from '@/components/ReservationModal';
 import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
-import CookieBanner from '@/components/CookieBanner';
 import SplashScreen from '@/components/SplashScreen';
 import ScenarioFAQSection from '@/components/ScenarioFAQSection';
 import BookingWizard from '@/components/BookingWizard';
@@ -35,11 +33,6 @@ export default function Home() {
   const [showContent, setShowContent] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardPackKey, setWizardPackKey] = useState<'conference' | 'soiree' | 'mariage' | null>(null);
-
-  const handleReservePack = (packId: number) => {
-    setSelectedPackId(packId);
-    setReservationModal(true);
-  };
 
   const handleCloseReservationModal = () => {
     setReservationModal(false);

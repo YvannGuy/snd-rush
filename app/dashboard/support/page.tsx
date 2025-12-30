@@ -11,6 +11,7 @@ import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Phone, MessageCircle, Clock, Mail, Menu } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect } from 'react';
 
 export default function SupportPage() {
@@ -48,19 +49,29 @@ export default function SupportPage() {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={handleToggleSidebar}
         />
-        <main className={`flex-1 p-6 max-w-4xl mx-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
+        <main className={`flex-1 overflow-y-auto w-full transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
           {/* Mobile Header */}
-          <div className="lg:hidden flex items-center justify-between mb-6">
+          <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsSidebarOpen(true)}
+              onClick={() => setIsSidebarOpen(v => !v)}
               className="lg:hidden"
+              aria-expanded={isSidebarOpen}
+              aria-controls="dashboard-sidebar"
             >
               <Menu className="h-6 w-6" />
             </Button>
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#F2431E] rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">♪</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">SoundRush</span>
+            </Link>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Support</h1>
+
+          <div className="p-6 max-w-4xl mx-auto w-full">
+            <h1 className="text-2xl font-bold text-gray-900 mb-6">Support</h1>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Téléphone */}
@@ -165,6 +176,7 @@ export default function SupportPage() {
               </Button>
             </CardContent>
           </Card>
+          </div>
         </main>
       </div>
       <Footer language={language} />
