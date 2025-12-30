@@ -119,11 +119,6 @@ export default function AdminPaiementPage() {
       openWhatsApp: 'Open WhatsApp',
       shareViaWhatsApp: 'Share via WhatsApp',
       linkDescription: 'Payment link has been created. You can copy it or send it via WhatsApp.',
-      linkGenerated: 'Payment link generated',
-      copyLink: 'Copy link',
-      linkCopied: 'Link copied!',
-      openWhatsApp: 'Open WhatsApp',
-      shareViaWhatsApp: 'Share via WhatsApp',
     },
   };
 
