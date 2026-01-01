@@ -314,6 +314,7 @@ export async function POST(req: NextRequest) {
             }
             
             // Envoyer un email de confirmation après paiement de l'acompte
+            console.log('📧 Début section envoi email de confirmation');
             try {
               // Priorité : email mis à jour > email Stripe > email réservation
               const customerEmail = updatedReservation.customer_email || session.customer_email || session.customer_details?.email || '';
@@ -392,91 +393,330 @@ export async function POST(req: NextRequest) {
                 const packName = packNames[updatedReservation.pack_key] || updatedReservation.pack_key || 'Pack';
                 const depositAmount = parseFloat(updatedReservation.price_total.toString()) * 0.3;
                 const balanceAmount = parseFloat(updatedReservation.price_total.toString()) - depositAmount;
+                const totalAmount = parseFloat(updatedReservation.price_total.toString());
+                
+                // Formatage des dates
+                const formatDate = (dateString: string | null) => {
+                  if (!dateString) return '—';
+                  const date = new Date(dateString);
+                  return date.toLocaleDateString('fr-FR', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  });
+                };
+                
+                const formatDateTime = (dateString: string | null) => {
+                  if (!dateString) return '—';
+                  const date = new Date(dateString);
+                  const dateStr = date.toLocaleDateString('fr-FR', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  });
+                  const timeStr = date.toLocaleTimeString('fr-FR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+                  return `${dateStr} à ${timeStr}`;
+                };
+                
+                const currentDate = new Date().toLocaleDateString('fr-FR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                });
+                const currentYear = new Date().getFullYear();
+                
+                const customerName = updatedReservation.customer_name || session.customer_details?.name || '—';
+                const customerPhone = updatedReservation.customer_phone || '—';
+                const eventAddress = updatedReservation.address || '—';
+                const startDateTime = formatDateTime(updatedReservation.start_at);
+                const endDateTime = formatDateTime(updatedReservation.end_at);
                 
                 const emailHtml = `
                   <!DOCTYPE html>
-                  <html style="background-color: #ffffff;">
+                  <html style="background:#ffffff;">
                     <head>
-                      <meta charset="utf-8">
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                      <meta charset="utf-8" />
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                      <title>Acompte payé - SoundRush Paris</title>
+                      <style type="text/css">
+                        /* Mobile-first base styles */
+                        body {
+                          margin: 0 !important;
+                          padding: 0 !important;
+                          -webkit-text-size-adjust: 100%;
+                          -ms-text-size-adjust: 100%;
+                        }
+                        table {
+                          border-collapse: collapse;
+                          mso-table-lspace: 0pt;
+                          mso-table-rspace: 0pt;
+                        }
+                        img {
+                          border: 0;
+                          height: auto;
+                          line-height: 100%;
+                          outline: none;
+                          text-decoration: none;
+                          -ms-interpolation-mode: bicubic;
+                        }
+                        a {
+                          text-decoration: none;
+                        }
+                        /* Media queries pour desktop */
+                        @media only screen and (min-width: 600px) {
+                          .email-container {
+                            width: 600px !important;
+                            max-width: 600px !important;
+                          }
+                          .header-logo {
+                            font-size: 20px !important;
+                            padding: 12px 14px !important;
+                          }
+                          .hero-title {
+                            font-size: 18px !important;
+                          }
+                          .section-label {
+                            font-size: 15px !important;
+                          }
+                          .table-cell {
+                            font-size: 14px !important;
+                          }
+                          .cta-button {
+                            padding: 14px 22px !important;
+                            font-size: 15px !important;
+                          }
+                        }
+                        /* Media queries pour mobile */
+                        @media only screen and (max-width: 599px) {
+                          .email-container {
+                            width: 100% !important;
+                            max-width: 100% !important;
+                            padding: 20px 12px !important;
+                          }
+                          .email-table {
+                            padding: 20px 15px !important;
+                          }
+                          .header-logo {
+                            font-size: 18px !important;
+                            padding: 10px 12px !important;
+                          }
+                          .header-status {
+                            display: block !important;
+                            margin-top: 10px !important;
+                            text-align: left !important;
+                          }
+                          .hero-title {
+                            font-size: 16px !important;
+                          }
+                          .section-label {
+                            font-size: 14px !important;
+                          }
+                          .table-cell {
+                            font-size: 13px !important;
+                            padding: 8px 10px !important;
+                          }
+                          .table-header {
+                            font-size: 13px !important;
+                            padding: 10px !important;
+                          }
+                          .cta-button {
+                            padding: 12px 18px !important;
+                            font-size: 14px !important;
+                            width: 100% !important;
+                            display: block !important;
+                            box-sizing: border-box !important;
+                          }
+                          .footer-text {
+                            font-size: 11px !important;
+                          }
+                        }
+                      </style>
                     </head>
-                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #000000; background-color: #ffffff !important; margin: 0; padding: 0;">
-                      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff !important; padding: 40px 20px;">
-                        <!-- Header -->
-                        <div style="text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #F2431E;">
-                          <div style="background-color: #F2431E; color: #ffffff; padding: 20px; border-radius: 8px; display: inline-block; margin-bottom: 15px;">
-                            <h1 style="margin: 0; font-size: 32px; color: #ffffff; font-weight: bold; letter-spacing: 1px;">SoundRush Paris</h1>
-                          </div>
-                          <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">La location sono express à Paris en 2min</p>
-                        </div>
-                        
-                        <!-- Main Content -->
-                        <div style="background-color: #ffffff !important;">
-                          <div style="text-align: center; margin-bottom: 30px;">
-                            <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
-                            <h2 style="color: #F2431E; margin-top: 0; margin-bottom: 20px; font-size: 28px; font-weight: bold;">Acompte payé avec succès !</h2>
-                            <p style="color: #000000; font-size: 18px; margin-bottom: 30px;">
-                              Votre date est maintenant bloquée. Votre réservation pour <strong>${packName}</strong> est confirmée.
-                            </p>
-                          </div>
-                          
-                          <!-- Récapitulatif -->
-                          <div style="background-color: #f9fafb; border: 2px solid #e5e7eb; border-radius: 10px; padding: 25px; margin-bottom: 30px;">
-                            <h3 style="color: #111827; margin-top: 0; margin-bottom: 20px; font-size: 20px; font-weight: bold;">Récapitulatif de votre réservation</h3>
-                            <div style="color: #000000; font-size: 16px; line-height: 2;">
-                              <div style="margin-bottom: 10px;"><strong>Pack :</strong> ${packName}</div>
-                              <div style="margin-bottom: 10px;"><strong>Acompte payé (30%) :</strong> ${depositAmount.toFixed(2)}€</div>
-                              <div style="margin-bottom: 10px;"><strong>Solde restant (70%) :</strong> ${balanceAmount.toFixed(2)}€</div>
-                              <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;"><strong>Total :</strong> ${parseFloat(updatedReservation.price_total.toString()).toFixed(2)}€</div>
-                            </div>
-                          </div>
-                          
-                          <!-- Prochaines étapes -->
-                          <div style="background-color: #fff7ed; padding: 30px; border-radius: 10px; border: 3px solid #F2431E; margin-bottom: 30px;">
-                            <h3 style="color: #F2431E; margin-top: 0; margin-bottom: 20px; font-size: 22px; font-weight: bold;">📅 Prochaines étapes</h3>
-                            <ol style="color: #000000; font-size: 16px; line-height: 2; padding-left: 20px; margin: 0;">
-                              <li style="margin-bottom: 15px;">
-                                Le <strong>solde restant (${balanceAmount.toFixed(2)}€)</strong> sera demandé automatiquement <strong>1 jour avant</strong> votre événement
-                              </li>
-                              <li style="margin-bottom: 15px;">
-                                La <strong>caution</strong> sera demandée <strong>2 jours avant</strong> votre événement (non débitée sauf incident)
-                              </li>
-                              <li style="margin-bottom: 15px;">
-                                Vous recevrez un email de rappel avant chaque échéance
-                              </li>
-                            </ol>
-                          </div>
-                          
-                          <!-- Bouton CTA -->
-                          <div style="text-align: center; margin: 40px 0;">
-                            <a href="${signupUrl}" 
-                               style="display: inline-block; background-color: #F2431E; color: #ffffff; padding: 18px 40px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 18px; box-shadow: 0 6px 20px rgba(242, 67, 30, 0.4);">
-                              🚀 Créer mon compte et voir ma réservation
-                            </a>
-                          </div>
-                          
-                          <!-- Footer -->
-                          <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #F2431E;">
-                            <p style="color: #000000; font-size: 15px; text-align: center; margin-bottom: 20px; line-height: 1.6;">
-                              Nous sommes ravis de vous accompagner dans votre événement.<br>
-                              Notre équipe reste disponible pour toute question.
-                            </p>
-                            <div style="background-color: #ffffff; padding: 25px; border-radius: 8px; border: 2px solid #F2431E; margin-top: 20px;">
-                              <p style="color: #F2431E; font-size: 16px; font-weight: bold; text-align: center; margin: 0 0 15px 0;">L'équipe SoundRush Paris</p>
-                              <div style="text-align: center; color: #000000; font-size: 14px; line-height: 2;">
-                                <p style="margin: 5px 0;">
-                                  <strong style="color: #F2431E;">📧 Email :</strong> 
-                                  <a href="mailto:contact@guylocationevents.com" style="color: #0066cc; text-decoration: none;">contact@guylocationevents.com</a>
-                                </p>
-                                <p style="margin: 5px 0;">
-                                  <strong style="color: #F2431E;">📞 Téléphone :</strong> 
-                                  <a href="tel:+33744782754" style="color: #0066cc; text-decoration: none;">07 44 78 27 54</a>
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                    <body style="margin:0;padding:0;background:#ffffff;font-family:Arial,sans-serif;color:#000;">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#ffffff;">
+                        <tr>
+                          <td align="center" style="padding:28px 12px;">
+                            <table role="presentation" class="email-container" width="600" cellspacing="0" cellpadding="0" style="width:600px;max-width:600px;background:#ffffff;border:1px solid #f1f1f1;border-radius:12px;overflow:hidden;">
+                              <!-- Header -->
+                              <tr>
+                                <td class="email-table" style="padding:26px 22px 18px 22px;border-bottom:3px solid #F2431E;">
+                                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                      <td>
+                                        <div style="display:inline-block;background:#F2431E;color:#fff;padding:12px 14px;border-radius:10px;font-weight:700;font-size:18px;">
+                                          SoundRush Paris
+                                        </div>
+                                        <div style="margin-top:8px;color:#666;font-size:13px;">
+                                          La location sono express à Paris en 2min
+                                        </div>
+                                      </td>
+                                      <td align="right" class="header-status" style="color:#666;font-size:13px;">
+                                        <div><strong>Statut :</strong> Acompte reçu ✅</div>
+                                        <div><strong>Date :</strong> ${currentDate}</div>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                              <!-- Hero -->
+                              <tr>
+                                <td class="email-table" style="padding:26px 22px 10px 22px;">
+                                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fff7ed;border:2px solid #F2431E;border-radius:12px;">
+                                    <tr>
+                                      <td style="padding:18px 18px;">
+                                        <div class="hero-title" style="font-size:16px;font-weight:700;color:#F2431E;margin:0 0 8px 0;">
+                                          ✅ Acompte payé avec succès
+                                        </div>
+                                        <div style="color:#000;font-size:14px;line-height:1.7;">
+                                          Votre date est maintenant bloquée. Votre réservation pour <strong>${packName}</strong> est confirmée.
+                                        </div>
+                                        <div style="margin-top:10px;color:#666;font-size:13px;">
+                                          Référence réservation : <strong>${reservationId}</strong>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                              <!-- Infos client -->
+                              <tr>
+                                <td class="email-table" style="padding:0 22px 12px 22px;">
+                                  <div class="section-label" style="font-weight:700;margin:14px 0 8px 0;font-size:14px;">📋 Informations client</div>
+                                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eaeaea;border-radius:10px;overflow:hidden;">
+                                    <tr>
+                                      <td class="table-cell" style="padding:10px 12px;background:#fafafa;width:40%;font-size:13px;"><strong>Nom</strong></td>
+                                      <td class="table-cell" style="padding:10px 12px;font-size:13px;">${customerName}</td>
+                                    </tr>
+                                    <tr>
+                                      <td class="table-cell" style="padding:10px 12px;background:#fafafa;font-size:13px;"><strong>Email</strong></td>
+                                      <td class="table-cell" style="padding:10px 12px;font-size:13px;">${customerEmail}</td>
+                                    </tr>
+                                    <tr>
+                                      <td class="table-cell" style="padding:10px 12px;background:#fafafa;font-size:13px;"><strong>Téléphone</strong></td>
+                                      <td class="table-cell" style="padding:10px 12px;font-size:13px;">${customerPhone}</td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                              <!-- Détails événement -->
+                              <tr>
+                                <td class="email-table" style="padding:0 22px 12px 22px;">
+                                  <div class="section-label" style="font-weight:700;margin:14px 0 8px 0;font-size:14px;">📅 Détails événement</div>
+                                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eaeaea;border-radius:10px;overflow:hidden;">
+                                    <tr>
+                                      <td class="table-cell" style="padding:10px 12px;background:#fafafa;width:40%;font-size:13px;"><strong>Adresse</strong></td>
+                                      <td class="table-cell" style="padding:10px 12px;font-size:13px;">${eventAddress}</td>
+                                    </tr>
+                                    <tr>
+                                      <td class="table-cell" style="padding:10px 12px;background:#fafafa;font-size:13px;"><strong>Début</strong></td>
+                                      <td class="table-cell" style="padding:10px 12px;font-size:13px;">${startDateTime}</td>
+                                    </tr>
+                                    <tr>
+                                      <td class="table-cell" style="padding:10px 12px;background:#fafafa;font-size:13px;"><strong>Fin</strong></td>
+                                      <td class="table-cell" style="padding:10px 12px;font-size:13px;">${endDateTime}</td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                              <!-- Tableau paiement -->
+                              <tr>
+                                <td class="email-table" style="padding:0 22px 18px 22px;">
+                                  <div class="section-label" style="font-weight:700;margin:14px 0 8px 0;font-size:14px;">🧾 Récapitulatif</div>
+                                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eaeaea;border-radius:10px;overflow:hidden;">
+                                    <!-- Header table -->
+                                    <tr>
+                                      <td class="table-header" style="padding:12px;background:#111827;color:#fff;font-weight:700;font-size:13px;">Élément</td>
+                                      <td align="right" class="table-header" style="padding:12px;background:#111827;color:#fff;font-weight:700;font-size:13px;">Montant</td>
+                                    </tr>
+                                    <tr>
+                                      <td class="table-cell" style="padding:12px;background:#ffffff;font-size:13px;">
+                                        Pack : <strong>${packName}</strong>
+                                      </td>
+                                      <td align="right" class="table-cell" style="padding:12px;background:#ffffff;font-size:13px;">
+                                        <strong>${totalAmount.toFixed(2)}€</strong>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td class="table-cell" style="padding:12px;background:#fafafa;font-size:13px;">
+                                        Acompte payé (30%)
+                                      </td>
+                                      <td align="right" class="table-cell" style="padding:12px;background:#fafafa;font-size:13px;">
+                                        <strong>${depositAmount.toFixed(2)}€</strong>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td class="table-cell" style="padding:12px;background:#ffffff;font-size:13px;">
+                                        Solde restant (70%)
+                                      </td>
+                                      <td align="right" class="table-cell" style="padding:12px;background:#ffffff;font-size:13px;">
+                                        <strong>${balanceAmount.toFixed(2)}€</strong>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td class="table-cell" style="padding:12px;background:#fff7ed;border-top:1px solid #eaeaea;font-size:13px;">
+                                        <strong>Total</strong>
+                                      </td>
+                                      <td align="right" class="table-cell" style="padding:12px;background:#fff7ed;border-top:1px solid #eaeaea;font-size:13px;">
+                                        <strong>${totalAmount.toFixed(2)}€</strong>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                              <!-- Next steps -->
+                              <tr>
+                                <td class="email-table" style="padding:0 22px 18px 22px;">
+                                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;">
+                                    <tr>
+                                      <td style="padding:16px 16px;">
+                                        <div style="font-weight:700;margin-bottom:6px;color:#111827;font-size:14px;">✅ Prochaines étapes</div>
+                                        <div style="font-size:14px;line-height:1.7;color:#000;">
+                                          • Le solde sera demandé automatiquement <strong>1 jour avant</strong> l'événement.<br/>
+                                          • La caution sera demandée <strong>2 jours avant</strong> (non débitée sauf incident).<br/>
+                                          • Vous recevrez un rappel email avant chaque échéance.
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                              <!-- CTA -->
+                              <tr>
+                                <td align="center" class="email-table" style="padding:10px 22px 26px 22px;">
+                                  <a href="${signupUrl}" class="cta-button" style="display:inline-block;background:#F2431E;color:#fff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:700;font-size:15px;">
+                                    Voir ma réservation
+                                  </a>
+                                  <div style="margin-top:10px;color:#666;font-size:12px;">
+                                    Si le bouton ne fonctionne pas, copiez ce lien : ${signupUrl}
+                                  </div>
+                                </td>
+                              </tr>
+                              <!-- Footer -->
+                              <tr>
+                                <td class="email-table" style="padding:18px 22px;background:#ffffff;border-top:1px solid #f1f1f1;">
+                                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                      <td class="footer-text" style="color:#666;font-size:12px;line-height:1.7;">
+                                        <strong style="color:#F2431E;">SoundRush Paris</strong><br/>
+                                        📧 contact@guylocationevents.com • 📞 07 44 78 27 54<br/>
+                                        Service disponible 24h/24 • 7j/7 (selon disponibilité)
+                                      </td>
+                                      <td align="right" class="footer-text" style="color:#999;font-size:12px;">
+                                        ©️ ${currentYear} SoundRush Paris
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
                     </body>
                   </html>
                 `;
@@ -514,6 +754,7 @@ export async function POST(req: NextRequest) {
               // Ne pas faire échouer le webhook si l'email échoue
             }
             
+            console.log('✅ Fin traitement acompte, retour réponse webhook');
             return NextResponse.json({ received: true, success: true, status: updatedReservation.status, paymentType: 'deposit' });
           }
           
