@@ -3,6 +3,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import SectionChevron from './SectionChevron';
 
 interface GallerySectionProps {
   language: 'fr' | 'en';
@@ -275,7 +276,7 @@ export default function GallerySection({ language }: GallerySectionProps) {
           </div>
         </div>
       </section>
-
+      <SectionChevron nextSectionId="trusted" />
       {/* Video Modal */}
       {selectedVideo && (
         <div 

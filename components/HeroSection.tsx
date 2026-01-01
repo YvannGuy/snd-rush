@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import HeroAIInput from './HeroAIInput';
+import SectionChevron from './SectionChevron';
 
 interface HeroSectionProps {
   language: 'fr' | 'en';
@@ -137,6 +138,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
           </div>
         </div>
       </div>
+      <SectionChevron nextSectionId="about-soundrush" />
     </section>
   );
 }

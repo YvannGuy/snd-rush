@@ -1,6 +1,8 @@
 
 'use client';
 
+import SectionChevron from './SectionChevron';
+
 interface AboutSectionProps {
   language: 'fr' | 'en';
 }
@@ -72,6 +74,7 @@ export default function AboutSection({ language }: AboutSectionProps) {
           ))}
         </div>
       </div>
+      <SectionChevron nextSectionId="gallery" />
     </section>
   );
 }

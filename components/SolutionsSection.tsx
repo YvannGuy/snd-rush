@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import SectionChevron from './SectionChevron';
 
 interface SolutionsSectionProps {
   language: 'fr' | 'en';
@@ -239,6 +240,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
           ))}
         </div>
       </div>
+      <SectionChevron nextSectionId="urgency" />
     </section>
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import SectionChevron from './SectionChevron';
+
 interface CommentCaMarcheSectionProps {
   language: 'fr' | 'en';
 }
@@ -63,7 +65,7 @@ export default function CommentCaMarcheSection({ language }: CommentCaMarcheSect
   const currentTexts = texts[language];
 
   return (
-    <section id="howItWorks" className="py-16 lg:py-24 bg-gray-50">
+    <section id="comment-ca-marche" className="py-16 lg:py-24 bg-gray-50">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Title */}
         <p className="text-xs font-bold text-[#F2431E] uppercase tracking-[0.2em] mb-4 text-center">
@@ -108,6 +110,7 @@ export default function CommentCaMarcheSection({ language }: CommentCaMarcheSect
           ))}
         </div>
       </div>
+      <SectionChevron nextSectionId="pour-qui" />
     </section>
   );
 }

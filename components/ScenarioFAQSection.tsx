@@ -69,6 +69,7 @@ export default function ScenarioFAQSection({
 
   return (
     <section 
+      id="faq"
       className="bg-white py-24"
       aria-labelledby="faq-title"
     >

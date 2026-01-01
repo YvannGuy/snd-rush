@@ -1,5 +1,7 @@
 'use client';
 
+import SectionChevron from './SectionChevron';
+
 interface PourQuiSectionProps {
   language: 'fr' | 'en';
 }
@@ -89,7 +91,7 @@ export default function PourQuiSection({ language }: PourQuiSectionProps) {
   const currentTexts = texts[language];
 
   return (
-    <section id="forWho" className="py-16 lg:py-24 bg-white">
+    <section id="pour-qui" className="py-16 lg:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Title */}
         <p className="text-xs font-bold text-[#F2431E] uppercase tracking-[0.2em] mb-4 text-center">
@@ -139,6 +141,7 @@ export default function PourQuiSection({ language }: PourQuiSectionProps) {
           ))}
         </div>
       </div>
+      <SectionChevron nextSectionId="about" />
     </section>
   );
 }

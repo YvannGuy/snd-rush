@@ -1,6 +1,7 @@
 'use client';
 
 import { CheckCircle2, Package, Wrench, Zap, Shield } from 'lucide-react';
+import SectionChevron from './SectionChevron';
 
 interface AboutSoundRushSectionProps {
   language: 'fr' | 'en';
@@ -79,7 +80,7 @@ export default function AboutSoundRushSection({ language }: AboutSoundRushSectio
   const currentTexts = texts[language];
 
   return (
-    <section className="py-20 lg:py-28 bg-gradient-to-b from-white to-gray-50">
+    <section id="about-soundrush" className="py-20 lg:py-28 bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Title */}
         <div className="text-center mb-12">
@@ -147,6 +148,7 @@ export default function AboutSoundRushSection({ language }: AboutSoundRushSectio
           })}
         </div>
       </div>
+      <SectionChevron nextSectionId="solutions" />
     </section>
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import SectionChevron from './SectionChevron';
+
 interface TrustedBySectionProps {
   language: 'fr' | 'en';
 }
@@ -57,6 +59,7 @@ export default function TrustedBySection({ language }: TrustedBySectionProps) {
           ))}
         </div>
       </div>
+      <SectionChevron nextSectionId="testimonials" />
     </section>
   );
 }

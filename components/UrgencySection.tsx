@@ -1,5 +1,7 @@
 'use client';
 
+import SectionChevron from './SectionChevron';
+
 interface UrgencySectionProps {
   language: 'fr' | 'en';
 }
@@ -98,6 +100,7 @@ export default function UrgencySection({ language }: UrgencySectionProps) {
           </div>
         </div>
       </div>
+      <SectionChevron nextSectionId="comment-ca-marche" />
     </section>
   );
 }

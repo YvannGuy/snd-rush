@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import SectionChevron from './SectionChevron';
 
 interface TrustindexReviewsProps {
   language?: 'fr' | 'en';
@@ -130,6 +131,7 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
           </a>
         </div>
       </div>
+      <SectionChevron nextSectionId="faq" />
     </section>
   );
 }
