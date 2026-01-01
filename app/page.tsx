@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
+import AboutSoundRushSection from '@/components/AboutSoundRushSection';
 import SolutionsSection from '@/components/SolutionsSection';
 import UrgencySection from '@/components/UrgencySection';
 import CommentCaMarcheSection from '@/components/CommentCaMarcheSection';
@@ -162,6 +163,13 @@ export default function Home() {
         <HeroSection 
           language={language}
         />
+
+        {/* Section Qui est SoundRush Paris ? */}
+        <SectionAnimation delay={0.05}>
+          <AboutSoundRushSection 
+            language={language}
+          />
+        </SectionAnimation>
 
         {/* Section IA - Masquée */}
         {/* <SectionAnimation delay={0.05}>

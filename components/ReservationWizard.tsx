@@ -462,12 +462,12 @@ export default function ReservationWizard({
 
               <Separator />
 
-              {/* Matériel inclus */}
+              {/* Matériel disponible */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-[#F2431E]" />
                   <h4 className="font-semibold text-gray-900 text-lg">
-                    {language === 'fr' ? 'Matériel inclus' : 'Included equipment'}
+                    {language === 'fr' ? 'Matériel disponible' : 'Available equipment'}
                   </h4>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -912,10 +912,10 @@ export default function ReservationWizard({
                       )}
                     </div>
                     
-                    {/* Matériel inclus */}
+                    {/* Matériel disponible */}
                     <div>
                       <p className="text-sm font-semibold text-gray-700 mb-2">
-                        {language === 'fr' ? 'Matériel inclus :' : 'Included equipment :'}
+                        {language === 'fr' ? 'Matériel disponible :' : 'Available equipment :'}
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {displayItems.map((item, idx) => (

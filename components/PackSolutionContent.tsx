@@ -268,10 +268,10 @@ export default function PackSolutionContent({ packId, language }: PackSolutionCo
             {expertContent.expertText}
           </p>
           
-          {/* Matériel inclus */}
+          {/* Matériel disponible */}
           <div className="bg-gray-50 rounded-lg p-6 max-w-2xl mx-auto">
             <p className="font-semibold text-gray-900 mb-3">
-              {language === 'fr' ? 'Matériel inclus :' : 'Included equipment:'}
+              {language === 'fr' ? 'Matériel disponible :' : 'Available equipment:'}
             </p>
             <ul className="text-left space-y-2 text-gray-700">
               {pack.defaultItems.map((item, idx) => (

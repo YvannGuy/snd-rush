@@ -40,7 +40,7 @@ export const BASE_PACKS: Record<string, BasePack> = {
       installationIncluded: true,
       pickupIncluded: true,
     },
-    basePrice: 299,
+    basePrice: 249,
   },
   soiree: {
     key: 'soiree',
@@ -59,7 +59,7 @@ export const BASE_PACKS: Record<string, BasePack> = {
       installationIncluded: true,
       pickupIncluded: true,
     },
-    basePrice: 249,
+    basePrice: 299,
   },
   mariage: {
     key: 'mariage',
