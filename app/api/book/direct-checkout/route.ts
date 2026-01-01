@@ -263,7 +263,7 @@ export async function POST(req: NextRequest) {
             currency: 'eur',
             product_data: {
               name: 'Acompte - Blocage de date',
-              description: `Acompte de 30% pour ${packName} (${deposit_amount}€). Le solde restant sera demandé 5 jours avant votre événement.`,
+              description: `Acompte de 30% pour ${packName} (${deposit_amount}€). Le solde restant sera demandé 1 jour avant votre événement.`,
             },
             unit_amount: Math.round(deposit_amount * 100), // En centimes
           },

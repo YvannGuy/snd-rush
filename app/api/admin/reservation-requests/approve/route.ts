@@ -67,9 +67,9 @@ export async function POST(req: NextRequest) {
     let depositRequestedAt: string | null = null;
     
     if (startDate) {
-      // Solde à payer J-5 avant l'événement
+      // Solde à payer J-1 avant l'événement
       const balanceDueDate = new Date(startDate);
-      balanceDueDate.setDate(balanceDueDate.getDate() - 5);
+      balanceDueDate.setDate(balanceDueDate.getDate() - 1);
       balanceDueDate.setHours(9, 0, 0, 0); // 9h du matin
       balanceDueAt = balanceDueDate.toISOString();
       
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
         customer_summary: customer_summary || null,
         base_pack_price: base_pack_price || null,
         extras_total: extras_total || 0,
-        balance_due_at: balanceDueAt, // J-5 avant l'événement
+        balance_due_at: balanceDueAt, // J-1 avant l'événement
         deposit_requested_at: depositRequestedAt, // J-2 avant l'événement
         public_token_hash: publicTokenHash, // V1.4 - Stocker le hash du token
         public_token_expires_at: publicTokenExpiresAt.toISOString(), // V1.4 - Expiration dans 7 jours

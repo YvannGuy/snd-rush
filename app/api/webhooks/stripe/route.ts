@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { resend } from '@/lib/resend';
 import { ensureValidCheckoutToken, hashToken } from '@/lib/token';
+import { sendTelegramMessage } from '@/lib/telegram';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil',
@@ -94,10 +95,11 @@ export async function POST(req: NextRequest) {
           if (paymentType === 'client_reservation_deposit') {
             const reservationId = metadata.reservation_id;
             
-            console.log('📋 Webhook client_reservation reçu:', {
+            console.log('📋 Webhook client_reservation_deposit reçu:', {
               sessionId: session.id,
               reservationId,
               paymentStatus: session.payment_status,
+              paymentType,
               metadata: JSON.stringify(metadata),
             });
             
@@ -264,6 +266,52 @@ export async function POST(req: NextRequest) {
             }
             
             console.log('✅ Acompte payé avec succès:', reservationId);
+            console.log('🔔 Début section notification Telegram');
+            
+            // Envoyer une notification Telegram après paiement de l'acompte
+            try {
+              console.log('📱 Tentative envoi notification Telegram pour acompte:', reservationId);
+              
+              // Fonction locale pour échapper les caractères HTML
+              const escapeHtml = (text: string | null | undefined): string => {
+                if (!text) return '—';
+                return text
+                  .replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;');
+              };
+
+              const customerName = escapeHtml(
+                session.customer_details?.name || updatedReservation.customer_name || null
+              );
+              const customerEmail = escapeHtml(
+                updatedReservation.customer_email || session.customer_email || session.customer_details?.email || null
+              );
+              const amount = session.amount_total
+                ? `${(session.amount_total / 100).toFixed(2)}€`
+                : `${(parseFloat(updatedReservation.price_total.toString()) * 0.3).toFixed(2)}€`;
+              const packKey = escapeHtml(updatedReservation.pack_key || metadata.pack_key || null);
+              const address = escapeHtml(updatedReservation.address || metadata.address || null);
+
+              const telegramMessage = `<b>✅ Acompte 30% reçu</b>
+
+<b>Nom:</b> ${customerName}
+<b>Email:</b> ${customerEmail}
+<b>Montant:</b> ${amount}
+<b>Réservation:</b> ${reservationId}
+<b>Pack:</b> ${packKey}
+<b>Adresse:</b> ${address}
+<b>Session Stripe:</b> <code>${session.id}</code>`;
+
+              console.log('📱 Message Telegram préparé:', telegramMessage.substring(0, 100) + '...');
+              await sendTelegramMessage(telegramMessage);
+              console.log('✅ Notification Telegram envoyée pour acompte:', reservationId);
+            } catch (telegramError) {
+              console.error('⚠️ Telegram notification failed (non bloquant):', telegramError);
+              if (telegramError instanceof Error) {
+                console.error('⚠️ Détails erreur Telegram:', telegramError.message);
+              }
+            }
             
             // Envoyer un email de confirmation après paiement de l'acompte
             try {
@@ -388,7 +436,7 @@ export async function POST(req: NextRequest) {
                             <h3 style="color: #F2431E; margin-top: 0; margin-bottom: 20px; font-size: 22px; font-weight: bold;">📅 Prochaines étapes</h3>
                             <ol style="color: #000000; font-size: 16px; line-height: 2; padding-left: 20px; margin: 0;">
                               <li style="margin-bottom: 15px;">
-                                Le <strong>solde restant (${balanceAmount.toFixed(2)}€)</strong> sera demandé automatiquement <strong>5 jours avant</strong> votre événement
+                                Le <strong>solde restant (${balanceAmount.toFixed(2)}€)</strong> sera demandé automatiquement <strong>1 jour avant</strong> votre événement
                               </li>
                               <li style="margin-bottom: 15px;">
                                 La <strong>caution</strong> sera demandée <strong>2 jours avant</strong> votre événement (non débitée sauf incident)

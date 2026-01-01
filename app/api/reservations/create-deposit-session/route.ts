@@ -62,10 +62,10 @@ export async function POST(req: NextRequest) {
     const basePackPrice = computeBasePackPrice(packKey, startAt, endAt);
     const depositAmount = computeDepositAmountEur(basePackPrice); // 30% en euros
 
-    // Calculer les dates de paiement (solde J-5, caution J-2)
+    // Calculer les dates de paiement (solde J-1, caution J-2)
     const startDate = new Date(startAt);
     const balanceDueDate = new Date(startDate);
-    balanceDueDate.setDate(balanceDueDate.getDate() - 5);
+    balanceDueDate.setDate(balanceDueDate.getDate() - 1);
     balanceDueDate.setHours(9, 0, 0, 0);
     
     const depositRequestDate = new Date(startDate);

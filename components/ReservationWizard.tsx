@@ -174,7 +174,7 @@ export default function ReservationWizard({
       summary: 'Summary',
       total: 'Total',
       deposit: '30% deposit',
-      balance: 'Balance due 5 days before',
+      balance: 'Balance due 1 day before',
       caution: 'Security deposit will be requested 2 days before',
       deliverySupplement: 'Delivery supplement',
       petiteCouronne: 'Small crown',

@@ -25,7 +25,7 @@ export default function CommentCaMarcheSection({ language }: CommentCaMarcheSect
         {
           number: 3,
           title: 'Paiement de l\'acompte',
-          description: 'Sécurisez votre date avec un acompte de 30%. Le solde sera demandé 5 jours avant l\'événement.'
+          description: 'Sécurisez votre date avec un acompte de 30%. Le solde sera demandé 1 jour avant l\'événement.'
         },
         {
           number: 4,
@@ -51,7 +51,7 @@ export default function CommentCaMarcheSection({ language }: CommentCaMarcheSect
         {
           number: 3,
           title: 'Pay the deposit',
-          description: 'Secure your date with a 30% deposit. The balance will be requested 5 days before the event.'
+          description: 'Secure your date with a 30% deposit. The balance will be requested 1 day before the event.'
         },
         {
           number: 4,

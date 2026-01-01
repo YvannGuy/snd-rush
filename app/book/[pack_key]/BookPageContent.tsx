@@ -275,7 +275,7 @@ export default function BookPageContent() {
       processing: 'Processing...',
       total: 'Total',
       deposit: '30% deposit',
-      balance: 'Balance due 5 days before',
+      balance: 'Balance due 1 day before',
       caution: 'Security deposit will be requested 2 days before',
       depositNote: 'Security deposit will be requested 2 days before',
       specificNeeds: 'Do you have specific needs?',

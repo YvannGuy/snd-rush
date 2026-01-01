@@ -175,7 +175,7 @@ export function CheckoutContent({
               <p className="font-medium text-gray-700">Vous ne payez jamais tout d'un coup :</p>
               <div className="space-y-1.5">
                 <p>✅ <strong>Acompte 30%</strong> — bloque définitivement votre date</p>
-                <p>⏳ <strong>Solde restant</strong> — à régler automatiquement 5 jours avant l'événement</p>
+                <p>⏳ <strong>Solde restant</strong> — à régler automatiquement 1 jour avant l'événement</p>
                 <p>🔒 <strong>Caution</strong> — demandée avant l'événement (non débitée sauf incident)</p>
               </div>
             </div>
@@ -207,7 +207,7 @@ export function CheckoutContent({
                       weekday: 'long', 
                       day: 'numeric', 
                       month: 'long' 
-                    })} (5 jours avant)
+                    })} (1 jour avant)
                   </p>
                 </div>
                 <span className="text-lg font-bold text-gray-900">

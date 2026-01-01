@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
             currency: 'eur',
             product_data: {
               name: 'Solde restant - Votre événement',
-              description: `Solde de 70% pour votre événement (${balanceAmount / 100}€). Le solde est demandé 5 jours avant votre événement.`,
+              description: `Solde de 70% pour votre événement (${balanceAmount / 100}€). Le solde est demandé 1 jour avant votre événement.`,
             },
             unit_amount: balanceAmount,
           },

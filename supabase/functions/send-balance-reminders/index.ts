@@ -33,7 +33,7 @@ serve(async (req) => {
     // Sélectionner les réservations éligibles pour relance solde :
     // - Acompte payé (deposit_paid_at IS NOT NULL)
     // - Solde non payé (balance_paid_at IS NULL)
-    // - balance_due_at atteint ou dépassé (J-5)
+    // - balance_due_at atteint ou dépassé (J-1)
     // - balance_reminder_count < 2 (max 2 relances)
     const { data: reservations, error: fetchError } = await supabaseAdmin
       .from('client_reservations')
@@ -156,7 +156,7 @@ serve(async (req) => {
                 
                 <div class="info-box">
                   <p><strong>Solde restant à régler :</strong> ${balanceAmount.toFixed(2)}€</p>
-                  <p>Ce montant correspond à 70% du total de votre prestation. Il est demandé 5 jours avant votre événement pour confirmer votre réservation.</p>
+                  <p>Ce montant correspond à 70% du total de votre prestation. Il est demandé 1 jour avant votre événement pour confirmer votre réservation.</p>
                 </div>
                 
                 <p>Pour régler le solde, cliquez sur le bouton ci-dessous :</p>

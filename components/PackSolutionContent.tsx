@@ -214,7 +214,7 @@ export default function PackSolutionContent({ packId, language }: PackSolutionCo
       deliveryIncluded: 'Delivery and installation included',
       total: 'Total price',
       deposit: '30% deposit to pay now',
-      balance: 'Balance due 5 days before',
+      balance: 'Balance due 1 day before',
       caution: 'Security deposit will be requested 2 days before',
       payDeposit: 'Pay deposit (30%)',
       notSure: 'Not sure? Talk to a SoundRush expert',

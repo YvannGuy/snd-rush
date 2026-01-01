@@ -216,7 +216,7 @@ export async function POST(req: NextRequest) {
             currency: 'eur',
             product_data: {
               name: 'Acompte - Blocage de date',
-              description: `Acompte de 30% pour bloquer votre date (${Math.round(parseFloat(reservation.price_total.toString()) * 0.3)}€). Le solde restant sera demandé 5 jours avant votre événement.`,
+              description: `Acompte de 30% pour bloquer votre date (${Math.round(parseFloat(reservation.price_total.toString()) * 0.3)}€). Le solde restant sera demandé 1 jour avant votre événement.`,
             },
             unit_amount: depositAmount,
           },
