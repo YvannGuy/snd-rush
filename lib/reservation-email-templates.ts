@@ -268,7 +268,7 @@ export function getPaymentReminderEmailTemplate(data: {
                   </tr>
                 </table>
                 <p style="margin:8px 0 0;font-size:13px;line-height:1.5;color:#6b7280;">Si le bouton ne fonctionne pas, copiez-collez ce lien :<br /><span style="word-break:break-all;color:#374151;">${data.checkoutUrl}</span></p>
-                <p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#6b7280;">Des questions ? Répondez directement à cet email ou appelez-nous au <strong>06 51 08 49 94</strong>.</p>
+                <p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#6b7280;">Des questions ? Répondez directement à cet email ou appelez-nous au <strong>07 44 78 27 54</strong>.</p>
               </td>
             </tr>
             <tr>
@@ -357,7 +357,7 @@ export function getEventReminderJ1EmailTemplate(data: {
                 <div style="margin:16px 0;padding:14px 14px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;">
                   <div style="font-weight:700;color:#9a3412;margin-bottom:6px;">📞 Contact & Consignes</div>
                   <div style="font-size:14px;line-height:1.6;color:#7c2d12;">
-                    <div>• <strong>Téléphone :</strong> 06 51 08 49 94</div>
+                    <div>• <strong>Téléphone :</strong> 07 44 78 27 54</div>
                     <div>• <strong>Email :</strong> contact@guylocationevents.com</div>
                     <div style="margin-top:8px;">• Assurez-vous que l'accès au lieu est possible à l'heure prévue</div>
                     <div>• Parking ou zone de déchargement disponible si nécessaire</div>
@@ -440,7 +440,7 @@ export function getEventReminderH3EmailTemplate(data: {
                 <div style="margin:16px 0;padding:14px 14px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;">
                   <div style="font-weight:700;color:#9a3412;margin-bottom:6px;">📞 Contact urgent</div>
                   <div style="font-size:14px;line-height:1.6;color:#7c2d12;">
-                    <div>• <strong>Téléphone :</strong> 06 51 08 49 94</div>
+                    <div>• <strong>Téléphone :</strong> 07 44 78 27 54</div>
                     <div>• <strong>Email :</strong> contact@guylocationevents.com</div>
                     <div style="margin-top:8px;">• Vérifiez que l'accès au lieu est possible</div>
                     <div>• Parking ou zone de déchargement disponible</div>

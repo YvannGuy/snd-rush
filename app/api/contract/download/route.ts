@@ -767,7 +767,7 @@ async function generateContractPDF(reservation: any, customerName: string, custo
   yPos += 5;
   doc.text('SoundRush - Guy Location Events | SIRET 799596176000217 | 78 avenue des Champs-Élysées, 75008 Paris', pageWidth / 2, yPos, { align: 'center' });
   yPos += 5;
-  doc.text('contact@guylocationevents.com | 06 51 08 49 94 | www.sndrush.com', pageWidth / 2, yPos, { align: 'center' });
+  doc.text('contact@guylocationevents.com | 07 44 78 27 54 | www.sndrush.com', pageWidth / 2, yPos, { align: 'center' });
 
   // Convertir en Buffer
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'));

@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
           <div class="footer">
             <p><strong>SND Rush</strong> - Location Sono & Événementiel Paris</p>
             <p style="margin-top: 10px; opacity: 0.9;">
-              📧 contact@guylocationevents.com | 📞 06 51 08 49 94
+              📧 contact@guylocationevents.com | 📞 07 44 78 27 54
             </p>
           </div>
         </div>
@@ -363,8 +363,8 @@ export async function POST(request: NextRequest) {
 
             <p style="margin-top: 30px;">
               En cas de question urgente, n'hésitez pas à nous appeler directement au 
-              <a href="tel:+33651084994" style="color: #e27431; text-decoration: none; font-weight: bold;">
-                06 51 08 49 94
+              <a href="tel:+33744782754" style="color: #e27431; text-decoration: none; font-weight: bold;">
+                07 44 78 27 54
               </a>
             </p>
 
@@ -378,7 +378,7 @@ export async function POST(request: NextRequest) {
           <div class="footer">
             <p><strong>SND Rush</strong> - Location Sono & Événementiel Paris</p>
             <p style="margin-top: 10px; opacity: 0.9;">
-              📧 contact@guylocationevents.com | 📞 06 51 08 49 94<br/>
+              📧 contact@guylocationevents.com | 📞 07 44 78 27 54<br/>
               🌐 www.sndrush.com
             </p>
           </div>

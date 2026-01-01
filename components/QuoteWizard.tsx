@@ -304,8 +304,8 @@ export default function QuoteWizard({ language }: QuoteWizardProps) {
       console.error('Erreur lors de l\'envoi:', error);
       setSubmitError(
         language === 'fr' 
-          ? 'Une erreur est survenue. Veuillez réessayer ou nous appeler au 06 51 08 49 94.'
-          : 'An error occurred. Please try again or call us at 06 51 08 49 94.'
+          ? 'Une erreur est survenue. Veuillez réessayer ou nous appeler au 07 44 78 27 54.'
+          : 'An error occurred. Please try again or call us at 07 44 78 27 54.'
       );
     } finally {
       setIsSubmitting(false);
@@ -740,7 +740,7 @@ export default function QuoteWizard({ language }: QuoteWizardProps) {
                           {currentTexts.help.description}
                         </p>
                         <a
-                          href="tel:+33651084994"
+                          href="tel:+33744782754"
                           className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                         >
                           <span>💬</span>
@@ -787,7 +787,7 @@ export default function QuoteWizard({ language }: QuoteWizardProps) {
                     {currentTexts.why.urgency.description}
                   </p>
                   <a
-                    href="tel:+33651084994"
+                    href="tel:+33744782754"
                     className="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors w-full justify-center"
                   >
                     <span>📞</span>

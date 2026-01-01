@@ -243,7 +243,7 @@ function CheckoutError({
           )}
           <div className="text-center text-sm text-gray-600">
             <p>Email : <a href="mailto:contact@guylocationevents.com" className="text-[#F2431E] hover:underline">contact@guylocationevents.com</a></p>
-            <p className="mt-1">Téléphone : <a href="tel:+33651084994" className="text-[#F2431E] hover:underline">06 51 08 49 94</a></p>
+            <p className="mt-1">Téléphone : <a href="tel:+33744782754" className="text-[#F2431E] hover:underline">07 44 78 27 54</a></p>
           </div>
         </CardContent>
       </Card>

@@ -49,7 +49,7 @@ function BookSuccessContent() {
       backHome: 'Retour à l\'accueil',
       contactUs: 'Une question ?',
       contactDesc: 'Notre équipe est là pour vous aider.',
-      phone: '06 51 08 49 94',
+      phone: '07 44 78 27 54',
       email: 'contact@guylocationevents.com',
     },
     en: {
@@ -76,7 +76,7 @@ function BookSuccessContent() {
       backHome: 'Back to home',
       contactUs: 'Have a question?',
       contactDesc: 'Our team is here to help you.',
-      phone: '06 51 08 49 94',
+      phone: '07 44 78 27 54',
       email: 'contact@guylocationevents.com',
     },
   };

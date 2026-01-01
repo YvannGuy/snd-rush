@@ -32,7 +32,7 @@ export default function Footer({ language }: FooterProps) {
       faq: "FAQ",
       zone: "Paris & Île-de-France",
       schedule: "24h/24 - 7j/7",
-      phone: "06 51 08 49 94",
+      phone: "07 44 78 27 54",
       whatsapp: "WhatsApp",
       email: "contact@guylocationevents.com",
       rights: " 2025 snd•rush. Tous droits réservés.",
@@ -55,7 +55,7 @@ export default function Footer({ language }: FooterProps) {
       faq: "FAQ",
       zone: "Paris & Île-de-France",
       schedule: "24/7",
-      phone: "06 51 08 49 94",
+      phone: "07 44 78 27 54",
       whatsapp: "WhatsApp",
       email: "contact@guylocationevents.com",
       rights: " 2025 snd•rush. All rights reserved.",
@@ -127,7 +127,7 @@ export default function Footer({ language }: FooterProps) {
                 {texts[language].baseline}
               </p>
               <a
-                href="tel:+33651084994"
+                href="tel:+33744782754"
                 className="inline-block bg-[#F2431E] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors mt-4"
               >
                 {currentFooterTexts.getQuote}
@@ -168,7 +168,7 @@ export default function Footer({ language }: FooterProps) {
                   <div className="w-4 h-4 flex items-center justify-center">
                     <i className="ri-phone-line text-[#F2431E]"></i>
                   </div>
-                  <a href="tel:+33651084994" className="text-gray-300 hover:text-white transition-colors text-sm cursor-pointer">
+                  <a href="tel:+33744782754" className="text-gray-300 hover:text-white transition-colors text-sm cursor-pointer">
                     {texts[language].phone}
                   </a>
                 </div>

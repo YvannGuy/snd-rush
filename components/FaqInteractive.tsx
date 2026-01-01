@@ -22,7 +22,7 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
     },
     {
       question: "Que se passe-t-il en cas d'urgence ?",
-      answer: "Notre service d'urgence 24/7 est spécialement conçu pour répondre à vos besoins immédiats :\n\n⚡ **Intervention rapide** : Livraison en 30 à 60 minutes dans Paris intra-muros\n\n🚨 **Urgences critiques** : Intervention en moins de 30 minutes possible selon la localisation (avec supplément express)\n\n📞 **Disponibilité** : Service disponible 7j/7 de 8h à 2h du matin en Île-de-France\n\n💬 **Contact direct** : Appelez-nous au 06 51 08 49 94 ou contactez-nous via WhatsApp pour une intervention express. Notre équipe est prête à intervenir rapidement pour sauver votre événement !"
+      answer: "Notre service d'urgence 24/7 est spécialement conçu pour répondre à vos besoins immédiats :\n\n⚡ **Intervention rapide** : Livraison en 30 à 60 minutes dans Paris intra-muros\n\n🚨 **Urgences critiques** : Intervention en moins de 30 minutes possible selon la localisation (avec supplément express)\n\n📞 **Disponibilité** : Service disponible 7j/7 de 8h à 2h du matin en Île-de-France\n\n💬 **Contact direct** : Appelez-nous au 07 44 78 27 54 ou contactez-nous via WhatsApp pour une intervention express. Notre équipe est prête à intervenir rapidement pour sauver votre événement !"
     },
     {
       question: "Faut-il une caution ?",
@@ -34,11 +34,11 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
     },
     {
       question: "Comment réserver du matériel ?",
-      answer: "Plusieurs options s'offrent à vous pour réserver votre matériel :\n\n🤖 **1. Assistant IA** : Utilisez notre assistant intelligent pour trouver le pack idéal selon vos besoins (nombre de personnes, type d'événement, budget)\n\n📞 **2. Par téléphone** : Appelez directement au 06 51 08 49 94 - notre équipe vous conseille et confirme la disponibilité en temps réel\n\n📝 **3. Formulaire de devis** : Remplissez le formulaire en ligne sur notre site pour recevoir un devis personnalisé sous 48h\n\n✅ **Confirmation** : Nous confirmons la disponibilité et les détails de votre réservation sous 48h après votre demande. Pour les urgences, contactez-nous directement par téléphone pour une réponse immédiate."
+      answer: "Plusieurs options s'offrent à vous pour réserver votre matériel :\n\n🤖 **1. Assistant IA** : Utilisez notre assistant intelligent pour trouver le pack idéal selon vos besoins (nombre de personnes, type d'événement, budget)\n\n📞 **2. Par téléphone** : Appelez directement au 07 44 78 27 54 - notre équipe vous conseille et confirme la disponibilité en temps réel\n\n📝 **3. Formulaire de devis** : Remplissez le formulaire en ligne sur notre site pour recevoir un devis personnalisé sous 48h\n\n✅ **Confirmation** : Nous confirmons la disponibilité et les détails de votre réservation sous 48h après votre demande. Pour les urgences, contactez-nous directement par téléphone pour une réponse immédiate."
     },
     {
       question: "Quels sont vos horaires d'intervention ?",
-      answer: "Nous sommes disponibles pour vous servir selon vos besoins :\n\n🕐 **Horaires standards** :\n• 7j/7 de 8h à 2h du matin en Île-de-France\n• Pour les réservations et livraisons programmées\n\n🚨 **Service d'urgence 24/7** :\n• Disponible 24h/24 et 7j/7 pour les urgences\n• Livraison express en 30 à 60 minutes dans Paris intra-muros\n• Intervention possible en moins de 30 minutes selon la localisation et la disponibilité\n\n📞 **Contact** : Pour les urgences ou interventions en dehors des horaires standards, contactez-nous au 06 51 08 49 94 - nous trouverons toujours une solution !"
+      answer: "Nous sommes disponibles pour vous servir selon vos besoins :\n\n🕐 **Horaires standards** :\n• 7j/7 de 8h à 2h du matin en Île-de-France\n• Pour les réservations et livraisons programmées\n\n🚨 **Service d'urgence 24/7** :\n• Disponible 24h/24 et 7j/7 pour les urgences\n• Livraison express en 30 à 60 minutes dans Paris intra-muros\n• Intervention possible en moins de 30 minutes selon la localisation et la disponibilité\n\n📞 **Contact** : Pour les urgences ou interventions en dehors des horaires standards, contactez-nous au 07 44 78 27 54 - nous trouverons toujours une solution !"
     },
     {
       question: "Proposez-vous des services pour les entreprises ?",
@@ -100,7 +100,7 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
                   {index === 1 && (
                     <div className="mt-4">
                       <a
-                        href="tel:+33651084994"
+                        href="tel:+33744782754"
                         className="inline-flex items-center px-4 py-2 bg-[#F2431E] text-white font-medium rounded-lg hover:bg-[#E63A1A] transition-colors text-sm"
                       >
                         Appeler maintenant
@@ -120,7 +120,7 @@ export default function FaqInteractive({ onOpenAssistant }: FaqInteractiveProps)
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
-              href="tel:+33651084994"
+              href="tel:+33744782754"
               className="inline-flex items-center justify-center px-6 py-3 bg-[#F2431E] text-white font-semibold rounded-lg hover:bg-[#E63A1A] transition-colors"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

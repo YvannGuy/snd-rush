@@ -116,7 +116,7 @@ export default function RootLayout({
     "url": "https://www.sndrush.com",
     "logo": "https://www.sndrush.com/logo.svg",
     "image": "https://www.sndrush.com/og-image.jpg",
-    "telephone": "+33651084994",
+    "telephone": "+33744782754",
     "email": "contact@guylocationevents.com",
     "vatID": "FR799596176000217",
     "taxID": "799596176000217",
@@ -175,7 +175,7 @@ export default function RootLayout({
       "@type": "ServiceChannel",
       "servicePhone": {
         "@type": "ContactPoint",
-        "telephone": "+33651084994",
+        "telephone": "+33744782754",
         "contactType": "customer service",
         "availableLanguage": ["French", "English"]
       }

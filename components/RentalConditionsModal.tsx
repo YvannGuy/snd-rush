@@ -346,13 +346,13 @@ export default function RentalConditionsModal({ isOpen, onClose, language }: Ren
               </div>
               <div className="flex gap-3">
                 <a
-                  href="tel:+33651084994"
+                  href="tel:+33744782754"
                   className="bg-[#F2431E] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors whitespace-nowrap"
                 >
-                  06 51 08 49 94
+                  07 44 78 27 54
                 </a>
                 <a
-                  href="https://wa.me/33651084994"
+                  href="https://wa.me/33744782754"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-[#25D366] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#1FA551] transition-colors whitespace-nowrap"

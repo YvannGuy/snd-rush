@@ -759,7 +759,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
               </div>
             </div>
             <a
-              href="tel:+33651084994"
+              href="tel:+33744782754"
               className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-[#E63A1A] transition-colors"
             >
               {currentTexts.urgency.cta}

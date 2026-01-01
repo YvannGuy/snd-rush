@@ -290,7 +290,7 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
               </p>
               <div className="flex gap-2">
                 <a
-                  href="https://wa.me/33651084994"
+                  href="https://wa.me/33744782754"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 bg-green-500 text-white py-2 rounded-lg font-semibold text-xs hover:bg-green-600 transition-colors text-center flex items-center justify-center gap-1"
@@ -299,7 +299,7 @@ export default function MiniCart({ isOpen, onClose, language }: MiniCartProps) {
                   {currentTexts.whatsapp}
                 </a>
                 <a
-                  href="tel:+33651084994"
+                  href="tel:+33744782754"
                   className="flex-1 bg-gray-900 text-white py-2 rounded-lg font-semibold text-xs hover:bg-gray-800 transition-colors text-center flex items-center justify-center gap-1"
                 >
                   <span>📞</span>

@@ -126,7 +126,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
                   </a>
                   
                   <a
-                    href="tel:+33651084994"
+                    href="tel:+33744782754"
                     className="bg-white hover:bg-gray-100 text-[#F2431E] font-semibold px-8 py-4 rounded-full text-lg sm:text-xl transition-colors shadow-lg hover:shadow-xl"
                   >
                     {texts[language].ctaSecondary}

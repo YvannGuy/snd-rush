@@ -448,7 +448,7 @@ On peut commencer par une recommandation, sans engagement. Dis-moi ce que tu org
 
   'contact-humain': `Bien sûr, je comprends que tu préfères parler à quelqu'un.
 
-Tu peux appeler directement le 06 51 08 49 94, ou dis-moi ce dont tu as besoin et je peux te préparer un résumé pour faciliter l'appel.`
+Tu peux appeler directement le 07 44 78 27 54, ou dis-moi ce dont tu as besoin et je peux te préparer un résumé pour faciliter l'appel.`
 };
 
 /**
@@ -1640,7 +1640,7 @@ Format exact :
 Dans ta réponse texte, afficher :
 1. Résumé clair et rassurant
 2. "Tu peux réserver directement ici : [lien vers /book/${packKey}]" (CTA principal)
-3. "Ou appeler Soundrush au 06 51 08 49 94" (CTA secondaire)
+3. "Ou appeler Soundrush au 07 44 78 27 54" (CTA secondaire)
 4. "Solde J-5, caution J-2" (mention courte)
 
 IMPORTANT : Le chat ne crée plus de panier. Il conseille et redirige vers /book/${packKey} pour réserver.

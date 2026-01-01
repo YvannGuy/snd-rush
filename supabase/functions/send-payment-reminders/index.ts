@@ -192,7 +192,7 @@ serve(async (req) => {
                 </tr>
               </table>
               <p style="margin:8px 0 0;font-size:13px;line-height:1.5;color:#6b7280;">Si le bouton ne fonctionne pas, copiez-collez ce lien :<br /><span style="word-break:break-all;color:#374151;">${checkoutUrl}</span></p>
-              <p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#6b7280;">Des questions ? Répondez directement à cet email ou appelez-nous au <strong>06 51 08 49 94</strong>.</p>
+              <p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#6b7280;">Des questions ? Répondez directement à cet email ou appelez-nous au <strong>07 44 78 27 54</strong>.</p>
             </td>
           </tr>
         </table>

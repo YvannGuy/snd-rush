@@ -85,10 +85,10 @@ export default function ContactSection({ language }: ContactSectionProps) {
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">{texts[language].callNow}</h3>
               <a 
-                href="tel:+33651084994"
+                href="tel:+33744782754"
                 className="inline-block bg-[#F2431E] text-white px-6 py-2 rounded-full font-medium hover:bg-[#E63A1A] transition-colors cursor-pointer whitespace-nowrap"
               >
-                +33 6 51 08 49 94
+                +33 7 44 78 27 54
               </a>
             </div>
 
@@ -99,7 +99,7 @@ export default function ContactSection({ language }: ContactSectionProps) {
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">{texts[language].whatsappAvailable}</h3>
               <a 
-                href="https://wa.me/33651084994"
+                href="https://wa.me/33744782754"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block bg-[#25D366] text-white px-6 py-2 rounded-full font-medium hover:bg-[#1FA551] transition-colors cursor-pointer whitespace-nowrap"

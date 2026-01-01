@@ -153,7 +153,7 @@ async function generateInvoicePDF(order: any, clientReservation?: any): Promise<
   companyYPos += 5;
   doc.text('contact@guylocationevents.com', companyX, companyYPos, { align: 'right' });
   companyYPos += 5;
-  doc.text('06 51 08 49 94', companyX, companyYPos, { align: 'right' });
+  doc.text('07 44 78 27 54', companyX, companyYPos, { align: 'right' });
 
   // Informations client (gauche)
   doc.setFontSize(12);

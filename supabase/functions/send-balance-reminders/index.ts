@@ -169,7 +169,7 @@ serve(async (req) => {
                 <p><strong>Rappel :</strong> Vous avez déjà payé l'acompte de 30% qui a bloqué votre date. Le solde restant est demandé pour finaliser votre réservation.</p>
                 
                 <p>Si vous avez des questions, n'hésitez pas à nous contacter :<br>
-                📞 06 51 08 49 94<br>
+                📞 07 44 78 27 54<br>
                 📧 contact@guylocationevents.com</p>
                 
                 <p>Cordialement,<br>L'équipe SoundRush Paris</p>

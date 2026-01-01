@@ -89,7 +89,7 @@ export default function UrgencySection({ language }: UrgencySectionProps) {
 
             {/* CTA Button */}
             <a
-              href="tel:+33651084994"
+              href="tel:+33744782754"
               className="bg-white text-[#F2431E] px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-3 w-full sm:w-auto"
             >
               <span>🔴</span>

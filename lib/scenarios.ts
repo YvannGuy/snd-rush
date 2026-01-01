@@ -19,7 +19,7 @@ TU DOIS :
    - Localisation (Paris/IDF) pour livraison express
 3. Recommander immédiatement un pack adapté selon le nombre de personnes
 4. Proposer livraison + installation express (service d'urgence)
-5. Donner 2 CTAs clairs : "Réserver maintenant" ou "Appeler le 06 51 08 49 94"
+5. Donner 2 CTAs clairs : "Réserver maintenant" ou "Appeler le 07 44 78 27 54"
 
 CONTRAINTES :
 - Réponds EN FRANÇAIS uniquement
@@ -41,7 +41,7 @@ STRUCTURE DE RÉPONSE OBLIGATOIRE :
         'Où se déroule l\'événement ? (Paris/IDF pour livraison express)'
       ],
       ctaPrimary: 'Réserver maintenant',
-      ctaSecondary: 'Appeler le 06 51 08 49 94'
+      ctaSecondary: 'Appeler le 07 44 78 27 54'
     },
     'evenement-2h': {
       id: 'evenement-2h',
@@ -60,7 +60,7 @@ TU DOIS :
    - Heure exacte de début (pour timing livraison)
 3. Recommander pack adapté immédiatement
 4. Confirmer service express (livraison + installation en < 2h)
-5. Donner 2 CTAs : "Confirmer la commande" ou "Appeler maintenant le 06 51 08 49 94"
+5. Donner 2 CTAs : "Confirmer la commande" ou "Appeler maintenant le 07 44 78 27 54"
 
 CONTRAINTES :
 - Réponds EN FRANÇAIS uniquement
@@ -81,7 +81,7 @@ STRUCTURE DE RÉPONSE OBLIGATOIRE :
         'Heure exacte de début ?'
       ],
       ctaPrimary: 'Confirmer la commande',
-      ctaSecondary: 'Appeler maintenant le 06 51 08 49 94'
+      ctaSecondary: 'Appeler maintenant le 07 44 78 27 54'
     },
     'materiel-choisir': {
       id: 'materiel-choisir',
@@ -262,7 +262,7 @@ YOU MUST:
    - Location (Paris/IDF) for express delivery
 3. Immediately recommend a suitable pack based on number of people
 4. Offer express delivery + installation (emergency service)
-5. Give 2 clear CTAs: "Book now" or "Call 06 51 08 49 94"
+5. Give 2 clear CTAs: "Book now" or "Call 07 44 78 27 54"
 
 CONSTRAINTS:
 - Respond ONLY IN FRENCH
@@ -284,7 +284,7 @@ MANDATORY RESPONSE STRUCTURE:
         'Where is the event? (Paris/IDF for express delivery)'
       ],
       ctaPrimary: 'Book now',
-      ctaSecondary: 'Call 06 51 08 49 94'
+      ctaSecondary: 'Call 07 44 78 27 54'
     },
     'evenement-2h': {
       id: 'evenement-2h',
@@ -303,7 +303,7 @@ YOU MUST:
    - Exact start time (for delivery timing)
 3. Immediately recommend suitable pack
 4. Confirm express service (delivery + installation in < 2h)
-5. Give 2 CTAs: "Confirm order" or "Call now 06 51 08 49 94"
+5. Give 2 CTAs: "Confirm order" or "Call now 07 44 78 27 54"
 
 CONSTRAINTS:
 - Respond ONLY IN FRENCH
@@ -324,7 +324,7 @@ MANDATORY RESPONSE STRUCTURE:
         'Exact start time?'
       ],
       ctaPrimary: 'Confirm order',
-      ctaSecondary: 'Call now 06 51 08 49 94'
+      ctaSecondary: 'Call now 07 44 78 27 54'
     },
     'materiel-choisir': {
       id: 'materiel-choisir',

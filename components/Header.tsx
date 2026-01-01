@@ -358,7 +358,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 size="default"
                 className="hidden lg:flex bg-[#F2431E] hover:bg-[#E63A1A] text-white"
               >
-                <a href="tel:+33651084994">
+                <a href="tel:+33744782754">
                   {texts[language].callNow}
                 </a>
               </Button>
@@ -714,7 +714,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white mt-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <a href="tel:+33651084994">
+              <a href="tel:+33744782754">
                 {texts[language].callNow}
               </a>
             </Button>

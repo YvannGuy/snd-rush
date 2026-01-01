@@ -118,7 +118,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <div className="mt-4 space-y-2 text-gray-700">
               <p><strong>Email :</strong> <a href="mailto:contact@guylocationevents.com" className="text-[#F2431E] hover:underline">contact@guylocationevents.com</a></p>
-              <p><strong>Téléphone :</strong> <a href="tel:+33651084994" className="text-[#F2431E] hover:underline">06 51 08 49 94</a></p>
+              <p><strong>Téléphone :</strong> <a href="tel:+33744782754" className="text-[#F2431E] hover:underline">07 44 78 27 54</a></p>
             </div>
           </section>
         </div>

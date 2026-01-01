@@ -871,10 +871,10 @@ export default function CGVPage() {
                 • Nous contacter
               </a>
               <a
-                href="tel:+33651084994"
+                href="tel:+33744782754"
                 className="bg-white text-black px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors"
               >
-                • 06 51 08 49 94
+                • 07 44 78 27 54
               </a>
             </div>
           </div>

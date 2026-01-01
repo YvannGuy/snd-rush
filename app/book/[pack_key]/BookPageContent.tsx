@@ -889,7 +889,7 @@ export default function BookPageContent() {
                 <p className="text-sm text-gray-600 mb-3">{currentTexts.specificNeeds}</p>
                 <Button
                   variant="outline"
-                  onClick={() => window.location.href = 'tel:+33651084994'}
+                  onClick={() => window.location.href = 'tel:+33744782754'}
                   className="border-[#F2431E] text-[#F2431E] hover:bg-[#F2431E] hover:text-white"
                 >
                   {currentTexts.callUs}

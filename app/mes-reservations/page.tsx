@@ -1169,7 +1169,7 @@ export default function MesReservationsPage() {
                       )}
                       
                       <a
-                        href="https://wa.me/33651084994"
+                        href="https://wa.me/33744782754"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors"

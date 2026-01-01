@@ -346,6 +346,22 @@ export async function POST(req: NextRequest) {
         .product-header {
           display: none !important;
         }
+        .account-buttons {
+          display: block !important;
+          width: 100% !important;
+        }
+        .account-buttons td {
+          display: block !important;
+          width: 100% !important;
+          padding: 0 0 8px 0 !important;
+        }
+        .account-buttons td:last-child {
+          padding-bottom: 0 !important;
+        }
+        .account-link {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
       }
       /* Styles pour Outlook */
       .outlook-group-fix {
@@ -477,6 +493,43 @@ export async function POST(req: NextRequest) {
                     </td>
                   </tr>
                 </table>
+                <!-- Account Creation Section -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:18px;background:#f8f9fa;border:1px solid #e9ecef;border-radius:14px;">
+                  <tr>
+                    <td class="card-padding" style="padding:14px 14px 6px 14px;font-size:13px;color:#333333;">
+                      <div style="font-weight:700;color:#111111;margin-bottom:12px;font-size:14px;">👤 Créez votre compte client</div>
+                      <div style="font-size:13px;line-height:1.6;color:#333333;margin-bottom:12px;">
+                        Créez votre compte pour accéder à votre espace client et retrouver toutes vos réservations, signer vos contrats, consulter vos factures et bien plus encore.
+                      </div>
+                      <table role="presentation" class="account-buttons" width="100%" cellspacing="0" cellpadding="0" style="margin-top:12px;">
+                        <tr>
+                          <td align="center" style="padding:0 4px 8px 0;">
+                            <a href="${process.env.NEXT_PUBLIC_BASE_URL}/auth/signup?email=${encodeURIComponent(customerEmail)}" 
+                               class="account-link"
+                               style="display:inline-block;background:#e27431;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;width:100%;max-width:200px;text-align:center;word-break:break-word;">
+                              📧 Créer mon compte
+                            </a>
+                          </td>
+                          <td align="center" style="padding:0 0 8px 4px;">
+                            <a href="https://wa.me/33744782754?text=${encodeURIComponent(`Bonjour, je souhaite créer mon compte SoundRush pour accéder à mes réservations. Mon email : ${customerEmail}`)}" 
+                               class="account-link"
+                               style="display:inline-block;background:#25D366;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;width:100%;max-width:200px;text-align:center;word-break:break-word;">
+                              💬 WhatsApp
+                            </a>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colspan="2" align="center" style="padding-top:8px;">
+                            <a href="${process.env.NEXT_PUBLIC_BASE_URL}/dashboard" 
+                               style="color:#e27431;text-decoration:none;font-size:12px;font-weight:600;">
+                              Accéder à mon espace client →
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
                 <!-- Closing -->
                 <div style="margin-top:18px;font-size:14px;line-height:1.6;color:#333333;">
                   Nous sommes ravis de vous accompagner dans votre événement.<br/>
@@ -494,7 +547,7 @@ export async function POST(req: NextRequest) {
                   <tr>
                     <td class="footer-info" style="font-size:12px;color:#666666;line-height:1.7;vertical-align:top;">
                       📧 Email : <a href="mailto:contact@guylocationevents.com" style="color:#e27431;text-decoration:none;font-weight:700;word-break:break-all;">contact@guylocationevents.com</a><br/>
-                      📞 Téléphone : <a href="tel:+33651084994" style="color:#e27431;text-decoration:none;font-weight:700;">06 51 08 49 94</a><br/>
+                      📞 Téléphone : <a href="tel:+33744782754" style="color:#e27431;text-decoration:none;font-weight:700;">07 44 78 27 54</a><br/>
                       📍 Adresse : Paris, Île-de-France<br/>
                       <span style="color:#999999;">Service disponible 24h/24 - 7j/7</span>
                     </td>

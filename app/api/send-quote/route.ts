@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
             <div class="contact-info">
               <strong>Location Sono & Événementiel Paris</strong><br/>
               📧 <a href="mailto:contact@guylocationevents.com">contact@guylocationevents.com</a><br/>
-              📞 <a href="tel:0651084994">06 51 08 49 94</a><br/>
+              📞 <a href="tel:0744782754">07 44 78 27 54</a><br/>
               🌐 <a href="https://www.sndrush.com">www.sndrush.com</a>
             </div>
             <div style="margin: 20px 0; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px;">

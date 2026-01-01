@@ -217,7 +217,7 @@ export default function FloatingChatWidgetSimplified({
    * Ouvrir appel téléphonique
    */
   const handleCall = () => {
-    window.open('tel:0651084994', '_self');
+    window.open('tel:0744782754', '_self');
   };
 
   /**
@@ -304,7 +304,7 @@ export default function FloatingChatWidgetSimplified({
               className="w-full"
             >
               <Phone className="h-4 w-4 mr-2" />
-              Appeler Soundrush (06 51 08 49 94)
+              Appeler Soundrush (07 44 78 27 54)
             </Button>
           </div>
         )}

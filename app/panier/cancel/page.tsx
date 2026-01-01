@@ -54,7 +54,7 @@ export default function CartCancelPage() {
           <div className="pt-8 border-t border-gray-200">
             <p className="text-sm text-gray-600 mb-2">{currentTexts.help}</p>
             <a
-              href="tel:+33651084994"
+              href="tel:+33744782754"
               className="text-[#F2431E] font-semibold hover:underline"
             >
               {currentTexts.contact}

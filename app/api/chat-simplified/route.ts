@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
         `📞 Téléphone: ${draft.phone}\n\n` +
         `Pour finaliser votre réservation, vous avez deux options:\n\n` +
         `1️⃣ Payer l'acompte de 30% pour bloquer la date immédiatement\n` +
-        `2️⃣ Appeler Soundrush au 06 51 08 49 94 pour discuter de vos besoins\n\n` +
+        `2️⃣ Appeler Soundrush au 07 44 78 27 54 pour discuter de vos besoins\n\n` +
         `Que souhaitez-vous faire ?`;
     }
 

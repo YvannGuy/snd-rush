@@ -45,7 +45,7 @@ Checklist de vérification :
 ✓ Pieds d'enceinte si inclus dans votre pack
 ✓ Housses de protection
 
-Si un élément manque ou est endommagé, contactez immédiatement SoundRush au 06 51 08 49 94.`
+Si un élément manque ou est endommagé, contactez immédiatement SoundRush au 07 44 78 27 54.`
         },
         {
           title: 'Étape 2 : Placement de l\'enceinte',
@@ -157,7 +157,7 @@ Problèmes courants et solutions :
 
 3. Support :
    • Notre service d'urgence 24/7 est disponible à Paris et Île-de-France
-   • En cas de problème, appelez le 06 51 08 49 94
+   • En cas de problème, appelez le 07 44 78 27 54
    • Intervention possible en moins d'1 heure
 
 4. Retour du matériel :
@@ -628,7 +628,7 @@ Que ce soit pour un mariage, un séminaire, un concert ou une soirée, les princ
 3. Support :
    • Service d'urgence 24/7 disponible
    • Intervention rapide à Paris et Île-de-France
-   • Tél : 06 51 08 49 94`
+   • Tél : 07 44 78 27 54`
         }
       ]
     },
@@ -842,7 +842,7 @@ export default function DownloadGuideModal({
       doc.text('Location de sonorisation express', pageWidth / 2, yPos, { align: 'center' });
       yPos += 10;
       doc.setFontSize(11);
-      doc.text('📞 06 51 08 49 94 | Service 24/7', pageWidth / 2, yPos, { align: 'center' });
+      doc.text('📞 07 44 78 27 54 | Service 24/7', pageWidth / 2, yPos, { align: 'center' });
       yPos += 10;
       doc.text('Paris & Île-de-France', pageWidth / 2, yPos, { align: 'center' });
       yPos += 15;

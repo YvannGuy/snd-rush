@@ -30,7 +30,7 @@ export default function ScenarioFAQSection({
       },
       {
         question: 'Que se passe-t-il en cas de problème technique pendant l\'événement ?',
-        answer: 'Notre équipe reste disponible pendant toute la durée de votre événement. En cas de problème technique, contactez-nous immédiatement au 06 51 08 49 94 et nous intervenons rapidement pour résoudre le problème.'
+        answer: 'Notre équipe reste disponible pendant toute la durée de votre événement. En cas de problème technique, contactez-nous immédiatement au 07 44 78 27 54 et nous intervenons rapidement pour résoudre le problème.'
       },
       {
         question: 'Quand dois-je payer le solde et la caution ?',
@@ -52,7 +52,7 @@ export default function ScenarioFAQSection({
       },
       {
         question: 'What happens if there is a technical problem during the event?',
-        answer: 'Our team remains available throughout your event. In case of a technical problem, contact us immediately at 06 51 08 49 94 and we will intervene quickly to resolve the issue.'
+        answer: 'Our team remains available throughout your event. In case of a technical problem, contact us immediately at 07 44 78 27 54 and we will intervene quickly to resolve the issue.'
       },
       {
         question: 'When do I pay the balance and deposit?',

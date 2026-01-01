@@ -1273,7 +1273,7 @@ export default function AssistantRefactored({
     const message = encodeURIComponent(
       `Bonjour, j'ai utilisé l'assistant SoundRush Paris et j'aimerais parler avec un expert pour finaliser ma réservation.`
     );
-    window.open(`https://wa.me/33651084994?text=${message}`, '_blank');
+    window.open(`https://wa.me/33744782754?text=${message}`, '_blank');
     
     // Track expert call
     const recommendation = recommendPack(answers);

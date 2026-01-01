@@ -98,7 +98,7 @@ export default function TopBanner({ language }: TopBannerProps) {
         <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
           {/* Bouton téléphone */}
           <a
-            href="tel:+33651084994"
+            href="tel:+33744782754"
             className="flex items-center justify-center gap-2 px-3 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg hover:bg-white/30 transition-colors text-sm font-medium min-w-[44px] h-[38px]"
           >
             <span>📞</span>
