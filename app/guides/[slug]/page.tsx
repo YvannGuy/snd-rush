@@ -604,30 +604,6 @@ export default function GuidePage() {
               </p>
             </CardContent>
           </Card>
-
-          {/* CTA Section */}
-          <Card className="mt-8 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] text-white border-0">
-            <CardContent className="p-8 text-center">
-              <h3 className="text-2xl font-bold mb-4">
-                Besoin d'aide pour votre installation ?
-              </h3>
-              <p className="text-white/90 mb-6">
-                Notre équipe SoundRush peut vous accompagner dans l'installation de votre matériel. Service disponible 24/7 à Paris et en Île-de-France.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild size="lg" className="bg-white text-[#F2431E] hover:bg-gray-100">
-                  <Link href="/catalogue">
-                    Voir nos packs
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="border-2 border-white bg-transparent text-white hover:bg-white/10 hover:text-white">
-                  <Link href="/#urgency">
-                    Urgence 24/7
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </main>
 

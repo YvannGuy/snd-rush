@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
+import SectionChevron from './SectionChevron';
 
 interface TutosSectionProps {
   language: 'fr' | 'en';
@@ -142,6 +143,7 @@ export default function TutosSection({ language }: TutosSectionProps) {
           ))}
         </div>
       </div>
+      <SectionChevron nextSectionId="faq" />
     </section>
   );
 }

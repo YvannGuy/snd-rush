@@ -15,6 +15,7 @@ import AboutSection from '@/components/AboutSection';
 import GallerySection from '@/components/GallerySection';
 import TrustedBySection from '@/components/TrustedBySection';
 import TrustindexReviews from '@/components/TrustindexReviews';
+import TutosSection from '@/components/TutosSection';
 import Footer from '@/components/Footer';
 import SectionAnimation from '@/components/SectionAnimation';
 import ReservationModal from '@/components/ReservationModal';
@@ -216,6 +217,11 @@ export default function Home() {
         {/* Section Témoignages Clients */}
         <SectionAnimation delay={0.5}>
           <TrustindexReviews language={language} />
+        </SectionAnimation>
+
+        {/* Section Tutos */}
+        <SectionAnimation delay={0.55}>
+          <TutosSection language={language} />
         </SectionAnimation>
 
         {/* Section FAQ Scénarios */}

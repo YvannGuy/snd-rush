@@ -236,6 +236,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       soiree: 'Soirée',
       mariage: 'Mariage',
       urgence: 'Urgence',
+      tutos: 'Tutos',
       commentCaMarche: 'Comment ça marche',
       cataloguePro: 'Catalogue pro',
       catalogue: 'Catalogue',
@@ -262,6 +263,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       soiree: 'Party',
       mariage: 'Wedding',
       urgence: 'Emergency',
+      tutos: 'Tutorials',
       commentCaMarche: 'How it works',
       cataloguePro: 'Pro catalog',
       catalogue: 'Catalogue',
@@ -326,10 +328,16 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
               <Link 
-                href="/#urgence"
+                href="/#urgency"
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
               >
                 {texts[language].urgence}
+              </Link>
+              <Link 
+                href="/#tutos"
+                className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
+              >
+                {texts[language].tutos}
               </Link>
               {/* Lien Catalogue Pro - Affiché uniquement si pro active */}
               {isPro ? (
@@ -748,11 +756,18 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 </Link>
               </div>
               <Link 
-                href="/#urgence"
+                href="/#urgency"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
               >
                 {texts[language].urgence}
+              </Link>
+              <Link 
+                href="/#tutos"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
+              >
+                {texts[language].tutos}
               </Link>
               {/* Lien Catalogue Pro - Affiché uniquement si pro active */}
               {isPro ? (

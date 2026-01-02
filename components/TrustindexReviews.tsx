@@ -131,7 +131,7 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
           </a>
         </div>
       </div>
-      <SectionChevron nextSectionId="faq" />
+      <SectionChevron nextSectionId="tutos" />
     </section>
   );
 }
