@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 // Icônes lucide-react
-import { User, ShoppingCart, Menu, X, Globe, ChevronDown } from 'lucide-react';
+import { User, ShoppingCart, Menu, X, Globe, ChevronDown, Phone } from 'lucide-react';
 
 
 interface HeaderProps {
@@ -553,6 +553,22 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 {/* Séparateur vertical mobile */}
                 <div className="w-px h-6 bg-white/20 mx-1" />
                 
+                {/* CTA Appelez - Mobile - Icône téléphone à côté du toggle */}
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/10 rounded-lg flex-shrink-0"
+                  aria-label={texts[language].callNow}
+                >
+                  <a href="tel:+33744782754">
+                    <Phone className="h-6 w-6" />
+                  </a>
+                </Button>
+                
+                {/* Séparateur vertical mobile */}
+                <div className="w-px h-6 bg-white/20 mx-1" />
+                
                 {/* Panier Mobile - Affiché uniquement si pro active ET dans /pro/* */}
                 {shouldShowMiniCart && (
                   <>
@@ -714,19 +730,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               className="lg:hidden fixed top-16 left-0 right-0 border-t border-white/20 z-40 overflow-hidden bg-black"
             >
               <div className="pt-3 pb-4 space-y-2 px-4 sm:px-6 lg:px-8">
-            {/* CTA Appelez - Mobile */}
-            <Button
-              asChild
-              variant="default"
-              size="default"
-              className="w-full bg-[#F2431E] hover:bg-[#E63A1A] text-white mt-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <a href="tel:+33744782754">
-                {texts[language].callNow}
-              </a>
-            </Button>
-
             {/* Navigation Links - Mobile */}
             <div className="flex flex-col gap-2 pt-2">
               <div className="text-white font-medium text-base py-2">
