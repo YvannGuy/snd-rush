@@ -190,6 +190,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/favicon-32x32.png" />
         <link rel="manifest" href="/manifest.json" />
         
+        {/* Sitemap */}
+        <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+        
         {/* Preconnect pour améliorer les performances */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
