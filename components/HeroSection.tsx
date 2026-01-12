@@ -28,10 +28,10 @@ export default function HeroSection({ language }: HeroSectionProps) {
 
   const texts = {
     fr: {
-      title1Prefix: 'Solutions',
+      title1Prefix: 'Location',
       title1Suffix: 'clé en main à paris',
       title2: 'Intervention rapide et réservation simplifiée',
-      subtitle: 'Conférences, événements, soirées, mariages. Nous livrons, installons et réglons une solution adaptée à votre événement, sans stress',
+      subtitle: 'Conférences, événements, soirées, mariages. Nous livrons, installons et réglons une location adaptée à votre événement, sans stress',
       cta: 'Préparer mon événement',
       ctaSecondary: 'Intervention urgente',
       catalogue: 'Voir le catalogue',

@@ -20,7 +20,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
         {
           id: 1,
           image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop',
-          name: 'Solution Conférence',
+          name: 'Conférence',
           description: 'Pour réunions, conférences, prises de parole, cultes et événements institutionnels.',
           features: [
             'Livraison et installation par nos techniciens',
@@ -34,7 +34,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
         {
           id: 2,
           image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=600&fit=crop',
-          name: 'Solution Soirée',
+          name: 'Soirée',
           recommended: true,
           description: 'Pour soirées privées, anniversaires et événements festifs.',
           features: [
@@ -49,7 +49,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
         {
           id: 3,
           image: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&h=600&fit=crop',
-          name: 'Solution Mariage',
+          name: 'Mariage',
           description: 'Pour mariages, soirées DJ et événements à fort enjeu.',
           features: [
             'Livraison et installation par nos techniciens',
@@ -70,7 +70,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
         {
           id: 1,
           image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop',
-          name: 'Conference Solution',
+          name: 'Conference',
           description: 'For meetings, conferences, speeches, services and institutional events.',
           features: [
             'Delivery and installation by our technicians',
@@ -84,7 +84,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
         {
           id: 2,
           image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=600&fit=crop',
-          name: 'Party Solution',
+          name: 'Party',
           recommended: true,
           description: 'For private parties, birthdays and festive events.',
           features: [
@@ -99,7 +99,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
         {
           id: 3,
           image: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&h=600&fit=crop',
-          name: 'Wedding Solution',
+          name: 'Wedding',
           description: 'For weddings, DJ parties and high-stakes events.',
           features: [
             'Delivery and installation by our technicians',
@@ -204,16 +204,6 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
                 </ul>
               </div>
 
-              {/* Price - More visible */}
-              <div className="mb-4">
-                <div className="text-xl lg:text-2xl font-bold text-[#F2431E]">
-                  {language === 'fr' ? 'À partir de' : 'From'} {pack.price}
-                </div>
-                <div className="text-sm text-gray-500 mt-1">
-                  {language === 'fr' ? 'Acompte 30% pour bloquer votre date' : '30% deposit to secure your date'}
-                </div>
-              </div>
-
               {/* Buttons - CTA Principal */}
               <div className="mt-auto">
                 <button
@@ -231,7 +221,6 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
                   }}
                   className="w-full bg-[#F2431E] text-white px-6 py-4 rounded-xl font-semibold hover:bg-[#E63A1A] transition-all duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
-                  <span>✨</span>
                   {language === 'fr' ? 'Réserver maintenant' : 'Book now'}
                 </button>
               </div>

@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Calendar, Clock, User, Download } from 'lucide-react';
 import DownloadGuideModal from '@/components/DownloadGuideModal';
+import SEOHead from '@/components/SEOHead';
+import Breadcrumb from '@/components/Breadcrumb';
 
 const articles = {
   'installation-pack-s': {
@@ -404,22 +406,32 @@ export default function GuidePage() {
 
   const article = articles[slug as keyof typeof articles];
   
-  // SEO Metadata
-  useEffect(() => {
-    if (article && article[language]) {
-      const currentArticle = article[language];
-      document.title = `${currentArticle.title} | SoundRush Paris - Location Sono Express`;
-      const metaDescription = document.querySelector('meta[name="description"]');
-      if (metaDescription) {
-        metaDescription.setAttribute('content', currentArticle.description);
-      } else {
-        const meta = document.createElement('meta');
-        meta.name = 'description';
-        meta.content = currentArticle.description;
-        document.head.appendChild(meta);
-      }
-    }
-  }, [article, language, slug]);
+  // Générer les structured data pour l'article
+  const structuredData = article && article[language] ? {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article[language].title,
+    description: article[language].description,
+    image: `https://www.sndrush.com${article[language].image}`,
+    author: {
+      '@type': 'Organization',
+      name: article[language].author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'SoundRush Paris',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.sndrush.com/logo.svg',
+      },
+    },
+    datePublished: article[language].date,
+    dateModified: article[language].date,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://www.sndrush.com/guides/${slug}`,
+    },
+  } : null;
 
   if (!article) {
     return (
@@ -456,9 +468,37 @@ export default function GuidePage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {article && article[language] && (
+        <SEOHead
+          title={article[language].title}
+          description={article[language].description}
+          canonicalUrl={`https://www.sndrush.com/guides/${slug}`}
+          ogImage={`https://www.sndrush.com${article[language].image}`}
+          structuredData={structuredData || undefined}
+          keywords={[
+            'guide installation sono',
+            'tutoriel sonorisation',
+            'installation matériel audio',
+            'guide SoundRush',
+            'installation pack sono',
+            'configuration sonorisation',
+          ]}
+        />
+      )}
       <Header language={language} onLanguageChange={setLanguage} />
       <main className="pt-[180px] sm:pt-[200px] pb-32">
         <div className="max-w-4xl mx-auto px-6 lg:px-8 py-12">
+          {/* Breadcrumb avec structured data */}
+          {article && article[language] && (
+            <Breadcrumb
+              items={[
+                { label: language === 'fr' ? 'Accueil' : 'Home', href: '/' },
+                { label: language === 'fr' ? 'Guides' : 'Guides', href: '/#tutos' },
+                { label: article[language].title, href: `/guides/${slug}` },
+              ]}
+              language={language}
+            />
+          )}
           {/* Navigation entre tutos */}
           <div className="mb-8">
             {/* Navigation Précédent/Suivant */}

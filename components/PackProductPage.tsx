@@ -114,16 +114,6 @@ export default function PackProductPage({ packKey, language = 'fr', onLanguageCh
                 </p>
               </div>
 
-              {/* Price */}
-              <div className="bg-[#F2431E] text-white p-6 rounded-xl">
-                <div className="text-3xl lg:text-4xl font-bold mb-2">
-                  {currentTexts.from} {pack.basePrice}€
-                </div>
-                <div className="text-sm opacity-90">
-                  {currentTexts.deposit}
-                </div>
-              </div>
-
               {/* Features */}
               <Card>
                 <CardContent className="p-6">

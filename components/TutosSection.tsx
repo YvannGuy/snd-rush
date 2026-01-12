@@ -143,7 +143,7 @@ export default function TutosSection({ language }: TutosSectionProps) {
           ))}
         </div>
       </div>
-      <SectionChevron nextSectionId="faq" />
+      <SectionChevron nextSectionId="blog" />
     </section>
   );
 }

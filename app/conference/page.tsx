@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import PackProductPage from '@/components/PackProductPage';
+import PackSEOContent from '@/components/PackSEOContent';
 
 export default function ConferencePage() {
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
 
-  return <PackProductPage packKey="conference" language={language} onLanguageChange={setLanguage} />;
+  return <PackSEOContent packKey="conference" language={language} onLanguageChange={setLanguage} />;
 }

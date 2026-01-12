@@ -235,8 +235,9 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       conference: 'Conférence',
       soiree: 'Soirée',
       mariage: 'Mariage',
-      urgence: 'Urgence',
+      blog: 'Blog',
       tutos: 'Tutos',
+      location: 'Location',
       commentCaMarche: 'Comment ça marche',
       cataloguePro: 'Catalogue pro',
       catalogue: 'Catalogue',
@@ -262,8 +263,9 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       conference: 'Conference',
       soiree: 'Party',
       mariage: 'Wedding',
-      urgence: 'Emergency',
+      blog: 'Blog',
       tutos: 'Tutorials',
+      location: 'Location',
       commentCaMarche: 'How it works',
       cataloguePro: 'Pro catalog',
       catalogue: 'Catalogue',
@@ -328,10 +330,16 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
               <Link 
-                href="/#urgency"
+                href="/location"
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
               >
-                {texts[language].urgence}
+                {texts[language].location}
+              </Link>
+              <Link 
+                href="/#blog"
+                className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
+              >
+                {texts[language].blog}
               </Link>
               <Link 
                 href="/#tutos"
@@ -339,22 +347,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               >
                 {texts[language].tutos}
               </Link>
-              {/* Lien Catalogue Pro - Affiché uniquement si pro active */}
-              {isPro ? (
-                <Link 
-                  href="/pro/catalogue"
-                  className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
-                >
-                  {texts[language].cataloguePro}
-                </Link>
-              ) : (
-                <Link 
-                  href="/pro"
-                  className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
-                >
-                  Pro
-                </Link>
-              )}
             </nav>
 
             {/* CTA Buttons */}
@@ -759,11 +751,18 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 </Link>
               </div>
               <Link 
-                href="/#urgency"
+                href="/location"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
               >
-                {texts[language].urgence}
+                {texts[language].location}
+              </Link>
+              <Link 
+                href="/#blog"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
+              >
+                {texts[language].blog}
               </Link>
               <Link 
                 href="/#tutos"
@@ -772,24 +771,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               >
                 {texts[language].tutos}
               </Link>
-              {/* Lien Catalogue Pro - Affiché uniquement si pro active */}
-              {isPro ? (
-                <Link 
-                  href="/pro/catalogue"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
-                >
-                  {texts[language].cataloguePro}
-                </Link>
-              ) : (
-                <Link 
-                  href="/pro"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
-                >
-                  Pro
-                </Link>
-              )}
             </div>
 
             {/* Language switcher for mobile */}

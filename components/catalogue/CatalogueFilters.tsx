@@ -195,15 +195,6 @@ export default function CatalogueFilters({
       </button>
 
       {/* Help Button */}
-      <button
-        onClick={() => {
-          onHelpClick();
-          setIsMobileFiltersOpen(false);
-        }}
-        className="w-full px-4 py-2 border-2 border-[#F2431E] text-[#F2431E] rounded-lg font-medium hover:bg-[#F2431E] hover:text-white transition-colors"
-      >
-        {currentTexts.helpButton}
-      </button>
     </div>
   );
 

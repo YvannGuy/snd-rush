@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import ReservationWizard from '@/components/ReservationWizard';
+import SEOHead from '@/components/SEOHead';
 import Link from 'next/link';
 
 type PackKey = 'conference' | 'soiree' | 'mariage';
@@ -568,8 +569,43 @@ export default function BookPageContent() {
     setAdditionalMics(additionalMics.filter((_, i) => i !== index));
   };
 
+  // Générer les structured data pour la réservation de pack
+  const structuredData = pack ? {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: pack.title,
+    description: pack.description,
+    brand: {
+      '@type': 'Brand',
+      name: 'SoundRush Paris',
+    },
+    offers: {
+      '@type': 'Offer',
+      price: pack.basePrice?.toString() || '0',
+      priceCurrency: 'EUR',
+      availability: 'https://schema.org/InStock',
+      url: `https://www.sndrush.com/book/${packKey}`,
+    },
+  } : null;
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {pack && (
+        <SEOHead
+          title={`Réserver ${pack.title} - SoundRush Paris`}
+          description={`Réservez ${pack.title} pour votre événement. ${pack.description} Location sono express à Paris et Île-de-France.`}
+          canonicalUrl={`https://www.sndrush.com/book/${packKey}`}
+          ogImage="https://www.sndrush.com/og-image.jpg"
+          structuredData={structuredData || undefined}
+          keywords={[
+            `réserver ${pack.title.toLowerCase()}`,
+            `location ${pack.title.toLowerCase()} Paris`,
+            'réservation pack sono',
+            'location sono express Paris',
+            'pack sonorisation événement',
+          ]}
+        />
+      )}
       <Header language={language} onLanguageChange={setLanguage} />
       
       <main className="pt-[112px] pb-20">

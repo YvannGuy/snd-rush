@@ -337,16 +337,6 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         usageType: 'event'
       },
       {
-        id: 'pack-5',
-        name: 'Pack Custom',
-        category: 'packs',
-        description: 'Composez votre pack sur mesure. Sélectionnez uniquement ce dont vous avez besoin, matériel adapté à votre événement, devis personnalisé',
-        price: 'Sur devis',
-        image: '/concert.jpg',
-        capacity: '300+',
-        usageType: 'event'
-      },
-      {
         id: 'pack-6',
         name: 'Pack DJ Essentiel',
         category: 'packs',
@@ -534,12 +524,6 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
               <option value="100+">100€+</option>
             </select>
 
-            <button
-              onClick={scrollToHelp}
-              className="px-6 py-2 border-2 border-[#F2431E] text-[#F2431E] rounded-lg font-medium hover:bg-[#F2431E] hover:text-white transition-colors"
-            >
-              {currentTexts.helpButton}
-            </button>
           </div>
         </div>
       </div>
@@ -610,18 +594,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                         <span>🚫</span>
                         {language === 'fr' ? 'Indisponible' : 'Unavailable'}
                       </button>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          // Pour tous les produits (y compris les packs), ouvrir le modal
-                          setQuickAddModal({ isOpen: true, product });
-                        }}
-                        className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors flex items-center justify-center gap-2 min-h-[44px]"
-                      >
-                        <span>🛒</span>
-                        {currentTexts.addToCart}
-                      </button>
-                    )}
+                    ) : null}
                     {/* Ne pas afficher "Voir le produit" pour le pack XL sur mesure */}
                     {!(product.id === 'pack-5' || product.name.toLowerCase().includes('pack xl') || product.name.toLowerCase().includes('sur mesure')) && (
                       <Link
@@ -716,26 +689,6 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         </div>
       </div>
 
-      {/* Help Section */}
-      <div id="help-section" className="bg-white py-16">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
-          <div className="text-6xl mb-6">🤖</div>
-          <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">
-            {currentTexts.needHelp.title}
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            {currentTexts.needHelp.description}
-          </p>
-          <button
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent('openAssistantModal'));
-            }}
-            className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-[#E63A1A] transition-colors"
-          >
-            {currentTexts.needHelp.cta}
-          </button>
-        </div>
-      </div>
 
       {/* Urgency Section */}
       <div className="bg-black text-white py-16">

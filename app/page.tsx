@@ -16,6 +16,7 @@ import GallerySection from '@/components/GallerySection';
 import TrustedBySection from '@/components/TrustedBySection';
 import TrustindexReviews from '@/components/TrustindexReviews';
 import TutosSection from '@/components/TutosSection';
+import BlogSection from '@/components/BlogSection';
 import Footer from '@/components/Footer';
 import SectionAnimation from '@/components/SectionAnimation';
 import ReservationModal from '@/components/ReservationModal';
@@ -224,8 +225,13 @@ export default function Home() {
           <TutosSection language={language} />
         </SectionAnimation>
 
-        {/* Section FAQ Scénarios */}
+        {/* Section Blog */}
         <SectionAnimation delay={0.58}>
+          <BlogSection language={language} />
+        </SectionAnimation>
+
+        {/* Section FAQ Scénarios */}
+        <SectionAnimation delay={0.6}>
           <ScenarioFAQSection 
             language={language}
             onScenarioClick={(scenarioId) => {

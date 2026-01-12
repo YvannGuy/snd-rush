@@ -10,6 +10,7 @@ import { getDeliveryPrice, DELIVERY_AR } from '@/lib/zone-detection';
 import ShareProductButton from '@/components/ShareProductButton';
 import AskAssistantButton from '@/components/AskAssistantButton';
 import PackNavigation from '@/components/packs/PackNavigation';
+import Breadcrumb from '@/components/Breadcrumb';
 
 // Configuration : Masquer les options Installation et Livraison
 // Pour les réactiver, changer cette valeur à true
@@ -880,6 +881,15 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
     <div className={`${(pack.id === 9 || pack.id === 10 || pack.id === 11) ? 'pt-16' : 'pt-[180px] sm:pt-[190px]'} bg-white`}>
       {/* Hero Section - Image + Infos principales */}
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+          {/* Breadcrumb avec structured data */}
+          <Breadcrumb
+            items={[
+              { label: language === 'fr' ? 'Accueil' : 'Home', href: '/' },
+              { label: language === 'fr' ? 'Packs' : 'Packs', href: '/packs' },
+              { label: pack.name, href: `/packs/${pack.id}` },
+            ]}
+            language={language}
+          />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
           {/* Left Column - Image Gallery */}
             <div>

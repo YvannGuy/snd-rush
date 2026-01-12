@@ -152,10 +152,10 @@ export default function RootLayout({
       }
     },
     "sameAs": [
-      // Ajoutez vos réseaux sociaux ici
-      // "https://www.facebook.com/soundrushparis",
-      // "https://www.instagram.com/soundrushparis",
-      // "https://www.linkedin.com/company/soundrushparis"
+      "https://www.facebook.com/sndrush/",
+      "https://www.instagram.com/sndrush/",
+      "https://www.tiktok.com/@snd.rush",
+      "https://www.linkedin.com/company/106547248"
     ]
   };
 

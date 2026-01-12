@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import QuantityStepper from '@/components/products/QuantityStepper';
@@ -10,6 +11,8 @@ import ProductAddons from '@/components/products/ProductAddons';
 import ProductNavigation from '@/components/products/ProductNavigation';
 import ShareProductButton from '@/components/ShareProductButton';
 import AskAssistantButton from '@/components/AskAssistantButton';
+import SEOHead from '@/components/SEOHead';
+import Breadcrumb from '@/components/Breadcrumb';
 import { supabase } from '@/lib/supabase';
 import { Product, AvailabilityResponse, CalendarDisabledRange, ProductAddon, CartItem } from '@/types/db';
 import { useCart } from '@/contexts/CartContext';
@@ -44,137 +47,8 @@ export default function ProductDetailPage() {
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [disabledRanges, setDisabledRanges] = useState<CalendarDisabledRange[]>([]);
 
-  // Produits recommandés
-  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
-
-  // Charger les produits recommandés depuis Supabase
-  useEffect(() => {
-    async function loadRecommendedProducts() {
-      if (!product || !supabase) return;
-
-      try {
-        // Ne pas charger de produits recommandés pour les packs (ils ont leur propre logique)
-        if (product.category === 'packs' || product.id.toString().startsWith('pack-')) {
-          setRecommendedProducts([]);
-          return;
-        }
-
-        // Définir les catégories recommandées selon le produit actuel
-        let targetCategories: string[] = [];
-        
-        if (product.category === 'sonorisation') {
-          // Pour les enceintes/caissons : recommander micros, consoles, câbles, pieds d'enceinte
-          targetCategories = ['micros', 'sonorisation', 'accessoires']; // On inclut aussi sonorisation pour avoir des consoles et accessoires pour les pieds
-        } else if (product.category === 'micros') {
-          // Pour les micros : recommander câbles, consoles, autres micros
-          targetCategories = ['accessoires', 'sonorisation'];
-        } else if (product.category === 'lumieres') {
-          // Pour les lumières : recommander autres lumières, câbles
-          targetCategories = ['lumieres', 'accessoires'];
-        } else if (product.category === 'accessoires') {
-          // Pour les accessoires : recommander produits principaux
-          targetCategories = ['sonorisation', 'micros', 'lumieres'];
-        } else if (product.category === 'dj') {
-          // Pour les produits DJ : recommander autres produits DJ et accessoires
-          targetCategories = ['dj', 'accessoires'];
-        } else {
-          // Par défaut : recommander produits de différentes catégories
-          targetCategories = ['sonorisation', 'micros', 'accessoires', 'lumieres'];
-        }
-
-        // Charger les produits depuis Supabase
-        const { data: allProducts, error } = await supabase
-          .from('products')
-          .select('*')
-          .neq('id', product.id.toString()) // Exclure le produit actuel (convertir en string pour comparaison)
-          .in('category', targetCategories)
-          .limit(20); // Charger plus pour avoir un meilleur choix
-
-        if (error) {
-          console.error('Erreur chargement produits recommandés:', error);
-          setRecommendedProducts([]);
-          return;
-        }
-
-        // Exclure uniquement les produits XDJ des produits recommandés (mais permettre DDJ-400)
-        const filteredByPioneer = (allProducts || []).filter(p => {
-          const nameLower = p.name.toLowerCase();
-          return !nameLower.includes('xdj');
-        });
-
-        if (filteredByPioneer && filteredByPioneer.length > 0) {
-          // Trier et sélectionner les produits les plus pertinents
-          let filtered = filteredByPioneer;
-
-          // Prioriser les produits complémentaires selon le type de produit
-          if (product.category === 'sonorisation') {
-            // Pour enceintes/caissons : prioriser micros, puis consoles, puis pieds d'enceinte, puis autres accessoires
-            filtered = allProducts.sort((a, b) => {
-              const aIsMicro = a.category === 'micros' ? 4 : 0;
-              const bIsMicro = b.category === 'micros' ? 4 : 0;
-              const aIsConsole = (a.name.toLowerCase().includes('promix') || a.name.toLowerCase().includes('console')) ? 3 : 0;
-              const bIsConsole = (b.name.toLowerCase().includes('promix') || b.name.toLowerCase().includes('console')) ? 3 : 0;
-              const aIsPied = (a.name.toLowerCase().includes('pied') || a.name.toLowerCase().includes('boomtone')) ? 2 : 0;
-              const bIsPied = (b.name.toLowerCase().includes('pied') || b.name.toLowerCase().includes('boomtone')) ? 2 : 0;
-              const aIsAccessoire = a.category === 'accessoires' ? 1 : 0;
-              const bIsAccessoire = b.category === 'accessoires' ? 1 : 0;
-              
-              const aScore = aIsMicro + aIsConsole + aIsPied + aIsAccessoire;
-              const bScore = bIsMicro + bIsConsole + bIsPied + bIsAccessoire;
-              return bScore - aScore;
-            });
-          } else if (product.category === 'micros') {
-            // Pour micros : prioriser câbles XLR, puis adaptateurs, puis consoles
-            filtered = allProducts.sort((a, b) => {
-              const aIsCableXlr = a.name.toLowerCase().includes('xlr') && a.category === 'accessoires' ? 3 : 0;
-              const bIsCableXlr = b.name.toLowerCase().includes('xlr') && b.category === 'accessoires' ? 3 : 0;
-              const aIsAdaptateur = a.name.toLowerCase().includes('adaptateur') ? 2 : 0;
-              const bIsAdaptateur = b.name.toLowerCase().includes('adaptateur') ? 2 : 0;
-              const aIsConsole = (a.name.toLowerCase().includes('promix') || a.name.toLowerCase().includes('console')) ? 1 : 0;
-              const bIsConsole = (b.name.toLowerCase().includes('promix') || b.name.toLowerCase().includes('console')) ? 1 : 0;
-              
-              const aScore = aIsCableXlr + aIsAdaptateur + aIsConsole;
-              const bScore = bIsCableXlr + bIsAdaptateur + bIsConsole;
-              return bScore - aScore;
-            });
-          } else if (product.category === 'lumieres') {
-            // Pour lumières : prioriser autres lumières, puis accessoires (câbles DMX potentiels)
-            filtered = allProducts.sort((a, b) => {
-              const aIsLumiere = a.category === 'lumieres' ? 2 : 0;
-              const bIsLumiere = b.category === 'lumieres' ? 2 : 0;
-              const aIsAccessoire = a.category === 'accessoires' ? 1 : 0;
-              const bIsAccessoire = b.category === 'accessoires' ? 1 : 0;
-              
-              const aScore = aIsLumiere + aIsAccessoire;
-              const bScore = bIsLumiere + bIsAccessoire;
-              return bScore - aScore;
-            });
-          } else if (product.category === 'accessoires') {
-            // Pour accessoires : prioriser produits principaux (enceintes, micros, consoles)
-            filtered = allProducts.sort((a, b) => {
-              const aIsSonorisation = a.category === 'sonorisation' ? 3 : 0;
-              const bIsSonorisation = b.category === 'sonorisation' ? 3 : 0;
-              const aIsMicro = a.category === 'micros' ? 2 : 0;
-              const bIsMicro = b.category === 'micros' ? 2 : 0;
-              const aIsConsole = (a.name.toLowerCase().includes('promix') || a.name.toLowerCase().includes('console')) ? 1 : 0;
-              const bIsConsole = (b.name.toLowerCase().includes('promix') || b.name.toLowerCase().includes('console')) ? 1 : 0;
-              
-              const aScore = aIsSonorisation + aIsMicro + aIsConsole;
-              const bScore = bIsSonorisation + bIsMicro + bIsConsole;
-              return bScore - aScore;
-            });
-          }
-
-          // Prendre les 4 premiers
-          setRecommendedProducts(filtered.slice(0, 4));
-        }
-      } catch (err) {
-        console.error('Erreur chargement produits recommandés:', err);
-      }
-    }
-
-    loadRecommendedProducts();
-  }, [product]);
+  // Produits recommandés - Désactivé car la section est masquée
+  const [recommendedProducts] = useState<Product[]>([]);
 
   // Charger le produit depuis Supabase ou données locales
   useEffect(() => {
@@ -756,8 +630,51 @@ export default function ProductDetailPage() {
   const canAddToCart = !checkingAvailability && startDate && endDate && startTime && endTime && (isAvailable === null || isAvailable === true);
 
 
+  // Générer les structured data pour le produit
+  const structuredData = product ? {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description || product.long_description || `Location ${product.name} - SoundRush Paris`,
+    image: product.images && product.images.length > 0 ? product.images[0] : 'https://www.sndrush.com/og-image.jpg',
+    brand: {
+      '@type': 'Brand',
+      name: 'SoundRush Paris',
+    },
+    offers: {
+      '@type': 'Offer',
+      price: product.daily_price_ttc?.toString() || '0',
+      priceCurrency: 'EUR',
+      availability: 'https://schema.org/InStock',
+      url: `https://www.sndrush.com/catalogue/${productId}`,
+      priceSpecification: {
+        '@type': 'UnitPriceSpecification',
+        price: product.daily_price_ttc?.toString() || '0',
+        priceCurrency: 'EUR',
+        unitCode: 'DAY',
+      },
+    },
+    category: product.category,
+  } : null;
+
   return (
     <div className="min-h-screen bg-white">
+      {product && (
+        <SEOHead
+          title={product.name}
+          description={product.description || product.long_description || `Location ${product.name} - SoundRush Paris. Matériel professionnel disponible à Paris et Île-de-France.`}
+          canonicalUrl={`https://www.sndrush.com/catalogue/${productId}`}
+          ogImage={product.images && product.images.length > 0 ? product.images[0] : 'https://www.sndrush.com/og-image.jpg'}
+          structuredData={structuredData || undefined}
+          keywords={[
+            `location ${product.name.toLowerCase()}`,
+            `location ${product.category} Paris`,
+            'location matériel audio Paris',
+            'sonorisation professionnelle',
+            'location sono Île-de-France',
+          ]}
+        />
+      )}
       <Header language={language} onLanguageChange={setLanguage} />
       
       <main className="pt-[180px] sm:pt-[200px] pb-32 bg-white">
@@ -768,22 +685,29 @@ export default function ProductDetailPage() {
             <div>
               {/* Image principale */}
               <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-gray-100">
-                <img
+                <Image
                   src={product.images && product.images.length > 0 ? product.images[0] : '/products/default.jpg'}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
+                  loading="eager"
                 />
               </div>
             </div>
 
             {/* Infos principales */}
             <div>
-              {/* Breadcrumb */}
-              <nav className="text-sm text-gray-500 mb-4">
-                <Link href="/catalogue" className="hover:text-[#F2431E] transition-colors">{language === 'fr' ? 'Catalogue' : 'Catalogue'}</Link>
-                <span className="mx-2">/</span>
-                <span className="text-gray-900 font-medium">{product.name}</span>
-              </nav>
+              {/* Breadcrumb avec structured data */}
+              <Breadcrumb
+                items={[
+                  { label: language === 'fr' ? 'Accueil' : 'Home', href: '/' },
+                  { label: language === 'fr' ? 'Catalogue' : 'Catalogue', href: '/catalogue' },
+                  { label: product.name, href: `/catalogue/${productId}` },
+                ]}
+                language={language}
+              />
 
               {/* Navigation entre produits - uniquement pour les produits (pas pour les packs non-DJ) */}
               {product && product.category !== 'packs' && <ProductNavigation currentProduct={product} language={language} />}
@@ -894,144 +818,14 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Sélecteur de dates et heures */}
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  {language === 'fr' ? 'Période de location' : 'Rental period'}
-                </label>
-                <div className="space-y-3">
-                  {/* Dates */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1.5">
-                        {language === 'fr' ? 'Date de début' : 'Start date'}
-                      </label>
-                      <input
-                        type="date"
-                        value={startDate || ''}
-                        onChange={(e) => {
-                          setStartDate(e.target.value);
-                          if (e.target.value && endDate && e.target.value > endDate) {
-                            setEndDate(null);
-                          }
-                        }}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1.5">
-                        {language === 'fr' ? 'Date de fin' : 'End date'}
-                      </label>
-                      <input
-                        type="date"
-                        value={endDate || ''}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        min={startDate || new Date().toISOString().split('T')[0]}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
-                      />
-                    </div>
-                  </div>
-                  {/* Heures - Requises pour éviter les doublons */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1.5">
-                        {language === 'fr' ? 'Heure de début *' : 'Start time *'}
-                      </label>
-                      <input
-                        type="time"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        required
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1.5">
-                        {language === 'fr' ? 'Heure de fin *' : 'End time *'}
-                      </label>
-                      <input
-                        type="time"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        required
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:border-[#F2431E] transition-colors"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Disponibilité */}
-              {startDate && endDate && startTime && endTime && (
-                <div className="mb-6">
-                  {checkingAvailability ? (
-                    <div className="text-sm text-gray-600 py-2">{currentTexts.checking}</div>
-                  ) : availability ? (
-                    <div className={`flex items-center gap-2 ${availability.available ? 'text-green-600' : 'text-red-600'}`}>
-                      <span className="text-lg">{availability.available ? '●' : '●'}</span>
-                      <span className="font-medium text-sm">
-                        {availability.available 
-                          ? (language === 'fr' ? 'Disponible aux dates sélectionnées' : 'Available on selected dates')
-                          : currentTexts.unavailable
-                        }
-                      </span>
-                    </div>
-                  ) : null}
-                </div>
-              )}
-
-              {/* Total */}
-              {startDate && endDate && (
-                <div className="mb-6 flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700 font-medium">
-                    {currentTexts.totalPrice} ({rentalDays} {currentTexts.days})
-                  </span>
-                  <span className="text-2xl font-bold text-black">{calculateTotal().toFixed(2)}€</span>
-                </div>
-              )}
-
-              {/* Bouton Ajouter au panier - Indisponible pour les lumières */}
-              {isLightProduct() ? (
-                <button
-                  disabled
-                  className="w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed"
-                >
-                  <span>🚫</span>
-                  {language === 'fr' ? 'Indisponible' : 'Unavailable'}
-                </button>
-              ) : (
-                <button
-                  onClick={handleAddToCart}
-                  disabled={!canAddToCart || checkingAvailability}
-                  className={`
-                    w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-3 flex items-center justify-center gap-2
-                    ${canAddToCart && !checkingAvailability
-                      ? 'bg-[#F2431E] text-white hover:bg-[#E63A1A] hover:shadow-xl'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }
-                  `}
-                >
-                  <span>🛒</span>
-                  {checkingAvailability 
-                    ? currentTexts.checking
-                    : needsTime
-                    ? (language === 'fr' ? 'Veuillez spécifier les heures' : 'Please specify times')
-                    : currentTexts.addToCart
-                  }
-                </button>
-              )}
-
-              {/* Bouton Demander à l'assistant */}
-              {product && (
-                <AskAssistantButton
-                  productId={product.id.toString()}
-                  productName={product.name}
-                  productType="product"
-                  productUrl={`/catalogue/${product.slug || product.id}`}
-                  language={language}
-                />
-              )}
+              {/* Bouton Réserver */}
+              <a
+                href="tel:+33744782754"
+                className="w-full py-4 rounded-lg font-bold text-base transition-all shadow-lg mb-6 flex items-center justify-center gap-2 bg-[#F2431E] text-white hover:bg-[#E63A1A] hover:shadow-xl"
+              >
+                <span>📞</span>
+                {language === 'fr' ? 'Réserver' : 'Reserve'}
+              </a>
 
               {/* Carte Installation - Masquée pour les accessoires et lumières */}
               {SHOW_INSTALLATION_AND_DELIVERY && product.category !== 'accessoires' && !isLightProduct() && (() => {
@@ -1140,11 +934,6 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Caution */}
-              <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                <span>🔒</span>
-                <span>{language === 'fr' ? `Caution: ${product.deposit}€` : `Deposit: ${product.deposit}€`}</span>
-              </div>
             </div>
           </div>
 
@@ -1716,93 +1505,6 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Vous pourriez en avoir besoin */}
-          {recommendedProducts.length > 0 && (
-            <div className="bg-white py-12">
-              <h2 className="text-3xl font-bold text-black mb-8">{currentTexts.youMightNeed}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {recommendedProducts.map((recProduct) => {
-                  // Gérer les images (peuvent être un tableau ou une chaîne JSON)
-                  let productImages: string[] = [];
-                  if (Array.isArray(recProduct.images)) {
-                    productImages = recProduct.images;
-                  } else if (typeof recProduct.images === 'string') {
-                    try {
-                      const parsed = JSON.parse(recProduct.images);
-                      productImages = Array.isArray(parsed) ? parsed : [parsed];
-                    } catch {
-                      productImages = [recProduct.images];
-                    }
-                  }
-                  
-                  const productImage = productImages.length > 0 
-                    ? productImages[0] 
-                    : '/products/default.jpg';
-                  
-                  const handleAddRecommended = async () => {
-                    const cartItem: CartItem = {
-                      productId: String(recProduct.id),
-                      productName: recProduct.name,
-                      productSlug: recProduct.slug || String(recProduct.id),
-                      dailyPrice: recProduct.daily_price_ttc ? parseFloat(recProduct.daily_price_ttc.toString()) : 0,
-                      quantity: 1,
-                      rentalDays: 1,
-                      startDate: null,
-                      endDate: null,
-                      startTime: '',
-                      endTime: '',
-                      deposit: parseFloat(recProduct.deposit?.toString() || '0'),
-                      addons: [],
-                      images: productImage ? [productImage] : [],
-                    };
-                    const result = await addToCart(cartItem);
-                    if (!result.success) {
-                      alert(result.error || (language === 'fr'
-                        ? 'Impossible d\'ajouter ce produit au panier.'
-                        : 'Unable to add this product to cart.'));
-                    }
-                  };
-
-                  return (
-                    <Link 
-                      key={recProduct.id} 
-                      href={`/catalogue/${recProduct.id}`}
-                      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full"
-                    >
-                      <div className="relative h-48 bg-gray-100 flex-shrink-0">
-                        <img
-                          src={productImage}
-                          alt={recProduct.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="p-4 flex flex-col flex-grow">
-                        <div className="h-[3rem] mb-2 flex items-start">
-                          <h3 className="font-bold text-black line-clamp-2">{recProduct.name}</h3>
-                        </div>
-                        <div className="h-[2rem] mb-4 flex items-end">
-                          <p className="text-lg font-bold text-[#F2431E]">
-                            {recProduct.daily_price_ttc}€/{language === 'fr' ? 'jour' : 'day'}
-                          </p>
-                        </div>
-                        <div className="mt-auto">
-                          <button 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleAddRecommended();
-                            }}
-                            className="w-full bg-[#F2431E] text-white py-2 rounded-lg font-semibold hover:bg-[#E63A1A] transition-colors"
-                          >
-                            {language === 'fr' ? 'Ajouter' : 'Add'}
-                          </button>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* Nos engagements */}
           <div className="bg-gray-50 py-12">

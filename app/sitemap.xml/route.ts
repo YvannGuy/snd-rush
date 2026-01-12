@@ -9,6 +9,16 @@ const guides = [
   'configuration-sonorisation-evenement',
 ];
 
+// Articles de blog disponibles
+const blogArticles = [
+  'enceinte-active-vs-passive',
+  'micro-filaire-vs-sans-fil',
+  'calculer-puissance-sonore-evenement',
+  'sonorisation-mariage-guide-complet',
+  '10-erreurs-eviter-location-sono',
+  'budget-sonorisation-evenement-2025',
+];
+
 // Packs disponibles
 const packKeys = Object.keys(BASE_PACKS);
 const packIds = [1, 2, 3, 5, 6, 7, 8];
@@ -23,6 +33,7 @@ function generateSitemapXML(): string {
     { url: baseUrl, priority: '1.0', changefreq: 'daily' },
     { url: `${baseUrl}/catalogue`, priority: '0.9', changefreq: 'weekly' },
     { url: `${baseUrl}/packs`, priority: '0.9', changefreq: 'weekly' },
+    { url: `${baseUrl}/location`, priority: '0.9', changefreq: 'weekly' },
     { url: `${baseUrl}/generateur_de_prix`, priority: '0.8', changefreq: 'monthly' },
     { url: `${baseUrl}/devis`, priority: '0.8', changefreq: 'monthly' },
     { url: `${baseUrl}/conference`, priority: '0.8', changefreq: 'monthly' },
@@ -41,6 +52,13 @@ function generateSitemapXML(): string {
     changefreq: 'monthly',
   }));
 
+  // Pages de blog
+  const blogPages = blogArticles.map(slug => ({
+    url: `${baseUrl}/blog/${slug}`,
+    priority: '0.8',
+    changefreq: 'monthly',
+  }));
+
   // Pages de packs
   const packPages = packIds.map(id => ({
     url: `${baseUrl}/packs/${id}`,
@@ -55,10 +73,19 @@ function generateSitemapXML(): string {
     changefreq: 'weekly',
   }));
 
+  // Page blog index
+  const blogIndexPage = {
+    url: `${baseUrl}/blog`,
+    priority: '0.8',
+    changefreq: 'weekly',
+  };
+
   // Combiner toutes les pages
   const allPages = [
     ...staticPages,
+    blogIndexPage,
     ...guidePages,
+    ...blogPages,
     ...packPages,
     ...bookPackPages,
   ];

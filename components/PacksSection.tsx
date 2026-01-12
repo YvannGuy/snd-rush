@@ -122,25 +122,6 @@ export default function PacksSection({ language }: PacksSectionProps) {
         note: "Idéal pour concerts, DJ sets, grandes conférences."
       },
       {
-        id: 5,
-        name: "Pack Custom",
-        tagline: "Composez votre pack sur mesure",
-        description: "Sélectionnez uniquement le matériel dont vous avez besoin. Devis personnalisé adapté à votre événement avec accompagnement complet.",
-        priceParis: "Sur devis",
-        priceHorsParis: "Sur devis",
-        featured: false,
-        image: "/concert.jpg",
-        features: [
-          "Sélectionnez uniquement ce dont vous avez besoin",
-          "Matériel adapté à votre événement",
-          "Devis personnalisé selon vos besoins",
-          "Accompagnement de A à Z"
-        ],
-        highlight: "Caution : selon devis",
-        ideal: "Tous types d'événements",
-        note: "Parfait pour composer une solution sur mesure adaptée à vos besoins spécifiques."
-      },
-      {
         id: 1,
         name: "Pack S Petit",
         tagline: "Solution basique pour petits événements",
@@ -324,7 +305,13 @@ export default function PacksSection({ language }: PacksSectionProps) {
 
               // Si on charge depuis Supabase et qu'on a des données, les utiliser
               if (!loadingPacks && packsFromSupabase.length > 0) {
-                return packsFromSupabase.map((pack: any) => {
+                return packsFromSupabase
+                  .filter((pack: any) => {
+                    // Exclure le Pack Custom (id 4 ou 5, ou nom contenant "Custom")
+                    const packName = (pack.nom_pack || '').toLowerCase();
+                    return pack.id !== 4 && pack.id !== 5 && !packName.includes('custom');
+                  })
+                  .map((pack: any) => {
                   // Parser la composition si c'est une string JSON
                   let features: string[] = [];
                   if (pack.composition) {
@@ -353,8 +340,11 @@ export default function PacksSection({ language }: PacksSectionProps) {
                   };
                 });
               }
-              // Sinon utiliser les packs par défaut
-              return currentPacks;
+              // Sinon utiliser les packs par défaut (filtrer le Pack Custom)
+              return currentPacks.filter((pack: Pack) => {
+                const packName = pack.name.toLowerCase();
+                return pack.id !== 4 && pack.id !== 5 && !packName.includes('custom');
+              });
             })().map((pack) => (
                     <Link
                       key={pack.id}
