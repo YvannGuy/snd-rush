@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface CatalogueSectionProps {
   language: 'fr' | 'en';
@@ -125,12 +126,16 @@ export default function CatalogueSection({ language }: CatalogueSectionProps) {
                 key={product.id}
                 className="bg-gray-50 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow min-w-[300px] max-w-[300px]"
               >
-                {/* Image placeholder */}
-                <div className="w-full h-48 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                  <img 
-                    src={product.image} 
-                    alt={product.name}
-                    className="w-full h-full object-cover rounded-lg"
+                {/* Image */}
+                <div className="relative w-full h-48 bg-gray-200 rounded-lg mb-4 overflow-hidden">
+                  <Image
+                    src={product.image}
+                    alt={`${product.name} - ${language === 'fr' ? 'Location matériel sonore professionnel' : 'Professional sound equipment rental'}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 300px, 300px"
+                    loading="lazy"
+                    quality={85}
                   />
                 </div>
 

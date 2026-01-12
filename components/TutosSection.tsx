@@ -117,9 +117,12 @@ export default function TutosSection({ language }: TutosSectionProps) {
               <div className="relative w-full h-48 overflow-hidden bg-gray-200">
                 <Image
                   src={tutorial.image}
-                  alt={tutorial.title}
+                  alt={`${tutorial.title} - ${language === 'fr' ? 'Guide installation sonorisation' : 'Sound system installation guide'}`}
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-300"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  loading="lazy"
+                  quality={85}
                 />
                 {/* Category Badge */}
                 <div className="absolute bottom-2 right-2">

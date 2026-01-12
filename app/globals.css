@@ -3,6 +3,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Optimisation fonts pour Core Web Vitals */
+@font-face {
+  font-family: 'RemixIcon';
+  font-display: swap;
+}
+
 /* Animations pour le popup de bienvenue */
 @keyframes fadeIn {
   from {

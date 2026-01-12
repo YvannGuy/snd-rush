@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import SectionChevron from './SectionChevron';
 
 interface AboutSoundRushSectionProps {
@@ -29,7 +30,21 @@ export default function AboutSoundRushSection({ language }: AboutSoundRushSectio
             {currentTexts.title}
           </h2>
           <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            {currentTexts.description}
+            {language === 'fr' ? (
+              <>
+                La solution clé en main pour sonoriser vos évènements à{' '}
+                <Link href="/location" className="text-[#F2431E] hover:underline font-medium">
+                  Paris et Île-de-France
+                </Link>
+                . Notre mission est simple : vous offrir un son propre, fiable et prêt à l'heure, sans stress. Conférence, soirée, mariage : vous choisissez un{' '}
+                <Link href="/packs" className="text-[#F2431E] hover:underline font-medium">
+                  pack
+                </Link>
+                {' '}selon votre événement et votre nombre d'invités, et on s'occupe du reste (livraison, installation, réglages, tests sur place).
+              </>
+            ) : (
+              currentTexts.description
+            )}
           </p>
         </div>
 

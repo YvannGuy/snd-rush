@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
@@ -13,6 +12,15 @@ import { getBasePack } from '@/lib/packs/basePacks';
 import SEOHead from '@/components/SEOHead';
 import Breadcrumb from '@/components/Breadcrumb';
 import Script from 'next/script';
+
+// Fonction pour enrichir le texte avec des liens internes
+function enrichTextWithLinks(text: string): string {
+  return text
+    .replace(/(location de matériel sonore)/gi, '<a href="/location" class="text-[#F2431E] hover:underline font-medium">$1</a>')
+    .replace(/(catalogue)/gi, '<a href="/catalogue" class="text-[#F2431E] hover:underline font-medium">$1</a>')
+    .replace(/(pack sonorisation)/gi, '<a href="/packs" class="text-[#F2431E] hover:underline font-medium">$1</a>')
+    .replace(/(sonorisation professionnelle)/gi, '<a href="/location" class="text-[#F2431E] hover:underline font-medium">$1</a>');
+}
 
 interface PackSEOContentProps {
   packKey: 'conference' | 'soiree' | 'mariage';
@@ -212,7 +220,6 @@ const seoContent = {
 };
 
 export default function PackSEOContent({ packKey, language = 'fr', onLanguageChange }: PackSEOContentProps) {
-  const router = useRouter();
   const pack = getBasePack(packKey);
   const currentContent = seoContent[packKey][language];
   const currentTexts = {
@@ -241,7 +248,7 @@ export default function PackSEOContent({ packKey, language = 'fr', onLanguageCha
   }
 
   const handleReserve = () => {
-    router.push(`/book/${packKey}`);
+    window.location.href = 'tel:+33744782754';
   };
 
   // Structured data pour SEO
@@ -312,10 +319,12 @@ export default function PackSEOContent({ packKey, language = 'fr', onLanguageCha
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100">
                 <Image
                   src={PACK_IMAGES[packKey]}
-                  alt={pack.title}
+                  alt={`${pack.title} - ${language === 'fr' ? 'Pack sonorisation professionnelle' : 'Professional sound pack'}`}
                   fill
                   className="object-cover"
                   priority
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  quality={85}
                 />
               </div>
               <div className="flex flex-col justify-center">
@@ -345,9 +354,15 @@ export default function PackSEOContent({ packKey, language = 'fr', onLanguageCha
                   {section.title}
                 </h2>
                 <div className="text-gray-700 leading-relaxed text-lg space-y-4">
-                  {section.content.split('\n\n').map((paragraph, pIndex) => (
-                    <p key={pIndex}>{paragraph}</p>
-                  ))}
+                  {section.content.split('\n\n').map((paragraph, pIndex) => {
+                    const enrichedParagraph = enrichTextWithLinks(paragraph);
+                    return (
+                      <p 
+                        key={pIndex}
+                        dangerouslySetInnerHTML={{ __html: enrichedParagraph }}
+                      />
+                    );
+                  })}
                 </div>
               </section>
             ))}
@@ -403,11 +418,22 @@ export default function PackSEOContent({ packKey, language = 'fr', onLanguageCha
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       {item.q}
                     </h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      {item.a}
-                    </p>
+                    <p 
+                      className="text-gray-600 leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: enrichTextWithLinks(item.a) }}
+                    />
                   </div>
                 ))}
+              </div>
+              {/* Lien vers FAQ complète */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <Link 
+                  href="/#faq" 
+                  className="text-[#F2431E] hover:underline font-medium inline-flex items-center gap-2"
+                >
+                  {language === 'fr' ? 'Voir toutes les questions fréquentes' : 'View all frequently asked questions'}
+                  <ArrowLeft className="w-4 h-4 rotate-180" />
+                </Link>
               </div>
             </CardContent>
           </Card>

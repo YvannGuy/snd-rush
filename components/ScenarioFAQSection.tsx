@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import Script from 'next/script';
 
 interface ScenarioFAQSectionProps {
   language?: 'fr' | 'en';
@@ -67,12 +68,34 @@ export default function ScenarioFAQSection({
 
   const currentFaqs = faqs[language];
 
+  // Structured data FAQPage pour SEO
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: currentFaqs.map(faq => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+
   return (
-    <section 
-      id="faq"
-      className="bg-white py-24"
-      aria-labelledby="faq-title"
-    >
+    <>
+      <Script
+        id="faq-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(faqSchema),
+        }}
+      />
+      <section 
+        id="faq"
+        className="bg-white py-24"
+        aria-labelledby="faq-title"
+      >
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
@@ -129,5 +152,6 @@ export default function ScenarioFAQSection({
         </div>
       </div>
     </section>
+    </>
   );
 }

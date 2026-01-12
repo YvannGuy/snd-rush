@@ -707,10 +707,20 @@ export default function BlogArticleClient({ slug }: BlogArticleClientProps) {
                 );
               }
               if (section.type === 'paragraph') {
+                // Enrichir le texte avec des liens internes stratégiques
+                const enrichText = (text: string): string => {
+                  return text
+                    .replace(/(location de matériel sonore|location sono)/gi, '<a href="/location" class="text-[#F2431E] hover:underline font-medium">$1</a>')
+                    .replace(/(catalogue)/gi, '<a href="/catalogue" class="text-[#F2431E] hover:underline font-medium">$1</a>')
+                    .replace(/(pack sonorisation|pack)/gi, '<a href="/packs" class="text-[#F2431E] hover:underline font-medium">$1</a>');
+                };
+                
                 return (
-                  <p key={index} className="text-gray-700 leading-relaxed mb-6 text-lg">
-                    {section.text}
-                  </p>
+                  <p 
+                    key={index} 
+                    className="text-gray-700 leading-relaxed mb-6 text-lg"
+                    dangerouslySetInnerHTML={{ __html: enrichText(section.text) }}
+                  />
                 );
               }
               if (section.type === 'list') {
@@ -725,6 +735,48 @@ export default function BlogArticleClient({ slug }: BlogArticleClientProps) {
               return null;
             })}
           </article>
+
+          {/* Articles similaires */}
+          <div className="mt-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">
+              {language === 'fr' ? 'Articles similaires' : 'Related articles'}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {Object.keys(articles)
+                .filter(articleSlug => articleSlug !== slug)
+                .slice(0, 3)
+                .map((relatedSlug) => {
+                  const relatedArticle = articles[relatedSlug as keyof typeof articles]?.[language];
+                  if (!relatedArticle) return null;
+                  
+                  return (
+                    <Link key={relatedSlug} href={`/blog/${relatedSlug}`}>
+                      <Card className="h-full hover:shadow-xl transition-shadow">
+                        <div className="relative h-48 bg-gray-200">
+                          <Image
+                            src={relatedArticle.image}
+                            alt={relatedArticle.title}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                            loading="lazy"
+                            quality={85}
+                          />
+                        </div>
+                        <CardContent className="p-6">
+                          <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                            {relatedArticle.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 line-clamp-2">
+                            {relatedArticle.description}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
+            </div>
+          </div>
 
           {/* CTA Section */}
           <Card className="mt-16 bg-gradient-to-br from-[#F2431E] to-[#E63A1A] text-white border-0">
@@ -753,8 +805,8 @@ export default function BlogArticleClient({ slug }: BlogArticleClientProps) {
                   variant="outline"
                   className="border-white text-white hover:bg-white/10"
                 >
-                  <Link href="/devis">
-                    {language === 'fr' ? 'Demander un devis' : 'Request a quote'}
+                  <Link href="/catalogue">
+                    {language === 'fr' ? 'Voir le catalogue' : 'View catalog'}
                   </Link>
                 </Button>
               </div>
