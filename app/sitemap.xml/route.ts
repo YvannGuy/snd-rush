@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { BASE_PACKS } from '@/lib/packs/basePacks';
 
 // Guides disponibles
 const guides = [
@@ -20,7 +19,6 @@ const blogArticles = [
 ];
 
 // Packs disponibles
-const packKeys = Object.keys(BASE_PACKS);
 const packIds = [1, 2, 3, 5, 6, 7, 8];
 
 const baseUrl = 'https://www.sndrush.com';
@@ -39,7 +37,6 @@ function generateSitemapXML(): string {
     { url: `${baseUrl}/conference`, priority: '0.8', changefreq: 'monthly' },
     { url: `${baseUrl}/mariage`, priority: '0.8', changefreq: 'monthly' },
     { url: `${baseUrl}/soiree`, priority: '0.8', changefreq: 'monthly' },
-    { url: `${baseUrl}/pro`, priority: '0.7', changefreq: 'monthly' },
     { url: `${baseUrl}/cgv`, priority: '0.5', changefreq: 'yearly' },
     { url: `${baseUrl}/mentions-legales`, priority: '0.5', changefreq: 'yearly' },
     { url: `${baseUrl}/politique-de-confidentialite`, priority: '0.5', changefreq: 'yearly' },
@@ -66,13 +63,6 @@ function generateSitemapXML(): string {
     changefreq: 'weekly',
   }));
 
-  // Pages de réservation
-  const bookPackPages = packKeys.map(key => ({
-    url: `${baseUrl}/book/${key}`,
-    priority: '0.7',
-    changefreq: 'weekly',
-  }));
-
   // Page blog index
   const blogIndexPage = {
     url: `${baseUrl}/blog`,
@@ -87,7 +77,6 @@ function generateSitemapXML(): string {
     ...guidePages,
     ...blogPages,
     ...packPages,
-    ...bookPackPages,
   ];
 
   // Générer le XML
