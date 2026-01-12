@@ -169,10 +169,12 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
               <div className="relative w-full h-48 overflow-hidden">
                 <Image 
                   src={pack.image} 
-                  alt={pack.name}
+                  alt={`${pack.name} - ${language === 'fr' ? 'Pack sonorisation clé en main' : 'Turnkey sound pack'}`}
                   fill
                   className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 33vw"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
+                  loading="lazy"
+                  quality={85}
                 />
               </div>
 

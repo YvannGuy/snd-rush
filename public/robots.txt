@@ -40,4 +40,6 @@ Allow: /mariage
 Allow: /soiree
 Allow: /pro
 Allow: /book/
+Allow: /blog
+Allow: /location
 

@@ -25,6 +25,7 @@ import RentalConditionsModal from '@/components/RentalConditionsModal';
 import SplashScreen from '@/components/SplashScreen';
 import ScenarioFAQSection from '@/components/ScenarioFAQSection';
 import BookingWizard from '@/components/BookingWizard';
+import SEOHead from '@/components/SEOHead';
 
 export default function Home() {
   const router = useRouter();
@@ -156,6 +157,32 @@ export default function Home() {
       {/* Contenu principal - affiché seulement après le splash */}
       {showContent && (
         <div className="min-h-screen bg-white">
+          <SEOHead
+            title={language === 'fr' 
+              ? 'Location Sono Urgence 24/7 Paris | SoundRush - Packs Clé en Main'
+              : '24/7 Sound Rental Paris | SoundRush - Turnkey Packs'}
+            description={language === 'fr'
+              ? 'SoundRush Paris : location sono urgence 24h/24 et 7j/7 à Paris et Île-de-France. Sonorisation professionnelle, packs clé en main pour mariages, anniversaires, événements corporate. Livraison incluse, installation disponible.'
+              : 'SoundRush Paris: 24/7 emergency sound rental in Paris and Île-de-France. Professional sound systems, turnkey packs for weddings, birthdays, corporate events. Delivery included, installation available.'}
+            canonicalUrl="https://www.sndrush.com"
+            keywords={language === 'fr' ? [
+              'location sono urgence Paris',
+              'sono urgence 24/7 Paris',
+              'location sonorisation express Paris',
+              'sono mariage Paris',
+              'location sono professionnelle Paris',
+              'packs sono clé en main Paris',
+              'location matériel audio Île-de-France',
+            ] : [
+              'emergency sound rental Paris',
+              '24/7 sound rental Paris',
+              'express sound system rental Paris',
+              'wedding sound system Paris',
+              'professional sound rental Paris',
+              'turnkey sound packs Paris',
+              'audio equipment rental Île-de-France',
+            ]}
+          />
           <Header 
             language={language} 
             onLanguageChange={setLanguage}

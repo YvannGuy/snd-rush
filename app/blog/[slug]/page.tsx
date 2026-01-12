@@ -17,7 +17,7 @@ const articles = {
     fr: {
       title: 'Enceinte active vs passive : laquelle choisir pour votre événement ?',
       category: 'Comparaison',
-      image: '/enceintemacmah.png',
+      image: '/enceintebt.jpg',
       author: 'Équipe SoundRush',
       date: '2025',
       readTime: '8 min',
@@ -122,7 +122,7 @@ const articles = {
     en: {
       title: 'Active vs Passive Speaker: Which One to Choose for Your Event?',
       category: 'Comparison',
-      image: '/enceintemacmah.png',
+      image: '/enceintebt.jpg',
       author: 'SoundRush Team',
       date: '2025',
       readTime: '8 min',
@@ -143,7 +143,7 @@ const articles = {
     fr: {
       title: 'Micro filaire vs sans-fil : guide de choix selon vos besoins',
       category: 'Comparaison',
-      image: '/microshure.png',
+      image: '/Microsansfil.png',
       author: 'Équipe SoundRush',
       date: '2025',
       readTime: '10 min',
@@ -234,7 +234,7 @@ const articles = {
     en: {
       title: 'Wired vs Wireless Microphone: Selection Guide Based on Your Needs',
       category: 'Comparison',
-      image: '/microshure.png',
+      image: '/Microsansfil.png',
       author: 'SoundRush Team',
       date: '2025',
       readTime: '10 min',
@@ -255,7 +255,7 @@ const articles = {
     fr: {
       title: 'Comment calculer la puissance sonore nécessaire pour votre événement ?',
       category: 'Guide',
-      image: '/enceintefbt.png',
+      image: '/concert.jpg',
       author: 'Équipe SoundRush',
       date: '2025',
       readTime: '12 min',
@@ -312,7 +312,7 @@ const articles = {
     en: {
       title: 'How to Calculate the Sound Power Needed for Your Event?',
       category: 'Guide',
-      image: '/enceintefbt.png',
+      image: '/concert.jpg',
       author: 'SoundRush Team',
       date: '2025',
       readTime: '12 min',
@@ -403,7 +403,7 @@ const articles = {
     fr: {
       title: '10 erreurs à éviter lors de la location de matériel sonore',
       category: 'Conseils',
-      image: '/installation.jpg',
+      image: '/livraison.jpg',
       author: 'Équipe SoundRush',
       date: '2025',
       readTime: '9 min',
@@ -510,7 +510,7 @@ const articles = {
     en: {
       title: '10 Mistakes to Avoid When Renting Sound Equipment',
       category: 'Tips',
-      image: '/installation.jpg',
+      image: '/livraison.jpg',
       author: 'SoundRush Team',
       date: '2025',
       readTime: '9 min',
@@ -531,7 +531,7 @@ const articles = {
     fr: {
       title: 'Budget sonorisation événement : guide des prix 2025',
       category: 'Économique',
-      image: '/packs.png',
+      image: '/packdjL.png',
       author: 'Équipe SoundRush',
       date: '2025',
       readTime: '11 min',
@@ -608,7 +608,7 @@ const articles = {
     en: {
       title: 'Event Sound System Budget: 2025 Price Guide',
       category: 'Economic',
-      image: '/packs.png',
+      image: '/packdjL.png',
       author: 'SoundRush Team',
       date: '2025',
       readTime: '11 min',

@@ -225,23 +225,83 @@ export default function LocationPage() {
           />
 
           {/* Hero Section */}
-          <div className="mb-12">
-            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-              {currentContent.h1}
-            </h1>
-            <p className="text-lg text-gray-600 leading-relaxed mb-8 max-w-3xl">
-              {currentContent.intro}
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Button
-                asChild
-                className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
-                size="lg"
-              >
-                <Link href="/catalogue">
-                  {language === 'fr' ? 'Voir le catalogue' : 'View catalog'}
-                </Link>
-              </Button>
+          <div className="mb-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Section - Text Content */}
+            <div>
+              {/* Label */}
+              <p className="text-sm font-bold text-[#F2431E] uppercase tracking-wider mb-4">
+                {language === 'fr' ? 'LOCATION' : 'RENTAL'}
+              </p>
+              
+              {/* Main Heading */}
+              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                {currentContent.h1}
+              </h1>
+              
+              {/* Main Paragraph */}
+              <p className="text-lg text-gray-600 leading-relaxed mb-8">
+                {currentContent.intro}
+              </p>
+              
+              {/* Two Feature Blocks */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {/* Left Feature Block */}
+                <div>
+                  <div className="w-12 h-12 bg-[#F2431E] rounded-full flex items-center justify-center mb-4">
+                    <Package className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    {language === 'fr' ? 'Matériel professionnel' : 'Professional equipment'}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {language === 'fr' 
+                      ? 'Équipements de qualité testés et entretenus régulièrement pour garantir des performances optimales.'
+                      : 'Quality equipment tested and maintained regularly to ensure optimal performance.'}
+                  </p>
+                </div>
+                
+                {/* Right Feature Block */}
+                <div>
+                  <div className="w-12 h-12 bg-[#F2431E] rounded-full flex items-center justify-center mb-4">
+                    <Wrench className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    {language === 'fr' ? 'Service clé en main' : 'Turnkey service'}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {language === 'fr' 
+                      ? 'Livraison, installation et récupération incluses. Nos techniciens s\'occupent de tout.'
+                      : 'Delivery, installation and pickup included. Our technicians take care of everything.'}
+                  </p>
+                </div>
+              </div>
+              
+              {/* CTA Button */}
+              <div className="mt-8">
+                <Button
+                  asChild
+                  className="bg-[#F2431E] hover:bg-[#E63A1A] text-white"
+                  size="lg"
+                >
+                  <Link href="/catalogue">
+                    {language === 'fr' ? 'Voir le catalogue' : 'View catalog'}
+                  </Link>
+                </Button>
+              </div>
+            </div>
+            
+            {/* Right Section - Image */}
+            <div className="relative">
+              <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden">
+                <Image
+                  src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&h=600&fit=crop"
+                  alt={language === 'fr' ? 'Location matériel sonore professionnel' : 'Professional sound equipment rental'}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  priority
+                />
+              </div>
             </div>
           </div>
 

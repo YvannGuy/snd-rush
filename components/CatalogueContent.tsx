@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import QuickAddToCartModal from './catalogue/QuickAddToCartModal';
 
@@ -545,10 +546,13 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
               >
                 {/* Product Image */}
                 <div className="relative h-48 bg-gray-200 flex-shrink-0">
-                  <img
+                  <Image
                     src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
+                    alt={`${product.name} - ${language === 'fr' ? 'Location matériel sonore' : 'Sound equipment rental'}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    loading="lazy"
                   />
                   {/* Category Tag */}
                   <div className={`absolute top-3 left-3 ${categoryColors[product.category] || 'bg-gray-500'} text-white px-3 py-1 rounded-full text-xs font-medium`}>

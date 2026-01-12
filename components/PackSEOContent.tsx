@@ -245,27 +245,42 @@ export default function PackSEOContent({ packKey, language = 'fr', onLanguageCha
   };
 
   // Structured data pour SEO
+  const packImage = PACK_IMAGES[packKey];
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: pack.title,
     description: currentContent.description,
-    image: PACK_IMAGES[packKey],
+    image: packImage.startsWith('http') ? packImage : `https://www.sndrush.com${packImage}`,
     brand: {
+      '@type': 'Brand',
+      name: 'SoundRush Paris',
+    },
+    manufacturer: {
       '@type': 'Brand',
       name: 'SoundRush Paris',
     },
     offers: {
       '@type': 'Offer',
+      price: pack.basePrice.toString(),
       priceCurrency: 'EUR',
       availability: 'https://schema.org/InStock',
       url: `https://www.sndrush.com/${packKey}`,
+      priceSpecification: {
+        '@type': 'UnitPriceSpecification',
+        price: pack.basePrice.toString(),
+        priceCurrency: 'EUR',
+        unitCode: 'DAY',
+        unitText: language === 'fr' ? 'jour' : 'day',
+      },
+      availabilityStarts: new Date().toISOString(),
     },
     aggregateRating: {
       '@type': 'AggregateRating',
       ratingValue: '4.8',
       reviewCount: '127',
     },
+    sku: `pack-${packKey}`,
   };
 
   return (

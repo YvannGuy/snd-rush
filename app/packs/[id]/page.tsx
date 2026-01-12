@@ -148,23 +148,36 @@ export default function PackDetailPage() {
     '@type': 'Product',
     name: currentPack.name,
     description: currentPack.description,
-    image: currentPack.image,
+    image: currentPack.image.startsWith('http') ? currentPack.image : `https://www.sndrush.com${currentPack.image}`,
     brand: {
+      '@type': 'Brand',
+      name: 'SoundRush Paris',
+    },
+    manufacturer: {
       '@type': 'Brand',
       name: 'SoundRush Paris',
     },
     offers: {
       '@type': 'Offer',
-      price: currentPack.priceParis.replace(/[^0-9]/g, ''),
+      price: currentPack.priceParis.replace(/[^0-9,.]/g, '').replace(',', '.'),
       priceCurrency: 'EUR',
       availability: 'https://schema.org/InStock',
       url: `https://www.sndrush.com/packs/${packId}`,
+      priceSpecification: {
+        '@type': 'UnitPriceSpecification',
+        price: currentPack.priceParis.replace(/[^0-9,.]/g, '').replace(',', '.'),
+        priceCurrency: 'EUR',
+        unitCode: 'DAY',
+        unitText: language === 'fr' ? 'jour' : 'day',
+      },
+      availabilityStarts: new Date().toISOString(),
     },
     aggregateRating: {
       '@type': 'AggregateRating',
       ratingValue: '4.8',
       reviewCount: '127',
     },
+    sku: `pack-${packId}`,
   } : null;
 
   return (
@@ -174,7 +187,7 @@ export default function PackDetailPage() {
           title={currentPack.name}
           description={currentPack.description}
           canonicalUrl={`https://www.sndrush.com/packs/${packId}`}
-          ogImage={currentPack.image}
+          ogImage={currentPack.image.startsWith('http') ? currentPack.image : `https://www.sndrush.com${currentPack.image}`}
           structuredData={structuredData || undefined}
           keywords={[
             `location sono ${currentPack.name.toLowerCase()}`,

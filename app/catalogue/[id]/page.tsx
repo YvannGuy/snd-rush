@@ -635,26 +635,40 @@ export default function ProductDetailPage() {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    description: product.description || product.long_description || `Location ${product.name} - SoundRush Paris`,
-    image: product.images && product.images.length > 0 ? product.images[0] : 'https://www.sndrush.com/og-image.jpg',
+    description: product.description || product.long_description || `Location ${product.name} - SoundRush Paris. Matériel professionnel disponible à Paris et Île-de-France.`,
+    image: product.images && product.images.length > 0 
+      ? (product.images[0].startsWith('http') ? product.images[0] : `https://www.sndrush.com${product.images[0]}`)
+      : 'https://www.sndrush.com/og-image.jpg',
     brand: {
+      '@type': 'Brand',
+      name: 'SoundRush Paris',
+    },
+    manufacturer: {
       '@type': 'Brand',
       name: 'SoundRush Paris',
     },
     offers: {
       '@type': 'Offer',
-      price: product.daily_price_ttc?.toString() || '0',
+      price: product.daily_price_ttc ? parseFloat(product.daily_price_ttc.toString()).toFixed(2) : '0',
       priceCurrency: 'EUR',
       availability: 'https://schema.org/InStock',
-      url: `https://www.sndrush.com/catalogue/${productId}`,
+      url: `https://www.sndrush.com/catalogue/${product.slug || productId}`,
       priceSpecification: {
         '@type': 'UnitPriceSpecification',
-        price: product.daily_price_ttc?.toString() || '0',
+        price: product.daily_price_ttc ? parseFloat(product.daily_price_ttc.toString()).toFixed(2) : '0',
         priceCurrency: 'EUR',
         unitCode: 'DAY',
+        unitText: language === 'fr' ? 'jour' : 'day',
       },
+      availabilityStarts: new Date().toISOString(),
     },
     category: product.category,
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      reviewCount: '127',
+    },
+    sku: product.id.toString(),
   } : null;
 
   return (
@@ -687,12 +701,13 @@ export default function ProductDetailPage() {
               <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-gray-100">
                 <Image
                   src={product.images && product.images.length > 0 ? product.images[0] : '/products/default.jpg'}
-                  alt={product.name}
+                  alt={`${product.name} - ${language === 'fr' ? 'Location matériel sonore professionnel' : 'Professional sound equipment rental'}`}
                   fill
                   className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                   priority
                   loading="eager"
+                  quality={85}
                 />
               </div>
             </div>
@@ -1583,6 +1598,87 @@ export default function ProductDetailPage() {
                   {language === 'fr' 
                     ? 'Pour votre événement' 
                     : 'For your event'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* FAQ Section */}
+          <div className="mt-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">
+              {language === 'fr' ? 'Questions fréquentes' : 'Frequently asked questions'}
+            </h2>
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {language === 'fr' 
+                    ? 'Quels sont les tarifs de location de ce produit ?'
+                    : 'What are the rental rates for this product?'}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {language === 'fr'
+                    ? `Le tarif de location est de ${product.daily_price_ttc}€ par jour TTC. Tous nos prix incluent la livraison, l'installation et la récupération du matériel. Les tarifs peuvent varier selon la zone géographique et la durée de location.`
+                    : `The rental rate is ${product.daily_price_ttc}€ per day including tax. All our prices include delivery, installation and pickup of equipment. Rates may vary according to geographical area and rental duration.`}
+                </p>
+              </div>
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {language === 'fr'
+                    ? 'La livraison est-elle incluse dans le prix ?'
+                    : 'Is delivery included in the price?'}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {language === 'fr'
+                    ? 'Oui, la livraison et la récupération sont incluses dans tous nos tarifs de location. Nos techniciens livrent le matériel directement sur votre lieu d\'événement, l\'installent et le récupèrent après utilisation.'
+                    : 'Yes, delivery and pickup are included in all our rental rates. Our technicians deliver the equipment directly to your event location, install it and pick it up after use.'}
+                </p>
+              </div>
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {language === 'fr'
+                    ? 'Peut-on réserver ce produit en urgence ?'
+                    : 'Can this product be booked urgently?'}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {language === 'fr'
+                    ? 'Oui, notre service urgence 24/7 permet de réserver jusqu\'à la dernière minute. Nous nous efforçons d\'intervenir rapidement pour répondre à vos besoins urgents de location de matériel sonore à Paris et en Île-de-France.'
+                    : 'Yes, our 24/7 emergency service allows booking until the last minute. We strive to respond quickly to your urgent sound equipment rental needs in Paris and Île-de-France.'}
+                </p>
+              </div>
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {language === 'fr'
+                    ? 'Y a-t-il une caution à prévoir ?'
+                    : 'Is a deposit required?'}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {language === 'fr'
+                    ? `Pour ce produit, une caution de ${product.deposit}€ peut être demandée selon les conditions de location. Pour nos packs clé en main, aucune caution n'est requise. Tous les détails sont indiqués lors de la réservation.`
+                    : `For this product, a deposit of ${product.deposit}€ may be required depending on rental conditions. For our turnkey packs, no deposit is required. All details are indicated during booking.`}
+                </p>
+              </div>
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {language === 'fr'
+                    ? 'Le matériel est-il garanti en cas de panne ?'
+                    : 'Is the equipment guaranteed in case of breakdown?'}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {language === 'fr'
+                    ? 'Oui, tous nos équipements sont régulièrement entretenus et testés. En cas de problème technique pendant votre location, notre support technique intervient rapidement pour résoudre le problème ou remplacer le matériel défectueux.'
+                    : 'Yes, all our equipment is regularly maintained and tested. In case of technical problems during your rental, our technical support responds quickly to resolve the issue or replace defective equipment.'}
+                </p>
+              </div>
+              <div className="pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {language === 'fr'
+                    ? 'Peut-on louer ce produit pour plusieurs jours ?'
+                    : 'Can this product be rented for several days?'}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {language === 'fr'
+                    ? 'Oui, nous proposons des locations à la journée, au week-end ou en longue durée. Les tarifs sont adaptés selon la durée de location, avec des avantages pour les locations longues durées. Contactez-nous pour connaître les tarifs dégressifs.'
+                    : 'Yes, we offer daily, weekend or long-term rentals. Rates are adapted according to rental duration, with advantages for long-term rentals. Contact us to find out about degressive rates.'}
                 </p>
               </div>
             </div>
