@@ -43,7 +43,7 @@ const seoContent = {
         },
         {
           title: 'Matériel inclus dans le pack',
-          content: `Le pack sonorisation conférence comprend un équipement professionnel sélectionné pour garantir une qualité audio optimale. Pour les conférences jusqu'à 30 personnes, le pack inclut une enceinte active professionnelle, deux micros sans-fil permettant aux intervenants de se déplacer librement, et une console de mixage pour gérer les sources audio. Tous les câbles, supports micros et accessoires sont inclus. L'équipement peut être ajusté selon le nombre de participants et vos besoins spécifiques.`
+          content: `Le pack sonorisation conférence comprend un équipement professionnel sélectionné pour garantir une qualité audio optimale. Pour les conférences jusqu'à 1500 personnes, le pack inclut une enceinte active professionnelle, deux micros sans-fil permettant aux intervenants de se déplacer librement, et une console de mixage pour gérer les sources audio. Tous les câbles, supports micros et accessoires sont inclus. L'équipement peut être ajusté selon le nombre de participants et vos besoins spécifiques.`
         },
         {
           title: 'Avantages du service clé en main',
@@ -57,7 +57,7 @@ const seoContent = {
         },
         {
           q: 'Combien de personnes peut accueillir le pack conférence ?',
-          a: 'Le pack sonorisation conférence est adapté pour des événements jusqu\'à 30 personnes. Pour des événements plus importants, nous pouvons adapter le matériel en ajoutant des enceintes supplémentaires ou des micros additionnels.'
+          a: 'Le pack sonorisation conférence est adapté pour des événements jusqu\'à 1500 personnes. Pour des événements plus importants, nous pouvons adapter le matériel en ajoutant des enceintes supplémentaires ou des micros additionnels.'
         },
         {
           q: 'Le service d\'installation est-il inclus ?',
@@ -103,7 +103,7 @@ const seoContent = {
         },
         {
           title: 'Matériel inclus dans le pack',
-          content: `Le pack sonorisation soirée comprend un équipement professionnel sélectionné pour offrir puissance et qualité. Pour les soirées jusqu'à 50 personnes, le pack inclut une enceinte active professionnelle de qualité et une console de mixage permettant de connecter facilement vos sources audio (smartphone, tablette, ordinateur). Tous les câbles et accessoires sont inclus. Pour les soirées plus importantes, nous pouvons adapter le matériel en ajoutant des enceintes supplémentaires ou un caisson de basses.`
+          content: `Le pack sonorisation soirée comprend un équipement professionnel sélectionné pour offrir puissance et qualité. Pour les soirées jusqu'à 1500 personnes, le pack inclut une enceinte active professionnelle de qualité et une console de mixage permettant de connecter facilement vos sources audio (smartphone, tablette, ordinateur). Tous les câbles et accessoires sont inclus. Pour les soirées plus importantes, nous pouvons adapter le matériel en ajoutant des enceintes supplémentaires ou un caisson de basses.`
         },
         {
           title: 'Avantages du service clé en main',
@@ -117,7 +117,7 @@ const seoContent = {
         },
         {
           q: 'Combien de personnes peut accueillir le pack soirée ?',
-          a: 'Le pack sonorisation soirée est adapté pour des événements jusqu\'à 50 personnes. Pour des soirées plus importantes, nous pouvons adapter le matériel en ajoutant des enceintes supplémentaires ou un caisson de basses.'
+          a: 'Le pack sonorisation soirée est adapté pour des événements jusqu\'à 1500 personnes. Pour des soirées plus importantes, nous pouvons adapter le matériel en ajoutant des enceintes supplémentaires ou un caisson de basses.'
         },
         {
           q: 'Peut-on connecter un smartphone ou une tablette ?',
@@ -163,7 +163,7 @@ const seoContent = {
         },
         {
           title: 'Matériel inclus dans le pack',
-          content: `Le pack sonorisation mariage comprend un équipement professionnel complet adapté aux besoins d'un mariage. Pour les mariages jusqu'à 100 personnes, le pack inclut une enceinte active professionnelle haute puissance, un caisson de basses pour la soirée dansante, deux micros sans-fil de qualité pour la cérémonie et les discours, et une console de mixage professionnelle. Tous les câbles, supports micros et accessoires sont inclus. Pour les mariages plus importants, nous pouvons adapter le matériel en ajoutant des enceintes supplémentaires, des micros additionnels ou des retours de scène si vous avez des musiciens.`
+          content: `Le pack sonorisation mariage comprend un équipement professionnel complet adapté aux besoins d'un mariage. Pour les mariages jusqu'à 1500 personnes, le pack inclut une enceinte active professionnelle haute puissance, un caisson de basses pour la soirée dansante, deux micros sans-fil de qualité pour la cérémonie et les discours, et une console de mixage professionnelle. Tous les câbles, supports micros et accessoires sont inclus. Pour les mariages plus importants, nous pouvons adapter le matériel en ajoutant des enceintes supplémentaires, des micros additionnels ou des retours de scène si vous avez des musiciens.`
         },
         {
           title: 'Avantages du service clé en main',
@@ -177,7 +177,7 @@ const seoContent = {
         },
         {
           q: 'Combien de personnes peut accueillir le pack mariage ?',
-          a: 'Le pack sonorisation mariage est adapté pour des événements jusqu\'à 100 personnes. Pour des mariages plus importants, nous pouvons adapter le matériel en ajoutant des enceintes supplémentaires, des micros additionnels ou des retours de scène.'
+          a: 'Le pack sonorisation mariage est adapté pour des événements jusqu\'à 1500 personnes. Pour des mariages plus importants, nous pouvons adapter le matériel en ajoutant des enceintes supplémentaires, des micros additionnels ou des retours de scène.'
         },
         {
           q: 'Le pack couvre-t-il la cérémonie et la soirée ?',
