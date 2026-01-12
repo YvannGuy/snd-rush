@@ -14,13 +14,13 @@ export default function CommentCaMarcheSection({ language }: CommentCaMarcheSect
       steps: [
         {
           number: 1,
-          title: 'Choisissez votre pack',
-          description: 'Sélectionnez la solution adaptée à votre événement : Conférence, Soirée ou Mariage.'
+          title: 'Choisissez votre pack ou matériel',
+          description: 'Sélectionnez le pack adapté à votre événement ou choisissez du matériel à la carte selon vos besoins.'
         },
         {
           number: 2,
-          title: 'Remplissez votre réservation',
-          description: 'Indiquez vos dates, lieu, nombre de personnes et finalisez votre sélection.'
+          title: 'Confirmez vos informations',
+          description: 'Renseignez vos dates, le lieu de l\'événement, le nombre de personnes et toutes les informations nécessaires.'
         },
         {
           number: 3,
