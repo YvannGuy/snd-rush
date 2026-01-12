@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import SectionChevron from './SectionChevron';
 
 interface SolutionsSectionProps {
@@ -9,8 +8,6 @@ interface SolutionsSectionProps {
 }
 
 export default function SolutionsSection({ language }: SolutionsSectionProps) {
-  const router = useRouter();
-  
   const texts = {
     fr: {
       sectionTitle: 'NOS SOLUTIONS',
@@ -123,8 +120,8 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
       return;
     }
     
-    // NOUVEAU FLOW : Redirection directe vers la page de réservation
-    router.push(`/book/${packKey}`);
+    // Déclencher un appel téléphonique
+    window.location.href = 'tel:+33744782754';
   };
 
   return (
