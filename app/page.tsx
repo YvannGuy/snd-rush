@@ -12,7 +12,7 @@ import UrgencySection from '@/components/UrgencySection';
 import CommentCaMarcheSection from '@/components/CommentCaMarcheSection';
 import PourQuiSection from '@/components/PourQuiSection';
 import AboutSection from '@/components/AboutSection';
-import GallerySection from '@/components/GallerySection';
+// import GallerySection from '@/components/GallerySection'; // Masqué
 import TrustedBySection from '@/components/TrustedBySection';
 import TrustindexReviews from '@/components/TrustindexReviews';
 import TutosSection from '@/components/TutosSection';
@@ -232,10 +232,10 @@ export default function Home() {
           <AboutSection language={language} />
         </SectionAnimation>
 
-        {/* Section Galerie Vidéos */}
-        <SectionAnimation delay={0.45}>
+        {/* Section Galerie Vidéos - Masquée */}
+        {/* <SectionAnimation delay={0.45}>
           <GallerySection language={language} />
-        </SectionAnimation>
+        </SectionAnimation> */}
 
         {/* Section Ils nous ont fait confiance */}
         <SectionAnimation delay={0.48}>

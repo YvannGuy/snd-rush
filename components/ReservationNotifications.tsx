@@ -61,23 +61,41 @@ export default function ReservationNotifications() {
   };
 
   useEffect(() => {
-    const addNotification = () => {
-      const newNotification = createNotification();
-      setNotifications([newNotification]); // Une seule notification à la fois
+    let nextTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let removeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let isMounted = true;
+
+    const scheduleNext = () => {
+      if (!isMounted) return;
       
-      // Supprimer la notification après 8 secondes
-      setTimeout(() => {
-        setNotifications([]);
-      }, 8000);
+      const delay = Math.random() * 5000 + 3000; // Entre 3 et 8 secondes
+      nextTimeoutId = setTimeout(() => {
+        if (!isMounted) return;
+        
+        const newNotification = createNotification();
+        setNotifications([newNotification]);
+        
+        // Supprimer la notification après 8 secondes
+        removeTimeoutId = setTimeout(() => {
+          if (isMounted) {
+            setNotifications([]);
+          }
+          removeTimeoutId = null;
+        }, 8000);
+        
+        // Planifier la prochaine notification
+        scheduleNext();
+      }, delay);
     };
 
-    // Ajouter une notification toutes les 3-8 secondes
-    const interval = setInterval(() => {
-      const delay = Math.random() * 5000 + 3000; // Entre 3 et 8 secondes
-      setTimeout(addNotification, delay);
-    }, 3000);
+    // Démarrer le cycle
+    scheduleNext();
 
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      if (nextTimeoutId) clearTimeout(nextTimeoutId);
+      if (removeTimeoutId) clearTimeout(removeTimeoutId);
+    };
   }, []);
 
   if (notifications.length === 0) return null;

@@ -115,7 +115,12 @@ export default function AdminReservationRequestsPage() {
   useEffect(() => {
     if (!isAdmin) return;
     
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const inFlightRef = { current: false };
+    
     const loadRequests = async () => {
+      if (inFlightRef.current) return; // Guard contre appels concurrents
+      inFlightRef.current = true;
       try {
         // Récupérer le token d'authentification
         const { supabase } = await import('@/lib/supabase');
@@ -143,14 +148,42 @@ export default function AdminReservationRequestsPage() {
       } catch (error) {
         console.error('Erreur chargement demandes:', error);
       } finally {
+        inFlightRef.current = false;
         setLoading(false);
       }
     };
     
-    loadRequests();
+    const scheduleNext = () => {
+      if (document.hidden) return; // Pause si onglet caché
+      
+      timeoutId = setTimeout(() => {
+        if (!document.hidden) {
+          loadRequests().then(() => {
+            if (!document.hidden) {
+              scheduleNext(); // Réplanifier seulement si visible
+            }
+          });
+        }
+      }, 30000); // 30 secondes minimum
+    };
     
-    // Recharger toutes les 30 secondes pour avoir les nouvelles demandes
-    const interval = setInterval(loadRequests, 30000);
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Pause : nettoyer le timeout en cours
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+      } else {
+        // Reprendre : charger immédiatement puis planifier
+        loadRequests().then(() => scheduleNext());
+      }
+    };
+    
+    loadRequests();
+    scheduleNext();
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     
     // Écouter les changements pour mettre à jour les compteurs
     const handleStorageChange = () => {
@@ -160,7 +193,8 @@ export default function AdminReservationRequestsPage() {
     window.addEventListener('pendingActionsUpdated', handleStorageChange);
     
     return () => {
-      clearInterval(interval);
+      if (timeoutId) clearTimeout(timeoutId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('pendingActionsUpdated', handleStorageChange);
     };

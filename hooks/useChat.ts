@@ -591,14 +591,57 @@ export function useChat() {
     ) {
       const { startDate, endDate, startTime, endTime } = reservationRequestDraft.payload;
       
-      // Vérifier la disponibilité
-      checkAvailability(
-        activePackKey,
-        startDate,
-        endDate,
-        startTime || null,
-        endTime || null
-      );
+      // Logique inline pour éviter la dépendance à checkAvailability
+      // (checkAvailability est stable mais mieux vaut éviter toute référence)
+      const verifyAvailability = async () => {
+        setAvailabilityStatus('checking');
+        setAvailabilityDetails(null);
+
+        try {
+          const response = await fetch('/api/availability', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              packId: activePackKey,
+              startDate,
+              endDate,
+              startTime: startTime || null,
+              endTime: endTime || null,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`API returned ${response.status}`);
+          }
+
+          const data = await response.json();
+          
+          if (data.available) {
+            setAvailabilityStatus('available');
+            setAvailabilityDetails({
+              remaining: data.remaining,
+              bookedQuantity: data.bookedQuantity,
+              totalQuantity: data.totalQuantity,
+            });
+          } else {
+            setAvailabilityStatus('unavailable');
+            setAvailabilityDetails({
+              remaining: data.remaining,
+              bookedQuantity: data.bookedQuantity,
+              totalQuantity: data.totalQuantity,
+              reason: `Indisponible (${data.bookedQuantity}/${data.totalQuantity} réservé${data.totalQuantity > 1 ? 's' : ''})`,
+            });
+          }
+        } catch (error) {
+          console.error('[CHAT] Erreur vérification disponibilité:', error);
+          setAvailabilityStatus('error');
+          setAvailabilityDetails({
+            reason: 'Impossible de vérifier la disponibilité pour le moment',
+          });
+        }
+      };
+
+      verifyAvailability();
     } else {
       // Si les conditions ne sont plus remplies, réinitialiser l'état
       if (availabilityStatus !== 'idle') {
@@ -606,14 +649,13 @@ export function useChat() {
         setAvailabilityDetails(null);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activePackKey,
     reservationRequestDraft?.payload?.startDate,
     reservationRequestDraft?.payload?.endDate,
     reservationRequestDraft?.payload?.startTime,
     reservationRequestDraft?.payload?.endTime,
-    checkAvailability,
+    availabilityStatus,
   ]);
 
   return {

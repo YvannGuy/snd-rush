@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, KeyboardEvent } from 'react';
+import { useState, useEffect, useRef, KeyboardEvent, useMemo } from 'react';
 
 interface HeroAIInputProps {
   onSend: (message: string) => void;
@@ -21,38 +21,50 @@ const PLACEHOLDERS_EN = [
   'I don\'t know what to choose',
 ];
 
+const PLACEHOLDERS_MAP = {
+  fr: PLACEHOLDERS_FR,
+  en: PLACEHOLDERS_EN,
+};
+
+const WORDS_MAP = {
+  fr: ['sono', 'DJ gear', 'lumière'],
+  en: ['sound', 'DJ gear', 'lighting'],
+};
+
 export default function HeroAIInput({ onSend, language = 'fr' }: HeroAIInputProps) {
   const [placeholder, setPlaceholder] = useState('');
   const [inputValue, setInputValue] = useState('');
   const placeholderIndexRef = useRef(0);
-  const placeholders = language === 'fr' ? PLACEHOLDERS_FR : PLACEHOLDERS_EN;
+  
+  // Utiliser useMemo pour stabiliser les références
+  const placeholders = useMemo(() => PLACEHOLDERS_MAP[language], [language]);
+  const words = useMemo(() => WORDS_MAP[language], [language]);
   
   // Animation du mot dans la phrase d'accroche
   const [currentWord, setCurrentWord] = useState(0);
-  const words = language === 'fr' 
-    ? ['sono', 'DJ gear', 'lumière']
-    : ['sound', 'DJ gear', 'lighting'];
 
   // Cycle des placeholders toutes les 2-3 secondes
   useEffect(() => {
-    setPlaceholder(placeholders[0]);
+    const currentPlaceholders = PLACEHOLDERS_MAP[language];
+    setPlaceholder(currentPlaceholders[0]);
 
     const interval = setInterval(() => {
-      placeholderIndexRef.current = (placeholderIndexRef.current + 1) % placeholders.length;
-      setPlaceholder(placeholders[placeholderIndexRef.current]);
+      placeholderIndexRef.current = (placeholderIndexRef.current + 1) % currentPlaceholders.length;
+      setPlaceholder(currentPlaceholders[placeholderIndexRef.current]);
     }, 2500);
 
     return () => clearInterval(interval);
-  }, [placeholders]);
+  }, [language]);
 
   // Cycle des mots dans la phrase d'accroche
   useEffect(() => {
+    const currentWords = WORDS_MAP[language];
     const wordInterval = setInterval(() => {
-      setCurrentWord((prev) => (prev + 1) % words.length);
+      setCurrentWord((prev) => (prev + 1) % currentWords.length);
     }, 2000);
 
     return () => clearInterval(wordInterval);
-  }, [words.length]);
+  }, [language]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {

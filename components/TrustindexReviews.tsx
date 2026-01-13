@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import SectionChevron from './SectionChevron';
 
 interface TrustindexReviewsProps {
@@ -9,8 +9,49 @@ interface TrustindexReviewsProps {
 
 export default function TrustindexReviews({ language = 'fr' }: TrustindexReviewsProps) {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [widgetError, setWidgetError] = useState(false);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
+    
+    // Intercepter console.error pour filtrer les erreurs Elfsight
+    const originalConsoleError = console.error;
+    console.error = (...args: any[]) => {
+      const errorMessage = args.join(' ');
+      // Filtrer les erreurs Elfsight liées aux limites
+      if (
+        errorMessage.includes('APP_VIEWS_LIMIT_REACHED') ||
+        (errorMessage.includes('Widget') && errorMessage.includes('can\'t be initialized') && errorMessage.includes('5061f2ae-239e-459a-be12-6e4eeaa1d4f3'))
+      ) {
+        // Ne pas logger cette erreur et marquer le widget comme en erreur
+        if (isMountedRef.current) {
+          setWidgetError(true);
+        }
+        return;
+      }
+      // Pour les autres erreurs, utiliser console.error normal
+      originalConsoleError.apply(console, args);
+    };
+    
+    // Intercepter les erreurs globales également
+    const handleElfsightError = (event: ErrorEvent) => {
+      const errorMessage = event.message || event.error?.message || '';
+      if (
+        errorMessage.includes('APP_VIEWS_LIMIT_REACHED') ||
+        (errorMessage.includes('Widget') && errorMessage.includes('can\'t be initialized'))
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (isMountedRef.current) {
+          setWidgetError(true);
+        }
+        return false;
+      }
+    };
+
+    window.addEventListener('error', handleElfsightError, true);
+
     // Charger le script Elfsight s'il n'est pas déjà chargé
     const loadElfsightScript = () => {
       if (document.querySelector('script[src*="apps.elfsight.com"]')) {
@@ -23,6 +64,10 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
       script.defer = true;
       script.onload = () => {
         setIsScriptLoaded(true);
+      };
+      script.onerror = () => {
+        // Gérer gracieusement l'erreur de chargement
+        setWidgetError(true);
       };
       document.body.appendChild(script);
     };
@@ -50,7 +95,7 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
     };
 
     // Essayer de masquer après plusieurs délais pour s'assurer que le widget est chargé
-    const timeouts = [
+    const timeouts: ReturnType<typeof setTimeout>[] = [
       setTimeout(hideTitle, 2000),
       setTimeout(hideTitle, 5000),
       setTimeout(hideTitle, 8000),
@@ -58,24 +103,32 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
     ];
     
     // Observer pour détecter quand le widget se charge
-    const observer = new MutationObserver(() => {
-      hideTitle();
-    });
-    
-    // Attendre que le conteneur soit disponible
-    setTimeout(() => {
+    let observer: MutationObserver | null = null;
+    const observerInitTimeout = setTimeout(() => {
       const widgetContainer = document.querySelector('.elfsight-app-5061f2ae-239e-459a-be12-6e4eeaa1d4f3');
       if (widgetContainer) {
+        observer = new MutationObserver(() => {
+          hideTitle();
+        });
         observer.observe(widgetContainer, {
           childList: true,
           subtree: true
         });
       }
     }, 1000);
+    timeouts.push(observerInitTimeout);
     
     // Nettoyer au démontage
     return () => {
-      observer.disconnect();
+      isMountedRef.current = false;
+      // Restaurer console.error original
+      console.error = originalConsoleError;
+      window.removeEventListener('error', handleElfsightError, true);
+      
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
       timeouts.forEach(timeout => clearTimeout(timeout));
     };
   }, []);
@@ -109,7 +162,17 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
         </div>
         
         {/* Elfsight Google Reviews Widget */}
-        <div className="elfsight-app-5061f2ae-239e-459a-be12-6e4eeaa1d4f3"></div>
+        {!widgetError ? (
+          <div className="elfsight-app-5061f2ae-239e-459a-be12-6e4eeaa1d4f3"></div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <p className="text-sm">
+              {language === 'fr' 
+                ? 'Les avis Google sont temporairement indisponibles. Veuillez réessayer plus tard.'
+                : 'Google reviews are temporarily unavailable. Please try again later.'}
+            </p>
+          </div>
+        )}
         
         {/* Lien vers Google Reviews */}
         <div className="text-center mt-8">

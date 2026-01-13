@@ -145,25 +145,12 @@ export default function GallerySection({ language }: GallerySectionProps) {
     <>
       <section id="gallery" className="py-24 lg:py-32 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-black leading-tight mb-8">
-              {language === 'fr' ? (
-                <>
-                  <span className="text-black">Nos équipements </span>
-                  <span className="text-[#F2431E]">en action.</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-black">Our equipment </span>
-                  <span className="text-[#F2431E]">in action.</span>
-                </>
-              )}
-            </h2>
+          {/* Header - Masqué */}
+          {/* <div className="text-center mb-20">
             <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
               {texts[language].description}
             </p>
-          </div>
+          </div> */}
 
           {/* Video Slider */}
           <div className="relative">

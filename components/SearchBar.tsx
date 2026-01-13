@@ -143,7 +143,7 @@ export default function SearchBar({ language }: SearchBarProps) {
     {
       type: 'section',
       title: currentTexts.sections.gallery,
-      description: language === 'fr' ? 'Nos équipements en action' : 'Our equipment in action',
+      description: language === 'fr' ? 'Découvrez notre matériel professionnel' : 'Discover our professional equipment',
       url: '/#gallery',
       icon: '🎥'
     },

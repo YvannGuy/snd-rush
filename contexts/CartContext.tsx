@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { CartItem, Cart } from '@/types/db';
 import { useUser } from '@/hooks/useUser';
 import { supabase } from '@/lib/supabase';
@@ -704,9 +704,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }, 5000); // 5 secondes devraient être suffisantes
   };
 
-  const getCartItemCount = () => {
+  const getCartItemCount = useCallback(() => {
     return cart.items.reduce((sum, item) => sum + item.quantity, 0);
-  };
+  }, [cart.items]);
 
   return (
     <CartContext.Provider

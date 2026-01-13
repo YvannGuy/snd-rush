@@ -126,6 +126,10 @@ function DashboardContent() {
   useEffect(() => {
     const payment = searchParams.get('payment');
     const reservationId = searchParams.get('reservation_id');
+    
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const inFlightRef = { current: false };
+    let isMounted = true;
 
     if (payment === 'success' && reservationId && user && supabase) {
       setPaymentSuccess(true);
@@ -135,7 +139,15 @@ function DashboardContent() {
       const maxAttempts = 15; // 15 tentatives sur 30 secondes
       
       const pollReservationStatus = async () => {
-        if (!supabase) return;
+        if (!isMounted || !supabase) return;
+        if (inFlightRef.current) return; // Guard contre appels concurrents
+        if (document.hidden) {
+          // Si onglet caché, réessayer plus tard
+          timeoutId = setTimeout(pollReservationStatus, 2000);
+          return;
+        }
+        
+        inFlightRef.current = true;
         try {
           console.log(`🔄 Tentative ${attempts + 1}/${maxAttempts} - Vérification statut réservation ${reservationId}`);
           
@@ -250,7 +262,7 @@ function DashboardContent() {
           attempts++;
           if (attempts < maxAttempts) {
             // Réessayer après 2 secondes
-            setTimeout(pollReservationStatus, 2000);
+            timeoutId = setTimeout(pollReservationStatus, 2000);
           } else {
             // Après maxAttempts tentatives, recharger quand même les données
             console.warn('⚠️ Timeout polling après', maxAttempts, 'tentatives, rechargement forcé');
@@ -283,23 +295,35 @@ function DashboardContent() {
           }
         } catch (error) {
           console.error('❌ Erreur polling statut:', error);
+          inFlightRef.current = false;
           attempts++;
           if (attempts < maxAttempts) {
-            setTimeout(pollReservationStatus, 2000);
+            timeoutId = setTimeout(pollReservationStatus, 2000);
           } else {
             setTimeout(() => {
-              setPaymentSuccess(false);
-              setPaymentReservationId(null);
+              if (isMounted) {
+                setPaymentSuccess(false);
+                setPaymentReservationId(null);
+              }
             }, 3000);
-            router.replace('/dashboard');
+            if (isMounted) {
+              router.replace('/dashboard');
+            }
           }
+        } finally {
+          inFlightRef.current = false;
         }
       };
       
       // Démarrer le polling après 1 seconde
-      setTimeout(pollReservationStatus, 1000);
+      timeoutId = setTimeout(pollReservationStatus, 1000);
     }
-  }, [searchParams, user, router, supabase]);
+    
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [searchParams, user?.id, router, supabase]); // Stabiliser user avec user?.id
 
   useEffect(() => {
     if (!user) return;

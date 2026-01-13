@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import HeroAIInput from './HeroAIInput';
 import SectionChevron from './SectionChevron';
@@ -18,6 +18,9 @@ const animatedWords = {
 export default function HeroSection({ language }: HeroSectionProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const imageIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wordIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
 
   const backgroundImages = [
     'https://readdy.ai/api/search-image?query=Professional%20DJ%20mixing%20console%20with%20glowing%20buttons%20and%20sliders%20in%20dark%20nightclub%20environment%2C%20emergency%20lighting%20effects%2C%20red%20and%20orange%20dramatic%20lighting%2C%20urgent%20atmosphere%2C%20high-end%20audio%20equipment%20setup%20for%20emergency%20sound%20rental%20service&width=1920&height=1080&seq=hero-bg-1&orientation=landscape',
@@ -50,28 +53,68 @@ export default function HeroSection({ language }: HeroSectionProps) {
   };
 
   useEffect(() => {
-    const imageInterval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) =>
-        prevIndex === backgroundImages.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 5000);
+    const startIntervals = () => {
+      // Nettoyer les intervalles existants avant d'en créer de nouveaux
+      if (imageIntervalRef.current) clearInterval(imageIntervalRef.current);
+      if (wordIntervalRef.current) clearInterval(wordIntervalRef.current);
 
-    return () => clearInterval(imageInterval);
-  }, [backgroundImages.length]);
+      imageIntervalRef.current = setInterval(() => {
+        setCurrentImageIndex((prevIndex) =>
+          prevIndex === backgroundImages.length - 1 ? 0 : prevIndex + 1
+        );
+      }, 5000);
 
-  // Animation du mot qui change
-  useEffect(() => {
-    const wordInterval = setInterval(() => {
-      setCurrentWordIndex((prevIndex) =>
-        prevIndex === animatedWords[language].length - 1 ? 0 : prevIndex + 1
-      );
-    }, 2000); // Change toutes les 2 secondes
+      wordIntervalRef.current = setInterval(() => {
+        setCurrentWordIndex((prevIndex) =>
+          prevIndex === animatedWords[language].length - 1 ? 0 : prevIndex + 1
+        );
+      }, 2000);
+    };
 
-    return () => clearInterval(wordInterval);
-  }, [language]);
+    const stopIntervals = () => {
+      if (imageIntervalRef.current) {
+        clearInterval(imageIntervalRef.current);
+        imageIntervalRef.current = null;
+      }
+      if (wordIntervalRef.current) {
+        clearInterval(wordIntervalRef.current);
+        wordIntervalRef.current = null;
+      }
+    };
+
+    // Utiliser IntersectionObserver pour arrêter les intervals quand hors vue
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const isVisible = entries[0].isIntersecting;
+        if (isVisible) {
+          startIntervals();
+        } else {
+          stopIntervals();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    // Attacher l'observer au conteneur de la section
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    // Démarrer les intervals initialement
+    startIntervals();
+
+    return () => {
+      observer.disconnect();
+      stopIntervals();
+    };
+  }, [language, backgroundImages.length]);
 
   return (
-    <section className="relative min-h-screen bg-black overflow-hidden" style={{ paddingTop: '64px' }}>
+    <section 
+      ref={sectionRef}
+      className="relative min-h-screen bg-black overflow-hidden" 
+      style={{ paddingTop: '64px' }}
+    >
       {/* Background Images with Smooth Transition */}
       {backgroundImages.map((image, index) => (
         <div

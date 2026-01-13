@@ -1,16 +1,45 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function CROHeader() {
   const [scrolled, setScrolled] = useState(false);
+  const rafIdRef = useRef<number | null>(null);
+  const lastValueRef = useRef(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+    const handleScroll = () => {
+      // Annuler le RAF précédent si pas encore exécuté
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+      
+      rafIdRef.current = requestAnimationFrame(() => {
+        const shouldBeScrolled = window.scrollY > 8;
+        
+        // Ne mettre à jour que si la valeur change réellement
+        if (shouldBeScrolled !== lastValueRef.current) {
+          lastValueRef.current = shouldBeScrolled;
+          setScrolled(shouldBeScrolled);
+        }
+        
+        rafIdRef.current = null;
+      });
+    };
+    
+    // Initialiser l'état au montage
+    handleScroll();
+    
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   return (

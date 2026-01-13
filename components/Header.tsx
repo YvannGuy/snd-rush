@@ -59,12 +59,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   // Afficher le minicart uniquement si pro active ET dans /pro/*
   const shouldShowMiniCart = isPro && isProPage;
 
-  // Synchroniser le compteur avec le panier en temps réel
-  useEffect(() => {
-    const count = getCartItemCount();
-    setCartCount(count);
-  }, [cart, getCartItemCount]);
-
   useEffect(() => {
     // Initialiser le compteur au montage
     setCartCount(getCartItemCount());
@@ -98,8 +92,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
       window.removeEventListener('cartUpdated', cartUpdateHandler);
       window.removeEventListener('productAddedToCart', handleProductAdded);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, getCartItemCount]); // Inclure getCartItemCount pour la réactivité
+  }, [pathname, getCartItemCount]); // getCartItemCount est maintenant stable via useCallback
 
   // Récupérer le prénom de l'utilisateur et vérifier le rôle admin
   useEffect(() => {

@@ -1,22 +1,42 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function ScrollToTopButton() {
   const [isVisible, setIsVisible] = useState(false);
+  const rafIdRef = useRef<number | null>(null);
+  const lastValueRef = useRef(false);
 
   useEffect(() => {
-    const toggleVisibility = () => {
-      if (window.pageYOffset > 300) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
+    const handleScroll = () => {
+      // Annuler le RAF précédent si pas encore exécuté
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
       }
+      
+      rafIdRef.current = requestAnimationFrame(() => {
+        const shouldBeVisible = window.pageYOffset > 300;
+        
+        // Ne mettre à jour que si la valeur change réellement
+        if (shouldBeVisible !== lastValueRef.current) {
+          lastValueRef.current = shouldBeVisible;
+          setIsVisible(shouldBeVisible);
+        }
+        
+        rafIdRef.current = null;
+      });
     };
 
-    window.addEventListener('scroll', toggleVisibility);
-    return () => window.removeEventListener('scroll', toggleVisibility);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const scrollToTop = () => {
