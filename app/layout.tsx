@@ -221,6 +221,7 @@ export default function RootLayout({
         <Script
           src="https://elfsightcdn.com/platform.js"
           strategy="lazyOnload"
+          async
         />
 
         <CartProvider>
