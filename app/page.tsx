@@ -27,7 +27,7 @@ import ScenarioFAQSection from '@/components/ScenarioFAQSection';
 import BookingWizard from '@/components/BookingWizard';
 import SEOHead from '@/components/SEOHead';
 
-export default function Home() {
+export default function HomePageClient() {
   const router = useRouter();
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const [reservationModal, setReservationModal] = useState(false);

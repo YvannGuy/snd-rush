@@ -3,7 +3,7 @@ import SoireePageClient from './SoireePageClient'
 
 export const metadata: Metadata = {
   title: 'Location Sono Soirée Paris | Pack jusqu\'à 1500 personnes | SoundRush',
-  description: 'Pack sonorisation soirée clé en main à Paris. Jusqu\'à 1500 personnes. Enceintes puissantes, éclairage, livraison et installation incluses. Devis rapide.',
+  description: 'Pack sonorisation soirée clé en main à Paris. Jusqu\'à 1500 personnes. Enceintes puissantes, éclairage, livraison et installation incluses. Devis en 2h. Réservez maintenant !',
   keywords: [
     'location sono soirée Paris',
     'pack sonorisation soirée',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Location Sono Soirée Paris | SoundRush',
-    description: 'Pack sonorisation soirée clé en main à Paris. Jusqu\'à 1500 personnes. Enceintes puissantes, éclairage, livraison et installation incluses.',
+    description: 'Pack sonorisation soirée clé en main à Paris. Jusqu\'à 1500 personnes. Enceintes puissantes, éclairage, livraison et installation incluses. Devis en 2h.',
     url: 'https://www.sndrush.com/soiree',
     siteName: 'SoundRush Paris',
     images: [

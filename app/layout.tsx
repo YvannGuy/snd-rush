@@ -10,7 +10,10 @@ import GlobalButtons from "@/components/GlobalButtons";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SoundRush Paris - Location Sono Urgence 24/7 & Événementiel | Paris & Île-de-France",
+  title: {
+    template: '%s | SoundRush Paris - Location Sono Express',
+    default: 'SoundRush Paris - Location Sono Urgence 24/7 & Événementiel | Paris & Île-de-France',
+  },
   description:
     "SoundRush Paris : location sono urgence 24h/24 et 7j/7 à Paris et Île-de-France. Sonorisation professionnelle, packs clé en main pour mariages, anniversaires, événements corporate. Livraison incluse, installation disponible. Intervention rapide garantie.",
   keywords: [

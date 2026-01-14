@@ -3,7 +3,7 @@ import LocationPageClient from './LocationPageClient'
 
 export const metadata: Metadata = {
   title: 'Location Matériel Sonore Paris - SoundRush 24/7 | Catalogue Complet',
-  description: 'Location de matériel sonore professionnel à Paris et Île-de-France. Enceintes, micros, consoles, éclairage. Service clé en main avec livraison et installation. Disponible 24h/24.',
+  description: 'Location de matériel sonore professionnel à Paris et Île-de-France. Enceintes, micros, consoles, éclairage. Service clé en main avec livraison et installation. Disponible 24h/24. Devis en 2h.',
   keywords: [
     'location matériel sonore Paris',
     'location sono Paris',

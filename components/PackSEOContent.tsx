@@ -13,6 +13,22 @@ import SEOHead from '@/components/SEOHead';
 import Breadcrumb from '@/components/Breadcrumb';
 import Script from 'next/script';
 
+// Fonction pour générer le FAQPage schema
+function generateFAQSchema(faq: Array<{ q: string; a: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faq.map(item => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.a.replace(/<[^>]*>/g, ''), // Remove HTML tags for schema
+      },
+    })),
+  };
+}
+
 // Fonction pour enrichir le texte avec des liens internes
 function enrichTextWithLinks(text: string): string {
   return text
@@ -290,6 +306,9 @@ export default function PackSEOContent({ packKey, language = 'fr', onLanguageCha
     sku: `pack-${packKey}`,
   };
 
+  // Générer le FAQPage schema
+  const faqSchema = generateFAQSchema(currentContent.faq);
+
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
@@ -299,6 +318,13 @@ export default function PackSEOContent({ packKey, language = 'fr', onLanguageCha
         ogImage={PACK_IMAGES[packKey]}
         structuredData={structuredData}
         keywords={currentContent.keywords}
+      />
+      <Script
+        id={`faq-schema-${packKey}`}
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(faqSchema),
+        }}
       />
       <Header language={language} onLanguageChange={onLanguageChange || (() => {})} />
       

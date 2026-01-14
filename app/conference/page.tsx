@@ -3,7 +3,7 @@ import ConferencePageClient from './ConferencePageClient'
 
 export const metadata: Metadata = {
   title: 'Location Sono Conférence Paris | Pack jusqu\'à 1500 personnes | SoundRush',
-  description: 'Pack sonorisation conférence clé en main à Paris. Jusqu\'à 1500 personnes. Livraison, installation, réglage inclus. Devis rapide.',
+  description: 'Pack sonorisation conférence clé en main à Paris. Jusqu\'à 1500 personnes. Livraison, installation, réglage inclus. Devis en 2h. Réservez maintenant !',
   keywords: [
     'location sono conférence Paris',
     'pack sonorisation événement',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Location Sono Conférence Paris | SoundRush',
-    description: 'Pack sonorisation conférence clé en main à Paris. Jusqu\'à 1500 personnes. Livraison, installation, réglage inclus.',
+    description: 'Pack sonorisation conférence clé en main à Paris. Jusqu\'à 1500 personnes. Livraison, installation, réglage inclus. Devis en 2h.',
     url: 'https://www.sndrush.com/conference',
     siteName: 'SoundRush Paris',
     images: [

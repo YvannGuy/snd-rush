@@ -1,4 +1,7 @@
-User-agent: *
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  const robotsTxt = `User-agent: *
 Allow: /
 
 # Sitemap
@@ -24,6 +27,7 @@ Disallow: /sign-quote/
 Disallow: /suivi/
 Disallow: /etat-materiel/
 Disallow: /test-email-confirmation/
+Disallow: /pro/
 
 # Autoriser les pages importantes
 Allow: /
@@ -38,8 +42,22 @@ Allow: /generateur_de_prix
 Allow: /conference
 Allow: /mariage
 Allow: /soiree
-Allow: /pro
 Allow: /book/
 Allow: /blog
 Allow: /location
+Allow: /location-sono-paris
+Allow: /location-enceinte-paris
+Allow: /prestataire-audiovisuel-paris
+Allow: /sonorisation-concert-paris
+Allow: /guide-sonorisation
+`;
+
+  return new NextResponse(robotsTxt, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate',
+    },
+  });
+}
 

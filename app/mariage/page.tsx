@@ -3,7 +3,7 @@ import MariagePageClient from './MariagePageClient'
 
 export const metadata: Metadata = {
   title: 'Location Sono Mariage Paris | Pack jusqu\'à 1500 personnes | SoundRush',
-  description: 'Pack sonorisation mariage clé en main à Paris. Jusqu\'à 1500 personnes. Micros, enceintes, éclairage, livraison et installation incluses. Devis rapide.',
+  description: 'Pack sonorisation mariage clé en main à Paris. Jusqu\'à 1500 personnes. Micros, enceintes, éclairage, livraison et installation incluses. Devis en 2h. Réservez maintenant !',
   keywords: [
     'location sono mariage Paris',
     'pack sonorisation mariage',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Location Sono Mariage Paris | SoundRush',
-    description: 'Pack sonorisation mariage clé en main à Paris. Jusqu\'à 1500 personnes. Micros, enceintes, éclairage, livraison et installation incluses.',
+    description: 'Pack sonorisation mariage clé en main à Paris. Jusqu\'à 1500 personnes. Micros, enceintes, éclairage, livraison et installation incluses. Devis en 2h.',
     url: 'https://www.sndrush.com/mariage',
     siteName: 'SoundRush Paris',
     images: [
