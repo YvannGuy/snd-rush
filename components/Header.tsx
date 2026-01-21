@@ -340,6 +340,12 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               >
                 {texts[language].tutos}
               </Link>
+              <Link 
+                href="mailto:devisclients@guylocationevents.com"
+                className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
+              >
+                {language === 'fr' ? 'Devis' : 'Quote'}
+              </Link>
             </nav>
 
             {/* CTA Buttons */}
@@ -763,6 +769,13 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
               >
                 {texts[language].tutos}
+              </Link>
+              <Link 
+                href="mailto:devisclients@guylocationevents.com"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
+              >
+                {language === 'fr' ? 'Devis' : 'Quote'}
               </Link>
             </div>
 

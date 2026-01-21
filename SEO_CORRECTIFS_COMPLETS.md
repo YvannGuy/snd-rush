@@ -145,3 +145,5 @@ git commit -m "feat(seo): Ajout FAQPage schema et composants réutilisables"
 - **Impressions :** +20% (nouvelles pages indexées)
 - **Trafic organique :** +30% à +50% sur 6 mois
 
+
+

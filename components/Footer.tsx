@@ -34,7 +34,7 @@ export default function Footer({ language }: FooterProps) {
       schedule: "24h/24 - 7j/7",
       phone: "07 44 78 27 54",
       whatsapp: "WhatsApp",
-      email: "contact@guylocationevents.com",
+      email: "devisclients@guylocationevents.com",
       rights: " 2025 snd•rush. Tous droits réservés.",
       about: "À propos",
       address: "Adresse",
@@ -57,7 +57,7 @@ export default function Footer({ language }: FooterProps) {
       schedule: "24/7",
       phone: "07 44 78 27 54",
       whatsapp: "WhatsApp",
-      email: "contact@guylocationevents.com",
+      email: "devisclients@guylocationevents.com",
       rights: " 2025 snd•rush. All rights reserved.",
       about: "About",
       address: "Address",
@@ -176,7 +176,7 @@ export default function Footer({ language }: FooterProps) {
                   <div className="w-4 h-4 flex items-center justify-center">
                     <i className="ri-mail-line text-[#F2431E]"></i>
                   </div>
-                  <a href="mailto:contact@guylocationevents.com" className="text-gray-300 hover:text-white transition-colors text-sm cursor-pointer">
+                  <a href="mailto:devisclients@guylocationevents.com" className="text-gray-300 hover:text-white transition-colors text-sm cursor-pointer">
                     {texts[language].email}
                   </a>
                 </div>

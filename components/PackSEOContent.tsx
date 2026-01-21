@@ -360,14 +360,29 @@ export default function PackSEOContent({ packKey, language = 'fr', onLanguageCha
                 <p className="text-lg text-gray-600 leading-relaxed mb-6">
                   {currentContent.intro}
                 </p>
-                <Button
-                  onClick={handleReserve}
-                  className="w-full lg:w-auto bg-[#F2431E] hover:bg-[#E63A1A] text-white py-6 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
-                  size="lg"
-                >
-                  <Calendar className="w-5 h-5 mr-2" />
-                  {currentTexts[language].reserve}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={handleReserve}
+                    className="w-full lg:w-auto bg-[#F2431E] hover:bg-[#E63A1A] text-white py-6 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
+                    size="lg"
+                  >
+                    <Calendar className="w-5 h-5 mr-2" />
+                    {currentTexts[language].reserve}
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full lg:w-auto border-2 border-[#F2431E] text-[#F2431E] hover:bg-[#F2431E] hover:text-white py-6 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
+                    size="lg"
+                  >
+                    <a href="mailto:devisclients@guylocationevents.com">
+                      <svg className="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      {language === 'fr' ? 'Devis' : 'Quote'}
+                    </a>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -474,14 +489,29 @@ export default function PackSEOContent({ packKey, language = 'fr', onLanguageCha
                 ? 'Réservez maintenant et profitez d\'un service clé en main pour votre événement.'
                 : 'Book now and enjoy a turnkey service for your event.'}
             </p>
-            <Button
-              onClick={handleReserve}
-              className="bg-white text-[#F2431E] hover:bg-gray-100 py-6 text-lg font-bold rounded-xl shadow-lg"
-              size="lg"
-            >
-              <Calendar className="w-5 h-5 mr-2" />
-              {currentTexts[language].reserve}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={handleReserve}
+                className="bg-white text-[#F2431E] hover:bg-gray-100 py-6 text-lg font-bold rounded-xl shadow-lg"
+                size="lg"
+              >
+                <Calendar className="w-5 h-5 mr-2" />
+                {currentTexts[language].reserve}
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#F2431E] py-6 text-lg font-bold rounded-xl shadow-lg"
+                size="lg"
+              >
+                <a href="mailto:devisclients@guylocationevents.com">
+                  <svg className="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  {language === 'fr' ? 'Devis' : 'Quote'}
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
       </main>

@@ -204,7 +204,7 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
               </div>
 
               {/* Buttons - CTA Principal */}
-              <div className="mt-auto">
+              <div className="mt-auto space-y-3">
                 <button
                   onClick={() => {
                     // Mapper l'ID du pack au packKey
@@ -222,6 +222,15 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
                 >
                   {language === 'fr' ? 'Réserver maintenant' : 'Book now'}
                 </button>
+                <a
+                  href="mailto:devisclients@guylocationevents.com"
+                  className="w-full border-2 border-[#F2431E] text-[#F2431E] px-6 py-4 rounded-xl font-semibold hover:bg-[#F2431E] hover:text-white transition-all duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  {language === 'fr' ? 'Demander devis' : 'Request quote'}
+                </a>
               </div>
               </div>
             </div>
