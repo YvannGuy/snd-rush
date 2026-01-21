@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import SectionChevron from './SectionChevron';
 
 interface PourQuiSectionProps {
@@ -7,6 +8,22 @@ interface PourQuiSectionProps {
 }
 
 export default function PourQuiSection({ language }: PourQuiSectionProps) {
+  // Animation de texte rotatif pour les événements
+  const eventTypes = {
+    fr: ['concerts', 'mariages', 'soirées privées', 'anniversaires', 'festivals'],
+    en: ['concerts', 'weddings', 'private parties', 'birthdays', 'festivals']
+  };
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const events = eventTypes[language];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % events.length);
+    }, 2000); // Change toutes les 2 secondes
+
+    return () => clearInterval(interval);
+  }, [events.length]);
   const texts = {
     fr: {
       sectionTitle: 'POUR QUI ?',
@@ -103,15 +120,41 @@ export default function PourQuiSection({ language }: PourQuiSectionProps) {
           {language === 'fr' ? (
             <>
               <span className="text-black">On s'occupe de tout, pour tous vos </span>
-              <span className="text-[#F2431E]">événements</span>
+              <span 
+                className="text-[#F2431E] inline-block min-w-[200px] md:min-w-[300px] lg:min-w-[350px] text-left"
+                key={currentIndex}
+              >
+                <span className="animate-fade-in">{events[currentIndex]}</span>
+              </span>
             </>
           ) : (
             <>
               <span className="text-black">We take care of everything, for all your </span>
-              <span className="text-[#F2431E]">events</span>
+              <span 
+                className="text-[#F2431E] inline-block min-w-[200px] md:min-w-[300px] lg:min-w-[350px] text-left"
+                key={currentIndex}
+              >
+                <span className="animate-fade-in">{events[currentIndex]}</span>
+              </span>
             </>
           )}
         </h2>
+        
+        <style jsx global>{`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .animate-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+          }
+        `}</style>
 
         {/* Categories Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">

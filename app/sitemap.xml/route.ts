@@ -75,6 +75,7 @@ export async function GET() {
     { url: `${baseUrl}/conference`, priority: '0.8', changefreq: 'monthly', lastmod: currentDate },
     { url: `${baseUrl}/mariage`, priority: '0.8', changefreq: 'monthly', lastmod: currentDate },
     { url: `${baseUrl}/soiree`, priority: '0.8', changefreq: 'monthly', lastmod: currentDate },
+    { url: `${baseUrl}/comment-choisir-son-pack`, priority: '0.8', changefreq: 'monthly', lastmod: currentDate },
     { url: `${baseUrl}/cgv`, priority: '0.5', changefreq: 'yearly', lastmod: currentDate },
     { url: `${baseUrl}/mentions-legales`, priority: '0.5', changefreq: 'yearly', lastmod: currentDate },
     { url: `${baseUrl}/politique-de-confidentialite`, priority: '0.5', changefreq: 'yearly', lastmod: currentDate },

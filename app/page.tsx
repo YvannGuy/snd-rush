@@ -10,6 +10,7 @@ import AboutSoundRushSection from '@/components/AboutSoundRushSection';
 import SolutionsSection from '@/components/SolutionsSection';
 import UrgencySection from '@/components/UrgencySection';
 import CommentCaMarcheSection from '@/components/CommentCaMarcheSection';
+import HowToChoosePackSection from '@/components/HowToChoosePackSection';
 import PourQuiSection from '@/components/PourQuiSection';
 import AboutSection from '@/components/AboutSection';
 // import GallerySection from '@/components/GallerySection'; // Masqué
@@ -220,6 +221,11 @@ export default function HomePageClient() {
         {/* Section Comment ça marche */}
         <SectionAnimation delay={0.25}>
           <CommentCaMarcheSection language={language} />
+        </SectionAnimation>
+
+        {/* Section Comment choisir son pack */}
+        <SectionAnimation delay={0.28}>
+          <HowToChoosePackSection language={language} />
         </SectionAnimation>
 
         {/* Section Pour Qui ? */}

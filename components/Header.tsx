@@ -320,6 +320,12 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                       {texts[language].mariage}
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-gray-700" />
+                  <DropdownMenuItem asChild className="text-white hover:text-[#F2431E] hover:bg-gray-900 focus:bg-gray-900 focus:text-[#F2431E]">
+                    <Link href="/comment-choisir-son-pack" className="cursor-pointer">
+                      {language === 'fr' ? 'Comment choisir son pack' : 'How to choose your pack'}
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <Link 
@@ -747,6 +753,14 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                   className="text-white/80 hover:text-[#F2431E] transition-colors text-sm py-1"
                 >
                   {texts[language].mariage}
+                </Link>
+                <div className="h-px bg-white/20 my-2"></div>
+                <Link 
+                  href="/comment-choisir-son-pack"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-white/80 hover:text-[#F2431E] transition-colors text-sm py-1"
+                >
+                  {language === 'fr' ? 'Comment choisir son pack' : 'How to choose your pack'}
                 </Link>
               </div>
               <Link 
