@@ -18,7 +18,7 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
       if (
         typeof message === 'string' && 
         (message.includes('APP_VIEWS_LIMIT_REACHED') || 
-         message.includes('eceb54fb-9632-4eda-b210-eb64d51178f4') ||
+         message.includes('3ad63c94-f36d-4b5d-b64e-513e62c70eb6') ||
          message.includes('can\'t be initialized') ||
          message.includes('Widget'))
       ) {
@@ -37,7 +37,7 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
     const handleError = (event: ErrorEvent) => {
       if (
         event.message?.includes('APP_VIEWS_LIMIT_REACHED') ||
-        event.message?.includes('eceb54fb-9632-4eda-b210-eb64d51178f4') ||
+        event.message?.includes('3ad63c94-f36d-4b5d-b64e-513e62c70eb6') ||
         event.message?.includes('can\'t be initialized')
       ) {
         event.preventDefault();
@@ -50,7 +50,7 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
 
     // Masquer le titre du widget après le chargement
     const hideTitle = () => {
-      const widget = document.querySelector('.elfsight-app-eceb54fb-9632-4eda-b210-eb64d51178f4');
+      const widget = document.querySelector('.elfsight-app-3ad63c94-f36d-4b5d-b64e-513e62c70eb6');
       if (widget) {
         const headings = widget.querySelectorAll('h1, h2, h3, h4, h5, h6');
         headings.forEach((heading) => {
@@ -78,7 +78,7 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
     // Observer pour détecter quand le widget se charge
     let observer: MutationObserver | null = null;
     const observerInitTimeout = setTimeout(() => {
-      const widgetContainer = document.querySelector('.elfsight-app-eceb54fb-9632-4eda-b210-eb64d51178f4');
+      const widgetContainer = document.querySelector('.elfsight-app-3ad63c94-f36d-4b5d-b64e-513e62c70eb6');
       if (widgetContainer) {
         observer = new MutationObserver(() => {
           hideTitle();
@@ -93,7 +93,7 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
     
     // Vérifier après un délai si le widget s'est chargé
     const checkWidgetLoadTimeout = setTimeout(() => {
-      const widget = document.querySelector('.elfsight-app-eceb54fb-9632-4eda-b210-eb64d51178f4');
+      const widget = document.querySelector('.elfsight-app-3ad63c94-f36d-4b5d-b64e-513e62c70eb6');
       // Si le widget existe mais est vide après 10 secondes, considérer comme erreur
       if (widget && widget.children.length === 0) {
         const errorMessage = widget.getAttribute('data-error') || '';
@@ -146,7 +146,7 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
           </p>
         </div>
         
-        {/* Elfsight Google Reviews Widget */}
+        {/* Elfsight Google Reviews | Untitled Google Reviews */}
         <div className="min-h-[400px]">
           {widgetError ? (
             <div className="text-center py-12 text-gray-500">
@@ -165,7 +165,7 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
               </a>
             </div>
           ) : (
-            <div className="elfsight-app-eceb54fb-9632-4eda-b210-eb64d51178f4" data-elfsight-app-lazy></div>
+            <div className="elfsight-app-3ad63c94-f36d-4b5d-b64e-513e62c70eb6" data-elfsight-app-lazy></div>
           )}
         </div>
       </div>

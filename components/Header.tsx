@@ -9,8 +9,6 @@ import MiniCart from '@/components/cart/MiniCart';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import { usePro } from '@/hooks/usePro';
-import SignModal from '@/components/auth/SignModal';
-import UserIconWithName from '@/components/UserIconWithName';
 import { supabase } from '@/lib/supabase';
 // Shadcn UI components
 import { Button } from '@/components/ui/button';
@@ -35,17 +33,12 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   
-  // Ne pas afficher le bandeau noir sur les pages dashboard/admin et toutes les pages utilisateur (mes-*)
-  const isDashboardPage = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/mes-');
-  
-  // Masquer le header sur les pages admin/dashboard/mes-*
-  if (isDashboardPage) return null;
-  
+  // Tous les hooks doivent être appelés avant tout return conditionnel
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   // const [isSignModalOpen, setIsSignModalOpen] = useState(false); // Remplacé par redirection vers /auth/login
   // const [isAdminModalOpen, setIsAdminModalOpen] = useState(false); // Remplacé par redirection vers /auth/admin/login
-  const { getCartItemCount, cart } = useCart();
+  const { getCartItemCount } = useCart();
   const [cartCount, setCartCount] = useState(0);
   const { user } = useUser();
   const { signOut } = useAuth();
@@ -53,12 +46,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   const [userFirstName, setUserFirstName] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   
-  // Vérifier si on est dans l'espace pro
-  const isProPage = pathname?.startsWith('/pro');
-  
-  // Afficher le minicart uniquement si pro active ET dans /pro/*
-  const shouldShowMiniCart = isPro && isProPage;
-
   useEffect(() => {
     // Initialiser le compteur au montage
     setCartCount(getCartItemCount());
@@ -161,7 +148,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
         } else {
           setIsAdmin(isAdminFromMetadata);
         }
-      } catch (error: any) {
+      } catch {
         // En cas d'erreur, utiliser les métadonnées (ne pas logger pour éviter le spam)
         setIsAdmin(isAdminFromMetadata);
         // Le prénom est déjà défini depuis l'email plus haut
@@ -176,12 +163,17 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     }
   }, [user]);
 
-
-
-  const getUserInitials = (user: any) => {
-    const email = user?.email || '';
-    return email.charAt(0).toUpperCase();
-  };
+  // Ne pas afficher le bandeau noir sur les pages dashboard/admin et toutes les pages utilisateur (mes-*)
+  const isDashboardPage = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/mes-');
+  
+  // Vérifier si on est dans l'espace pro
+  const isProPage = pathname?.startsWith('/pro');
+  
+  // Afficher le minicart uniquement si pro active ET dans /pro/*
+  const shouldShowMiniCart = isPro && isProPage;
+  
+  // Masquer le header sur les pages admin/dashboard/mes-*
+  if (isDashboardPage) return null;
 
   const handleSignOut = async () => {
     try {
