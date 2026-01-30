@@ -21,7 +21,7 @@ export default function PackWizardSection({ language }: PackWizardSectionProps) 
   const [ambiance, setAmbiance] = useState<AmbianceType | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [result, setResult] = useState<{ pack: string; description: string; image: string; explanation: string } | null>(null);
+  const [result, setResult] = useState<{ pack?: string; name: string; description: string; image: string; explanation: string } | null>(null);
   const [error, setError] = useState('');
 
   const texts = {
@@ -147,19 +147,24 @@ export default function PackWizardSection({ language }: PackWizardSectionProps) 
 
   const currentTexts = texts[language];
 
-  const calculatePack = (): { pack: string; description: string; image: string; explanation: string } => {
+  const calculatePack = (): { pack?: string; name: string; description: string; image: string; explanation: string } => {
     if (!peopleCount) {
-      return { ...currentTexts.packs.S, image: '/packs.png' };
+      const pack = currentTexts.packs.S;
+      return { pack: pack.name, name: pack.name, description: pack.description, image: '/packs.png', explanation: pack.explanation };
     }
 
     if (peopleCount >= 1 && peopleCount <= 40) {
-      return { ...currentTexts.packs.S, image: '/packs.png' };
+      const pack = currentTexts.packs.S;
+      return { pack: pack.name, name: pack.name, description: pack.description, image: '/packs.png', explanation: pack.explanation };
     } else if (peopleCount >= 41 && peopleCount <= 80) {
-      return { ...currentTexts.packs.M, image: '/packM.png' };
+      const pack = currentTexts.packs.M;
+      return { pack: pack.name, name: pack.name, description: pack.description, image: '/packM.png', explanation: pack.explanation };
     } else if (peopleCount >= 81 && peopleCount <= 150) {
-      return { ...currentTexts.packs.L, image: '/packL.png' };
+      const pack = currentTexts.packs.L;
+      return { pack: pack.name, name: pack.name, description: pack.description, image: '/packL.png', explanation: pack.explanation };
     } else {
-      return { ...currentTexts.packs.XL, image: '/concert.jpg' };
+      const pack = currentTexts.packs.XL;
+      return { pack: pack.name, name: pack.name, description: pack.description, image: '/concert.jpg', explanation: pack.explanation };
     }
   };
 
@@ -208,7 +213,7 @@ export default function PackWizardSection({ language }: PackWizardSectionProps) 
           location,
           ambiance,
           phoneNumber,
-          pack: packResult.name,
+          pack: packResult.pack,
           language
         }),
       });
@@ -509,13 +514,13 @@ export default function PackWizardSection({ language }: PackWizardSectionProps) 
                 <div className="mb-6 max-w-md mx-auto">
                   <img
                     src={result.image}
-                    alt={result.name}
+                    alt={result.name || result.pack || 'Pack'}
                     className="w-full h-auto rounded-xl shadow-lg"
                   />
                 </div>
               )}
               <p className="text-xl text-[#F2431E] font-bold mb-2">
-                {result?.name}
+                {result?.name || result?.pack}
               </p>
               <p className="text-gray-600 mb-6">
                 {result?.description}
