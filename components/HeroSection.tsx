@@ -11,7 +11,7 @@ interface HeroSectionProps {
 }
 
 const animatedWords = {
-  fr: ['Son', 'Lumière', 'DJ gear'],
+  fr: ['Sono', 'Lumière', 'DJ gear'],
   en: ['Sound', 'Lighting', 'DJ gear']
 };
 
@@ -33,8 +33,8 @@ export default function HeroSection({ language }: HeroSectionProps) {
     fr: {
       title1Prefix: 'Location',
       title1Suffix: 'clé en main à paris',
-      title2: 'Intervention rapide et réservation simplifiée',
-      subtitle: 'Conférences, événements, soirées, mariages. Nous livrons, installons et réglons une location adaptée à votre événement, sans stress',
+      title2: 'Disponible 24/7 • Réservation en 2 clics',
+      subtitle: 'Besoin d\'une sono maintenant ? Mariages, événements, soirées. Livraison 24/7, installation par nos experts, matériel professionnel. Service clé en main.',
       cta: 'Préparer mon événement',
       ctaSecondary: 'Intervention urgente',
       catalogue: 'Voir le catalogue',

@@ -8,7 +8,46 @@ interface TrustindexReviewsProps {
 }
 
 export default function TrustindexReviews({ language = 'fr' }: TrustindexReviewsProps) {
+  const [widgetError, setWidgetError] = useState(false);
+
   useEffect(() => {
+    // Intercepter les erreurs du widget Elfsight
+    const originalError = console.error;
+    const errorHandler = (...args: any[]) => {
+      const message = args[0];
+      if (
+        typeof message === 'string' && 
+        (message.includes('APP_VIEWS_LIMIT_REACHED') || 
+         message.includes('eceb54fb-9632-4eda-b210-eb64d51178f4') ||
+         message.includes('can\'t be initialized') ||
+         message.includes('Widget'))
+      ) {
+        setWidgetError(true);
+        // Ne pas afficher l'erreur dans la console
+        return;
+      }
+      // Laisser passer les autres erreurs
+      originalError.apply(console, args);
+    };
+    
+    // Remplacer temporairement console.error
+    console.error = errorHandler as any;
+
+    // Gestionnaire d'erreur global pour window
+    const handleError = (event: ErrorEvent) => {
+      if (
+        event.message?.includes('APP_VIEWS_LIMIT_REACHED') ||
+        event.message?.includes('eceb54fb-9632-4eda-b210-eb64d51178f4') ||
+        event.message?.includes('can\'t be initialized')
+      ) {
+        event.preventDefault();
+        setWidgetError(true);
+        return false;
+      }
+    };
+    
+    window.addEventListener('error', handleError);
+
     // Masquer le titre du widget après le chargement
     const hideTitle = () => {
       const widget = document.querySelector('.elfsight-app-eceb54fb-9632-4eda-b210-eb64d51178f4');
@@ -52,6 +91,19 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
     }, 1000);
     timeouts.push(observerInitTimeout);
     
+    // Vérifier après un délai si le widget s'est chargé
+    const checkWidgetLoadTimeout = setTimeout(() => {
+      const widget = document.querySelector('.elfsight-app-eceb54fb-9632-4eda-b210-eb64d51178f4');
+      // Si le widget existe mais est vide après 10 secondes, considérer comme erreur
+      if (widget && widget.children.length === 0) {
+        const errorMessage = widget.getAttribute('data-error') || '';
+        if (errorMessage.includes('LIMIT') || errorMessage.includes('initialized')) {
+          setWidgetError(true);
+        }
+      }
+    }, 10000);
+    timeouts.push(checkWidgetLoadTimeout);
+
     // Nettoyer au démontage
     return () => {
       if (observer) {
@@ -59,6 +111,10 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
         observer = null;
       }
       timeouts.forEach(timeout => clearTimeout(timeout));
+      // Restaurer console.error
+      console.error = originalError;
+      // Retirer le gestionnaire d'erreur
+      window.removeEventListener('error', handleError);
     };
   }, []);
 
@@ -92,7 +148,25 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
         
         {/* Elfsight Google Reviews Widget */}
         <div className="min-h-[400px]">
-          <div className="elfsight-app-eceb54fb-9632-4eda-b210-eb64d51178f4" data-elfsight-app-lazy></div>
+          {widgetError ? (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg">
+                {language === 'fr' 
+                  ? 'Les avis clients sont temporairement indisponibles. Veuillez consulter nos avis Google directement.'
+                  : 'Customer reviews are temporarily unavailable. Please check our Google reviews directly.'}
+              </p>
+              <a 
+                href="https://www.google.com/maps/place/SoundRush+Paris" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block mt-4 text-[#F2431E] hover:underline"
+              >
+                {language === 'fr' ? 'Voir les avis Google' : 'View Google Reviews'}
+              </a>
+            </div>
+          ) : (
+            <div className="elfsight-app-eceb54fb-9632-4eda-b210-eb64d51178f4" data-elfsight-app-lazy></div>
+          )}
         </div>
       </div>
       <SectionChevron nextSectionId="tutos" />
