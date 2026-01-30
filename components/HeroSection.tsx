@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import HeroAIInput from './HeroAIInput';
 import SectionChevron from './SectionChevron';
+import { ArrowRight } from 'lucide-react';
 
 interface HeroSectionProps {
   language: 'fr' | 'en';
@@ -174,6 +175,24 @@ export default function HeroSection({ language }: HeroSectionProps) {
                     className="bg-white hover:bg-gray-100 text-[#F2431E] font-semibold px-8 py-4 rounded-full text-lg sm:text-xl transition-colors shadow-lg hover:shadow-xl"
                   >
                     {texts[language].ctaSecondary}
+                  </a>
+                </div>
+
+                {/* Simulator CTA */}
+                <div className="mt-6 text-center">
+                  <a
+                    href="#pack-wizard"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const wizardSection = document.getElementById('pack-wizard');
+                      if (wizardSection) {
+                        wizardSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
+                    className="text-white/90 hover:text-white text-base sm:text-lg underline transition-colors inline-flex items-center gap-2"
+                  >
+                    {language === 'fr' ? 'Pas sûr de votre besoin ? Laissez notre simulateur vous guider' : 'Not sure what you need? Let our simulator guide you'}
+                    <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>
               </div>

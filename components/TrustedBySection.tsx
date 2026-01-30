@@ -10,7 +10,7 @@ export default function TrustedBySection({ language }: TrustedBySectionProps) {
   const texts = {
     fr: {
       title: "Ils nous ont fait confiance",
-      subtitle: "Des entreprises et organisations qui nous font confiance pour leurs événements"
+      subtitle: "Des entreprises et organisations françaises et internationales qui nous font confiance pour leurs événements"
     },
     en: {
       title: "They trusted us",
@@ -19,14 +19,17 @@ export default function TrustedBySection({ language }: TrustedBySectionProps) {
   };
 
   const clients = [
-    "Référence Studios",
-    "Unikorn Events",
-    "The Maptique SRL",
-    "Fédération Syndicale Étudiante",
-    "American School of Paris",
-    "Wave in Paris",
-    "Synergie productions",
-    "Restaurant Leriche"
+    { name: "Référence Studios", flag: "🇫🇷" },
+    { name: "Unikorn Events", flag: "🇫🇷" },
+    { name: "The Maptique SRL", flag: "🇮🇹" },
+    { name: "Fédération Syndicale Étudiante", flag: "🇫🇷" },
+    { name: "American School of Paris", flag: "🇺🇸" },
+    { name: "Wave in Paris", flag: "🇫🇷" },
+    { name: "Synergie productions", flag: "🇫🇷" },
+    { name: "Restaurant Leriche", flag: "🇲🇶" },
+    { name: "Poltrona Fau", flag: "🇮🇹" },
+    { name: "Nude Project", flag: "🇪🇸" },
+    { name: "La Bourse de Paris", flag: "🇫🇷" }
   ];
 
   const currentTexts = texts[language];
@@ -50,10 +53,13 @@ export default function TrustedBySection({ language }: TrustedBySectionProps) {
           {clients.map((client, index) => (
             <div
               key={index}
-              className="px-6 py-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 flex items-center justify-center"
+              className="px-6 py-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 flex items-center justify-center gap-2"
             >
+              {client.flag && (
+                <span className="text-2xl">{client.flag}</span>
+              )}
               <p className="text-base md:text-lg font-semibold text-gray-800 text-center">
-                {client}
+                {client.name}
               </p>
             </div>
           ))}
