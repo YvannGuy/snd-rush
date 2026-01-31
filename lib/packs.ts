@@ -14,7 +14,7 @@ export const PACKS: Record<string, Pack> = {
   petit: {
     id: "pack_petit",
     name: "Pack S Petit",
-    basePrice: 109,
+    basePrice: 120,
     composition: [
       "1 enceinte Mac Mah AS 115",
       "1 console de mixage",
@@ -25,7 +25,7 @@ export const PACKS: Record<string, Pack> = {
   confort: {
     id: "pack_confort",
     name: "Pack M Confort",
-    basePrice: 129,
+    basePrice: 200,
     composition: [
       "2 enceintes Mac Mah AS 115",
       "1 console HPA Promix 8",
@@ -36,7 +36,7 @@ export const PACKS: Record<string, Pack> = {
   grand: {
     id: "pack_grand",
     name: "Pack L Grand",
-    basePrice: 179,
+    basePrice: 290,
     composition: [
       "2 enceintes FBT X-Lite 115A",
       "1 caisson X-Sub 118SA",

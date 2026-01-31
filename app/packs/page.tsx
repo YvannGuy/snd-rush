@@ -82,7 +82,7 @@ export default function AllPacksPage() {
         {
           id: 6,
           name: 'Pack DJ Essentiel',
-          price: '109€ /jour',
+          price: '140€ /jour',
           capacity: 'Pour 30 à 70 personnes',
           includes: [
             '1 enceinte Mac Mah AS 115',
@@ -95,7 +95,7 @@ export default function AllPacksPage() {
         {
           id: 7,
           name: 'Pack DJ Performance',
-          price: '159€ /jour',
+          price: '220€ /jour',
           capacity: 'Pour 50 à 100 personnes',
           includes: [
             '2 enceintes FBT sur pied',
@@ -107,7 +107,7 @@ export default function AllPacksPage() {
         {
           id: 8,
           name: 'Pack DJ Premium',
-          price: '219€ /jour',
+          price: '310€ /jour',
           capacity: 'Pour 80 à 150 personnes',
           includes: [
             '2 enceintes FBT sur pied',
@@ -181,7 +181,7 @@ export default function AllPacksPage() {
         {
           id: 6,
           name: 'Pack DJ Essential',
-          price: '109€ /day',
+          price: '140€ /day',
           capacity: 'For 30 to 70 people',
           includes: [
             '1 Mac Mah AS 115 speaker',
@@ -194,7 +194,7 @@ export default function AllPacksPage() {
         {
           id: 7,
           name: 'Pack DJ Performance',
-          price: '159€ /day',
+          price: '220€ /day',
           capacity: 'For 50 to 100 people',
           includes: [
             '2 FBT speakers on stands',
@@ -206,7 +206,7 @@ export default function AllPacksPage() {
         {
           id: 8,
           name: 'Pack DJ Premium',
-          price: '219€ /day',
+          price: '310€ /day',
           capacity: 'For 80 to 150 people',
           includes: [
             '2 FBT speakers on stands',
@@ -275,8 +275,23 @@ export default function AllPacksPage() {
                     <h3 className="text-xl font-bold text-black mb-2">
                       {pack.name}
                     </h3>
-                    <div className="text-3xl font-bold text-[#F2431E] mb-3">
-                      {pack.price}
+                    <div className="mb-3">
+                      <div className="flex items-baseline gap-2">
+                        <div className="text-3xl font-bold text-[#F2431E]">
+                          {pack.price}
+                        </div>
+                        <div className="relative group">
+                          <i className="ri-information-line text-gray-400 hover:text-gray-600 cursor-help text-lg"></i>
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                            {language === 'fr' 
+                              ? 'Ces prix peuvent varier selon le matériel inclus dans le pack, adapté à votre demande.'
+                              : 'These prices may vary depending on the equipment included in the pack, adapted to your request.'}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                              <div className="w-2 h-2 bg-gray-900 rotate-45"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <p className="text-gray-600 mb-4 text-sm">
                       {pack.capacity}

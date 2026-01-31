@@ -134,8 +134,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         name: "Pack DJ Essentiel",
         tagline: "Solution DJ compacte pour petits événements",
         description: "Pack DJ Essentiel parfait pour les petits événements jusqu'à 70 personnes, avec 1 enceinte Mac Mah AS 115 et console DJ Pioneer.",
-        priceParis: "109 € /jour TTC",
-        priceHorsParis: "109 € /jour TTC",
+        priceParis: "140 € /jour TTC",
+        priceHorsParis: "140 € /jour TTC",
         featured: false,
         image: "/packdjs.png",
         features: [
@@ -153,8 +153,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         name: "Pack DJ Performance",
         tagline: "Solution DJ complète pour événements moyens",
         description: "Pack DJ Performance pour événements moyens jusqu'à 100 personnes, avec 2 enceintes FBT sur pied et console DJ Pioneer.",
-        priceParis: "159 € /jour TTC",
-        priceHorsParis: "159 € /jour TTC",
+        priceParis: "220 € /jour TTC",
+        priceHorsParis: "220 € /jour TTC",
         featured: false,
         image: "/packdjM.png",
         features: [
@@ -171,8 +171,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         name: "Pack DJ Premium",
         tagline: "Solution DJ professionnelle avec basses renforcées",
         description: "Pack DJ Premium idéal pour événements jusqu'à 150 personnes, avec 2 enceintes FBT sur pied, 1 caisson de basses et console DJ Pioneer.",
-        priceParis: "219 € /jour TTC",
-        priceHorsParis: "219 € /jour TTC",
+        priceParis: "310 € /jour TTC",
+        priceHorsParis: "310 € /jour TTC",
         featured: false,
         image: "/packdjL.png",
         features: [
@@ -320,8 +320,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         name: "Pack DJ Essential",
         tagline: "Compact DJ solution for small events",
         description: "Pack DJ Essential perfect for small events up to 70 people, with 1 Mac Mah AS 115 speaker and Pioneer DJ console.",
-        priceParis: "109 € /day TTC",
-        priceHorsParis: "109 € /day TTC",
+        priceParis: "140 € /day TTC",
+        priceHorsParis: "140 € /day TTC",
         featured: false,
         image: "/packdjs.png",
         features: [
@@ -339,8 +339,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         name: "Pack DJ Performance",
         tagline: "Complete DJ solution for medium events",
         description: "Pack DJ Performance for medium events up to 100 people, with 2 FBT speakers on stands and Pioneer DJ console.",
-        priceParis: "159 € /day TTC",
-        priceHorsParis: "159 € /day TTC",
+        priceParis: "220 € /day TTC",
+        priceHorsParis: "220 € /day TTC",
         featured: false,
         image: "/packdjM.png",
         features: [
@@ -357,8 +357,8 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
         name: "Pack DJ Premium",
         tagline: "Professional DJ solution with reinforced bass",
         description: "Pack DJ Premium ideal for events up to 150 people, with 2 FBT speakers on stands, 1 subwoofer and Pioneer DJ console.",
-        priceParis: "219 € /day TTC",
-        priceHorsParis: "219 € /day TTC",
+        priceParis: "310 € /day TTC",
+        priceHorsParis: "310 € /day TTC",
         featured: false,
         image: "/packdjL.png",
         features: [
@@ -1000,9 +1000,33 @@ export default function PackDetailContent({ packId, language }: PackDetailConten
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-bold text-black">{basePrice}€</span>
                     <span className="text-xl text-gray-500">{currentTexts.perDay}</span>
+                    <div className="relative group">
+                      <i className="ri-information-line text-gray-400 hover:text-gray-600 cursor-help text-lg"></i>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                        {language === 'fr' 
+                          ? 'Ces prix peuvent varier selon le matériel inclus dans le pack, adapté à votre demande.'
+                          : 'These prices may vary depending on the equipment included in the pack, adapted to your request.'}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                          <div className="w-2 h-2 bg-gray-900 rotate-45"></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-2xl font-semibold text-gray-700">{pack.priceParis}</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-2xl font-semibold text-gray-700">{pack.priceParis}</p>
+                    <div className="relative group">
+                      <i className="ri-information-line text-gray-400 hover:text-gray-600 cursor-help text-lg"></i>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                        {language === 'fr' 
+                          ? 'Ces prix peuvent varier selon le matériel inclus dans le pack, adapté à votre demande.'
+                          : 'These prices may vary depending on the equipment included in the pack, adapted to your request.'}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                          <div className="w-2 h-2 bg-gray-900 rotate-45"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             )}

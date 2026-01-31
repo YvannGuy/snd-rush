@@ -312,7 +312,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         name: 'Pack S Petit',
         category: 'packs',
         description: 'Pour 30 à 70 personnes. 1 enceinte Mac Mah AS 115, 1 console de mixage',
-        price: '109€/jour',
+        price: '120€/jour',
         image: '/packs.png',
         capacity: '30-70',
         usageType: 'event'
@@ -322,7 +322,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         name: 'Pack M Confort',
         category: 'packs',
         description: 'Pour 70 à 150 personnes. 2 enceintes Mac Mah AS 115, 1 console HPA Promix 8',
-        price: '129€/jour',
+        price: '200€/jour',
         image: '/packM.png',
         capacity: '70-150',
         usageType: 'event'
@@ -332,7 +332,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         name: 'Pack L Grand',
         category: 'packs',
         description: 'Pour 150 à 250 personnes. 2 enceintes FBT X-Lite 115A, 1 caisson, 1 console HPA Promix 16',
-        price: '179€/jour',
+        price: '290€/jour',
         image: '/packL.png',
         capacity: '150-250',
         usageType: 'event'
@@ -342,7 +342,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         name: 'Pack DJ Essentiel',
         category: 'packs',
         description: 'Pour 30 à 70 personnes. 1 enceinte Mac Mah AS 115, 1 console de mixage, 1 console DJ Pioneer',
-        price: '109€/jour',
+        price: '140€/jour',
         image: '/packdjs.png',
         capacity: '30-70',
         usageType: 'dj'
@@ -352,7 +352,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         name: 'Pack DJ Performance',
         category: 'packs',
         description: 'Pour 50 à 100 personnes. 2 enceintes FBT sur pied, 1 console DJ Pioneer',
-        price: '159€/jour',
+        price: '220€/jour',
         image: '/packdjM.png',
         capacity: '50-100',
         usageType: 'dj'
@@ -362,7 +362,7 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
         name: 'Pack DJ Premium',
         category: 'packs',
         description: 'Pour 80 à 150 personnes. 2 enceintes FBT sur pied, 1 caisson de basses, 1 console DJ Pioneer',
-        price: '219€/jour',
+        price: '310€/jour',
         image: '/packdjL.png',
         capacity: '80-150',
         usageType: 'dj'
@@ -574,9 +574,24 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                     </p>
                   </div>
                   <div className="h-[2.75rem] flex items-end mb-4">
-                    <p className="text-2xl font-bold text-[#F2431E] leading-none">
-                      {product.price}
-                    </p>
+                    <div className="flex items-baseline gap-1.5">
+                      <p className="text-2xl font-bold text-[#F2431E] leading-none">
+                        {product.price}
+                      </p>
+                      {product.category === 'packs' && !product.price.includes('devis') && !product.price.includes('quote') && (
+                        <div className="relative group">
+                          <i className="ri-information-line text-gray-400 hover:text-gray-600 cursor-help text-base"></i>
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                            {language === 'fr' 
+                              ? 'Ces prix peuvent varier selon le matériel inclus dans le pack, adapté à votre demande.'
+                              : 'These prices may vary depending on the equipment included in the pack, adapted to your request.'}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                              <div className="w-2 h-2 bg-gray-900 rotate-45"></div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Buttons - alignés en bas */}

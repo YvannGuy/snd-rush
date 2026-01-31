@@ -253,8 +253,19 @@ export default function PackSelectionStep({ language, onPackSelect }: PackSelect
                   <div className="text-right ml-4">
                     <div className="flex items-center gap-1">
                       <span className="text-lg font-bold text-black">{pack.price}</span>
+                      <div className="relative group">
+                        <i className="ri-information-line text-gray-400 hover:text-gray-600 cursor-help text-base"></i>
+                        <div className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                          {language === 'fr' 
+                            ? 'Ces prix peuvent varier selon le matériel inclus dans le pack, adapté à votre demande.'
+                            : 'These prices may vary depending on the equipment included in the pack, adapted to your request.'}
+                          <div className="absolute top-full right-4 -mt-1">
+                            <div className="w-2 h-2 bg-gray-900 rotate-45"></div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    {pack.duration && <div className="text-xs text-gray-500">{pack.duration}</div>}
+                    {pack.duration && <div className="text-xs text-gray-500 mt-1">{pack.duration}</div>}
                   </div>
                 </div>
 

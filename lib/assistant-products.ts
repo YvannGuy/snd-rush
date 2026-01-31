@@ -253,7 +253,7 @@ export function getPacksInfo(): PackInfo[] {
     {
       id: 'pack_petit',
       name: 'Pack S Petit',
-      basePrice: 109,
+      basePrice: 120,
       composition: [
         '1 enceinte Mac Mah AS 115',
         '1 console de mixage',
@@ -264,7 +264,7 @@ export function getPacksInfo(): PackInfo[] {
     {
       id: 'pack_confort',
       name: 'Pack M Confort',
-      basePrice: 129,
+      basePrice: 200,
       composition: [
         '2 enceintes Mac Mah AS 115',
         '1 console HPA Promix 8',
@@ -275,7 +275,7 @@ export function getPacksInfo(): PackInfo[] {
     {
       id: 'pack_grand',
       name: 'Pack L Grand',
-      basePrice: 179,
+      basePrice: 290,
       composition: [
         '2 enceintes FBT X-Lite 115A',
         '1 caisson X-Sub 118SA',
@@ -300,7 +300,7 @@ export function getPacksInfo(): PackInfo[] {
     {
       id: 'pack_dj_essentiel',
       name: 'Pack DJ Essentiel',
-      basePrice: 109,
+      basePrice: 140,
       composition: [
         '1 enceinte Mac Mah AS 115',
         '1 console de mixage',
@@ -312,7 +312,7 @@ export function getPacksInfo(): PackInfo[] {
     {
       id: 'pack_dj_performance',
       name: 'Pack DJ Performance',
-      basePrice: 159,
+      basePrice: 220,
       composition: [
         '2 enceintes FBT sur pied',
         '1 console DJ Pioneer',
@@ -323,7 +323,7 @@ export function getPacksInfo(): PackInfo[] {
     {
       id: 'pack_dj_premium',
       name: 'Pack DJ Premium',
-      basePrice: 219,
+      basePrice: 310,
       composition: [
         '2 enceintes FBT sur pied',
         '1 caisson de basses',

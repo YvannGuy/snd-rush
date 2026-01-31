@@ -227,18 +227,6 @@ export default function RootLayout({
           async
         />
 
-        {/* Elfsight AI Chatbot | Untitled AI Chatbot */}
-        <div 
-          className="elfsight-app-df5c8ca3-4471-400d-9cf4-bff0d26865ad" 
-          data-elfsight-app-lazy
-          style={{
-            position: 'fixed',
-            bottom: '112px',
-            right: '24px',
-            zIndex: 50
-          }}
-        ></div>
-
         <CartProvider>
           {children}
           
