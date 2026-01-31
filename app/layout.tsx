@@ -227,6 +227,9 @@ export default function RootLayout({
           async
         />
 
+        {/* Elfsight AI Chatbot | Untitled AI Chatbot */}
+        <div className="elfsight-app-a6997d3d-038c-45be-81c5-abbc7747dc81" data-elfsight-app-lazy></div>
+
         <CartProvider>
           {children}
           
