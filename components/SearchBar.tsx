@@ -163,10 +163,10 @@ export default function SearchBar({ language }: SearchBarProps) {
     },
     {
       type: 'section',
-      title: currentTexts.sections.faq,
-      description: language === 'fr' ? 'Questions fréquentes' : 'Frequently asked questions',
-      url: '/#faq',
-      icon: '❓'
+      title: language === 'fr' ? 'Contact' : 'Contact',
+      description: language === 'fr' ? 'Contactez-nous' : 'Contact us',
+      url: '/#contact',
+      icon: '📬'
     }
   ];
 

@@ -5,15 +5,17 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import HeroAIInput from './HeroAIInput';
 import SectionChevron from './SectionChevron';
-import { ArrowRight } from 'lucide-react';
 
 interface HeroSectionProps {
-  language: 'fr' | 'en';
+  language: 'fr' | 'en' | 'it' | 'es' | 'zh';
 }
 
 const animatedWords = {
   fr: ['Sono', 'Lumière', 'DJ gear'],
-  en: ['Sound', 'Lighting', 'DJ gear']
+  en: ['Sound', 'Lighting', 'DJ gear'],
+  it: ['Audio', 'Luci', 'DJ gear'],
+  es: ['Sonido', 'Luces', 'DJ gear'],
+  zh: ['音响', '灯光', 'DJ 设备'],
 };
 
 export default function HeroSection({ language }: HeroSectionProps) {
@@ -32,25 +34,45 @@ export default function HeroSection({ language }: HeroSectionProps) {
 
   const texts = {
     fr: {
-      title1Prefix: 'Location',
-      title1Suffix: 'clé en main à paris',
-      title2: 'Disponible 24/7 • Réservation en 2 clics',
-      subtitle: 'Besoin d\'une sono maintenant ? Mariages, événements, soirées. Livraison 24/7, installation par nos experts, matériel professionnel. Service clé en main.',
-      cta: 'Préparer mon événement',
-      ctaSecondary: 'Intervention urgente',
+      headlineHighlight: 'Votre événement',
+      headlineRest: ', notre excellence',
+      subheadline: 'Nous gérons votre événement clé en main, avec précision et style.',
+      cta: 'Planifiez votre projet',
       catalogue: 'Voir le catalogue',
       available: 'Disponible 24h/24 - 7j/7'
     },
     en: {
-      title1Prefix: 'Turnkey',
-      title1Suffix: 'solutions in Paris',
-      title2: 'Rapid intervention and simplified booking',
-      subtitle: 'Conferences, events, parties, weddings. We deliver, install and set up a solution adapted to your event, stress-free',
+      headlineHighlight: 'Your event',
+      headlineRest: ', our excellence',
+      subheadline: 'We handle your turnkey event with precision and style.',
       cta: 'Prepare my event',
-      ctaSecondary: 'Urgent intervention',
       catalogue: 'View catalogue',
       available: 'Available 24/7'
-    }
+    },
+    it: {
+      headlineHighlight: 'Il tuo evento',
+      headlineRest: ', la nostra eccellenza',
+      subheadline: 'Gestiamo il tuo evento chiavi in mano, con precisione e stile.',
+      cta: 'Prepara il mio evento',
+      catalogue: 'Vedi catalogo',
+      available: 'Disponibile 24/7'
+    },
+    es: {
+      headlineHighlight: 'Tu evento',
+      headlineRest: ', nuestra excelencia',
+      subheadline: 'Gestionamos tu evento llave en mano, con precision y estilo.',
+      cta: 'Preparar mi evento',
+      catalogue: 'Ver catalogo',
+      available: 'Disponible 24/7'
+    },
+    zh: {
+      headlineHighlight: '您的活动',
+      headlineRest: '，我们的卓越标准',
+      subheadline: '我们以精准与品味，为您提供一站式活动执行服务。',
+      cta: '开始筹备我的活动',
+      catalogue: '查看目录',
+      available: '24/7 全天候服务'
+    },
   };
 
   useEffect(() => {
@@ -138,20 +160,13 @@ export default function HeroSection({ language }: HeroSectionProps) {
               <div className="space-y-8 sm:space-y-12">
                 <div className="space-y-6 sm:space-y-8">
                   <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-tight">
-                    {texts[language].title1Prefix}{' '}
-                    <span className="text-[#F2431E] transition-all duration-500 inline-block">
-                      {animatedWords[language][currentWordIndex]}
-                    </span>
-                    {' '}{texts[language].title1Suffix}
+                    <span className="text-[#F2431E]">{texts[language].headlineHighlight}</span>
+                    {texts[language].headlineRest}
                   </h1>
 
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-white/95 font-semibold leading-tight">
-                    {texts[language].title2}
+                  <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white/95 font-semibold leading-tight max-w-5xl mx-auto">
+                    {texts[language].subheadline}
                   </h2>
-
-                  <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white/90 max-w-4xl mx-auto leading-relaxed px-4 sm:px-0">
-                    {texts[language].subtitle}
-                  </p>
                 </div>
 
                 {/* CTA Buttons */}
@@ -169,32 +184,8 @@ export default function HeroSection({ language }: HeroSectionProps) {
                   >
                     {texts[language].cta}
                   </a>
-                  
-                  <a
-                    href="tel:+33744782754"
-                    className="bg-white hover:bg-gray-100 text-[#F2431E] font-semibold px-8 py-4 rounded-full text-lg sm:text-xl transition-colors shadow-lg hover:shadow-xl"
-                  >
-                    {texts[language].ctaSecondary}
-                  </a>
                 </div>
 
-                {/* Simulator CTA */}
-                <div className="mt-6 text-center">
-                  <a
-                    href="#pack-wizard"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const wizardSection = document.getElementById('pack-wizard');
-                      if (wizardSection) {
-                        wizardSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
-                    }}
-                    className="text-white/90 hover:text-white text-base sm:text-lg underline transition-colors inline-flex items-center gap-2"
-                  >
-                    {language === 'fr' ? 'Pas sûr de votre besoin ? Laissez notre simulateur vous guider' : 'Not sure what you need? Let our simulator guide you'}
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
-                </div>
               </div>
             </div>
           </div>

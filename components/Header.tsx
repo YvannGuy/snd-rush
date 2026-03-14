@@ -29,6 +29,16 @@ interface HeaderProps {
   onLanguageChange: (lang: 'fr' | 'en') => void;
 }
 
+type HeaderLocale = 'fr' | 'en' | 'it' | 'es' | 'zh';
+
+const LANGUAGE_OPTIONS: Array<{ key: HeaderLocale; label: string; short: string; mappedLanguage: 'fr' | 'en' }> = [
+  { key: 'fr', label: 'Français', short: 'FRA', mappedLanguage: 'fr' },
+  { key: 'en', label: 'English', short: 'ENG', mappedLanguage: 'en' },
+  { key: 'it', label: 'Italiano', short: 'ITA', mappedLanguage: 'en' },
+  { key: 'es', label: 'Español', short: 'ESP', mappedLanguage: 'en' },
+  { key: 'zh', label: 'Mandarin', short: '中文', mappedLanguage: 'en' },
+];
+
 export default function Header({ language, onLanguageChange }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -45,6 +55,55 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
   const { isPro } = usePro();
   const [userFirstName, setUserFirstName] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [selectedLocale, setSelectedLocale] = useState<HeaderLocale>(language);
+
+  const selectedLanguageOption = LANGUAGE_OPTIONS.find((option) => option.key === selectedLocale) || LANGUAGE_OPTIONS[0];
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const detectBrowserLocale = (): HeaderLocale => {
+      const browserLanguages = navigator.languages?.length ? navigator.languages : [navigator.language];
+
+      for (const lang of browserLanguages) {
+        const normalized = (lang || '').toLowerCase();
+        if (normalized.startsWith('zh')) return 'zh';
+        if (normalized.startsWith('it')) return 'it';
+        if (normalized.startsWith('es')) return 'es';
+        if (normalized.startsWith('en')) return 'en';
+        if (normalized.startsWith('fr')) return 'fr';
+      }
+
+      return 'fr';
+    };
+
+    const syncLocale = () => {
+      const storedLocale = localStorage.getItem('preferredLocale') as HeaderLocale | null;
+      const resolvedLocale =
+        storedLocale && LANGUAGE_OPTIONS.some((option) => option.key === storedLocale)
+          ? storedLocale
+          : detectBrowserLocale();
+
+      if (!storedLocale) {
+        localStorage.setItem('preferredLocale', resolvedLocale);
+        window.dispatchEvent(new CustomEvent('preferredLocaleChanged', { detail: { locale: resolvedLocale } }));
+      }
+
+      setSelectedLocale(resolvedLocale);
+      const mappedLanguage = resolvedLocale === 'fr' ? 'fr' : 'en';
+      if (language !== mappedLanguage) {
+        onLanguageChange(mappedLanguage);
+      }
+    };
+
+    syncLocale();
+    window.addEventListener('preferredLocaleChanged', syncLocale);
+    window.addEventListener('storage', syncLocale);
+
+    return () => {
+      window.removeEventListener('preferredLocaleChanged', syncLocale);
+      window.removeEventListener('storage', syncLocale);
+    };
+  }, [language, onLanguageChange]);
   
   useEffect(() => {
     // Initialiser le compteur au montage
@@ -209,19 +268,28 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     }
   };
 
-  const toggleLanguage = () => {
-    const newLanguage = language === 'fr' ? 'en' : 'fr';
-    onLanguageChange(newLanguage);
+  const handleLanguageSelect = (locale: HeaderLocale) => {
+    setSelectedLocale(locale);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('preferredLocale', locale);
+      window.dispatchEvent(new CustomEvent('preferredLocaleChanged', { detail: { locale } }));
+    }
+    const targetLanguage = locale === 'fr' ? 'fr' : 'en';
+    if (language !== targetLanguage) {
+      onLanguageChange(targetLanguage);
+    }
   };
 
   const texts = {
     fr: {
       solutions: 'Solutions',
+      promesse: 'Promesse',
+      clients: 'Clients',
+      contact: 'Contact',
       conference: 'Conférence',
       soiree: 'Soirée',
       mariage: 'Mariage',
       blog: 'Blog',
-      tutos: 'Tutos',
       location: 'Location',
       commentCaMarche: 'Comment ça marche',
       cataloguePro: 'Catalogue pro',
@@ -245,11 +313,13 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     },
     en: {
       solutions: 'Solutions',
+      promesse: 'Promise',
+      clients: 'Clients',
+      contact: 'Contact',
       conference: 'Conference',
       soiree: 'Party',
       mariage: 'Wedding',
       blog: 'Blog',
-      tutos: 'Tutorials',
       location: 'Location',
       commentCaMarche: 'How it works',
       cataloguePro: 'Pro catalog',
@@ -273,6 +343,90 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
     }
   };
 
+  const localeTextOverrides = {
+    fr: {
+      commentChoosePack: 'Comment choisir son pack',
+      quote: 'Devis',
+      signIn: 'Connexion',
+    },
+    en: {
+      commentChoosePack: 'How to choose your pack',
+      quote: 'Quote',
+      signIn: 'Sign in',
+    },
+    it: {
+      solutions: 'Soluzioni',
+      promesse: 'Promessa',
+      clients: 'Clienti',
+      contact: 'Contatto',
+      conference: 'Conferenza',
+      soiree: 'Festa',
+      mariage: 'Matrimonio',
+      blog: 'Blog',
+      location: 'Noleggio',
+      callNow: 'Chiama',
+      account: 'Il mio account',
+      reservations: 'Le mie prenotazioni',
+      contracts: 'I miei contratti',
+      signOut: 'Disconnetti',
+      adminReservations: 'Prenotazioni',
+      adminClients: 'Clienti',
+      adminEtatsDesLieux: 'Verbali',
+      commentChoosePack: 'Come scegliere il tuo pacchetto',
+      quote: 'Preventivo',
+      signIn: 'Accedi',
+    },
+    es: {
+      solutions: 'Soluciones',
+      promesse: 'Promesa',
+      clients: 'Clientes',
+      contact: 'Contacto',
+      conference: 'Conferencia',
+      soiree: 'Fiesta',
+      mariage: 'Boda',
+      blog: 'Blog',
+      location: 'Alquiler',
+      callNow: 'Llamar',
+      account: 'Mi cuenta',
+      reservations: 'Mis reservas',
+      contracts: 'Mis contratos',
+      signOut: 'Cerrar sesion',
+      adminReservations: 'Reservas',
+      adminClients: 'Clientes',
+      adminEtatsDesLieux: 'Informes',
+      commentChoosePack: 'Como elegir tu pack',
+      quote: 'Presupuesto',
+      signIn: 'Iniciar sesion',
+    },
+    zh: {
+      solutions: '解决方案',
+      promesse: '承诺',
+      clients: '客户',
+      contact: '联系',
+      conference: '会议',
+      soiree: '派对',
+      mariage: '婚礼',
+      blog: '博客',
+      location: '租赁',
+      callNow: '立即致电',
+      account: '我的账户',
+      reservations: '我的预订',
+      contracts: '我的合同',
+      signOut: '退出登录',
+      adminReservations: '预订',
+      adminClients: '客户',
+      adminEtatsDesLieux: '验收报告',
+      commentChoosePack: '如何选择您的套餐',
+      quote: '获取报价',
+      signIn: '登录',
+    },
+  };
+
+  const currentTexts = {
+    ...texts[language],
+    ...(localeTextOverrides[selectedLocale] || localeTextOverrides.en),
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       {/* Header principal avec fond sombre */}
@@ -289,60 +443,53 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
 
             {/* Navigation Links - Desktop */}
             <nav className="hidden lg:flex items-center gap-6 flex-1 justify-center px-8">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap flex items-center gap-1">
-                    {texts[language].solutions}
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="bg-black border border-gray-800">
-                  <DropdownMenuItem asChild className="text-white hover:text-[#F2431E] hover:bg-gray-900 focus:bg-gray-900 focus:text-[#F2431E]">
-                    <Link href="/conference" className="cursor-pointer">
-                      {texts[language].conference}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="text-white hover:text-[#F2431E] hover:bg-gray-900 focus:bg-gray-900 focus:text-[#F2431E]">
-                    <Link href="/soiree" className="cursor-pointer">
-                      {texts[language].soiree}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="text-white hover:text-[#F2431E] hover:bg-gray-900 focus:bg-gray-900 focus:text-[#F2431E]">
-                    <Link href="/mariage" className="cursor-pointer">
-                      {texts[language].mariage}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-gray-700" />
-                  <DropdownMenuItem asChild className="text-white hover:text-[#F2431E] hover:bg-gray-900 focus:bg-gray-900 focus:text-[#F2431E]">
-                    <Link href="/comment-choisir-son-pack" className="cursor-pointer">
-                      {language === 'fr' ? 'Comment choisir son pack' : 'How to choose your pack'}
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
               <Link 
-                href="/location"
+                href="/#solutions"
+                onClick={(e) => {
+                  if (pathname === '/') {
+                    e.preventDefault();
+                    document.getElementById('solutions')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
               >
-                {texts[language].location}
+                {currentTexts.solutions}
               </Link>
               <Link 
-                href="/#blog"
+                href="/#promesse"
+                onClick={(e) => {
+                  if (pathname === '/') {
+                    e.preventDefault();
+                    document.getElementById('promesse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
               >
-                {texts[language].blog}
+                {currentTexts.promesse}
               </Link>
               <Link 
-                href="/#tutos"
+                href="/#trusted"
+                onClick={(e) => {
+                  if (pathname === '/') {
+                    e.preventDefault();
+                    document.getElementById('trusted')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
               >
-                {texts[language].tutos}
+                {currentTexts.clients}
               </Link>
               <Link 
-                href="mailto:devisclients@guylocationevents.com"
+                href="/#contact"
+                onClick={(e) => {
+                  if (pathname === '/') {
+                    e.preventDefault();
+                    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-sm whitespace-nowrap"
               >
-                {language === 'fr' ? 'Devis' : 'Quote'}
+                {currentTexts.contact}
               </Link>
             </nav>
 
@@ -356,7 +503,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                 className="hidden lg:flex bg-[#F2431E] hover:bg-[#E63A1A] text-white"
               >
                 <a href="tel:+33744782754">
-                  {texts[language].callNow}
+                  {currentTexts.callNow}
                 </a>
               </Button>
 
@@ -372,7 +519,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                         variant="ghost"
                         size="sm"
                         className="flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-2"
-                        aria-label={texts[language].account}
+                        aria-label={currentTexts.account}
                       >
                         <User className="h-5 w-5" />
                         <span className="font-semibold text-sm">{userFirstName || 'Login'}</span>
@@ -386,7 +533,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/admin/reservations"
                               className="cursor-pointer"
                             >
-                              {texts[language].adminReservations}
+                              {currentTexts.adminReservations}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
@@ -394,7 +541,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/admin/clients"
                               className="cursor-pointer"
                             >
-                              {texts[language].adminClients}
+                              {currentTexts.adminClients}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
@@ -402,7 +549,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/admin/etats-des-lieux"
                               className="cursor-pointer"
                             >
-                              {texts[language].adminEtatsDesLieux}
+                              {currentTexts.adminEtatsDesLieux}
                             </Link>
                           </DropdownMenuItem>
                         </>
@@ -413,7 +560,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/dashboard"
                               className="cursor-pointer"
                             >
-                              {texts[language].account}
+                              {currentTexts.account}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
@@ -421,7 +568,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/mes-reservations"
                               className="cursor-pointer"
                             >
-                              {texts[language].reservations}
+                              {currentTexts.reservations}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
@@ -429,7 +576,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/mes-contrats"
                               className="cursor-pointer"
                             >
-                              {texts[language].contracts}
+                              {currentTexts.contracts}
                             </Link>
                           </DropdownMenuItem>
                         </>
@@ -441,7 +588,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                         }}
                         className="cursor-pointer text-red-600 focus:text-red-600"
                       >
-                        {texts[language].signOut}
+                        {currentTexts.signOut}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -454,7 +601,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                     aria-label="Se connecter"
                   >
                     <User className="h-5 w-5" />
-                    <span className="font-semibold text-sm">{language === 'fr' ? 'Connexion' : 'Sign in'}</span>
+                    <span className="font-semibold text-sm">{currentTexts.signIn}</span>
                   </Button>
                 )}
               </div>
@@ -497,27 +644,22 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                     className="hidden lg:flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-2"
                   >
                     <Globe className="h-5 w-5" />
-                    <span className="font-semibold text-sm uppercase">{language === 'fr' ? 'Fra' : 'Eng'}</span>
+                    <span className="font-semibold text-sm uppercase">{selectedLanguageOption.short}</span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-32">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      if (language !== 'fr') toggleLanguage();
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <span className="font-semibold">Français</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      if (language !== 'en') toggleLanguage();
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <span className="font-semibold">English</span>
-                  </DropdownMenuItem>
+                <DropdownMenuContent align="end" className="w-40">
+                  {LANGUAGE_OPTIONS.map((option) => (
+                    <DropdownMenuItem
+                      key={option.key}
+                      onClick={() => handleLanguageSelect(option.key)}
+                      className="cursor-pointer"
+                    >
+                      <span className={`font-semibold ${selectedLocale === option.key ? 'text-[#F2431E]' : ''}`}>
+                        {option.label}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -548,7 +690,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                   variant="ghost"
                   size="icon"
                   className="text-white hover:bg-white/10 rounded-lg flex-shrink-0"
-                  aria-label={texts[language].callNow}
+                  aria-label={currentTexts.callNow}
                 >
                   <a href="tel:+33744782754">
                     <Phone className="h-6 w-6" />
@@ -592,7 +734,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                         variant="ghost"
                         size="icon"
                         className="text-white hover:bg-white/10 rounded-lg flex-shrink-0"
-                        aria-label={texts[language].account}
+                        aria-label={currentTexts.account}
                       >
                         <User className="h-5 w-5" />
                       </Button>
@@ -605,7 +747,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/admin/reservations"
                               className="cursor-pointer"
                             >
-                              {texts[language].adminReservations}
+                              {currentTexts.adminReservations}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
@@ -613,7 +755,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/admin/clients"
                               className="cursor-pointer"
                             >
-                              {texts[language].adminClients}
+                              {currentTexts.adminClients}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
@@ -621,7 +763,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/admin/etats-des-lieux"
                               className="cursor-pointer"
                             >
-                              {texts[language].adminEtatsDesLieux}
+                              {currentTexts.adminEtatsDesLieux}
                             </Link>
                           </DropdownMenuItem>
                         </>
@@ -632,7 +774,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/dashboard"
                               className="cursor-pointer"
                             >
-                              {texts[language].account}
+                              {currentTexts.account}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
@@ -640,7 +782,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/mes-reservations"
                               className="cursor-pointer"
                             >
-                              {texts[language].reservations}
+                              {currentTexts.reservations}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
@@ -648,7 +790,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                               href="/mes-contrats"
                               className="cursor-pointer"
                             >
-                              {texts[language].contracts}
+                              {currentTexts.contracts}
                             </Link>
                           </DropdownMenuItem>
                         </>
@@ -660,7 +802,7 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                         }}
                         className="cursor-pointer text-red-600 focus:text-red-600"
                       >
-                        {texts[language].signOut}
+                        {currentTexts.signOut}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -690,23 +832,18 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                       <Globe className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-32">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        if (language !== 'fr') toggleLanguage();
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <span className="font-semibold">Français</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        if (language !== 'en') toggleLanguage();
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <span className="font-semibold">English</span>
-                    </DropdownMenuItem>
+                  <DropdownMenuContent align="end" className="w-40">
+                    {LANGUAGE_OPTIONS.map((option) => (
+                      <DropdownMenuItem
+                        key={option.key}
+                        onClick={() => handleLanguageSelect(option.key)}
+                        className="cursor-pointer"
+                      >
+                        <span className={`font-semibold ${selectedLocale === option.key ? 'text-[#F2431E]' : ''}`}>
+                          {option.label}
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -721,67 +858,57 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               <div className="pt-3 pb-4 space-y-2 px-4 sm:px-6 lg:px-8">
             {/* Navigation Links - Mobile */}
             <div className="flex flex-col gap-2 pt-2">
-              <div className="text-white font-medium text-base py-2">
-                {texts[language].solutions}
-              </div>
-              <div className="flex flex-col gap-1 pl-4">
-                <Link 
-                  href="/conference"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white/80 hover:text-[#F2431E] transition-colors text-sm py-1"
-                >
-                  {texts[language].conference}
-                </Link>
-                <Link 
-                  href="/soiree"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white/80 hover:text-[#F2431E] transition-colors text-sm py-1"
-                >
-                  {texts[language].soiree}
-                </Link>
-                <Link 
-                  href="/mariage"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white/80 hover:text-[#F2431E] transition-colors text-sm py-1"
-                >
-                  {texts[language].mariage}
-                </Link>
-                <div className="h-px bg-white/20 my-2"></div>
-                <Link 
-                  href="/comment-choisir-son-pack"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-white/80 hover:text-[#F2431E] transition-colors text-sm py-1"
-                >
-                  {language === 'fr' ? 'Comment choisir son pack' : 'How to choose your pack'}
-                </Link>
-              </div>
               <Link 
-                href="/location"
-                onClick={() => setIsMobileMenuOpen(false)}
+                href="/#solutions"
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  if (pathname === '/') {
+                    e.preventDefault();
+                    document.getElementById('solutions')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
               >
-                {texts[language].location}
+                {currentTexts.solutions}
               </Link>
               <Link 
-                href="/#blog"
-                onClick={() => setIsMobileMenuOpen(false)}
+                href="/#promesse"
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  if (pathname === '/') {
+                    e.preventDefault();
+                    document.getElementById('promesse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
               >
-                {texts[language].blog}
+                {currentTexts.promesse}
               </Link>
               <Link 
-                href="/#tutos"
-                onClick={() => setIsMobileMenuOpen(false)}
+                href="/#trusted"
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  if (pathname === '/') {
+                    e.preventDefault();
+                    document.getElementById('trusted')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
               >
-                {texts[language].tutos}
+                {currentTexts.clients}
               </Link>
               <Link 
-                href="mailto:devisclients@guylocationevents.com"
-                onClick={() => setIsMobileMenuOpen(false)}
+                href="/#contact"
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  if (pathname === '/') {
+                    e.preventDefault();
+                    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="text-white hover:text-[#F2431E] transition-colors font-medium text-base py-2"
               >
-                {language === 'fr' ? 'Devis' : 'Quote'}
+                {currentTexts.contact}
               </Link>
             </div>
 
@@ -793,27 +920,22 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                   className="flex items-center gap-2 w-full justify-start text-white hover:text-[#F2431E] hover:bg-white/10"
                 >
                   <Globe className="h-5 w-5" />
-                  <span className="font-semibold text-sm uppercase">{language === 'fr' ? 'Fra' : 'Eng'}</span>
+                  <span className="font-semibold text-sm uppercase">{selectedLanguageOption.short}</span>
                   <ChevronDown className="h-4 w-4 ml-auto" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                <DropdownMenuItem
-                  onClick={() => {
-                    if (language !== 'fr') toggleLanguage();
-                  }}
-                  className="cursor-pointer"
-                >
-                  <span className="font-semibold">Français</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    if (language !== 'en') toggleLanguage();
-                  }}
-                  className="cursor-pointer"
-                >
-                  <span className="font-semibold">English</span>
-                </DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-40">
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    key={option.key}
+                    onClick={() => handleLanguageSelect(option.key)}
+                    className="cursor-pointer"
+                  >
+                    <span className={`font-semibold ${selectedLocale === option.key ? 'text-[#F2431E]' : ''}`}>
+                      {option.label}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
               </div>

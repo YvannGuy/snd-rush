@@ -1,16 +1,25 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import SectionChevron from './SectionChevron';
 
 interface TrustindexReviewsProps {
-  language?: 'fr' | 'en';
+  language?: 'fr' | 'en' | 'it' | 'es' | 'zh';
 }
 
 export default function TrustindexReviews({ language = 'fr' }: TrustindexReviewsProps) {
   const [widgetError, setWidgetError] = useState(false);
 
   useEffect(() => {
+    // Charger le script Elfsight si absent (avis Google)
+    const existingScript = document.querySelector('script[src="https://elfsightcdn.com/platform.js"]');
+    if (!existingScript) {
+      const script = document.createElement('script');
+      script.src = 'https://elfsightcdn.com/platform.js';
+      script.async = true;
+      document.head.appendChild(script);
+    }
+
     // Intercepter les erreurs du widget Elfsight
     const originalError = console.error;
     const errorHandler = (...args: any[]) => {
@@ -129,6 +138,21 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
       titleHighlight: 'customers say',
       subtitle: 'Discover our Google reviews',
     },
+    it: {
+      title: 'Cosa dicono',
+      titleHighlight: 'i clienti',
+      subtitle: 'Scopri le nostre recensioni Google',
+    },
+    es: {
+      title: 'Lo que dicen',
+      titleHighlight: 'nuestros clientes',
+      subtitle: 'Descubre nuestras reseñas de Google',
+    },
+    zh: {
+      title: '客户',
+      titleHighlight: '评价',
+      subtitle: '查看我们的 Google 评价',
+    },
   };
 
   const currentTexts = texts[language];
@@ -151,9 +175,15 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
           {widgetError ? (
             <div className="text-center py-12 text-gray-500">
               <p className="text-lg">
-                {language === 'fr' 
+                {language === 'fr'
                   ? 'Les avis clients sont temporairement indisponibles. Veuillez consulter nos avis Google directement.'
-                  : 'Customer reviews are temporarily unavailable. Please check our Google reviews directly.'}
+                  : language === 'it'
+                    ? 'Le recensioni sono temporaneamente non disponibili. Consulta direttamente Google.'
+                    : language === 'es'
+                      ? 'Las reseñas no estan disponibles temporalmente. Consulta Google directamente.'
+                      : language === 'zh'
+                        ? '客户评价暂时不可用，请直接查看 Google 评价。'
+                        : 'Customer reviews are temporarily unavailable. Please check our Google reviews directly.'}
               </p>
               <a 
                 href="https://www.google.com/maps/place/SoundRush+Paris" 
@@ -161,7 +191,15 @@ export default function TrustindexReviews({ language = 'fr' }: TrustindexReviews
                 rel="noopener noreferrer"
                 className="inline-block mt-4 text-[#F2431E] hover:underline"
               >
-                {language === 'fr' ? 'Voir les avis Google' : 'View Google Reviews'}
+                {language === 'fr'
+                  ? 'Voir les avis Google'
+                  : language === 'it'
+                    ? 'Vedi le recensioni Google'
+                    : language === 'es'
+                      ? 'Ver reseñas de Google'
+                      : language === 'zh'
+                        ? '查看 Google 评价'
+                        : 'View Google Reviews'}
               </a>
             </div>
           ) : (

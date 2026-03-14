@@ -2,16 +2,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import LegalNoticeModal from './LegalNoticeModal';
 
 interface FooterProps {
-  language: 'fr' | 'en';
+  language: 'fr' | 'en' | 'it' | 'es' | 'zh';
   onLegalNoticeClick?: () => void;
   onRentalConditionsClick?: () => void;
 }
+
+type FooterLocale = 'fr' | 'en' | 'it' | 'es' | 'zh';
 
 export default function Footer({ language }: FooterProps) {
   const pathname = usePathname();
@@ -21,6 +23,19 @@ export default function Footer({ language }: FooterProps) {
   if (isDashboardPage) return null;
   
   const [isLegalNoticeOpen, setIsLegalNoticeOpen] = useState(false);
+  const [footerLocale, setFooterLocale] = useState<FooterLocale>(language);
+  const modalLanguage: 'fr' | 'en' = footerLocale === 'fr' ? 'fr' : 'en';
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const supportedLocales: FooterLocale[] = ['fr', 'en', 'it', 'es', 'zh'];
+    const storedLocale = localStorage.getItem('preferredLocale') as FooterLocale | null;
+    if (storedLocale && supportedLocales.includes(storedLocale)) {
+      setFooterLocale(storedLocale);
+    } else {
+      setFooterLocale(language as FooterLocale);
+    }
+  }, [language]);
 
   const texts = {
     fr: {
@@ -68,17 +83,86 @@ export default function Footer({ language }: FooterProps) {
       allRightsReserved: "All rights reserved",
       emergencyService: "24/7 emergency service",
       followUs: "Follow us"
-    }
+    },
+    it: {
+      baseline: 'La tua soluzione audio last-minute.',
+      home: 'Home',
+      packs: 'Pack',
+      rentalConditions: 'Condizioni di noleggio',
+      legalNotice: 'Note legali',
+      faq: 'FAQ',
+      zone: 'Parigi e Ile-de-France',
+      schedule: '24/7',
+      phone: '07 44 78 27 54',
+      whatsapp: 'WhatsApp',
+      email: 'devisclients@guylocationevents.com',
+      rights: ' 2025 snd•rush. Tutti i diritti riservati.',
+      about: 'Chi siamo',
+      address: 'Indirizzo',
+      parisAddress: 'Parigi, Ile-de-France',
+      quickLinks: 'Link rapidi',
+      privacyPolicy: 'Note legali',
+      terms: 'Condizioni di noleggio',
+      allRightsReserved: 'Tutti i diritti riservati',
+      emergencyService: 'Servizio urgenza 24/7',
+      followUs: 'Seguici'
+    },
+    es: {
+      baseline: 'Tu solucion de sonido de ultima hora.',
+      home: 'Inicio',
+      packs: 'Packs',
+      rentalConditions: 'Condiciones de alquiler',
+      legalNotice: 'Aviso legal',
+      faq: 'FAQ',
+      zone: 'Paris e Ile-de-France',
+      schedule: '24/7',
+      phone: '07 44 78 27 54',
+      whatsapp: 'WhatsApp',
+      email: 'devisclients@guylocationevents.com',
+      rights: ' 2025 snd•rush. Todos los derechos reservados.',
+      about: 'Acerca de',
+      address: 'Direccion',
+      parisAddress: 'Paris, Ile-de-France',
+      quickLinks: 'Enlaces rapidos',
+      privacyPolicy: 'Aviso legal',
+      terms: 'Condiciones de alquiler',
+      allRightsReserved: 'Todos los derechos reservados',
+      emergencyService: 'Servicio de urgencia 24/7',
+      followUs: 'Siguenos'
+    },
+    zh: {
+      baseline: '您的紧急音响解决方案。',
+      home: '首页',
+      packs: '套餐',
+      rentalConditions: '租赁条款',
+      legalNotice: '法律声明',
+      faq: '常见问题',
+      zone: '巴黎与法兰西岛',
+      schedule: '24/7',
+      phone: '07 44 78 27 54',
+      whatsapp: 'WhatsApp',
+      email: 'devisclients@guylocationevents.com',
+      rights: ' 2025 snd•rush. 保留所有权利。',
+      about: '关于我们',
+      address: '地址',
+      parisAddress: '巴黎，法兰西岛',
+      quickLinks: '快捷链接',
+      privacyPolicy: '法律声明',
+      terms: '租赁条款',
+      allRightsReserved: '保留所有权利',
+      emergencyService: '24/7 紧急服务',
+      followUs: '关注我们'
+    },
   };
 
   const footerTexts = {
     fr: {
-      solutions: 'Solutions',
-      wedding: 'Mariage',
-      birthday: 'Anniversaire',
-      privateParty: 'Soirée privée',
-      conference: 'Conférence',
-      shortTerm: 'Location courte et longue durée',
+      solutions: 'Découvrir',
+      linkSolutions: 'Solutions',
+      linkPromesse: 'Notre promesse',
+      linkClients: 'Clients',
+      linkEvenements: 'Nos événements',
+      linkContact: 'Contact',
       catalogue: 'Catalogue',
       micros: 'Micros',
       speakers: 'Enceintes',
@@ -90,12 +174,12 @@ export default function Footer({ language }: FooterProps) {
       getQuote: 'Appeler'
     },
     en: {
-      solutions: 'Solutions',
-      wedding: 'Wedding',
-      birthday: 'Birthday',
-      privateParty: 'Private party',
-      conference: 'Conference',
-      shortTerm: 'Short and long-term rental',
+      solutions: 'Discover',
+      linkSolutions: 'Solutions',
+      linkPromesse: 'Our promise',
+      linkClients: 'Clients',
+      linkEvenements: 'Our events',
+      linkContact: 'Contact',
       catalogue: 'Catalogue',
       micros: 'Microphones',
       speakers: 'Speakers',
@@ -105,10 +189,61 @@ export default function Footer({ language }: FooterProps) {
       packs: 'Packs',
       contact: 'Contact',
       getQuote: 'Call'
-    }
+    },
+    it: {
+      solutions: 'Scopri',
+      linkSolutions: 'Soluzioni',
+      linkPromesse: 'La nostra promessa',
+      linkClients: 'Clienti',
+      linkEvenements: 'I nostri eventi',
+      linkContact: 'Contact',
+      catalogue: 'Catalogo',
+      micros: 'Microfoni',
+      speakers: 'Diffusori',
+      mixingDesks: 'Mixer',
+      lights: 'Luci',
+      accessories: 'Accessori',
+      packs: 'Pack',
+      contact: 'Contatto',
+      getQuote: 'Chiama'
+    },
+    es: {
+      solutions: 'Descubrir',
+      linkSolutions: 'Soluciones',
+      linkPromesse: 'Nuestra promesa',
+      linkClients: 'Clientes',
+      linkEvenements: 'Nuestros eventos',
+      linkContact: 'Contact',
+      catalogue: 'Catalogo',
+      micros: 'Microfonos',
+      speakers: 'Altavoces',
+      mixingDesks: 'Mesas de mezcla',
+      lights: 'Luces',
+      accessories: 'Accesorios',
+      packs: 'Packs',
+      contact: 'Contacto',
+      getQuote: 'Llamar'
+    },
+    zh: {
+      solutions: '探索',
+      linkSolutions: '解决方案',
+      linkPromesse: '我们的承诺',
+      linkClients: '客户',
+      linkEvenements: '近期活动',
+      linkContact: '联系',
+      catalogue: '目录',
+      micros: '麦克风',
+      speakers: '音箱',
+      mixingDesks: '调音台',
+      lights: '灯光',
+      accessories: '配件',
+      packs: '套餐',
+      contact: '联系我们',
+      getQuote: '电话咨询'
+    },
   };
 
-  const currentFooterTexts = footerTexts[language];
+  const currentFooterTexts = footerTexts[footerLocale];
 
   return (
     <>
@@ -124,7 +259,7 @@ export default function Footer({ language }: FooterProps) {
                 </span>
               </Link>
               <p className="text-gray-300 text-sm">
-                {texts[language].baseline}
+                {texts[footerLocale].baseline}
               </p>
               <a
                 href="tel:+33744782754"
@@ -134,27 +269,27 @@ export default function Footer({ language }: FooterProps) {
               </a>
             </div>
 
-            {/* Solutions */}
+            {/* Découvrir - Liens vers les sections de la homepage */}
             <div className="space-y-4">
               <h3 className="text-white font-semibold text-sm uppercase tracking-wider">
                 {currentFooterTexts.solutions}
               </h3>
               <nav className="flex flex-col space-y-2">
-                <span className="text-gray-300 text-sm">
-                  {currentFooterTexts.wedding}
-                </span>
-                <span className="text-gray-300 text-sm">
-                  {currentFooterTexts.birthday}
-                </span>
-                <span className="text-gray-300 text-sm">
-                  {currentFooterTexts.privateParty}
-                </span>
-                <span className="text-gray-300 text-sm">
-                  {currentFooterTexts.conference}
-                </span>
-                <span className="text-gray-300 text-sm">
-                  {currentFooterTexts.shortTerm}
-                </span>
+                <Link href="/#solutions" className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm">
+                  {currentFooterTexts.linkSolutions}
+                </Link>
+                <Link href="/#promesse" className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm">
+                  {currentFooterTexts.linkPromesse}
+                </Link>
+                <Link href="/#trusted" className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm">
+                  {currentFooterTexts.linkClients}
+                </Link>
+                <Link href="/#recent-events" className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm">
+                  {currentFooterTexts.linkEvenements}
+                </Link>
+                <Link href="/#contact" className="text-gray-300 hover:text-[#F2431E] transition-colors text-sm">
+                  {currentFooterTexts.linkContact}
+                </Link>
               </nav>
             </div>
 
@@ -169,7 +304,7 @@ export default function Footer({ language }: FooterProps) {
                     <i className="ri-phone-line text-[#F2431E]"></i>
                   </div>
                   <a href="tel:+33744782754" className="text-gray-300 hover:text-white transition-colors text-sm cursor-pointer">
-                    {texts[language].phone}
+                    {texts[footerLocale].phone}
                   </a>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -177,14 +312,14 @@ export default function Footer({ language }: FooterProps) {
                     <i className="ri-mail-line text-[#F2431E]"></i>
                   </div>
                   <a href="mailto:devisclients@guylocationevents.com" className="text-gray-300 hover:text-white transition-colors text-sm cursor-pointer">
-                    {texts[language].email}
+                    {texts[footerLocale].email}
                   </a>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-4 h-4 flex items-center justify-center">
                     <i className="ri-map-pin-line text-[#F2431E]"></i>
                   </div>
-                  <span className="text-gray-300 text-sm">{texts[language].parisAddress}</span>
+                  <span className="text-gray-300 text-sm">{texts[footerLocale].parisAddress}</span>
                 </div>
                 {/* Social Media Icons */}
                 <div className="flex items-center space-x-3 pt-2">
@@ -252,13 +387,13 @@ export default function Footer({ language }: FooterProps) {
                   href="/cgv"
                   className="text-gray-400 hover:text-[#F2431E] transition-colors text-sm"
                 >
-                  {texts[language].terms}
+                  {texts[footerLocale].terms}
                 </Link>
                 <Link 
                   href="/mentions-legales"
                   className="text-gray-400 hover:text-[#F2431E] transition-colors text-sm"
                 >
-                  {texts[language].privacyPolicy}
+                  {texts[footerLocale].privacyPolicy}
                 </Link>
               </div>
             </div>
@@ -270,7 +405,7 @@ export default function Footer({ language }: FooterProps) {
       <LegalNoticeModal
         isOpen={isLegalNoticeOpen}
         onClose={() => setIsLegalNoticeOpen(false)}
-        language={language}
+        language={modalLanguage}
       />
     </>
   );

@@ -3,11 +3,8 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2, MapPin, Clock, Shield, Zap, Package, Wrench, Users } from 'lucide-react';
 import Breadcrumb from '@/components/Breadcrumb';
-import Link from 'next/link';
 import Image from 'next/image';
 
 const seoContent = {
@@ -176,12 +173,6 @@ export default function LocationPageClient() {
                 </div>
               </div>
 
-              {/* CTA Button */}
-              <Link href="/catalogue">
-                <Button className="bg-[#F2431E] hover:bg-[#E63A1A] text-white px-8 py-6 text-lg font-bold rounded-xl">
-                  {language === 'fr' ? 'Voir le catalogue' : 'View catalog'}
-                </Button>
-              </Link>
             </div>
 
             {/* Right Section - Image */}
@@ -240,28 +231,6 @@ export default function LocationPageClient() {
           );
           })}
 
-          {/* FAQ Section */}
-          {language === 'fr' && currentContent.faq.length > 0 && (
-            <Card className="mt-16">
-              <CardContent className="p-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-8">
-                  {language === 'fr' ? 'Questions fréquentes' : 'Frequently asked questions'}
-                </h2>
-                <div className="space-y-6">
-                  {currentContent.faq.map((item, index) => (
-                    <div key={index} className="border-b border-gray-200 pb-6 last:border-0">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
-                        {item.q}
-                      </h3>
-                      <p className="text-gray-600 leading-relaxed">
-                        {item.a}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </main>
 

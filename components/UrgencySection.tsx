@@ -5,7 +5,7 @@ import SectionChevron from './SectionChevron';
 import { Clock, Calendar, Phone, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 
 interface UrgencySectionProps {
-  language: 'fr' | 'en';
+  language: 'fr' | 'en' | 'it' | 'es' | 'zh';
 }
 
 export default function UrgencySection({ language }: UrgencySectionProps) {
@@ -63,13 +63,94 @@ export default function UrgencySection({ language }: UrgencySectionProps) {
       },
       cta: 'Call now',
       ctaSecondary: 'View packs'
-    }
+    },
+    it: {
+      sectionTitle: 'URGENZA',
+      title: 'Hai bisogno di audio adesso?',
+      subtitle: 'I negozi chiudono alle 19:00. Nel weekend i noleggi sono chiusi.',
+      subtitleHighlight: 'Niente panico, ci siamo noi.',
+      description: 'SoundRush Paris e disponibile 24/7 per gestire le tue esigenze urgenti di sonorizzazione.',
+      problem: {
+        title: 'Il problema',
+        items: [
+          { icon: XCircle, text: 'Negozi chiusi dopo le 19:00' },
+          { icon: XCircle, text: 'Nessun noleggio aperto nel weekend' },
+          { icon: XCircle, text: 'Tempi di attesa troppo lunghi' },
+          { icon: XCircle, text: 'Nessun servizio urgente' }
+        ]
+      },
+      solution: {
+        title: 'La nostra soluzione',
+        items: [
+          { icon: CheckCircle2, text: 'Disponibili 24/7' },
+          { icon: CheckCircle2, text: 'Intervento rapido' },
+          { icon: CheckCircle2, text: 'Consegna express' },
+          { icon: CheckCircle2, text: 'Servizio urgenza dedicato' }
+        ]
+      },
+      cta: 'Chiama ora',
+      ctaSecondary: 'Vedi i pack'
+    },
+    es: {
+      sectionTitle: 'URGENCIA',
+      title: 'Necesitas sonido ahora?',
+      subtitle: 'Las tiendas cierran a las 19:00. El fin de semana no hay alquiler abierto.',
+      subtitleHighlight: 'No te preocupes, estamos aqui.',
+      description: 'SoundRush Paris esta disponible 24/7 para responder a tus necesidades urgentes de sonido.',
+      problem: {
+        title: 'El problema',
+        items: [
+          { icon: XCircle, text: 'Tiendas cerradas despues de las 19:00' },
+          { icon: XCircle, text: 'Ninguna tienda abierta en fin de semana' },
+          { icon: XCircle, text: 'Tiempos de espera largos' },
+          { icon: XCircle, text: 'Sin servicio de urgencia' }
+        ]
+      },
+      solution: {
+        title: 'Nuestra solucion',
+        items: [
+          { icon: CheckCircle2, text: 'Disponibles 24/7' },
+          { icon: CheckCircle2, text: 'Intervencion rapida' },
+          { icon: CheckCircle2, text: 'Entrega express' },
+          { icon: CheckCircle2, text: 'Servicio de urgencia dedicado' }
+        ]
+      },
+      cta: 'Llamar ahora',
+      ctaSecondary: 'Ver packs'
+    },
+    zh: {
+      sectionTitle: '紧急支持',
+      title: '现在就需要音响设备？',
+      subtitle: '大多数门店晚上 7 点后关闭，周末也基本不营业。',
+      subtitleHighlight: '别担心，我们随时在。',
+      description: 'SoundRush Paris 提供 24/7 全天候服务，快速响应您的紧急音响需求。',
+      problem: {
+        title: '常见问题',
+        items: [
+          { icon: XCircle, text: '晚上 7 点后门店关闭' },
+          { icon: XCircle, text: '周末无门店营业' },
+          { icon: XCircle, text: '等待时间过长' },
+          { icon: XCircle, text: '没有紧急服务' }
+        ]
+      },
+      solution: {
+        title: '我们的方案',
+        items: [
+          { icon: CheckCircle2, text: '24/7 全天候可用' },
+          { icon: CheckCircle2, text: '快速到场' },
+          { icon: CheckCircle2, text: '极速配送' },
+          { icon: CheckCircle2, text: '专属紧急支持团队' }
+        ]
+      },
+      cta: '立即致电',
+      ctaSecondary: '查看套餐'
+    },
   };
 
   const currentTexts = texts[language];
 
   return (
-    <section id="urgency" className="py-16 lg:py-28 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
+    <section id="urgency" className="py-10 lg:py-14 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-0 left-0 w-96 h-96 bg-[#F2431E] rounded-full blur-3xl"></div>
@@ -78,49 +159,49 @@ export default function UrgencySection({ language }: UrgencySectionProps) {
 
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
         {/* Section Title */}
-        <div className="text-center mb-4">
-          <p className="text-xs font-bold text-[#F2431E] uppercase tracking-[0.2em] mb-6">
+        <div className="text-center mb-2">
+          <p className="text-[11px] font-bold text-[#F2431E] uppercase tracking-[0.18em] mb-3">
             {currentTexts.sectionTitle}
           </p>
         </div>
 
         {/* Main Title */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+        <div className="text-center mb-7">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 leading-tight">
             {currentTexts.title}
           </h2>
-          <div className="max-w-4xl mx-auto space-y-4">
-            <p className="text-xl md:text-2xl text-gray-700 leading-relaxed">
+          <div className="max-w-3xl mx-auto space-y-2">
+            <p className="text-base md:text-lg text-gray-700 leading-relaxed">
               {currentTexts.subtitle}
             </p>
-            <p className="text-2xl md:text-3xl font-bold text-[#F2431E]">
+            <p className="text-lg md:text-xl font-bold text-[#F2431E]">
               {currentTexts.subtitleHighlight}
             </p>
-            <p className="text-lg md:text-xl text-gray-600 mt-6">
+            <p className="text-sm md:text-base text-gray-600 mt-3">
               {currentTexts.description}
             </p>
           </div>
         </div>
 
         {/* Problem vs Solution Comparison */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6">
           {/* Problem Column */}
-          <div className="bg-white rounded-2xl p-8 shadow-lg border-2 border-red-100">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                <AlertCircle className="w-6 h-6 text-red-600" />
+          <div className="bg-white rounded-xl p-5 shadow border border-red-100">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-9 h-9 bg-red-100 rounded-lg flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-lg font-bold text-gray-900">
                 {currentTexts.problem.title}
               </h3>
             </div>
-            <ul className="space-y-4">
+            <ul className="space-y-2.5">
               {currentTexts.problem.items.map((item, index) => {
                 const Icon = item.icon;
                 return (
-                  <li key={index} className="flex items-start gap-3">
-                    <Icon className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
-                    <span className="text-gray-700 text-lg">{item.text}</span>
+                  <li key={index} className="flex items-start gap-2.5">
+                    <Icon className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700 text-sm md:text-base">{item.text}</span>
                   </li>
                 );
               })}
@@ -128,22 +209,22 @@ export default function UrgencySection({ language }: UrgencySectionProps) {
           </div>
 
           {/* Solution Column */}
-          <div className="bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-2xl p-8 shadow-xl text-white">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-white" />
+          <div className="bg-gradient-to-br from-[#F2431E] to-[#E63A1A] rounded-xl p-5 shadow-lg text-white">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-white">
+              <h3 className="text-lg font-bold text-white">
                 {currentTexts.solution.title}
               </h3>
             </div>
-            <ul className="space-y-4">
+            <ul className="space-y-2.5">
               {currentTexts.solution.items.map((item, index) => {
                 const Icon = item.icon;
                 return (
-                  <li key={index} className="flex items-start gap-3">
-                    <Icon className="w-6 h-6 text-white flex-shrink-0 mt-1" />
-                    <span className="text-white text-lg font-medium">{item.text}</span>
+                  <li key={index} className="flex items-start gap-2.5">
+                    <Icon className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
+                    <span className="text-white text-sm md:text-base font-medium">{item.text}</span>
                   </li>
                 );
               })}
@@ -152,25 +233,39 @@ export default function UrgencySection({ language }: UrgencySectionProps) {
         </div>
 
         {/* CTA Section */}
-        <div className="bg-gray-900 rounded-2xl p-8 lg:p-12 text-center">
+        <div className="bg-gray-900 rounded-xl p-5 lg:p-7 text-center">
           <div className="max-w-2xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <Clock className="w-8 h-8 text-[#F2431E]" />
-              <h3 className="text-2xl md:text-3xl font-bold text-white">
-                {language === 'fr' ? 'Disponible maintenant' : 'Available now'}
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Clock className="w-5 h-5 text-[#F2431E]" />
+              <h3 className="text-lg md:text-xl font-bold text-white">
+                {language === 'fr'
+                  ? 'Disponible maintenant'
+                  : language === 'it'
+                    ? 'Disponibile ora'
+                    : language === 'es'
+                      ? 'Disponible ahora'
+                      : language === 'zh'
+                        ? '立即可用'
+                        : 'Available now'}
               </h3>
             </div>
-            <p className="text-lg text-gray-300 mb-8">
-              {language === 'fr' 
+            <p className="text-sm md:text-base text-gray-300 mb-4">
+              {language === 'fr'
                 ? 'Appelez-nous, nous intervenons rapidement pour votre événement'
-                : 'Call us, we respond quickly for your event'}
+                : language === 'it'
+                  ? 'Chiamaci, interveniamo rapidamente per il tuo evento'
+                  : language === 'es'
+                    ? 'Llamanos, intervenimos rapidamente para tu evento'
+                    : language === 'zh'
+                      ? '请立即联系我们，我们会快速响应您的活动需求'
+                      : 'Call us, we respond quickly for your event'}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
                 href="tel:+33744782754"
-                className="inline-flex items-center gap-2 bg-[#F2431E] hover:bg-[#E63A1A] text-white font-bold px-8 py-4 rounded-xl text-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 bg-[#F2431E] hover:bg-[#E63A1A] text-white font-bold px-6 py-3 rounded-xl text-sm md:text-base transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                <Phone className="w-5 h-5" />
+                <Phone className="w-4 h-4" />
                 {currentTexts.cta}
               </a>
               <Link
@@ -182,16 +277,15 @@ export default function UrgencySection({ language }: UrgencySectionProps) {
                     solutionsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }
                 }}
-                className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-900 font-bold px-8 py-4 rounded-xl text-lg transition-all shadow-lg hover:shadow-xl"
+                className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-900 font-bold px-6 py-3 rounded-xl text-sm md:text-base transition-all shadow-lg hover:shadow-xl"
               >
-                <Calendar className="w-5 h-5" />
+                <Calendar className="w-4 h-4" />
                 {currentTexts.ctaSecondary}
               </Link>
             </div>
           </div>
         </div>
       </div>
-      <SectionChevron nextSectionId="comment-ca-marche" />
     </section>
   );
 }

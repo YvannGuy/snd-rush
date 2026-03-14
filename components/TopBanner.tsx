@@ -16,7 +16,7 @@ export default function TopBanner({ language }: TopBannerProps) {
       packs: 'Packs',
       tutos: 'Tutos',
       testimonials: 'Avis clients',
-      faq: 'FAQ',
+      contactLink: 'Contact',
       contact: {
         phone: 'Appeler',
         whatsapp: 'WhatsApp'
@@ -27,7 +27,7 @@ export default function TopBanner({ language }: TopBannerProps) {
       packs: 'Packs',
       tutos: 'Tutorials',
       testimonials: 'Client reviews',
-      faq: 'FAQ',
+      contactLink: 'Contact',
       contact: {
         phone: 'Call',
         whatsapp: 'WhatsApp'
@@ -81,16 +81,16 @@ export default function TopBanner({ language }: TopBannerProps) {
             {currentTexts.testimonials}
           </Link>
           <Link 
-            href="/#faq"
+            href="/#contact"
             onClick={(e) => {
               if (pathname === '/') {
                 e.preventDefault();
-                scrollToSection('faq');
+                scrollToSection('contact');
               }
             }}
             className="text-white hover:text-white/80 transition-colors font-medium text-xs sm:text-sm lg:text-base whitespace-nowrap"
           >
-            {currentTexts.faq}
+            {currentTexts.contactLink}
           </Link>
         </div>
 

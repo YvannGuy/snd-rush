@@ -3,7 +3,7 @@
 import SectionChevron from './SectionChevron';
 
 interface TrustedBySectionProps {
-  language: 'fr' | 'en';
+  language: 'fr' | 'en' | 'it' | 'es' | 'zh';
 }
 
 export default function TrustedBySection({ language }: TrustedBySectionProps) {
@@ -15,7 +15,19 @@ export default function TrustedBySection({ language }: TrustedBySectionProps) {
     en: {
       title: "They trusted us",
       subtitle: "Companies and organizations who trust us for their events"
-    }
+    },
+    it: {
+      title: 'Si fidano di noi',
+      subtitle: 'Aziende e organizzazioni che ci affidano i loro eventi'
+    },
+    es: {
+      title: 'Confian en nosotros',
+      subtitle: 'Empresas y organizaciones que confian en nosotros para sus eventos'
+    },
+    zh: {
+      title: '他们选择了我们',
+      subtitle: '众多企业与机构将活动交给我们执行'
+    },
   };
 
   const clients = [
@@ -40,8 +52,28 @@ export default function TrustedBySection({ language }: TrustedBySectionProps) {
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-4">
-            <span className="text-black">{language === 'fr' ? 'Ils nous ont fait ' : 'They trusted '}</span>
-            <span className="text-[#F2431E]">{language === 'fr' ? 'confiance' : 'us'}</span>
+            <span className="text-black">
+              {language === 'fr'
+                ? 'Ils nous ont fait '
+                : language === 'it'
+                  ? 'Si fidano di '
+                  : language === 'es'
+                    ? 'Confian en '
+                    : language === 'zh'
+                      ? '他们'
+                      : 'They trusted '}
+            </span>
+            <span className="text-[#F2431E]">
+              {language === 'fr'
+                ? 'confiance'
+                : language === 'it'
+                  ? 'noi'
+                  : language === 'es'
+                    ? 'nosotros'
+                    : language === 'zh'
+                      ? '选择了我们'
+                      : 'us'}
+            </span>
           </h2>
           <p className="text-xl text-gray-600">
             {currentTexts.subtitle}

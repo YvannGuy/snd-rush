@@ -4,7 +4,7 @@
 import SectionChevron from './SectionChevron';
 
 interface AboutSectionProps {
-  language: 'fr' | 'en';
+  language: 'fr' | 'en' | 'it' | 'es' | 'zh';
 }
 
 export default function AboutSection({ language }: AboutSectionProps) {
@@ -43,7 +43,31 @@ export default function AboutSection({ language }: AboutSectionProps) {
           title: 'Professional and demanding private clients'
         }
       ]
-    }
+    },
+    it: {
+      sectionTitle: 'PERCHE SOUNDRUSH PARIS',
+      features: [
+        { icon: '⚡', title: 'Intervento rapido a Parigi' },
+        { icon: '🔑', title: 'Soluzioni chiavi in mano, senza improvvisazioni' },
+        { icon: '⭐', title: 'Clienti professionali e privati esigenti' }
+      ]
+    },
+    es: {
+      sectionTitle: 'POR QUE SOUNDRUSH PARIS',
+      features: [
+        { icon: '⚡', title: 'Intervencion rapida en Paris' },
+        { icon: '🔑', title: 'Soluciones llave en mano, sin improvisar' },
+        { icon: '⭐', title: 'Clientes profesionales y particulares exigentes' }
+      ]
+    },
+    zh: {
+      sectionTitle: '为什么选择 SOUNDRUSH PARIS',
+      features: [
+        { icon: '⚡', title: '巴黎地区快速响应' },
+        { icon: '🔑', title: '一站式交付方案，省心无忧' },
+        { icon: '⭐', title: '服务高标准企业与个人客户' }
+      ]
+    },
   };
 
   const currentTexts = texts[language];

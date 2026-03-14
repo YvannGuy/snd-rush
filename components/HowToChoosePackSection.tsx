@@ -68,7 +68,7 @@ export default function HowToChoosePackSection({ language }: HowToChoosePackSect
           </div>
         </div>
       </div>
-      <SectionChevron nextSectionId="pour-qui" />
+      <SectionChevron nextSectionId="promesse" />
     </section>
   );
 }

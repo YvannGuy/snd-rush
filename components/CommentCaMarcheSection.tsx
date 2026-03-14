@@ -110,7 +110,7 @@ export default function CommentCaMarcheSection({ language }: CommentCaMarcheSect
           ))}
         </div>
       </div>
-      <SectionChevron nextSectionId="pour-qui" />
+      <SectionChevron nextSectionId="promesse" />
     </section>
   );
 }

@@ -8,24 +8,22 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import SolutionsSection from '@/components/SolutionsSection';
 import UrgencySection from '@/components/UrgencySection';
-import CommentCaMarcheSection from '@/components/CommentCaMarcheSection';
-import HowToChoosePackSection from '@/components/HowToChoosePackSection';
-import PourQuiSection from '@/components/PourQuiSection';
-import AboutSection from '@/components/AboutSection';
+import PromiseSection from '@/components/PromiseSection';
+import RecentEventsSection from '@/components/RecentEventsSection';
 // import GallerySection from '@/components/GallerySection'; // Masqué
 import TrustedBySection from '@/components/TrustedBySection';
 import TrustindexReviews from '@/components/TrustindexReviews';
-import TutosSection from '@/components/TutosSection';
-import BlogSection from '@/components/BlogSection';
 import Footer from '@/components/Footer';
 import SectionAnimation from '@/components/SectionAnimation';
 import ReservationModal from '@/components/ReservationModal';
 import LegalNoticeModal from '@/components/LegalNoticeModal';
 import RentalConditionsModal from '@/components/RentalConditionsModal';
 import SplashScreen from '@/components/SplashScreen';
-import ScenarioFAQSection from '@/components/ScenarioFAQSection';
+import ContactFormSection from '@/components/ContactFormSection';
 import BookingWizard from '@/components/BookingWizard';
 import SEOHead from '@/components/SEOHead';
+
+type HomeLocale = 'fr' | 'en' | 'it' | 'es' | 'zh';
 
 export default function HomePageClient() {
   const router = useRouter();
@@ -37,6 +35,8 @@ export default function HomePageClient() {
   const [showContent, setShowContent] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardPackKey, setWizardPackKey] = useState<'conference' | 'soiree' | 'mariage' | null>(null);
+  const [homeLocale, setHomeLocale] = useState<HomeLocale>('fr');
+  const localizedLanguage = homeLocale as any;
 
   const handleCloseReservationModal = () => {
     setReservationModal(false);
@@ -106,6 +106,50 @@ export default function HomePageClient() {
 
     handleAuthTokens();
   }, [router]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const supportedLocales: HomeLocale[] = ['fr', 'en', 'it', 'es', 'zh'];
+    const storedLocale = localStorage.getItem('preferredLocale') as HomeLocale | null;
+    const detectBrowserLocale = (): HomeLocale => {
+      const browserLanguages = navigator.languages?.length ? navigator.languages : [navigator.language];
+
+      for (const lang of browserLanguages) {
+        const normalized = (lang || '').toLowerCase();
+        if (normalized.startsWith('zh')) return 'zh';
+        if (normalized.startsWith('it')) return 'it';
+        if (normalized.startsWith('es')) return 'es';
+        if (normalized.startsWith('en')) return 'en';
+        if (normalized.startsWith('fr')) return 'fr';
+      }
+
+      return 'fr';
+    };
+
+    if (storedLocale && supportedLocales.includes(storedLocale)) {
+      setHomeLocale(storedLocale);
+    } else {
+      const detectedLocale = detectBrowserLocale();
+      localStorage.setItem('preferredLocale', detectedLocale);
+      window.dispatchEvent(new CustomEvent('preferredLocaleChanged', { detail: { locale: detectedLocale } }));
+      setHomeLocale(detectedLocale);
+      setLanguage(detectedLocale === 'fr' ? 'fr' : 'en');
+    }
+
+    const handlePreferredLocaleChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{ locale?: HomeLocale }>;
+      const nextLocale = customEvent.detail?.locale;
+      if (nextLocale && supportedLocales.includes(nextLocale)) {
+        setHomeLocale(nextLocale);
+      }
+    };
+
+    window.addEventListener('preferredLocaleChanged', handlePreferredLocaleChange as EventListener);
+    return () => {
+      window.removeEventListener('preferredLocaleChanged', handlePreferredLocaleChange as EventListener);
+    };
+  }, [language]);
 
   // Écouter l'événement de réservation depuis l'assistant
   useEffect(() => {
@@ -190,7 +234,7 @@ export default function HomePageClient() {
       
       <main>
         <HeroSection 
-          language={language}
+          language={localizedLanguage}
         />
 
         {/* Section IA - Masquée */}
@@ -201,34 +245,19 @@ export default function HomePageClient() {
         {/* Section Nos Solutions */}
         <SectionAnimation delay={0.1}>
           <SolutionsSection 
-            language={language}
+            language={localizedLanguage}
           />
         </SectionAnimation>
 
-        {/* Section Besoin d'une sono maintenant ? */}
-        <SectionAnimation delay={0.2}>
-          <UrgencySection language={language} />
-        </SectionAnimation>
-
-        {/* Section Comment ça marche */}
-        <SectionAnimation delay={0.25}>
-          <CommentCaMarcheSection language={language} />
-        </SectionAnimation>
-
-        {/* Section Comment choisir son pack */}
-        <SectionAnimation delay={0.28}>
-          <HowToChoosePackSection language={language} />
-        </SectionAnimation>
-
-        {/* Section Pour Qui ? */}
+        {/* Section Promise */}
         <SectionAnimation delay={0.3}>
-          <PourQuiSection language={language} />
+          <PromiseSection language={localizedLanguage} />
         </SectionAnimation>
 
-        {/* Section Pourquoi SoundRush */}
-        <SectionAnimation delay={0.4}>
-          <AboutSection language={language} />
-        </SectionAnimation>
+        {/* Section Pourquoi SoundRush - Masquée */}
+        {/* <SectionAnimation delay={0.4}>
+          <AboutSection language={localizedLanguage} />
+        </SectionAnimation> */}
 
         {/* Section Galerie Vidéos - Masquée */}
         {/* <SectionAnimation delay={0.45}>
@@ -237,35 +266,27 @@ export default function HomePageClient() {
 
         {/* Section Ils nous ont fait confiance */}
         <SectionAnimation delay={0.48}>
-          <TrustedBySection language={language} />
+          <TrustedBySection language={localizedLanguage} />
         </SectionAnimation>
 
         {/* Section Témoignages Clients */}
         <SectionAnimation delay={0.5}>
-          <TrustindexReviews language={language} />
+          <TrustindexReviews language={localizedLanguage} />
         </SectionAnimation>
 
-        {/* Section Tutos */}
+        {/* Section Besoin d'une sono maintenant ? */}
+        <SectionAnimation delay={0.52}>
+          <UrgencySection language={localizedLanguage} />
+        </SectionAnimation>
+
+        {/* Section Nos récents événements */}
         <SectionAnimation delay={0.55}>
-          <TutosSection language={language} />
+          <RecentEventsSection language={localizedLanguage} />
         </SectionAnimation>
 
-        {/* Section Blog */}
-        <SectionAnimation delay={0.58}>
-          <BlogSection language={language} />
-        </SectionAnimation>
-
-        {/* Section FAQ Scénarios */}
+        {/* Section Contact */}
         <SectionAnimation delay={0.6}>
-          <ScenarioFAQSection 
-            language={language}
-            onScenarioClick={(scenarioId) => {
-              // Ouvrir l'assistant avec le scénario sélectionné
-              window.dispatchEvent(new CustomEvent('openChatWithDraft', { 
-                detail: { message: scenarioId } 
-              }));
-            }}
-          />
+          <ContactFormSection language={localizedLanguage} />
         </SectionAnimation>
 
       </main>
