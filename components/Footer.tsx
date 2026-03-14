@@ -4,7 +4,6 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 import LegalNoticeModal from './LegalNoticeModal';
 
 interface FooterProps {
@@ -358,21 +357,6 @@ export default function Footer({ language }: FooterProps) {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Moyens de paiement */}
-          <div className="mt-2 pt-2 border-t border-gray-800">
-            <div className="w-full px-2 sm:px-4 flex justify-center gap-2 md:gap-4 lg:gap-6">
-              <Image
-                src="/pay.png"
-                alt="Moyens de paiement acceptés"
-                width={250}
-                height={30}
-                className="max-w-[250px] h-auto opacity-90"
-                style={{ width: '250px', height: 'auto' }}
-                priority
-              />
             </div>
           </div>
 

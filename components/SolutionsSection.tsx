@@ -7,6 +7,13 @@ interface SolutionsSectionProps {
   language: 'fr' | 'en' | 'it' | 'es' | 'zh';
 }
 
+const SERVICE_IMAGES = [
+  'https://images.unsplash.com/photo-1511578314322-379afb476865?w=900&h=600&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=900&h=600&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1556155092-490a1ba16284?w=900&h=600&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=900&h=600&fit=crop&q=80',
+];
+
 export default function SolutionsSection({ language }: SolutionsSectionProps) {
   const texts = {
     fr: {
@@ -126,13 +133,21 @@ export default function SolutionsSection({ language }: SolutionsSectionProps) {
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {currentTexts.services.map((service) => {
+          {currentTexts.services.map((service, index) => {
             const Icon = service.icon;
             return (
               <article
                 key={service.title}
                 className="rounded-2xl border border-gray-200 bg-white p-6 lg:p-7 shadow-sm hover:shadow-lg hover:border-[#F2431E]/50 transition-all duration-300"
               >
+                <div className="mb-4 overflow-hidden rounded-xl">
+                  <img
+                    src={SERVICE_IMAGES[index]}
+                    alt={service.title}
+                    className="h-40 w-full object-cover transition-transform duration-300 hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
                 <div className="inline-flex rounded-xl bg-[#F2431E]/10 p-3 text-[#F2431E]">
                   <Icon className="w-5 h-5" />
                 </div>
