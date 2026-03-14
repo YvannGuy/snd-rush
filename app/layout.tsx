@@ -220,15 +220,10 @@ export default function RootLayout({
         {/* Google Analytics - Chargé conditionnellement selon le consentement */}
         <GoogleAnalytics />
 
-        {/* Elfsight Platform Script */}
-        <Script
-          src="https://elfsightcdn.com/platform.js"
-          strategy="lazyOnload"
-          async
-        />
-
-        {/* Elfsight AI Chatbot | Untitled AI Chatbot */}
-        <div className="elfsight-app-a6997d3d-038c-45be-81c5-abbc7747dc81" data-elfsight-app-lazy></div>
+        {/* Crisp Chat */}
+        <Script id="crisp-chat" strategy="afterInteractive">
+          {`window.$crisp=[];window.CRISP_WEBSITE_ID="bceee50b-ec29-4f49-a5bb-c83abd1640c6";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();`}
+        </Script>
 
         <CartProvider>
           {children}

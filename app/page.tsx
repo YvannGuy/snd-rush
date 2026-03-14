@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
-import PackWizardSection from '@/components/PackWizardSection';
 import SolutionsSection from '@/components/SolutionsSection';
 import UrgencySection from '@/components/UrgencySection';
 import CommentCaMarcheSection from '@/components/CommentCaMarcheSection';
@@ -193,13 +192,6 @@ export default function HomePageClient() {
         <HeroSection 
           language={language}
         />
-
-        {/* Section Pack Wizard */}
-        <SectionAnimation delay={0.05}>
-          <PackWizardSection 
-            language={language}
-          />
-        </SectionAnimation>
 
         {/* Section IA - Masquée */}
         {/* <SectionAnimation delay={0.05}>
