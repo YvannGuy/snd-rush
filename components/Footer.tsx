@@ -170,7 +170,8 @@ export default function Footer({ language }: FooterProps) {
       accessories: 'Accessoires',
       packs: 'Packs',
       contact: 'Contact',
-      getQuote: 'Appeler'
+      getQuote: 'Appeler',
+      espacePrestataire: 'Espace prestataire'
     },
     en: {
       solutions: 'Discover',
@@ -187,7 +188,8 @@ export default function Footer({ language }: FooterProps) {
       accessories: 'Accessories',
       packs: 'Packs',
       contact: 'Contact',
-      getQuote: 'Call'
+      getQuote: 'Call',
+      espacePrestataire: 'Partner area'
     },
     it: {
       solutions: 'Scopri',
@@ -204,7 +206,8 @@ export default function Footer({ language }: FooterProps) {
       accessories: 'Accessori',
       packs: 'Pack',
       contact: 'Contatto',
-      getQuote: 'Chiama'
+      getQuote: 'Chiama',
+      espacePrestataire: 'Area partner'
     },
     es: {
       solutions: 'Descubrir',
@@ -221,7 +224,8 @@ export default function Footer({ language }: FooterProps) {
       accessories: 'Accesorios',
       packs: 'Packs',
       contact: 'Contacto',
-      getQuote: 'Llamar'
+      getQuote: 'Llamar',
+      espacePrestataire: 'Zona partners'
     },
     zh: {
       solutions: '探索',
@@ -238,7 +242,8 @@ export default function Footer({ language }: FooterProps) {
       accessories: '配件',
       packs: '套餐',
       contact: '联系我们',
-      getQuote: '电话咨询'
+      getQuote: '电话咨询',
+      espacePrestataire: '合作伙伴'
     },
   };
 
@@ -378,6 +383,12 @@ export default function Footer({ language }: FooterProps) {
                   className="text-gray-400 hover:text-[#F2431E] transition-colors text-sm"
                 >
                   {texts[footerLocale].privacyPolicy}
+                </Link>
+                <Link 
+                  href="/auth/admin/login"
+                  className="text-gray-500 hover:text-[#F2431E] transition-colors text-sm"
+                >
+                  {currentFooterTexts.espacePrestataire}
                 </Link>
               </div>
             </div>

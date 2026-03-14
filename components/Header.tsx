@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import MiniCart from '@/components/cart/MiniCart';
 import { useUser } from '@/hooks/useUser';
@@ -40,7 +40,6 @@ const LANGUAGE_OPTIONS: Array<{ key: HeaderLocale; label: string; short: string;
 ];
 
 export default function Header({ language, onLanguageChange }: HeaderProps) {
-  const router = useRouter();
   const pathname = usePathname();
   
   // Tous les hooks doivent être appelés avant tout return conditionnel
@@ -510,10 +509,10 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
               {/* Séparateur vertical */}
               <div className="hidden lg:block w-px h-6 bg-white/20" />
 
-              {/* Login - Desktop only */}
+              {/* Compte utilisateur - Desktop only (masqué quand non connecté) */}
+              {user && (
               <div className="hidden lg:block">
-                {user ? (
-                  <DropdownMenu>
+                <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
@@ -592,19 +591,8 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => router.push('/auth/login')}
-                    className="flex items-center gap-2 text-white hover:text-[#F2431E] hover:bg-transparent px-2"
-                    aria-label="Se connecter"
-                  >
-                    <User className="h-5 w-5" />
-                    <span className="font-semibold text-sm">{currentTexts.signIn}</span>
-                  </Button>
-                )}
               </div>
+              )}
               
               {/* Séparateur vertical */}
               <div className="hidden lg:block w-px h-6 bg-white/20" />
@@ -726,8 +714,8 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                   </>
                 )}
                 
-                {/* Auth Icon - Mobile - Version compacte */}
-                {user ? (
+                {/* Auth Icon - Mobile - Version compacte (masqué quand non connecté) */}
+                {user && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -806,16 +794,6 @@ export default function Header({ language, onLanguageChange }: HeaderProps) {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => router.push('/auth/login')}
-                    className="text-white hover:bg-white/10 rounded-lg flex-shrink-0"
-                    aria-label="Se connecter"
-                  >
-                    <User className="h-5 w-5" />
-                  </Button>
                 )}
                 
                 {/* Séparateur vertical mobile */}
