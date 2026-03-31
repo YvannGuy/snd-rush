@@ -12,11 +12,11 @@ export default function MethodologySection() {
         <h2 className="font-helvetica text-3xl font-bold tracking-display sm:text-4xl">{m.title}</h2>
         <div className="mt-10 grid gap-8 md:grid-cols-3">
           {m.steps.map((step, index) => (
-            <article key={step.title} className="relative border-t border-[#d8d3cc] pt-7">
-              <span className="pointer-events-none absolute -top-8 right-0 text-8xl font-black leading-none text-[#141414]/8">
+            <article key={step.title} className="border-t border-[#d8d3cc] pt-5">
+              <span className="block font-black leading-none text-[#141414]/8 text-[88px]">
                 {String(index + 1).padStart(2, '0')}
               </span>
-              <h3 className="font-helvetica text-lg font-bold tracking-display">{step.title}</h3>
+              <h3 className="font-helvetica text-lg font-bold tracking-display mt-1">{step.title}</h3>
               <p className="mt-3 max-w-xs text-sm leading-relaxed text-[#141414]/75">{step.description}</p>
             </article>
           ))}

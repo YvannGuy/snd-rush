@@ -78,8 +78,8 @@ export default function Header() {
           </DropdownMenu>
 
           <Link
-            href="#contact"
-            className="rounded-sm bg-[#f36b21] px-5 py-2.5 font-helvetica text-sm font-bold tracking-display text-white transition-colors hover:bg-[#ff7a33] sm:px-7 sm:py-3.5 sm:text-base"
+            href="/contact"
+            className="whitespace-nowrap rounded-sm bg-[#f36b21] px-3 py-2 font-helvetica text-xs font-bold tracking-[0.04em] text-white transition-colors hover:bg-[#ff7a33] sm:px-6 sm:py-3 sm:text-sm"
           >
             {copy.header.cta}
           </Link>
