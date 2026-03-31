@@ -64,7 +64,7 @@ export default function TestimonialSection() {
         </div>
 
         <div
-          className="mt-6 flex flex-wrap items-center justify-center gap-1.5 sm:mt-8 sm:gap-2"
+          className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:mt-8 sm:gap-2.5"
           role="tablist"
           aria-label={tabsAria}
         >
@@ -80,10 +80,10 @@ export default function TestimonialSection() {
                   : `Review ${i + 1} of ${slides.length}`
               }
               onClick={() => goTo(i)}
-              className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
+              className={`aspect-square rounded-full transition-all duration-300 ${
                 i === index
-                  ? 'bg-[#f36b21] sm:h-2 sm:w-2'
-                  : 'bg-[#d8d3cc] hover:bg-[#8b8b8b] sm:h-2 sm:w-2'
+                  ? 'h-2.5 w-2.5 bg-[#f36b21] sm:h-3 sm:w-3'
+                  : 'h-2 w-2 bg-[#d8d3cc] hover:bg-[#8b8b8b] sm:h-2.5 sm:w-2.5'
               }`}
             />
           ))}

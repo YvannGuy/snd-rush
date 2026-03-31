@@ -2,8 +2,6 @@
 
 import { useHomeLocale } from '@/contexts/HomeLocaleContext';
 
-const VALUES = ['15+', '500+', '0%'] as const;
-
 export default function StatsSection() {
   const { copy } = useHomeLocale();
 
@@ -15,12 +13,18 @@ export default function StatsSection() {
             key={item.label}
             className={`${
               index < copy.stats.length - 1 ? 'sm:border-r sm:border-white/15' : ''
-            } flex items-end gap-3 pb-2 sm:px-6 lg:px-10`}
+            } flex items-end gap-3 pb-2 sm:px-6 lg:px-10 ${item.figure ? '' : 'sm:items-center'}`}
           >
-            <p className="font-helvetica text-5xl font-bold leading-none tracking-display text-white lg:text-6xl">
-              {VALUES[index]}
-            </p>
-            <p className="mb-1 font-helvetica text-[10px] font-bold tracking-display text-[#f36b21] sm:text-[11px]">
+            {item.figure ? (
+              <p className="shrink-0 font-helvetica text-5xl font-bold leading-none tracking-display text-white lg:text-6xl">
+                {item.figure}
+              </p>
+            ) : null}
+            <p
+              className={`mb-1 font-helvetica font-bold tracking-display text-[#f36b21] ${
+                item.figure ? 'text-[10px] sm:text-[11px]' : 'text-xs leading-snug sm:text-sm'
+              }`}
+            >
               {item.label}
             </p>
           </div>

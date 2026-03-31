@@ -15,10 +15,17 @@ export default function EventScaleSection() {
             {e.titleLine1}
             <br />
             {e.titleLine2}
-            <br />
-            {e.titleLine3}
+            {e.titleLine3 ? (
+              <>
+                <br />
+                {e.titleLine3}
+              </>
+            ) : null}
           </h2>
-          <p className="max-w-md text-sm leading-relaxed text-[#1f1f1f]/80 sm:text-base">{e.body}</p>
+          <div className="max-w-md space-y-4 text-sm leading-relaxed text-[#1f1f1f]/80 sm:text-base">
+            <p>{e.body}</p>
+            <p>{e.bodyClosing}</p>
+          </div>
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2">
@@ -32,9 +39,12 @@ export default function EventScaleSection() {
               />
               <div className="absolute inset-0 bg-black/15" />
             </div>
-            <p className="mt-3 font-helvetica text-[11px] font-bold tracking-display text-[#050505]/70">
-              {e.cap1}
-            </p>
+            <div className="mt-3 space-y-1.5">
+              <p className="font-helvetica text-[11px] font-bold tracking-display text-[#050505]">
+                {e.cap1}
+              </p>
+              <p className="text-sm leading-relaxed text-[#1f1f1f]/75">{e.cap1Detail}</p>
+            </div>
           </article>
 
           <article>
@@ -47,9 +57,12 @@ export default function EventScaleSection() {
               />
               <div className="absolute inset-0 bg-black/25" />
             </div>
-            <p className="mt-3 font-helvetica text-[11px] font-bold tracking-display text-[#050505]/70">
-              {e.cap2}
-            </p>
+            <div className="mt-3 space-y-1.5">
+              <p className="font-helvetica text-[11px] font-bold tracking-display text-[#050505]">
+                {e.cap2}
+              </p>
+              <p className="text-sm leading-relaxed text-[#1f1f1f]/75">{e.cap2Detail}</p>
+            </div>
           </article>
         </div>
       </div>

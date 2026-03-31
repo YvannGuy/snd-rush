@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Footer from '@/components/home/footer';
 import Header from '@/components/home/header';
 import ProjetBackLink from '@/components/home/projet-back-link';
+import ProjetDetailHeader from '@/components/home/projet-detail-header';
 import { ProjetMediaCell } from '@/components/home/projet-media';
 import { getAllProjets, getProjetBySlug } from '@/data/projets';
 
@@ -34,12 +35,7 @@ export default async function ProjetPage({ params }: PageProps) {
         <div className="mx-auto w-full max-w-[1240px] px-5 sm:px-8 lg:px-10">
           <ProjetBackLink />
 
-          <header className="mt-10 max-w-3xl">
-            <h1 className="font-helvetica text-3xl font-bold leading-tight tracking-display sm:text-4xl lg:text-5xl">
-              {projet.name}
-            </h1>
-            <p className="mt-6 text-sm leading-relaxed text-[#141414]/80 sm:text-base">{projet.description}</p>
-          </header>
+          <ProjetDetailHeader projet={projet} />
 
           <div className="mt-12 grid gap-4 sm:grid-cols-2 sm:gap-5">
             {projet.media.map((item, i) => (

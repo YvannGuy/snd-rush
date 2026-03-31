@@ -6,16 +6,28 @@ export type ProjetDefinition = {
   slug: string;
   name: string;
   description: string;
+  nameEn: string;
+  descriptionEn: string;
   cover: { src: string; alt: string };
   media: ProjetMediaItem[];
 };
+
+export function getProjetLocalized(
+  projet: ProjetDefinition,
+  locale: 'fr' | 'en'
+): { name: string; description: string } {
+  return locale === 'en'
+    ? { name: projet.nameEn, description: projet.descriptionEn }
+    : { name: projet.name, description: projet.description };
+}
 
 export const PROJETS: ProjetDefinition[] = [
   {
     slug: 'nude-project',
     name: 'Nude Project',
-    description:
-      'Direction technique, son, lumière et captation pour un showroom immersif dédié à la marque. Une mise en scène sobre et puissante, pensée pour mettre en valeur la collection dans un écrin premium.',
+    description: 'Installation technique et accompagnement événementiel',
+    nameEn: 'Nude Project',
+    descriptionEn: 'Technical installation and on-site event support',
     cover: { src: '/nude.jpg', alt: 'Nude Project — couverture' },
     media: [
       { type: 'video', src: '/IMG_1689.MOV' },
@@ -28,8 +40,9 @@ export const PROJETS: ProjetDefinition[] = [
   {
     slug: 'soiree-live',
     name: 'Soirée live',
-    description:
-      'Sonorisation et ambiance lumineuse pour une soirée live intimiste : clarté vocale, dynamique maîtrisée et ressenti chaleureux du premier au dernier titre.',
+    description: 'Son, lumière et régie sur site',
+    nameEn: 'Live evening',
+    descriptionEn: 'Sound, lighting and show control on site',
     cover: {
       src: 'https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?auto=format&fit=crop&w=1300&q=80',
       alt: 'Soirée live',
@@ -55,8 +68,9 @@ export const PROJETS: ProjetDefinition[] = [
   {
     slug: 'grand-festival',
     name: 'Grand festival',
-    description:
-      'Grand format outdoor : renfort de puissance, diffusion homogène sur zone étendue et coordination technique pour tenir la pression d’un festival, du soundcheck au dernier encore.',
+    description: 'Déploiement technique pour grande capacité',
+    nameEn: 'Major festival',
+    descriptionEn: 'Technical deployment for large-capacity events',
     cover: {
       src: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1300&q=80',
       alt: 'Grand festival',
@@ -82,8 +96,9 @@ export const PROJETS: ProjetDefinition[] = [
   {
     slug: 'scene-monumentale',
     name: 'Scène monumentale',
-    description:
-      'Scénographie et régie pour un plateau monumental : truss, LED, vidéo et audio synchronisés, avec une exécution millimétrée pour un impact visuel et sonore maximal.',
+    description: 'Installation et coordination technique complète',
+    nameEn: 'Monumental stage',
+    descriptionEn: 'Full technical installation and coordination',
     cover: {
       src: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=1300&q=80',
       alt: 'Scène monumentale',

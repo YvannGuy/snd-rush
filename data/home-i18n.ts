@@ -34,19 +34,22 @@ export type HomeCopy = {
     note: string;
   };
   expertiseStrip: string;
-  polePrefix: string;
+  servicesTitle: string;
   services: Array<{ title: string; description: string }>;
   eventScale: {
     titleLine1: string;
     titleLine2: string;
     titleLine3: string;
     body: string;
+    bodyClosing: string;
     cap1: string;
+    cap1Detail: string;
     cap2: string;
+    cap2Detail: string;
     imgAlt1: string;
     imgAlt2: string;
   };
-  stats: Array<{ label: string }>;
+  stats: Array<{ figure?: string; label: string }>;
   clients: { sectionLabel: string };
   portfolio: { title: string; viewProject: string };
   methodology: {
@@ -78,6 +81,7 @@ const SERVICES_IMAGES = [
   'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1400&q=80',
   'https://images.unsplash.com/photo-1571266028243-5c385f0f66fd?auto=format&fit=crop&w=1400&q=80',
   'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=1400&q=80',
+  'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1400&q=80',
   'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1400&q=80',
 ] as const;
 
@@ -85,7 +89,7 @@ export function getServicesWithImages(
   copy: HomeCopy
 ): Array<{ label: string; title: string; description: string; image: string }> {
   return copy.services.map((s, i) => ({
-    label: String(i + 1).padStart(2, '0'),
+    label: `${String(i + 1).padStart(2, '0')} — ${s.title}`,
     title: s.title,
     description: s.description,
     image: SERVICES_IMAGES[i],
@@ -98,75 +102,94 @@ const FR: HomeCopy = {
     realisations: 'Réalisations',
     methodologie: 'Méthodologie',
     contact: 'Contact',
-    cta: 'Lancer votre projet',
+    cta: 'Demander un devis',
   },
   hero: {
-    kicker: 'Production scénique premium · Paris',
-    titleLine1: 'Maîtrise technique',
-    titleLine2: 'À grande échelle',
-    body: 'Son, lumière, vidéo et régie réunis dans une direction technique unique pour des expériences événementielles impeccables.',
-    cta: 'Démarrer votre projet',
-    note: 'Opérations France & Europe',
+    kicker: 'Sndrush Paris · Son, lumière, audiovisuel, photo, vidéo et régie',
+    titleLine1: 'Nous orchestrons votre événement',
+    titleLine2: 'de A à Z',
+    body:
+      'Concert, conférence, mariage, événement d’entreprise ou grand rassemblement : Sndrush prend en charge le son, la lumière, les écrans LED, l’audiovisuel, la photo, la vidéo et la régie pour un rendu professionnel, fluide et fiable.',
+    cta: 'Demander un devis',
+    note: 'Paris · Île-de-France · France · Europe selon projet',
   },
-  expertiseStrip: 'Technique • Son • Lumière • Led • Vidéo • Régie',
-  polePrefix: 'Pôle',
+  expertiseStrip: 'Son • Lumière • Écrans LED • Audiovisuel • Photo • Vidéo • Régie',
+  servicesTitle: 'Nos services',
   services: [
     {
-      title: 'Excellence Audio',
+      title: 'Sonorisation',
       description:
-        'Systèmes calibrés avec précision pour une restitution puissante et maîtrisée.',
+        'Nous mettons en place le système son adapté à votre événement, du petit format aux grandes jauges.',
     },
     {
-      title: 'Impact Visuel',
-      description: 'Mise en scène vidéo et LED à fort impact, lisible à toute échelle.',
+      title: 'Éclairage',
+      description: 'Nous créons l’ambiance lumineuse adaptée à votre lieu, votre scène et votre public.',
     },
     {
-      title: 'Design Lumière',
-      description: 'Ambiances sculptées et dynamiques lumineuses pensées pour l’émotion.',
+      title: 'Écrans LED & audiovisuel',
+      description:
+        'Nous installons vos écrans LED et vos solutions audiovisuelles pour diffuser vos contenus avec clarté et impact.',
     },
     {
-      title: 'Régie Technique',
-      description: 'Pilotage centralisé, coordination terrain et sécurisation complète.',
+      title: 'Photo & vidéo',
+      description:
+        'Nous réalisons la couverture photo et vidéo de votre événement pour capturer chaque moment important et produire des contenus de qualité.',
+    },
+    {
+      title: 'Régie technique',
+      description:
+        'Nous coordonnons l’ensemble du dispositif avant et pendant l’événement pour assurer un déroulement fluide.',
     },
   ],
   eventScale: {
-    titleLine1: 'De l’élégance',
-    titleLine2: 'Intime',
-    titleLine3: 'À l’impact massif',
-    body: 'Qu’il s’agisse d’un écrin confidentiel ou d’un format monumental, chaque production est conçue avec la même exigence : fluidité, précision, et signature visuelle forte.',
-    cap1: 'Écrins de luxe',
-    cap2: 'Stades & festivals',
-    imgAlt1: 'Écrins de luxe',
-    imgAlt2: 'Stades et festivals',
+    titleLine1: 'Des formats intimistes aux',
+    titleLine2: 'productions de grande ampleur',
+    titleLine3: '',
+    body:
+      'Nous accompagnons aussi bien les événements élégants en petit comité que les dispositifs techniques de grande ampleur.',
+    bodyClosing:
+      'Notre objectif reste le même : une installation fiable, un rendu propre et une exécution sans stress.',
+    cap1: 'Événements soignés et formats sur mesure',
+    cap1Detail:
+      'Son, lumière, audiovisuel, photo, écrans LED et régie pour des événements qui demandent précision, fluidité et qualité d’exécution.',
+    cap2: 'Productions de grande ampleur',
+    cap2Detail:
+      'Des dispositifs adaptés aux événements à forte jauge, aux lieux exigeants et aux organisations plus complexes.',
+    imgAlt1: 'Événement soigné et prestation sur mesure',
+    imgAlt2: 'Production événementielle de grande ampleur',
   },
-  stats: [{ label: 'Ans d’expertise' }, { label: 'Événements réalisés' }, { label: 'Temps d’arrêt' }],
-  clients: { sectionLabel: 'Références' },
-  portfolio: { title: 'Projets', viewProject: 'Voir le projet' },
+  stats: [
+    { figure: '8+', label: 'Plus de 8 ans d’expérience' },
+    { figure: '100+', label: 'Plus de 100 événements accompagnés' },
+    { figure: '10 000+', label: 'Capacité sur grands événements' },
+  ],
+  clients: { sectionLabel: 'Ils nous ont fait confiance' },
+  portfolio: { title: 'Nos réalisations', viewProject: 'Voir le projet' },
   methodology: {
-    title: 'Méthodologie',
+    title: 'Comment nous travaillons',
     steps: [
       {
-        title: 'Audit',
+        title: 'Analyse du besoin',
         description:
-          'Analyse des contraintes techniques, du lieu et des objectifs de rendu.',
+          'Nous échangeons sur votre événement, votre lieu, vos contraintes et le rendu attendu.',
       },
       {
-        title: 'Déploiement',
+        title: 'Préparation technique',
         description:
-          'Installation, réglages et répétitions avec supervision de production.',
+          'Nous définissons le matériel, l’installation et l’organisation les plus adaptés.',
       },
       {
-        title: 'Commande',
+        title: 'Installation & exploitation',
         description:
-          'Pilotage opérationnel le jour J, coordination et qualité de diffusion.',
+          'Nous installons le dispositif, faisons les réglages et assurons le bon déroulement le jour J.',
       },
     ],
   },
   finalCta: {
-    line1: 'Prêt à',
-    line2: 'Commander la',
-    line3: 'scène ?',
-    button: 'Construisons votre événement',
+    line1: 'Parlons de',
+    line2: 'votre',
+    line3: 'événement',
+    button: 'Demander un devis',
   },
   footer: {
     mentions: 'Mentions',
@@ -175,8 +198,8 @@ const FR: HomeCopy = {
     copyright: '© 2026 Sndrush Paris',
   },
   projectsIndex: {
-    title: 'Projets',
-    intro: 'Un aperçu de nos interventions : sélectionnez un projet pour le détail et la galerie.',
+    title: 'Nos réalisations',
+    intro: 'Quelques exemples d’interventions — ouvrez une fiche pour la galerie.',
     viewProject: 'Voir le projet',
     back: '← Réalisations',
   },
@@ -189,71 +212,94 @@ const EN: HomeCopy = {
     realisations: 'Projects',
     methodologie: 'Method',
     contact: 'Contact',
-    cta: 'Start your project',
+    cta: 'Request a quote',
   },
   hero: {
-    kicker: 'Premium stage production · Paris',
-    titleLine1: 'Technical mastery',
-    titleLine2: 'At scale',
-    body: 'Sound, lighting, video and show control under one technical direction for flawless live experiences.',
-    cta: 'Start your project',
-    note: 'Operations France & Europe',
+    kicker: 'Sndrush Paris · Sound, lighting, AV, photo, video and show control',
+    titleLine1: 'We orchestrate your event',
+    titleLine2: 'from A to Z',
+    body:
+      'Concerts, conferences, weddings, corporate events or large gatherings: Sndrush handles sound, lighting, LED screens, AV, photography, video and show control for a professional, smooth and reliable result.',
+    cta: 'Request a quote',
+    note: 'Paris · Île-de-France · France · Europe as needed',
   },
-  expertiseStrip: 'Technical · Sound · Light · LED · Video · Control',
-  polePrefix: 'Unit',
+  expertiseStrip: 'Sound · Lighting · LED screens · AV · Photo · Video · Show control',
+  servicesTitle: 'Our services',
   services: [
     {
-      title: 'Audio excellence',
-      description: 'Precisely tuned systems for powerful, controlled reproduction.',
+      title: 'Sound',
+      description:
+        'We deploy the sound system suited to your event, from intimate formats to large crowds.',
     },
     {
-      title: 'Visual impact',
-      description: 'Video and LED staging with strong impact, readable at any scale.',
+      title: 'Lighting',
+      description: 'We shape the lighting to fit your venue, stage and audience.',
     },
     {
-      title: 'Light design',
-      description: 'Sculpted atmospheres and dynamic lighting built for emotion.',
+      title: 'LED screens & AV',
+      description:
+        'We install your LED screens and AV solutions to show your content clearly and with impact.',
     },
     {
-      title: 'Technical direction',
-      description: 'Centralised control, field coordination and full risk coverage.',
+      title: 'Photo & video',
+      description:
+        'We cover your event in photo and video to capture key moments and deliver high-quality content.',
+    },
+    {
+      title: 'Show control',
+      description:
+        'We coordinate the full setup before and during the event to keep everything running smoothly.',
     },
   ],
   eventScale: {
-    titleLine1: 'From intimate',
-    titleLine2: 'Elegance',
-    titleLine3: 'To massive impact',
-    body: 'Whether a private setting or a monumental format, every production meets the same bar: flow, precision, and a strong visual signature.',
-    cap1: 'Luxury venues',
-    cap2: 'Stadiums & festivals',
-    imgAlt1: 'Luxury venues',
-    imgAlt2: 'Stadiums and festivals',
+    titleLine1: 'From intimate formats to',
+    titleLine2: 'large-scale productions',
+    titleLine3: '',
+    body:
+      'We support both elegant small gatherings and large-scale technical productions.',
+    bodyClosing:
+      'Our goal stays the same: a reliable setup, polished results, and a stress-free experience.',
+    cap1: 'Polished events and bespoke formats',
+    cap1Detail:
+      'Sound, lighting, AV, photography, LED screens and show control for events that demand precision, flow and flawless execution.',
+    cap2: 'Large-scale productions',
+    cap2Detail:
+      'Setups suited to high-capacity events, demanding venues and more complex operations.',
+    imgAlt1: 'Polished event and bespoke technical setup',
+    imgAlt2: 'Large-scale event production',
   },
-  stats: [{ label: 'Years of experience' }, { label: 'Events delivered' }, { label: 'Downtime' }],
-  clients: { sectionLabel: 'References' },
-  portfolio: { title: 'Projects', viewProject: 'View project' },
+  stats: [
+    { figure: '8+', label: 'Over 8 years of experience' },
+    { figure: '100+', label: 'Over 100 events supported' },
+    { figure: '10,000+', label: 'Capacity for large-scale events' },
+  ],
+  clients: { sectionLabel: 'Trusted by clients and partners' },
+  portfolio: { title: 'Our work', viewProject: 'View project' },
   methodology: {
-    title: 'Methodology',
+    title: 'How we work',
     steps: [
       {
-        title: 'Audit',
-        description: 'Technical constraints, venue and production goals analysed end to end.',
+        title: 'Needs analysis',
+        description:
+          'We discuss your event, venue, constraints and the experience you want to deliver.',
       },
       {
-        title: 'Deployment',
-        description: 'Install, tuning and rehearsals with full production supervision.',
+        title: 'Technical preparation',
+        description:
+          'We define the equipment, setup and workflow that best fit your project.',
       },
       {
-        title: 'Show call',
-        description: 'Live-day control, coordination and broadcast quality.',
+        title: 'Installation & show day',
+        description:
+          'We install and tune the system, then keep everything running smoothly on the day.',
       },
     ],
   },
   finalCta: {
-    line1: 'Ready to',
-    line2: 'Own the',
-    line3: 'stage?',
-    button: 'Let’s build your event',
+    line1: 'Let’s discuss',
+    line2: 'your',
+    line3: 'event',
+    button: 'Request a quote',
   },
   footer: {
     mentions: 'Legal notice',
@@ -262,8 +308,8 @@ const EN: HomeCopy = {
     copyright: '© 2026 Sndrush Paris',
   },
   projectsIndex: {
-    title: 'Projects',
-    intro: 'A selection of our work — open a project for details and the full gallery.',
+    title: 'Our work',
+    intro: 'A few examples of our work — open a case for the full gallery.',
     viewProject: 'View project',
     back: '← Work',
   },

@@ -3,10 +3,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useHomeLocale } from '@/contexts/HomeLocaleContext';
-import { getAllProjets } from '@/data/projets';
+import { resolveHomeContentLocale } from '@/data/home-i18n';
+import { getAllProjets, getProjetLocalized } from '@/data/projets';
 
 export default function PortfolioSection() {
-  const { copy } = useHomeLocale();
+  const { copy, locale } = useHomeLocale();
+  const contentLocale = resolveHomeContentLocale(locale);
   const projets = getAllProjets();
 
   return (
@@ -14,11 +16,16 @@ export default function PortfolioSection() {
       <div className="mx-auto w-full max-w-[1240px] px-5 sm:px-8 lg:px-10">
         <h2 className="font-helvetica text-3xl font-bold tracking-display sm:text-4xl">{copy.portfolio.title}</h2>
         <div className="mt-10 grid grid-cols-1 gap-8 gap-y-10 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-12">
-          {projets.map((projet) => (
+          {projets.map((projet) => {
+            const { name, description } = getProjetLocalized(projet, contentLocale);
+            return (
             <article key={projet.slug}>
-              <p className="mb-3 font-helvetica text-[10px] font-bold tracking-display text-[#050505]/60">
-                {projet.name}
-              </p>
+              <div className="mb-3 space-y-1.5">
+                <p className="font-helvetica text-[10px] font-bold tracking-display text-[#050505]">
+                  {name}
+                </p>
+                <p className="text-sm leading-relaxed text-[#141414]/75">{description}</p>
+              </div>
               <Link href={`/projets/${projet.slug}`} className="group block">
                 <div className="relative h-52 overflow-hidden bg-[#e8e4df] sm:h-72 lg:h-80">
                   <Image
@@ -35,7 +42,8 @@ export default function PortfolioSection() {
                 </span>
               </Link>
             </article>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

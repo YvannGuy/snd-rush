@@ -5,10 +5,12 @@ import Link from 'next/link';
 import Footer from '@/components/home/footer';
 import Header from '@/components/home/header';
 import { useHomeLocale } from '@/contexts/HomeLocaleContext';
-import { getAllProjets } from '@/data/projets';
+import { resolveHomeContentLocale } from '@/data/home-i18n';
+import { getAllProjets, getProjetLocalized } from '@/data/projets';
 
 export default function ProjetsIndexPage() {
-  const { copy } = useHomeLocale();
+  const { copy, locale } = useHomeLocale();
+  const contentLocale = resolveHomeContentLocale(locale);
   const p = copy.projectsIndex;
   const projets = getAllProjets();
 
@@ -28,12 +30,17 @@ export default function ProjetsIndexPage() {
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#141414]/75">{p.intro}</p>
 
           <ul className="mt-12 grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-12">
-            {projets.map((projet) => (
+            {projets.map((projet) => {
+              const { name, description } = getProjetLocalized(projet, contentLocale);
+              return (
               <li key={projet.slug}>
                 <article>
-                  <p className="mb-3 font-helvetica text-[10px] font-bold tracking-display text-[#050505]/60">
-                    {projet.name}
-                  </p>
+                  <div className="mb-3 space-y-1.5">
+                    <p className="font-helvetica text-[10px] font-bold tracking-display text-[#050505]">
+                      {name}
+                    </p>
+                    <p className="text-sm leading-relaxed text-[#141414]/75">{description}</p>
+                  </div>
                   <Link href={`/projets/${projet.slug}`} className="group block">
                     <div className="relative h-52 overflow-hidden bg-[#e8e4df] sm:h-72 lg:h-80">
                       <Image
@@ -51,7 +58,8 @@ export default function ProjetsIndexPage() {
                   </Link>
                 </article>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </div>
       </main>

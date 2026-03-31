@@ -11,7 +11,10 @@ export default function ServicesGrid() {
   return (
     <section id="expertises" className="bg-[#0b0b0b] py-16 lg:py-20">
       <div className="mx-auto w-full max-w-[1240px] px-5 sm:px-8 lg:px-10">
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <h2 className="mb-10 font-helvetica text-2xl font-bold tracking-display text-white sm:text-3xl">
+          {copy.servicesTitle}
+        </h2>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {services.map((service) => (
             <article
               key={service.title}
@@ -29,8 +32,8 @@ export default function ServicesGrid() {
 
               <div className="space-y-3 p-5">
                 <div className="h-[2px] w-8 bg-[#f36b21]" />
-                <p className="font-helvetica text-[10px] font-bold tracking-display text-white/55">
-                  {copy.polePrefix} {service.label}
+                <p className="font-helvetica text-[10px] font-bold leading-snug tracking-display text-white/55">
+                  {service.label}
                 </p>
                 <h3 className="font-helvetica text-xl font-bold leading-tight tracking-display text-white">
                   {service.title}

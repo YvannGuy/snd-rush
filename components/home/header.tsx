@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,18 +12,80 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useHomeLocale } from '@/contexts/HomeLocaleContext';
 import { HOME_LANGUAGE_OPTIONS, type HomeLocale } from '@/data/home-i18n';
+import { cn } from '@/lib/utils';
 import { SndrushMark } from '@/components/home/sndrush-mark';
 
-export default function Header() {
-  const { locale, setLocale, copy } = useHomeLocale();
+const LANG_TRIGGER_CLASS =
+  'h-10 gap-2 rounded-sm px-2 text-white hover:bg-white/12 hover:text-white focus-visible:bg-white/12 focus-visible:text-white data-[state=open]:bg-white/12 data-[state=open]:text-white sm:h-11 sm:gap-2.5 sm:px-2.5 [&_svg]:text-white';
+
+function LanguageTriggerLabel({ short }: { short: string }) {
+  return (
+    <>
+      <Globe className="h-[18px] w-[18px] shrink-0 sm:h-5 sm:w-5" strokeWidth={1.75} />
+      <span className="inline-flex items-center gap-1 font-helvetica text-sm font-bold tracking-[0.08em] sm:gap-1 sm:text-base">
+        <span>{short}</span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-95 sm:h-4 sm:w-4" strokeWidth={2} />
+      </span>
+    </>
+  );
+}
+
+/** Radix peut produire des id différents SSR / client ; le menu ne monte qu’après hydratation. */
+function HeaderLanguageMenu() {
+  const [mounted, setMounted] = useState(false);
+  const { locale, setLocale } = useHomeLocale();
   const selectedLang =
     HOME_LANGUAGE_OPTIONS.find((o) => o.key === locale) ?? HOME_LANGUAGE_OPTIONS[0];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        className={cn(LANG_TRIGGER_CLASS, 'pointer-events-none select-none')}
+        aria-label="Changer de langue"
+        aria-disabled
+        tabIndex={-1}
+      >
+        <LanguageTriggerLabel short={selectedLang.short} />
+      </Button>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="ghost" className={LANG_TRIGGER_CLASS} aria-label="Changer de langue">
+          <LanguageTriggerLabel short={selectedLang.short} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[10rem]">
+        {HOME_LANGUAGE_OPTIONS.map((opt) => (
+          <DropdownMenuItem
+            key={opt.key}
+            className={locale === opt.key ? 'bg-muted font-medium' : ''}
+            onClick={() => setLocale(opt.key as HomeLocale)}
+          >
+            <span className="mr-2 text-xs text-muted-foreground">{opt.short}</span>
+            {opt.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export default function Header() {
+  const { copy } = useHomeLocale();
 
   const navItems: { href: string; label: string }[] = [
     { href: '#expertises', label: copy.header.expertises },
     { href: '#realisations', label: copy.header.realisations },
     { href: '#methodologie', label: copy.header.methodologie },
-    { href: '#contact', label: copy.header.contact },
   ];
 
   return (
@@ -48,34 +111,7 @@ export default function Header() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-10 gap-2 rounded-sm px-2 text-white hover:bg-white/12 hover:text-white focus-visible:bg-white/12 focus-visible:text-white data-[state=open]:bg-white/12 data-[state=open]:text-white sm:h-11 sm:gap-2.5 sm:px-2.5 [&_svg]:text-white"
-                aria-label="Changer de langue"
-              >
-                <Globe className="h-[18px] w-[18px] shrink-0 sm:h-5 sm:w-5" strokeWidth={1.75} />
-                <span className="inline-flex items-center gap-1 font-helvetica text-sm font-bold tracking-[0.08em] sm:gap-1 sm:text-base">
-                  <span>{selectedLang.short}</span>
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-95 sm:h-4 sm:w-4" strokeWidth={2} />
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[10rem]">
-              {HOME_LANGUAGE_OPTIONS.map((opt) => (
-                <DropdownMenuItem
-                  key={opt.key}
-                  className={locale === opt.key ? 'bg-muted font-medium' : ''}
-                  onClick={() => setLocale(opt.key as HomeLocale)}
-                >
-                  <span className="mr-2 text-xs text-muted-foreground">{opt.short}</span>
-                  {opt.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <HeaderLanguageMenu />
 
           <Link
             href="/contact"

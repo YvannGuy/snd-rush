@@ -26,8 +26,8 @@ export default function HeroSection() {
             {h.kicker}
           </p>
 
-          <h1 className="font-helvetica text-5xl font-bold leading-[0.92] tracking-display text-white sm:text-6xl md:text-7xl lg:text-[96px]">
-            <span className="lg:whitespace-nowrap">{h.titleLine1}</span>
+          <h1 className="font-helvetica text-5xl font-bold leading-[0.92] tracking-display text-white sm:text-6xl md:text-7xl lg:text-[84px] xl:text-[96px]">
+            <span>{h.titleLine1}</span>
             <br />
             {h.titleLine2}
           </h1>
