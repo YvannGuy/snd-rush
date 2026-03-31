@@ -27,7 +27,7 @@ export default function HeroSection() {
           </p>
 
           <h1 className="font-helvetica text-5xl font-bold leading-[0.92] tracking-display text-white sm:text-6xl md:text-7xl lg:text-[96px]">
-            {h.titleLine1}
+            <span className="lg:whitespace-nowrap">{h.titleLine1}</span>
             <br />
             {h.titleLine2}
           </h1>

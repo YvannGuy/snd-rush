@@ -48,7 +48,7 @@ export type HomeCopy = {
   };
   stats: Array<{ label: string }>;
   clients: { sectionLabel: string };
-  portfolio: { viewProject: string };
+  portfolio: { title: string; viewProject: string };
   methodology: {
     title: string;
     steps: Array<{ title: string; description: string }>;
@@ -141,7 +141,7 @@ const FR: HomeCopy = {
   },
   stats: [{ label: 'Ans d’expertise' }, { label: 'Événements réalisés' }, { label: 'Temps d’arrêt' }],
   clients: { sectionLabel: 'Références' },
-  portfolio: { viewProject: 'Voir le projet' },
+  portfolio: { title: 'Projets', viewProject: 'Voir le projet' },
   methodology: {
     title: 'Méthodologie',
     steps: [
@@ -231,7 +231,7 @@ const EN: HomeCopy = {
   },
   stats: [{ label: 'Years of experience' }, { label: 'Events delivered' }, { label: 'Downtime' }],
   clients: { sectionLabel: 'References' },
-  portfolio: { viewProject: 'View project' },
+  portfolio: { title: 'Projects', viewProject: 'View project' },
   methodology: {
     title: 'Methodology',
     steps: [

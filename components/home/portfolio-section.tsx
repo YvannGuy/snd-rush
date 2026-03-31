@@ -10,9 +10,10 @@ export default function PortfolioSection() {
   const projets = getAllProjets();
 
   return (
-    <section id="realisations" className="bg-[#f3f0eb] py-10 lg:py-14">
+    <section id="realisations" className="bg-[#f3f0eb] py-16 text-[#050505] lg:py-24">
       <div className="mx-auto w-full max-w-[1240px] px-5 sm:px-8 lg:px-10">
-        <div className="grid grid-cols-1 gap-8 gap-y-10 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-12">
+        <h2 className="font-helvetica text-3xl font-bold tracking-display sm:text-4xl">{copy.portfolio.title}</h2>
+        <div className="mt-10 grid grid-cols-1 gap-8 gap-y-10 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-12">
           {projets.map((projet) => (
             <article key={projet.slug}>
               <p className="mb-3 font-helvetica text-[10px] font-bold tracking-display text-[#050505]/60">
