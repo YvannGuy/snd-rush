@@ -1,8 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { useHomeLocale } from '@/contexts/HomeLocaleContext';
+import QuoteCtaLink from '@/components/home/quote-cta-link';
 
 export default function HeroSection() {
   const { copy } = useHomeLocale();
@@ -35,12 +35,7 @@ export default function HeroSection() {
           <p className="mt-6 max-w-xl text-base leading-relaxed text-white/78 sm:text-lg">{h.body}</p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Link
-              href="#contact"
-              className="rounded-sm bg-[#f36b21] px-7 py-3.5 font-helvetica text-base font-bold tracking-display text-white transition-colors hover:bg-[#ff7a33] sm:px-8 sm:py-4 sm:text-lg"
-            >
-              {h.cta}
-            </Link>
+            <QuoteCtaLink href="#contact" label={h.cta} />
             <span className="font-helvetica text-sm font-bold tracking-display text-white/70 sm:text-base">
               {h.note}
             </span>

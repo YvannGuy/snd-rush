@@ -10,7 +10,7 @@ const items = [
 export function TrustStrip() {
   return (
     <section className="bg-white">
-      <div className="mx-auto grid w-full max-w-[1240px] grid-cols-2 gap-4 px-4 py-5 sm:grid-cols-4 sm:gap-6 sm:px-8 sm:py-7 lg:px-12">
+      <div className="mx-auto grid w-full max-w-[1240px] grid-cols-2 gap-4 px-5 py-5 sm:grid-cols-4 sm:gap-6 sm:px-8 sm:py-7 lg:px-10">
         {items.map((item) => (
           <div
             key={item.title}

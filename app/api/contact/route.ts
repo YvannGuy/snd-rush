@@ -30,7 +30,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name, email and message are required' }, { status: 400 });
     }
 
-    const servicesList = Array.isArray(body.services) ? body.services.filter(Boolean).join(', ') : 'Non spécifié';
+    if (
+      !body.eventType?.trim() ||
+      !body.attendees?.trim() ||
+      !body.date?.trim() ||
+      !body.location?.trim()
+    ) {
+      return NextResponse.json(
+        { error: 'Event type, attendees, date and location are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!Array.isArray(body.services) || body.services.length === 0) {
+      return NextResponse.json({ error: 'At least one service is required' }, { status: 400 });
+    }
+
+    const servicesList = body.services.filter(Boolean).join(', ');
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 720px; margin: 0 auto; color: #0f0f0f;">

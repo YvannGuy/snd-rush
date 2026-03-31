@@ -9,7 +9,7 @@ import ExpertiseStrip from '@/components/home/expertise-strip';
 import MethodologySection from '@/components/home/methodology-section';
 import PortfolioSection from '@/components/home/portfolio-section';
 import SectionReveal from '@/components/home/section-reveal';
-import ServicesGrid from '@/components/home/services-grid';
+import ServicesInteractivePanels from '@/components/home/services-interactive-panels';
 import StatsSection from '@/components/home/stats-section';
 import TestimonialSection from '@/components/home/testimonial-section';
 
@@ -23,7 +23,7 @@ export default function HomePage() {
           <ExpertiseStrip />
         </SectionReveal>
         <SectionReveal>
-          <ServicesGrid />
+          <ServicesInteractivePanels />
         </SectionReveal>
         <SectionReveal>
           <EventScaleSection />

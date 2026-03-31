@@ -1,9 +1,9 @@
 import Link from 'next/link';
 
 const steps = [
-  { number: '01', title: 'Analyse des besoins techniques' },
-  { number: '02', title: 'Étude de faisabilité & plan 3D' },
-  { number: '03', title: 'Devis détaillé poste par poste' },
+  { number: '01', title: 'Analyse du besoin' },
+  { number: '02', title: 'Préparation technique' },
+  { number: '03', title: 'Installation & exploitation' },
 ];
 
 export function ContactIntroPanel() {
@@ -11,14 +11,15 @@ export function ContactIntroPanel() {
     <div className="flex flex-col gap-8 text-[#171717]">
       <div className="space-y-3">
         <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#f36b21]">Votre projet</p>
-        <h2 className="text-3xl font-extrabold leading-[1.05] tracking-tight text-[#050505]">
-          VOTRE
+        <h2 className="font-helvetica text-3xl font-bold leading-[1.05] tracking-display text-[#050505] sm:text-4xl">
+          Parlons de votre
           <br />
-          PROJET
+          événement
         </h2>
         <p className="max-w-xl text-base leading-relaxed text-[#6f6a63]">
-          Décrivez votre événement, vos contraintes et vos attentes techniques. Nous orchestrons la
-          coordination son, lumière, vidéo et régie pour un déploiement impeccable, quelle que soit l’échelle.
+          Décrivez votre événement, votre lieu, vos contraintes et le rendu attendu. Nous vous
+          accompagnons de la préparation technique à l’exploitation sur site, avec une exécution
+          fluide et fiable.
         </p>
       </div>
 
@@ -27,10 +28,9 @@ export function ContactIntroPanel() {
           Contact direct
         </p>
         <div className="mt-3 space-y-2 text-[#171717]">
-          <Link href="mailto:contact@sndrush.com" className="text-base font-semibold hover:text-[#f36b21]">
-            contact@sndrush.com
+          <Link href="mailto:devis@guylocationevents.com" className="text-base font-semibold hover:text-[#f36b21]">
+            devis@guylocationevents.com
           </Link>
-          <div className="text-sm text-[#6f6a63]">+33 123 45 67 89</div>
         </div>
       </div>
 

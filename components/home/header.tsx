@@ -14,6 +14,7 @@ import { useHomeLocale } from '@/contexts/HomeLocaleContext';
 import { HOME_LANGUAGE_OPTIONS, type HomeLocale } from '@/data/home-i18n';
 import { cn } from '@/lib/utils';
 import { SndrushMark } from '@/components/home/sndrush-mark';
+import QuoteCtaLink from '@/components/home/quote-cta-link';
 
 const LANG_TRIGGER_CLASS =
   'h-10 gap-2 rounded-sm px-2 text-white hover:bg-white/12 hover:text-white focus-visible:bg-white/12 focus-visible:text-white data-[state=open]:bg-white/12 data-[state=open]:text-white sm:h-11 sm:gap-2.5 sm:px-2.5 [&_svg]:text-white';
@@ -80,7 +81,7 @@ function HeaderLanguageMenu() {
 }
 
 export default function Header() {
-  const { copy } = useHomeLocale();
+  const { copy, locale } = useHomeLocale();
 
   const navItems: { href: string; label: string }[] = [
     { href: '#expertises', label: copy.header.expertises },
@@ -113,12 +114,12 @@ export default function Header() {
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <HeaderLanguageMenu />
 
-          <Link
+          <QuoteCtaLink
             href="/contact"
-            className="whitespace-nowrap rounded-sm bg-[#f36b21] px-3 py-2 font-helvetica text-xs font-bold tracking-[0.04em] text-white transition-colors hover:bg-[#ff7a33] sm:px-6 sm:py-3 sm:text-sm"
-          >
-            {copy.header.cta}
-          </Link>
+            label={copy.header.cta}
+            shortLabel={locale === 'fr' ? 'Devis' : 'Quote'}
+            size="compact"
+          />
         </div>
       </div>
     </header>

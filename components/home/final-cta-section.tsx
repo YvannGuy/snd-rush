@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useHomeLocale } from '@/contexts/HomeLocaleContext';
+import QuoteCtaLink from '@/components/home/quote-cta-link';
 
 export default function FinalCTASection() {
   const { copy } = useHomeLocale();
@@ -16,12 +16,11 @@ export default function FinalCTASection() {
             {[c.line1, c.line2, c.line3].join(' ')}
           </h2>
         </div>
-        <Link
+        <QuoteCtaLink
           href="mailto:contact@guylocationevents.com"
-          className="mt-9 inline-flex rounded-sm bg-[#f36b21] px-7 py-3 font-helvetica text-xs font-bold tracking-display text-white transition-colors hover:bg-[#ff7a33] sm:text-sm"
-        >
-          {c.button}
-        </Link>
+          label={c.button}
+          className="mt-9"
+        />
       </div>
     </section>
   );

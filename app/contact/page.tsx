@@ -21,7 +21,7 @@ export default function ContactPage() {
       <TrustStrip />
 
       <section className="bg-[#f3efe9]" id="contact">
-        <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-10 px-4 py-12 sm:px-8 sm:py-16 lg:grid-cols-[0.95fr_1.2fr] lg:gap-20 lg:px-12 lg:py-20">
+        <div className="mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[0.95fr_1.2fr] lg:gap-20 lg:px-10 lg:py-20">
           <ContactIntroPanel />
           <QuoteRequestForm />
         </div>

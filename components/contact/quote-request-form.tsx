@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlertCircle, Check, Loader2, UploadCloud } from 'lucide-react';
+import { AlertCircle, ArrowRight, Check, Loader2, UploadCloud } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type ServiceKey = 'Son' | 'Lumière' | 'Écran LED' | 'Vidéo' | 'Régie audiovisuelle';
@@ -77,12 +77,29 @@ export function QuoteRequestForm() {
     setError(null);
     setSuccess(false);
 
-    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
-      setError('Merci de renseigner au minimum votre nom, email et message.');
+    if (!form.name.trim() || !form.email.trim()) {
+      setError('Merci de renseigner votre nom et votre e-mail.');
+      return;
+    }
+    if (
+      !form.eventType.trim() ||
+      !form.attendees.trim() ||
+      !form.date.trim() ||
+      !form.location.trim()
+    ) {
+      setError('Merci de compléter tous les champs de la section « Détail événement ».');
       return;
     }
     if (!form.services.length) {
       setError('Sélectionnez au moins une prestation requise.');
+      return;
+    }
+    if (!form.message.trim()) {
+      setError('Merci de décrire votre besoin dans le message.');
+      return;
+    }
+    if (!form.consent) {
+      setError('Merci d’accepter l’utilisation de vos données pour traiter votre demande.');
       return;
     }
     setIsSubmitting(true);
@@ -147,7 +164,7 @@ export function QuoteRequestForm() {
             required
           />
           <InputField
-            label="Société"
+            label="Société (optionnel)"
             value={form.company}
             onChange={(v) => handleChange('company', v)}
             placeholder="Votre structure"
@@ -161,7 +178,7 @@ export function QuoteRequestForm() {
             required
           />
           <InputField
-            label="Téléphone"
+            label="Téléphone (optionnel)"
             type="tel"
             value={form.phone}
             onChange={(v) => handleChange('phone', v)}
@@ -178,24 +195,28 @@ export function QuoteRequestForm() {
             value={form.eventType}
             onChange={(v) => handleChange('eventType', v)}
             placeholder="Concert, conférence, lancement..."
+            required
           />
           <InputField
             label="Nombre de participants"
             value={form.attendees}
             onChange={(v) => handleChange('attendees', v)}
             placeholder="ex : 1 000"
+            required
           />
           <InputField
             label="Date désirée"
             value={form.date}
             onChange={(v) => handleChange('date', v)}
             placeholder="JJ/MM/AAAA"
+            required
           />
           <InputField
             label="Lieu / ville"
             value={form.location}
             onChange={(v) => handleChange('location', v)}
             placeholder="Paris, Lyon..."
+            required
           />
         </div>
 
@@ -298,10 +319,22 @@ export function QuoteRequestForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-3 rounded-sm bg-[#f36b21] px-6 py-4 text-sm font-bold tracking-[0.08em] text-white transition hover:bg-[#ff7a33] disabled:opacity-70"
+          className="group inline-flex w-full items-center justify-center rounded-full border-2 border-[#f36b21] bg-[#f36b21] px-6 py-3 text-white transition-[padding,background-color,border-color] duration-600 ease-[cubic-bezier(0.25,0.1,0.25,1)] hover:border-[#ff7a33] hover:bg-[#ff7a33] hover:px-8 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:px-8 sm:py-3.5 sm:hover:px-10"
         >
-          {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
-          {isSubmitting ? 'Envoi en cours' : 'Lancer ma demande'}
+          {isSubmitting ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <>
+              <span className="font-helvetica text-xs font-bold uppercase tracking-[0.08em] sm:text-sm">
+                Lancer ma demande
+              </span>
+              <span className="mx-2 h-[2px] w-8 bg-current transition-[width] duration-600 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:w-16 sm:w-10 sm:group-hover:w-20" />
+              <ArrowRight
+                className="h-4 w-4 shrink-0 transition-transform duration-600 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:translate-x-0.5 sm:h-5 sm:w-5"
+                strokeWidth={2.2}
+              />
+            </>
+          )}
         </button>
       </form>
     </div>

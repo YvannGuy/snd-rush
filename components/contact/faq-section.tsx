@@ -36,11 +36,12 @@ export function FAQSection() {
 
   return (
     <section className="bg-[#f3efe9]" id="studio">
-      <div className="mx-auto w-full max-w-[880px] px-5 py-14 sm:px-8 lg:px-12 lg:py-20">
-        <h2 className="text-center text-sm font-semibold uppercase tracking-[0.2em] text-[#6f6a63]">
-          Questions fréquentes
-        </h2>
-        <div className="mt-8 divide-y divide-[#ddd6cd] border-t border-b border-[#ddd6cd]">
+      <div className="mx-auto w-full max-w-[1240px] px-5 py-14 sm:px-8 lg:px-10 lg:py-20">
+        <div className="mx-auto w-full max-w-[880px]">
+          <h2 className="text-center text-sm font-semibold uppercase tracking-[0.2em] text-[#6f6a63]">
+            Questions fréquentes
+          </h2>
+          <div className="mt-8 divide-y divide-[#ddd6cd] border-t border-b border-[#ddd6cd]">
           {faqs.map((faq, idx) => {
             const open = openIndex === idx;
             return (
@@ -65,6 +66,7 @@ export function FAQSection() {
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     </section>
