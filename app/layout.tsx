@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CartProvider } from "@/contexts/CartContext";
+import { HomeLocaleProvider } from "@/contexts/HomeLocaleContext";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import CookieBanner from "@/components/CookieBanner";
 // import ConditionalChatWidget from "@/components/ConditionalChatWidget"; // Masqué
@@ -158,7 +159,7 @@ export default function RootLayout({
       "https://www.facebook.com/sndrush/",
       "https://www.instagram.com/sndrush/",
       "https://www.tiktok.com/@snd.rush",
-      "https://www.linkedin.com/company/106547248"
+      "https://www.linkedin.com/company/sndrush/?viewAsMember=true"
     ]
   };
 
@@ -226,7 +227,7 @@ export default function RootLayout({
         </Script>
 
         <CartProvider>
-          {children}
+          <HomeLocaleProvider>{children}</HomeLocaleProvider>
           
           {/* Chatbox flottante - Masquée */}
           {/* <ConditionalChatWidget /> */}

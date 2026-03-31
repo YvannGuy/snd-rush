@@ -4,14 +4,25 @@ module.exports = {
     content: ["./{app,components,libs,pages,hooks}/**/*.{html,js,ts,jsx,tsx}"],
   theme: {
   	extend: {
+  		fontFamily: {
+  			helvetica: ['"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
+  		},
+  		letterSpacing: {
+  			display: '-0.035em',
+  		},
   		keyframes: {
   			fadeInUp: {
+  				'0%': { opacity: '0', transform: 'translateY(10px)' },
+  				'100%': { opacity: '1', transform: 'translateY(0)' },
+  			},
+  			testimonialIn: {
   				'0%': { opacity: '0', transform: 'translateY(10px)' },
   				'100%': { opacity: '1', transform: 'translateY(0)' },
   			},
   		},
   		animation: {
   			fadeInUp: 'fadeInUp 0.3s ease-out',
+  			'testimonial-in': 'testimonialIn 0.55s ease-out forwards',
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
