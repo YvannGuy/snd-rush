@@ -259,35 +259,33 @@ export function QuoteRequestForm() {
     setIsSubmitting(true);
 
     try {
-      let fileUrl: string | undefined;
+      const payload = {
+        name: form.name,
+        company: form.company,
+        email: form.email,
+        phone: form.phone.trim() ? `${form.phoneCountryCode} ${form.phone.trim()}` : '',
+        eventType: form.eventType,
+        attendees: form.attendees,
+        date: form.date,
+        location: form.location,
+        services: form.services,
+        message: form.message,
+        fileUrl: '' as const,
+      };
+
+      let res: Response;
       if (form.file) {
         const fd = new FormData();
+        fd.append('payload', JSON.stringify(payload));
         fd.append('file', form.file);
-        const uploadRes = await fetch('/api/contact/upload', { method: 'POST', body: fd });
-        if (!uploadRes.ok) {
-          throw new Error('upload');
-        }
-        const uploadJson = (await uploadRes.json()) as { url?: string };
-        fileUrl = uploadJson.url;
+        res = await fetch('/api/contact', { method: 'POST', body: fd });
+      } else {
+        res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
       }
-
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          company: form.company,
-          email: form.email,
-          phone: form.phone.trim() ? `${form.phoneCountryCode} ${form.phone.trim()}` : '',
-          eventType: form.eventType,
-          attendees: form.attendees,
-          date: form.date,
-          location: form.location,
-          services: form.services,
-          message: form.message,
-          fileUrl,
-        }),
-      });
 
       if (!res.ok) {
         throw new Error('submit');

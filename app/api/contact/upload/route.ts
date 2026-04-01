@@ -1,3 +1,7 @@
+/**
+ * Upload vers le bucket Supabase `contact-briefs` (optionnel).
+ * Le formulaire devis envoie désormais les fichiers en PJ via POST /api/contact (multipart).
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase-server';
 

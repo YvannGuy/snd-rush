@@ -209,7 +209,7 @@ export function SndrushAdminQuoteEmail({
                                       Télécharger
                                     </a>
                                   ) : (
-                                    <span style={{ color: colors.muted }}>Télécharger</span>
+                                    <span style={{ color: colors.muted }}>Pièce jointe à cet e-mail</span>
                                   )}
                                 </td>
                               </tr>
