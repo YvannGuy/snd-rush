@@ -1,9 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import Footer from '@/components/home/footer';
 import Header from '@/components/home/header';
+import ProjetCoverBlock from '@/components/home/projet-cover-block';
 import { useHomeLocale } from '@/contexts/HomeLocaleContext';
 import { resolveHomeContentLocale } from '@/data/home-i18n';
 import { getAllProjets, getProjetLocalized } from '@/data/projets';
@@ -35,20 +35,21 @@ export default function ProjetsIndexPage() {
               return (
               <li key={projet.slug}>
                 <article>
-                  <div className="mb-3 space-y-1.5">
-                    <p className="font-helvetica text-[10px] font-bold tracking-display text-[#050505]">
-                      {name}
-                    </p>
-                    <p className="text-sm leading-relaxed text-[#141414]/75">{description}</p>
-                  </div>
-                  <Link href={`/projets/${projet.slug}`} className="group block">
+                  <Link
+                    href={`/projets/${projet.slug}`}
+                    className="group block outline-none focus-visible:ring-2 focus-visible:ring-[#f36b21] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f3f0eb]"
+                  >
+                    <div className="mb-3 space-y-1.5">
+                      <p className="font-helvetica text-[10px] font-bold tracking-display text-[#050505]">
+                        {name}
+                      </p>
+                      <p className="text-sm leading-relaxed text-[#141414]/75">{description}</p>
+                    </div>
                     <div className="relative h-52 overflow-hidden bg-[#e8e4df] sm:h-72 lg:h-80">
-                      <Image
-                        src={projet.cover.src}
-                        alt={projet.cover.alt}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      <ProjetCoverBlock
+                        cover={projet.cover}
                         sizes="(max-width: 640px) 100vw, 50vw"
+                        imageClassName="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       />
                       <div className="pointer-events-none absolute inset-0 bg-black/10 transition-colors duration-300 group-hover:bg-black/[0.06]" />
                     </div>

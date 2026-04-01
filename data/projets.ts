@@ -2,14 +2,20 @@ export type ProjetMediaItem =
   | { type: 'image'; src: string; alt: string }
   | { type: 'video'; src: string };
 
+export type ProjetCover =
+  | { kind: 'image'; src: string; alt: string }
+  | { kind: 'wordmark'; text: string; alt: string };
+
 export type ProjetDefinition = {
   slug: string;
   name: string;
   description: string;
   nameEn: string;
   descriptionEn: string;
-  cover: { src: string; alt: string };
+  cover: ProjetCover;
   media: ProjetMediaItem[];
+  /** Si false : pas affiché sur la home / liste projets, URL détail en 404. */
+  listed?: boolean;
 };
 
 export function getProjetLocalized(
@@ -24,11 +30,11 @@ export function getProjetLocalized(
 export const PROJETS: ProjetDefinition[] = [
   {
     slug: 'nude-project',
-    name: 'Nude Project',
+    name: 'Showroom',
     description: 'Installation technique et accompagnement événementiel',
-    nameEn: 'Nude Project',
+    nameEn: 'Showroom',
     descriptionEn: 'Technical installation and on-site event support',
-    cover: { src: '/nude.jpg', alt: 'Nude Project — couverture' },
+    cover: { kind: 'wordmark', text: 'Showroom', alt: 'Showroom — couverture' },
     media: [
       { type: 'video', src: '/IMG_1689.MOV' },
       { type: 'video', src: '/IMG_1765.MOV' },
@@ -39,39 +45,25 @@ export const PROJETS: ProjetDefinition[] = [
   },
   {
     slug: 'soiree-live',
-    name: 'Soirée live',
+    name: 'Mariages',
     description: 'Son, lumière et régie sur site',
-    nameEn: 'Live evening',
+    nameEn: 'Weddings',
     descriptionEn: 'Sound, lighting and show control on site',
-    cover: {
-      src: 'https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?auto=format&fit=crop&w=1300&q=80',
-      alt: 'Soirée live',
-    },
+    cover: { kind: 'wordmark', text: 'Mariages', alt: 'Mariages — couverture' },
     media: [
-      {
-        type: 'image',
-        src: 'https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?auto=format&fit=crop&w=1400&q=80',
-        alt: 'Soirée live — ambiance',
-      },
-      {
-        type: 'image',
-        src: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1400&q=80',
-        alt: 'Soirée live — public',
-      },
-      {
-        type: 'image',
-        src: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1400&q=80',
-        alt: 'Soirée live — scène',
-      },
+      { type: 'video', src: '/videos/mariages-1.mp4' },
+      { type: 'video', src: '/videos/mariages-3.mp4' },
     ],
   },
   {
     slug: 'grand-festival',
+    listed: false,
     name: 'Grand festival',
     description: 'Déploiement technique pour grande capacité',
     nameEn: 'Major festival',
     descriptionEn: 'Technical deployment for large-capacity events',
     cover: {
+      kind: 'image',
       src: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1300&q=80',
       alt: 'Grand festival',
     },
@@ -95,11 +87,13 @@ export const PROJETS: ProjetDefinition[] = [
   },
   {
     slug: 'scene-monumentale',
+    listed: false,
     name: 'Scène monumentale',
     description: 'Installation et coordination technique complète',
     nameEn: 'Monumental stage',
     descriptionEn: 'Full technical installation and coordination',
     cover: {
+      kind: 'image',
       src: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=1300&q=80',
       alt: 'Scène monumentale',
     },
@@ -124,9 +118,11 @@ export const PROJETS: ProjetDefinition[] = [
 ];
 
 export function getProjetBySlug(slug: string): ProjetDefinition | undefined {
-  return PROJETS.find((p) => p.slug === slug);
+  const p = PROJETS.find((pr) => pr.slug === slug);
+  if (!p || p.listed === false) return undefined;
+  return p;
 }
 
 export function getAllProjets(): ProjetDefinition[] {
-  return PROJETS;
+  return PROJETS.filter((p) => p.listed !== false);
 }

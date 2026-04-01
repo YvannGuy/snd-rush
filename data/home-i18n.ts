@@ -158,12 +158,12 @@ const FR: HomeCopy = {
     cap2: 'Productions de grande ampleur',
     cap2Detail:
       'Des dispositifs adaptés aux événements à forte jauge, aux lieux exigeants et aux organisations plus complexes.',
-    imgAlt1: 'Événement soigné et prestation sur mesure',
+    imgAlt1: 'Console de mixage en régie, groupe sur scène en arrière-plan',
     imgAlt2: 'Production événementielle de grande ampleur',
   },
   stats: [
-    { figure: '8+', label: 'Plus de 8 ans d’expérience' },
-    { figure: '100+', label: 'Plus de 100 événements accompagnés' },
+    { figure: '3+', label: 'ans d’expérience' },
+    { figure: '50+', label: 'événements accompagnés' },
     { figure: '10 000+', label: 'Capacité sur grands événements' },
   ],
   clients: { sectionLabel: 'Ils nous ont fait confiance' },
@@ -269,12 +269,12 @@ const EN: HomeCopy = {
     cap2: 'Large-scale productions',
     cap2Detail:
       'Setups suited to high-capacity events, demanding venues and more complex operations.',
-    imgAlt1: 'Polished event and bespoke technical setup',
+    imgAlt1: 'Mixing console at FOH, live band on stage in the background',
     imgAlt2: 'Large-scale event production',
   },
   stats: [
-    { figure: '8+', label: 'Over 8 years of experience' },
-    { figure: '100+', label: 'Over 100 events supported' },
+    { figure: '3+', label: 'years of experience' },
+    { figure: '50+', label: 'events supported' },
     { figure: '10,000+', label: 'Capacity for large-scale events' },
   ],
   clients: { sectionLabel: 'Trusted by clients and partners' },

@@ -32,10 +32,11 @@ export default function EventScaleSection() {
           <article>
             <div className="relative h-[360px] overflow-hidden bg-[#d8d3cc]">
               <Image
-                src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1200&q=80"
+                src="/event-scale-soignes.png"
                 alt={e.imgAlt1}
                 fill
-                className="object-cover"
+                className="object-cover object-center"
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
               <div className="absolute inset-0 bg-black/15" />
             </div>
@@ -50,7 +51,7 @@ export default function EventScaleSection() {
           <article>
             <div className="relative h-[360px] overflow-hidden bg-[#d8d3cc]">
               <Image
-                src="https://images.unsplash.com/photo-1503095396549-807759245b35?auto=format&fit=crop&w=1200&q=80"
+                src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=1200&q=80"
                 alt={e.imgAlt2}
                 fill
                 className="object-cover"
