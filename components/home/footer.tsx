@@ -40,6 +40,9 @@ export default function Footer() {
             <Link href="/politique-de-confidentialite" className={linkClass}>
               {copy.footer.confidentialite}
             </Link>
+            <Link href="/cgv" className={linkClass}>
+              {copy.footer.cgv}
+            </Link>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:pl-0">

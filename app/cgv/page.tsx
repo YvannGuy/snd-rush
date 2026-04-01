@@ -388,15 +388,15 @@ export default function CGVPage() {
                     <ul className="space-y-2 text-gray-700 ml-4">
                       <li className="flex items-start">
                         <span className="text-[#F2431E] mr-2">•</span>
-                        <span>Plus de 7 jours avant la date prévue : remboursement intégral du montant versé.</span>
+                        <span>Plus de 30 jours avant la date prévue : remboursement intégral du montant versé.</span>
                       </li>
                       <li className="flex items-start">
                         <span className="text-[#F2431E] mr-2">•</span>
-                        <span>Entre 3 et 7 jours avant : remboursement à hauteur de 50 %.</span>
+                        <span>Entre 30 et 15 jours avant : remboursement à hauteur de 50 %.</span>
                       </li>
                       <li className="flex items-start">
                         <span className="text-[#F2431E] mr-2">•</span>
-                        <span>Moins de 3 jours avant : aucun remboursement ne sera accordé.</span>
+                        <span>Moins de 15 jours avant : aucun remboursement ne sera accordé.</span>
                       </li>
                       <li className="flex items-start">
                         <span className="text-[#F2431E] mr-2">•</span>

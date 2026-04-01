@@ -71,6 +71,7 @@ export type HomeCopy = {
   footer: {
     mentions: string;
     confidentialite: string;
+    cgv: string;
     intranet: string;
     copyright: string;
   };
@@ -203,6 +204,7 @@ const FR: HomeCopy = {
   footer: {
     mentions: 'Mentions',
     confidentialite: 'Confidentialité',
+    cgv: 'CGV',
     intranet: 'Intranet',
     copyright: '© 2026 Sndrush Paris',
   },
@@ -316,6 +318,7 @@ const EN: HomeCopy = {
   footer: {
     mentions: 'Legal notice',
     confidentialite: 'Privacy',
+    cgv: 'T&Cs',
     intranet: 'Intranet',
     copyright: '© 2026 Sndrush Paris',
   },
@@ -428,6 +431,7 @@ const IT: HomeCopy = {
   footer: {
     mentions: 'Note legali',
     confidentialite: 'Privacy',
+    cgv: 'CGA',
     intranet: 'Intranet',
     copyright: '© 2026 Sndrush Paris',
   },
@@ -533,6 +537,7 @@ const ES: HomeCopy = {
   footer: {
     mentions: 'Aviso legal',
     confidentialite: 'Privacidad',
+    cgv: 'CGV',
     intranet: 'Intranet',
     copyright: '© 2026 Sndrush Paris',
   },
@@ -634,6 +639,7 @@ const ZH: HomeCopy = {
   footer: {
     mentions: '法律声明',
     confidentialite: '隐私',
+    cgv: '销售条款',
     intranet: '内网',
     copyright: '© 2026 Sndrush Paris',
   },

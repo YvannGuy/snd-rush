@@ -88,9 +88,9 @@ export function calculateRefundPolicy(eventDate: string | Date): {
   const diffTime = event.getTime() - now.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  if (diffDays > 7) {
+  if (diffDays > 30) {
     return { policy: 'FULL', daysUntilEvent: diffDays, refundPercentage: 100 };
-  } else if (diffDays >= 3 && diffDays <= 7) {
+  } else if (diffDays >= 15) {
     return { policy: 'HALF', daysUntilEvent: diffDays, refundPercentage: 50 };
   } else {
     return { policy: 'NONE', daysUntilEvent: diffDays, refundPercentage: 0 };
