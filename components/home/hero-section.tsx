@@ -9,7 +9,7 @@ export default function HeroSection() {
   const h = copy.hero;
 
   return (
-    <section className="relative isolate min-h-[78vh] overflow-hidden bg-[#050505] lg:min-h-[86vh]">
+    <section className="relative z-0 isolate -mt-20 min-h-[78vh] overflow-hidden bg-[#050505] sm:-mt-[88px] lg:-mt-24 lg:min-h-[86vh]">
       <Image
         src="/hero-background.png"
         alt={h.bgAlt}
@@ -21,7 +21,7 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/60 to-black/42" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 to-transparent" />
 
-      <div className="relative mx-auto flex w-full max-w-[1240px] px-5 pb-16 pt-24 sm:px-8 lg:px-10 lg:pb-24 lg:pt-32">
+      <div className="relative mx-auto flex w-full max-w-[1240px] px-5 pb-16 pt-44 sm:px-8 sm:pt-[11.5rem] lg:px-10 lg:pb-24 lg:pt-56">
         <div className="max-w-3xl">
           <p className="mb-5 font-helvetica text-sm font-bold tracking-display text-white/75 sm:text-base md:text-lg">
             {h.kicker}

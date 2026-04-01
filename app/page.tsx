@@ -15,39 +15,41 @@ import TestimonialSection from '@/components/home/testimonial-section';
 
 export default function HomePage() {
   return (
-    <div className="bg-[#050505] text-white">
+    <>
       <Header />
-      <main>
-        <HeroSection />
-        <SectionReveal>
-          <ExpertiseStrip />
-        </SectionReveal>
-        <SectionReveal>
-          <ServicesInteractivePanels />
-        </SectionReveal>
-        <SectionReveal>
-          <EventScaleSection />
-        </SectionReveal>
-        <SectionReveal>
-          <StatsSection />
-        </SectionReveal>
-        <SectionReveal>
-          <ClientLogosSection />
-        </SectionReveal>
-        <SectionReveal>
-          <PortfolioSection />
-        </SectionReveal>
-        <SectionReveal>
-          <TestimonialSection />
-        </SectionReveal>
-        <SectionReveal>
-          <MethodologySection />
-        </SectionReveal>
-        <SectionReveal>
-          <FinalCTASection />
-        </SectionReveal>
-      </main>
-      <Footer />
-    </div>
+      <div className="bg-[#050505] text-white">
+        <main>
+          <HeroSection />
+          <SectionReveal>
+            <ExpertiseStrip />
+          </SectionReveal>
+          <SectionReveal>
+            <ServicesInteractivePanels />
+          </SectionReveal>
+          <SectionReveal>
+            <EventScaleSection />
+          </SectionReveal>
+          <SectionReveal>
+            <StatsSection />
+          </SectionReveal>
+          <SectionReveal>
+            <ClientLogosSection />
+          </SectionReveal>
+          <SectionReveal>
+            <PortfolioSection />
+          </SectionReveal>
+          <SectionReveal>
+            <TestimonialSection />
+          </SectionReveal>
+          <SectionReveal>
+            <MethodologySection />
+          </SectionReveal>
+          <SectionReveal>
+            <FinalCTASection />
+          </SectionReveal>
+        </main>
+        <Footer />
+      </div>
+    </>
   );
 }
