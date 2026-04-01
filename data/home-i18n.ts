@@ -13,8 +13,11 @@ export const HOME_LANGUAGE_OPTIONS: Array<{
 ];
 
 /** Contenu affiché : IT/ES/ZH réutilisent l’anglais (comme le header principal). */
-export function resolveHomeContentLocale(locale: HomeLocale): 'fr' | 'en' {
-  return locale === 'fr' ? 'fr' : 'en';
+export function resolveHomeContentLocale(locale: HomeLocale): 'fr' | 'en' | 'it' | 'es' | 'zh' {
+  if (locale === 'fr' || locale === 'en' || locale === 'it' || locale === 'es' || locale === 'zh') {
+    return locale;
+  }
+  return 'en';
 }
 
 export type HomeCopy = {
@@ -325,7 +328,325 @@ const EN: HomeCopy = {
   projectDetail: { back: '← Work' },
 };
 
-const COPIES: Record<'fr' | 'en', HomeCopy> = { fr: FR, en: EN };
+const IT: HomeCopy = {
+  header: {
+    expertises: 'Competenze',
+    realisations: 'Progetti',
+    methodologie: 'Metodo',
+    contact: 'Contatto',
+    cta: 'Richiedi un preventivo',
+  },
+  hero: {
+    kicker: 'Sndrush Paris · Audio, luci, LED, AV, foto, video e regia',
+    titleLine1: 'Orchestri',
+    titleLine1Accent: 'il tuo evento',
+    titleLine2: 'da A a Z',
+    body:
+      'Concerti, conferenze, matrimoni, eventi corporate o grandi platee: Sndrush gestisce audio, luci, schermi LED, AV, foto, video e regia per un risultato professionale, fluido e affidabile.',
+    cta: 'Richiedi un preventivo',
+    note: 'Parigi · Île-de-France · Francia · Europa su richiesta',
+    bgAlt: 'Crew tecnica e regia, concerto live e pubblico',
+  },
+  expertiseStrip: 'Audio · Luci · Schermi LED · AV · Foto · Video · Regia',
+  servicesTitle: 'I nostri servizi',
+  services: [
+    {
+      title: 'Audio',
+      description:
+        'Configuriamo il sistema audio adatto al tuo evento, dai formati intimi alle grandi platee.',
+    },
+    {
+      title: 'Luci',
+      description: 'Progettiamo la luce per valorizzare venue, palco e pubblico.',
+    },
+    {
+      title: 'Schermi LED & AV',
+      description:
+        'Installiamo schermi LED e soluzioni AV per mostrare i contenuti con chiarezza e impatto.',
+    },
+    {
+      title: 'Foto & video',
+      description:
+        'Copriamo l’evento in foto e video per catturare i momenti chiave e produrre contenuti di qualità.',
+    },
+    {
+      title: 'Regia tecnica',
+      description:
+        'Coordiniamo l’intero setup prima e durante l’evento per garantire fluidità e affidabilità.',
+    },
+  ],
+  eventScale: {
+    titleLine1: 'Da formati intimi a',
+    titleLine2: 'produzioni su larga scala',
+    titleLine3: '',
+    body:
+      'Supportiamo eventi eleganti in piccolo comitato e produzioni tecniche complesse ad alta capienza.',
+    bodyClosing:
+      'L’obiettivo resta invariato: setup affidabile, resa pulita ed esecuzione senza stress.',
+    cap1: 'Eventi curati e su misura',
+    cap1Detail:
+      'Audio, luci, AV, foto, schermi LED e regia per eventi che richiedono precisione, fluidità ed esecuzione impeccabile.',
+    cap2: 'Produzioni di grande scala',
+    cap2Detail:
+      'Setup adatti a grandi platee, venue esigenti e organizzazioni complesse.',
+    imgAlt1: 'Console di mixaggio in regia, band live sullo sfondo',
+    imgAlt2: 'Produzione evento di grande scala',
+  },
+  stats: [
+    { figure: '3+', label: 'Anni di esperienza' },
+    { figure: '50+', label: 'Eventi seguiti' },
+    { figure: '10.000+', label: 'Capienza su grandi eventi' },
+  ],
+  clients: { sectionLabel: 'Ci hanno scelto' },
+  portfolio: { title: 'I nostri progetti', viewProject: 'Vedi progetto' },
+  methodology: {
+    title: 'Come lavoriamo',
+    steps: [
+      {
+        title: 'Analisi del bisogno',
+        description:
+          'Parliamo di evento, venue, vincoli e resa attesa.',
+      },
+      {
+        title: 'Preparazione tecnica',
+        description:
+          'Definiamo l’attrezzatura, l’installazione e l’organizzazione più adatte.',
+      },
+      {
+        title: 'Installazione & conduzione',
+        description:
+          'Installiamo, eseguiamo i settaggi e supervisioniamo il live.',
+      },
+    ],
+  },
+  finalCta: {
+    line1: 'Parliamo del',
+    line2: 'tuo',
+    line3: 'evento',
+    button: 'Richiedi un preventivo',
+  },
+  footer: {
+    mentions: 'Note legali',
+    confidentialite: 'Privacy',
+    intranet: 'Intranet',
+    copyright: '© 2026 Sndrush Paris',
+  },
+  projectsIndex: {
+    title: 'I nostri progetti',
+    intro: 'Alcuni esempi di intervento — apri una scheda per la gallery.',
+    viewProject: 'Vedi progetto',
+    back: '← Progetti',
+  },
+  projectDetail: { back: '← Progetti' },
+};
+
+const ES: HomeCopy = {
+  header: {
+    expertises: 'Expertise',
+    realisations: 'Proyectos',
+    methodologie: 'Método',
+    contact: 'Contacto',
+    cta: 'Pedir presupuesto',
+  },
+  hero: {
+    kicker: 'Sndrush Paris · Sonido, luces, AV, foto, video y regiduría',
+    titleLine1: 'Orquestamos',
+    titleLine1Accent: 'tu evento',
+    titleLine2: 'de principio a fin',
+    body:
+      'Conciertos, conferencias, bodas, eventos corporativos o grandes aforos: Sndrush gestiona sonido, luces, LED, AV, foto, video y regiduría con una operación clara y fiable.',
+    cta: 'Pedir presupuesto',
+    note: 'París · Île-de-France · Francia · Europa según el proyecto',
+    bgAlt: 'Equipo técnico en regiduría, concierto y público',
+  },
+  expertiseStrip: 'Sonido · Luces · Pantallas LED · AV · Foto · Video · Regiduría',
+  servicesTitle: 'Nuestros servicios',
+  services: [
+    {
+      title: 'Sonido',
+      description: 'Instalamos el sistema sonoro adecuado, de formatos íntimos a grandes aforos.',
+    },
+    {
+      title: 'Iluminación',
+      description: 'Diseñamos la luz para el espacio, el escenario y el público.',
+    },
+    {
+      title: 'Pantallas LED & AV',
+      description: 'Montamos LED y soluciones AV para mostrar contenido con claridad e impacto.',
+    },
+    {
+      title: 'Foto & video',
+      description: 'Cubrimos el evento en foto y video para contenidos de calidad.',
+    },
+    {
+      title: 'Regiduría técnica',
+      description: 'Coordinamos todo el setup antes y durante el evento para máxima fluidez.',
+    },
+  ],
+  eventScale: {
+    titleLine1: 'De formatos íntimos a',
+    titleLine2: 'producciones a gran escala',
+    titleLine3: '',
+    body:
+      'Acompañamos tanto eventos elegantes en pequeño comité como producciones técnicas complejas.',
+    bodyClosing:
+      'Objetivo: setup fiable, resultado pulido y ejecución sin estrés.',
+    cap1: 'Eventos cuidados y a medida',
+    cap1Detail:
+      'Sonido, luces, AV, foto, pantallas LED y regiduría para eventos que exigen precisión y fluidez.',
+    cap2: 'Grandes producciones',
+    cap2Detail:
+      'Setups pensados para grandes aforos, venues exigentes y operaciones complejas.',
+    imgAlt1: 'Mesa de mezcla en FOH, banda en directo al fondo',
+    imgAlt2: 'Producción de evento a gran escala',
+  },
+  stats: [
+    { figure: '3+', label: 'Años de experiencia' },
+    { figure: '50+', label: 'Eventos acompañados' },
+    { figure: '10.000+', label: 'Capacidad para grandes eventos' },
+  ],
+  clients: { sectionLabel: 'Nos han elegido' },
+  portfolio: { title: 'Nuestros proyectos', viewProject: 'Ver proyecto' },
+  methodology: {
+    title: 'Cómo trabajamos',
+    steps: [
+      {
+        title: 'Análisis de la necesidad',
+        description: 'Hablamos de evento, venue, restricciones y resultado esperado.',
+      },
+      {
+        title: 'Preparación técnica',
+        description: 'Definimos equipo, instalación y organización óptimos.',
+      },
+      {
+        title: 'Instalación & operación',
+        description: 'Instalamos, ajustamos y supervisamos el directo.',
+      },
+    ],
+  },
+  finalCta: {
+    line1: 'Hablemos de',
+    line2: 'tu',
+    line3: 'evento',
+    button: 'Pedir presupuesto',
+  },
+  footer: {
+    mentions: 'Aviso legal',
+    confidentialite: 'Privacidad',
+    intranet: 'Intranet',
+    copyright: '© 2026 Sndrush Paris',
+  },
+  projectsIndex: {
+    title: 'Nuestros proyectos',
+    intro: 'Algunos ejemplos — abre una ficha para ver la galería.',
+    viewProject: 'Ver proyecto',
+    back: '← Proyectos',
+  },
+  projectDetail: { back: '← Proyectos' },
+};
+
+const ZH: HomeCopy = {
+  header: {
+    expertises: '服务',
+    realisations: '案例',
+    methodologie: '方法',
+    contact: '联系',
+    cta: '索取报价',
+  },
+  hero: {
+    kicker: 'Sndrush Paris · 音响 · 灯光 · LED · 视听 · 摄影 · 视频 · 统筹',
+    titleLine1: '我们为你统筹',
+    titleLine1Accent: '整场活动',
+    titleLine2: '端到端',
+    body:
+      '音乐会、会议、婚礼、企业活动或大型现场：Sndrush 负责音响、灯光、LED、视听、摄影、视频与统筹，流程清晰、可靠。',
+    cta: '索取报价',
+    note: '巴黎 · 法国 · 欧洲（视项目而定）',
+    bgAlt: '技术团队与控台，现场演出与观众',
+  },
+  expertiseStrip: '音响 · 灯光 · LED · 视听 · 摄影 · 视频 · 统筹',
+  servicesTitle: '我们的服务',
+  services: [
+    {
+      title: '音响',
+      description: '为小型到大规模活动配置合适的扩声系统。',
+    },
+    {
+      title: '灯光',
+      description: '为场地、舞台与观众设计光线氛围。',
+    },
+    {
+      title: 'LED 与视听',
+      description: '安装 LED 与 AV 方案，确保内容清晰、有冲击力。',
+    },
+    {
+      title: '摄影与视频',
+      description: '全程摄影摄像，交付高质量内容。',
+    },
+    {
+      title: '技术统筹',
+      description: '演前到演中全链路协调，保证流畅与可靠。',
+    },
+  ],
+  eventScale: {
+    titleLine1: '从小型到',
+    titleLine2: '大型制作',
+    titleLine3: '',
+    body: '既支持精致小型活动，也擅长复杂的大型技术制作。',
+    bodyClosing: '目标不变：可靠配置、干净呈现、无压力执行。',
+    cap1: '精致与定制',
+    cap1Detail: '音响、灯光、AV、摄影、LED、统筹——精度与流畅兼顾。',
+    cap2: '大规模制作',
+    cap2Detail: '面向高容量、苛刻场地与复杂运营的方案。',
+    imgAlt1: '前场调音台，台上乐队演出',
+    imgAlt2: '大型活动制作',
+  },
+  stats: [
+    { figure: '3+', label: '年经验' },
+    { figure: '50+', label: '场活动' },
+    { figure: '10,000+', label: '大型容量' },
+  ],
+  clients: { sectionLabel: '客户与合作伙伴' },
+  portfolio: { title: '我们的案例', viewProject: '查看项目' },
+  methodology: {
+    title: '我们的方式',
+    steps: [
+      {
+        title: '需求分析',
+        description: '沟通活动、场地、限制与预期效果。',
+      },
+      {
+        title: '技术筹备',
+        description: '确定设备、布置与组织方式。',
+      },
+      {
+        title: '安装与执行',
+        description: '安装、调试并监督现场执行。',
+      },
+    ],
+  },
+  finalCta: {
+    line1: '聊聊',
+    line2: '你的',
+    line3: '活动',
+    button: '索取报价',
+  },
+  footer: {
+    mentions: '法律声明',
+    confidentialite: '隐私',
+    intranet: '内网',
+    copyright: '© 2026 Sndrush Paris',
+  },
+  projectsIndex: {
+    title: '我们的案例',
+    intro: '一些示例——打开卡片查看图库。',
+    viewProject: '查看项目',
+    back: '← 案例',
+  },
+  projectDetail: { back: '← 案例' },
+};
+
+const COPIES: Record<'fr' | 'en' | 'it' | 'es' | 'zh', HomeCopy> = { fr: FR, en: EN, it: IT, es: ES, zh: ZH };
 
 export function getHomeCopy(locale: HomeLocale): HomeCopy {
   return COPIES[resolveHomeContentLocale(locale)];

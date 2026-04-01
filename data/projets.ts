@@ -1,3 +1,5 @@
+import { type HomeLocale, resolveHomeContentLocale } from '@/data/home-i18n';
+
 export type ProjetMediaItem =
   | { type: 'image'; src: string; alt: string }
   | { type: 'video'; src: string };
@@ -20,9 +22,10 @@ export type ProjetDefinition = {
 
 export function getProjetLocalized(
   projet: ProjetDefinition,
-  locale: 'fr' | 'en'
+  locale: HomeLocale
 ): { name: string; description: string } {
-  return locale === 'en'
+  const lang = resolveHomeContentLocale(locale);
+  return lang === 'en'
     ? { name: projet.nameEn, description: projet.descriptionEn }
     : { name: projet.name, description: projet.description };
 }

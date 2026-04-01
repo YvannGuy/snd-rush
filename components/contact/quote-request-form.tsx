@@ -3,8 +3,10 @@
 import { useMemo, useState } from 'react';
 import { AlertCircle, ArrowRight, Check, Loader2, UploadCloud } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useHomeLocale } from '@/contexts/HomeLocaleContext';
+import { getContactCopy } from '@/data/contact-i18n';
 
-type ServiceKey = 'Son' | 'Lumière' | 'Écran LED' | 'Vidéo' | 'Régie audiovisuelle';
+type ServiceKey = string;
 
 type FormState = {
   name: string;
@@ -20,8 +22,6 @@ type FormState = {
   file?: File;
   consent: boolean;
 };
-
-const serviceOptions: ServiceKey[] = ['Son', 'Lumière', 'Écran LED', 'Vidéo', 'Régie audiovisuelle'];
 
 const initialForm: FormState = {
   name: '',
@@ -39,14 +39,20 @@ const initialForm: FormState = {
 };
 
 export function QuoteRequestForm() {
+  const { locale } = useHomeLocale();
+  const copy = getContactCopy(locale).form;
+  const serviceOptions: ServiceKey[] = copy.servicesOptions;
   const [form, setForm] = useState<FormState>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const servicesLabel = useMemo(
-    () => (form.services.length ? `${form.services.length} sélectionnée(s)` : 'Sélectionnez vos prestations'),
-    [form.services.length]
+    () =>
+      form.services.length
+        ? copy.selectedServices.replace('{count}', String(form.services.length))
+        : copy.selectServices,
+    [copy.selectedServices, copy.selectServices, form.services.length]
   );
 
   const toggleService = (key: ServiceKey) => {
@@ -66,7 +72,7 @@ export function QuoteRequestForm() {
   const handleFileChange = (file?: File) => {
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
-      setError('Fichier trop volumineux (10 Mo max).');
+      setError(copy.errors.fileTooLarge);
       return;
     }
     handleChange('file', file);
@@ -78,7 +84,7 @@ export function QuoteRequestForm() {
     setSuccess(false);
 
     if (!form.name.trim() || !form.email.trim()) {
-      setError('Merci de renseigner votre nom et votre e-mail.');
+      setError(copy.errors.requiredIdentity);
       return;
     }
     if (
@@ -87,19 +93,19 @@ export function QuoteRequestForm() {
       !form.date.trim() ||
       !form.location.trim()
     ) {
-      setError('Merci de compléter tous les champs de la section « Détail événement ».');
+      setError(copy.errors.requiredEvent);
       return;
     }
     if (!form.services.length) {
-      setError('Sélectionnez au moins une prestation requise.');
+      setError(copy.errors.requiredServices);
       return;
     }
     if (!form.message.trim()) {
-      setError('Merci de décrire votre besoin dans le message.');
+      setError(copy.errors.requiredMessage);
       return;
     }
     if (!form.consent) {
-      setError('Merci d’accepter l’utilisation de vos données pour traiter votre demande.');
+      setError(copy.errors.consent);
       return;
     }
     setIsSubmitting(true);
@@ -143,7 +149,7 @@ export function QuoteRequestForm() {
       setForm(initialForm);
     } catch (err) {
       console.error(err);
-      setError("Une erreur est survenue. Merci de réessayer ou de nous contacter directement.");
+      setError(copy.errors.submit);
     } finally {
       setIsSubmitting(false);
     }
@@ -153,76 +159,82 @@ export function QuoteRequestForm() {
     <div className="rounded-sm border border-[#ddd6cd] bg-[#fbf9f5] p-5 shadow-[0_22px_80px_rgba(0,0,0,0.06)] sm:p-9">
       <form onSubmit={handleSubmit} className="space-y-10 text-[#171717]">
         <div className="space-y-2">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#f36b21]">01. Coordonnées</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#f36b21]">
+            {copy.sections.contact}
+          </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <InputField
-            label="Nom complet"
+            label={copy.labels.name}
             value={form.name}
             onChange={(v) => handleChange('name', v)}
-            placeholder="Nom Prénom"
+            placeholder={copy.placeholders.name}
             required
           />
           <InputField
-            label="Société (optionnel)"
+            label={copy.labels.company}
             value={form.company}
             onChange={(v) => handleChange('company', v)}
-            placeholder="Votre structure"
+            placeholder={copy.placeholders.company}
           />
           <InputField
-            label="E-mail professionnel"
+            label={copy.labels.email}
             type="email"
             value={form.email}
             onChange={(v) => handleChange('email', v)}
-            placeholder="email@entreprise.com"
+            placeholder={copy.placeholders.email}
             required
           />
           <InputField
-            label="Téléphone (optionnel)"
+            label={copy.labels.phone}
             type="tel"
             value={form.phone}
             onChange={(v) => handleChange('phone', v)}
-            placeholder="+33 ..."
+            placeholder={copy.placeholders.phone}
           />
         </div>
 
         <div className="space-y-2">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#f36b21]">02. Détail événement</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#f36b21]">
+            {copy.sections.event}
+          </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <InputField
-            label="Type d’événement"
+            label={copy.labels.eventType}
             value={form.eventType}
             onChange={(v) => handleChange('eventType', v)}
-            placeholder="Concert, conférence, lancement..."
+            placeholder={copy.placeholders.eventType}
             required
           />
           <InputField
-            label="Nombre de participants"
+            label={copy.labels.attendees}
             value={form.attendees}
             onChange={(v) => handleChange('attendees', v)}
-            placeholder="ex : 1 000"
+            placeholder={copy.placeholders.attendees}
             required
           />
           <InputField
-            label="Date désirée"
+            label={copy.labels.date}
             value={form.date}
             onChange={(v) => handleChange('date', v)}
-            placeholder="JJ/MM/AAAA"
+            placeholder={copy.placeholders.date}
             required
           />
           <InputField
-            label="Lieu / ville"
+            label={copy.labels.location}
             value={form.location}
             onChange={(v) => handleChange('location', v)}
-            placeholder="Paris, Lyon..."
+            placeholder={copy.placeholders.location}
             required
           />
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#f36b21]">03. Prestations requises</p>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#f36b21]">
+              {copy.sections.services}
+            </p>
             <span className="text-xs text-[#6f6a63]">{servicesLabel}</span>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -249,12 +261,12 @@ export function QuoteRequestForm() {
 
         <div className="space-y-3">
           <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#f36b21]">
-            Message / besoins spécifiques
+            {copy.sections.message}
           </p>
           <textarea
             value={form.message}
             onChange={(e) => handleChange('message', e.target.value)}
-            placeholder="Détaillez votre vision ici…"
+            placeholder={copy.placeholders.message}
             rows={5}
             className="w-full rounded-sm border border-[#ddd6cd] bg-white px-4 py-3 text-sm text-[#171717] placeholder:text-[#6f6a63] focus:border-[#f36b21] focus:outline-none"
             required
@@ -262,7 +274,9 @@ export function QuoteRequestForm() {
         </div>
 
         <div className="space-y-3">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#f36b21]">Documents techniques (PDF, DWG)</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#f36b21]">
+            {copy.sections.files}
+          </p>
           <label
             htmlFor="file-upload"
             className="flex cursor-pointer items-center justify-between gap-3 rounded-sm border border-dashed border-[#ddd6cd] bg-[#fbf9f5] px-4 py-4 text-sm text-[#6f6a63] transition hover:border-[#f36b21] hover:bg-white"
@@ -271,13 +285,13 @@ export function QuoteRequestForm() {
               <UploadCloud className="h-5 w-5 text-[#f36b21]" />
               <div className="flex flex-col">
                 <span className="font-semibold text-[#171717]">
-                  {form.file ? form.file.name : 'Déposez votre brief ou plan (PDF, DWG, PNG)'}
+                  {form.file ? form.file.name : copy.labels.fileDrop}
                 </span>
-                <span className="text-xs text-[#6f6a63]">10 Mo max</span>
+                <span className="text-xs text-[#6f6a63]">{copy.labels.fileHint}</span>
               </div>
             </div>
             <span className="rounded-sm bg-[#f3efe9] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#171717]">
-              Parcourir
+              {copy.labels.browse}
             </span>
             <input
               id="file-upload"
@@ -299,7 +313,7 @@ export function QuoteRequestForm() {
             required
           />
           <label htmlFor="consent" className="text-sm text-[#6f6a63]">
-            J’accepte que mes données soient utilisées pour traiter ma demande de devis.
+            {copy.labels.consent}
           </label>
         </div>
 
@@ -312,7 +326,7 @@ export function QuoteRequestForm() {
         {success && (
           <div className="flex items-center gap-2 rounded-sm border border-emerald-500/40 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             <Check className="h-4 w-4" />
-            <span>Demande envoyée. Nous revenons vers vous sous 24h.</span>
+            <span>{copy.success}</span>
           </div>
         )}
 
@@ -326,7 +340,7 @@ export function QuoteRequestForm() {
           ) : (
             <>
               <span className="font-helvetica text-xs font-bold uppercase tracking-[0.08em] sm:text-sm">
-                Lancer ma demande
+                {copy.cta}
               </span>
               <span className="mx-2 h-[2px] w-8 bg-current transition-[width] duration-600 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:w-16 sm:w-10 sm:group-hover:w-20" />
               <ArrowRight

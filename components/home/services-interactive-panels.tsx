@@ -8,27 +8,27 @@ import { cn } from '@/lib/utils';
 
 const PANEL_MEDIA: { image: string; altFr: string; altEn: string }[] = [
   {
-    image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1400&q=80',
+    image: '/services/sono.png',
     altFr: 'Sonorisation événementielle',
     altEn: 'Event sound reinforcement',
   },
   {
-    image: 'https://images.unsplash.com/photo-1508606572321-901ea443707f?auto=format&fit=crop&w=1400&q=80',
+    image: '/services/lumiere.png',
     altFr: 'Éclairage scénique',
     altEn: 'Stage lighting',
   },
   {
-    image: 'https://images.unsplash.com/photo-1501973801540-537f08ccae7b?auto=format&fit=crop&w=1400&q=80',
+    image: '/services/murled.png',
     altFr: 'Mur LED et solutions audiovisuelles',
     altEn: 'LED wall and AV solutions',
   },
   {
-    image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1400&q=80',
+    image: '/services/photo.png',
     altFr: 'Prise de vue photo et vidéo',
     altEn: 'Photo and video capture',
   },
   {
-    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1400&q=80',
+    image: '/services/regie.png',
     altFr: 'Régie technique et pilotage',
     altEn: 'Technical direction and show control',
   },
