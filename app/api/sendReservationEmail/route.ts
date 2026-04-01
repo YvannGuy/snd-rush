@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { checkContactRateLimit, getClientIp } from '@/lib/ratelimit';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
+  const { success: rateLimitOk } = await checkContactRateLimit(getClientIp(req));
+  if (!rateLimitOk) {
+    return NextResponse.json({ error: 'Trop de requêtes, merci de patienter.' }, { status: 429 });
+  }
+
   // Vérifier les variables d'environnement
   if (!process.env.RESEND_API_KEY) {
     console.error('❌ RESEND_API_KEY manquante dans les variables d\'environnement');

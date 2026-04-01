@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { generateTokenWithHash } from '@/lib/token';
+import { BASE_PACKS } from '@/lib/packs/basePacks';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil',
@@ -95,6 +96,28 @@ export async function POST(req: NextRequest) {
     if (!deposit_amount || deposit_amount <= 0) {
       return NextResponse.json({ error: 'deposit_amount invalide' }, { status: 400 });
     }
+
+    // ── Validation des prix côté serveur ──────────────────────────────────────
+    // Vérifier que le price_total est au moins égal au prix plancher du pack
+    const basePack = BASE_PACKS[pack_key];
+    if (basePack && price_total < basePack.basePrice) {
+      console.warn(`[DIRECT-CHECKOUT] prix invalide: ${price_total}€ < plancher ${basePack.basePrice}€ pour ${pack_key}`);
+      return NextResponse.json(
+        { error: `Prix invalide pour ce pack (minimum ${basePack.basePrice}€)` },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier que deposit_amount représente bien ~30% du total (tolérance 20-40%)
+    const depositRatio = deposit_amount / price_total;
+    if (depositRatio < 0.20 || depositRatio > 0.40) {
+      console.warn(`[DIRECT-CHECKOUT] dépôt incohérent: ${deposit_amount}€ / ${price_total}€ = ${(depositRatio * 100).toFixed(0)}%`);
+      return NextResponse.json(
+        { error: 'Montant de l\'acompte incohérent avec le total' },
+        { status: 400 }
+      );
+    }
+    // ──────────────────────────────────────────────────────────────────────────
 
     const startAt = new Date(start_at);
     const endAt = new Date(end_at);

@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resend } from '@/lib/resend';
+import { checkContactRateLimit, getClientIp } from '@/lib/ratelimit';
 
 export async function POST(request: NextRequest) {
+  const { success: rateLimitOk } = await checkContactRateLimit(getClientIp(request));
+  if (!rateLimitOk) {
+    return NextResponse.json({ error: 'Trop de requêtes, merci de patienter.' }, { status: 429 });
+  }
+
   try {
     const { email } = await request.json();
 
