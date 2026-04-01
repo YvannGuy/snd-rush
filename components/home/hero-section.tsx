@@ -27,7 +27,14 @@ export default function HeroSection() {
           </p>
 
           <h1 className="font-helvetica text-5xl font-bold leading-[0.92] tracking-display text-white sm:text-6xl md:text-7xl lg:text-[84px] xl:text-[96px]">
-            <span>{h.titleLine1}</span>
+            {h.titleLine1Accent ? (
+              <>
+                <span>{h.titleLine1}</span>{' '}
+                <span className="text-[#f36b21]">{h.titleLine1Accent}</span>
+              </>
+            ) : (
+              <span>{h.titleLine1}</span>
+            )}
             <br />
             {h.titleLine2}
           </h1>

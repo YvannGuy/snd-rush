@@ -12,9 +12,8 @@ export function ContactIntroPanel() {
       <div className="space-y-3">
         <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#f36b21]">Votre projet</p>
         <h2 className="font-helvetica text-3xl font-bold leading-[1.05] tracking-display text-[#050505] sm:text-4xl">
-          Parlons de votre
-          <br />
-          événement
+          Parlons de{' '}
+          <span className="text-[#f36b21]">votre événement</span>
         </h2>
         <p className="max-w-xl text-base leading-relaxed text-[#6f6a63]">
           Décrivez votre événement, votre lieu, vos contraintes et le rendu attendu. Nous vous

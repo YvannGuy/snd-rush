@@ -28,6 +28,8 @@ export type HomeCopy = {
   hero: {
     kicker: string;
     titleLine1: string;
+    /** Si défini, affiché en orange après `titleLine1` (ex. « votre événement »). */
+    titleLine1Accent?: string;
     titleLine2: string;
     body: string;
     cta: string;
@@ -106,7 +108,8 @@ const FR: HomeCopy = {
   },
   hero: {
     kicker: 'Sndrush Paris · Son, lumière, audiovisuel, photo, vidéo et régie',
-    titleLine1: 'Nous orchestrons votre événement',
+    titleLine1: 'Nous orchestrons',
+    titleLine1Accent: 'votre événement',
     titleLine2: 'de A à Z',
     body:
       'Concert, conférence, mariage, événement d’entreprise ou grand rassemblement : Sndrush prend en charge le son, la lumière, les écrans LED, l’audiovisuel, la photo, la vidéo et la régie pour un rendu professionnel, fluide et fiable.',
@@ -216,7 +219,8 @@ const EN: HomeCopy = {
   },
   hero: {
     kicker: 'Sndrush Paris · Sound, lighting, AV, photo, video and show control',
-    titleLine1: 'We orchestrate your event',
+    titleLine1: 'We orchestrate',
+    titleLine1Accent: 'your event',
     titleLine2: 'from A to Z',
     body:
       'Concerts, conferences, weddings, corporate events or large gatherings: Sndrush handles sound, lighting, LED screens, AV, photography, video and show control for a professional, smooth and reliable result.',

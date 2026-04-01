@@ -21,7 +21,8 @@ export function ContactHeroSection() {
           Sndrush Paris · Son, lumière, audiovisuel, photo, vidéo et régie
         </p>
         <h1 className="max-w-3xl font-helvetica text-[30px] font-bold leading-[0.95] tracking-display text-white sm:text-[42px] lg:text-[58px]">
-          Nous orchestrons votre événement
+          <span>Nous orchestrons</span>{' '}
+          <span className="text-[#f36b21]">votre événement</span>
           <br />
           de A à Z
         </h1>

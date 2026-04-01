@@ -1,5 +1,8 @@
+import React from 'react';
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { SndrushAdminQuoteEmail } from '@/emails/SndrushAdminQuoteEmail';
+import { getSupabaseServerClient } from '@/lib/supabase-server';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -46,37 +49,56 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'At least one service is required' }, { status: 400 });
     }
 
-    const servicesList = body.services.filter(Boolean).join(', ');
+    const servicesArray = body.services.filter(Boolean);
+    const servicesList = servicesArray.join(', ');
 
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 720px; margin: 0 auto; color: #0f0f0f;">
-        <h2 style="color: #F36B21; margin-bottom: 12px;">Nouvelle demande de devis - Sndrush</h2>
-        <p><strong>Nom :</strong> ${body.name}</p>
-        <p><strong>Société :</strong> ${body.company || '—'}</p>
-        <p><strong>Email :</strong> ${body.email}</p>
-        <p><strong>Téléphone :</strong> ${body.phone || '—'}</p>
-        <p><strong>Type d'événement :</strong> ${body.eventType || '—'}</p>
-        <p><strong>Participants :</strong> ${body.attendees || '—'}</p>
-        <p><strong>Date :</strong> ${body.date || '—'}</p>
-        <p><strong>Lieu :</strong> ${body.location || '—'}</p>
-        <p><strong>Prestations requises :</strong> ${servicesList}</p>
-        ${
-          body.fileUrl
-            ? `<p><strong>Fichier :</strong> <a href="${body.fileUrl}" target="_blank" rel="noopener noreferrer">${body.fileUrl}</a></p>`
-            : ''
-        }
-        <p><strong>Message :</strong></p>
-        <div style="white-space: pre-wrap; background: #f5f5f5; padding: 16px; border-radius: 8px;">${body.message}</div>
-      </div>
-    `;
+    const fileName = body.fileUrl ? body.fileUrl.split('/').pop() || 'Pièce jointe' : undefined;
+    const submittedAt = new Date().toISOString();
+
+    const emailReact = React.createElement(SndrushAdminQuoteEmail, {
+      fullName: name,
+      company: body.company,
+      email,
+      phone: body.phone,
+      eventType: body.eventType,
+      participants: body.attendees,
+      desiredDate: body.date,
+      location: body.location,
+      selectedServices: servicesArray,
+      message,
+      attachments: body.fileUrl ? [{ name: fileName || 'Pièce jointe', url: body.fileUrl }] : [],
+      submittedAt,
+    });
 
     await resend.emails.send({
       from: 'SND Rush <devisclients@guylocationevents.com>',
       to: ['contact@guylocationevents.com'],
       replyTo: email,
       subject: `📬 Demande de devis - ${name}`,
-      html,
+      react: emailReact,
     });
+
+    try {
+      const supabase = getSupabaseServerClient();
+      if (supabase) {
+        await supabase.from('contact_requests').insert({
+          full_name: name,
+          company: body.company ?? null,
+          email,
+          phone: body.phone ?? null,
+          event_type: body.eventType,
+          participants: body.attendees,
+          desired_date: body.date,
+          location: body.location,
+          services: servicesArray,
+          message,
+          file_url: body.fileUrl ?? null,
+          submitted_at: submittedAt,
+        });
+      }
+    } catch (dbError) {
+      console.error('Supabase insert error (contact_requests):', dbError);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
