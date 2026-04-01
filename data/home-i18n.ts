@@ -34,6 +34,7 @@ export type HomeCopy = {
     body: string;
     cta: string;
     note: string;
+    bgAlt: string;
   };
   expertiseStrip: string;
   servicesTitle: string;
@@ -115,6 +116,8 @@ const FR: HomeCopy = {
       'Concert, conférence, mariage, événement d’entreprise ou grand rassemblement : Sndrush prend en charge le son, la lumière, les écrans LED, l’audiovisuel, la photo, la vidéo et la régie pour un rendu professionnel, fluide et fiable.',
     cta: 'Demander un devis',
     note: 'Paris · Île-de-France · France · Europe selon projet',
+    bgAlt:
+      'Équipe technique en régie : son, lumière et captation, concert live et public',
   },
   expertiseStrip: 'Son • Lumière • Écrans LED • Audiovisuel • Photo • Vidéo • Régie',
   servicesTitle: 'Nos services',
@@ -226,6 +229,8 @@ const EN: HomeCopy = {
       'Concerts, conferences, weddings, corporate events or large gatherings: Sndrush handles sound, lighting, LED screens, AV, photography, video and show control for a professional, smooth and reliable result.',
     cta: 'Request a quote',
     note: 'Paris · Île-de-France · France · Europe as needed',
+    bgAlt:
+      'Technical crew at show control: sound, lighting and capture, live concert and audience',
   },
   expertiseStrip: 'Sound · Lighting · LED screens · AV · Photo · Video · Show control',
   servicesTitle: 'Our services',
