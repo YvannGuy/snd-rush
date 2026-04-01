@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { z } from 'zod';
 import { ChatMessage, DraftFinalConfig, ChatIntent } from '@/types/chat';
 import { checkChatRateLimit, getClientIp } from '@/lib/ratelimit';
 import { getScenario } from '@/lib/scenarios';
@@ -1474,20 +1475,46 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const body = await req.json();
-    packKey = body.packKey || null;
-    const { messages, context, scenarioId, productContext } = body;
+    const ChatBodySchema = z.object({
+      messages: z.array(z.object({
+        role: z.enum(['user', 'assistant', 'system']),
+        content: z.string().max(8000),
+        kind: z.string().max(50).optional(),
+      })).min(1).max(100),
+      context: z.record(z.unknown()).optional(),
+      scenarioId: z.string().max(100).optional(),
+      packKey: z.string().max(50).optional().nullable(),
+      productContext: z.object({
+        productType: z.string().max(30).optional(),
+        productId: z.string().max(100).optional(),
+        productName: z.string().max(200).optional(),
+        productUrl: z.string().max(500).optional(),
+      }).optional().nullable(),
+    });
+
+    let parsedBody: z.infer<typeof ChatBodySchema>;
+    try {
+      const rawBody = await req.json();
+      const result = ChatBodySchema.safeParse(rawBody);
+      if (!result.success) {
+        return NextResponse.json(
+          { error: 'Données invalides', details: result.error.flatten().fieldErrors },
+          { status: 400 }
+        );
+      }
+      parsedBody = result.data;
+    } catch {
+      return NextResponse.json({ error: 'JSON invalide' }, { status: 400 });
+    }
+
+    packKey = parsedBody.packKey || null;
+    const { context, scenarioId, productContext } = parsedBody;
+    // Cast vers ChatMessage[] — la structure est validée par Zod
+    const messages = parsedBody.messages as unknown as ChatMessage[];
 
     // Log packKey pour debugging
     if (packKey) {
       console.log('[API/CHAT] PackKey reçu:', packKey, 'isPackMode:', isPackMode(packKey));
-    }
-
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json(
-        { error: 'Messages requis' },
-        { status: 400 }
-      );
     }
 
     // LOGS DIAGNOSTIQUES
@@ -1559,17 +1586,30 @@ export async function POST(req: NextRequest) {
     
     // Si un contexte produit est fourni, prépendre les instructions spécifiques
     if (productContext && typeof productContext === 'object') {
-      const { productType, productId, productName, productUrl } = productContext;
-      
-      if (productName && productType) {
+      // Assainir tous les champs pour éviter l'injection de prompt
+      const ALLOWED_TYPES = ['pack', 'product'] as const;
+      const rawType = productContext.productType ?? '';
+      const safeType: string = (ALLOWED_TYPES as readonly string[]).includes(rawType) ? rawType : 'product';
+      const safeLabel = safeType === 'pack' ? 'Pack' : 'produit';
+      // Limiter à 120 chars, retirer backticks/guillemets/newlines
+      const safeName = String(productContext.productName || '').slice(0, 120).replace(/[`"'\n\r]/g, '');
+      const safeId = String(productContext.productId || '').replace(/[^a-zA-Z0-9_\-]/g, '').slice(0, 64);
+      const safeUrl = (() => {
+        try {
+          const u = new URL(String(productContext.productUrl || ''));
+          return ['http:', 'https:'].includes(u.protocol) ? u.toString().slice(0, 200) : 'non disponible';
+        } catch { return 'non disponible'; }
+      })();
+
+      if (safeName && safeType) {
         const productContextInstruction = `CONTEXTE PRODUIT ACTUEL (IMPORTANT) :
 
-L'utilisateur est actuellement sur la page du ${productType === 'pack' ? 'Pack' : 'produit'} "${productName}".
-Il hésite à choisir ce ${productType === 'pack' ? 'pack' : 'produit'}.
+L'utilisateur est actuellement sur la page du ${safeLabel} "${safeName}".
+Il hésite à choisir ce ${safeLabel}.
 
 TU DOIS :
-1. Reconnaître le ${productType === 'pack' ? 'pack' : 'produit'} sur lequel il se trouve
-2. Expliquer POURQUOI ce ${productType === 'pack' ? 'pack' : 'produit'} peut être adapté ou non selon ses besoins
+1. Reconnaître le ${safeLabel} sur lequel il se trouve
+2. Expliquer POURQUOI ce ${safeLabel} peut être adapté ou non selon ses besoins
 3. Poser uniquement les questions essentielles pour confirmer ou ajuster
 4. Guider vers la meilleure décision :
    - Confirmer si c'est le bon choix
@@ -1578,19 +1618,19 @@ TU DOIS :
    - Ou orienter vers un humain si la situation est complexe
 
 NE JAMAIS :
-- Ignorer le ${productType === 'pack' ? 'pack' : 'produit'} sur lequel il se trouve
-- Dénigrer le ${productType === 'pack' ? 'pack' : 'produit'} affiché
+- Ignorer le ${safeLabel} sur lequel il se trouve
+- Dénigrer le ${safeLabel} affiché
 - Poser trop de questions avant de donner une orientation
 
-URL du produit : ${productUrl || 'non disponible'}
-ID du produit : ${productId || 'non disponible'}
+URL du produit : ${safeUrl}
+ID du produit : ${safeId || 'non disponible'}
 
 ---
 
 `;
 
         systemPromptWithCatalog = `${productContextInstruction}${systemPromptWithCatalog}`;
-        console.log(`[API/CHAT] Contexte produit actif: ${productType} - ${productName}`);
+        console.log(`[API/CHAT] Contexte produit actif: ${safeType} - ${safeName}`);
       }
     }
     
@@ -1999,7 +2039,7 @@ RÈGLES ANTI-BUG (OBLIGATOIRES) :
         if (packId) {
           draftFinalConfig = {
             selections: [{ catalogId: packId, qty: 1 }],
-            event: context.event,
+            event: context?.event as { startISO: string; endISO: string; address?: string; department?: string } | undefined,
             needsConfirmation: true,
           };
           intent = 'READY_TO_ADD';

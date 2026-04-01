@@ -20,18 +20,6 @@ const supabaseAdmin = (supabaseUrl && supabaseServiceKey && supabaseUrl.trim() !
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Gérer les requêtes OPTIONS (CORS preflight)
-export async function OPTIONS(req: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, stripe-signature',
-    },
-  });
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text();

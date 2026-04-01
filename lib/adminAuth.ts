@@ -14,9 +14,8 @@ export interface AdminAuthResult {
 }
 
 /**
- * Vérifie si un utilisateur est admin via token Bearer
- * - Whitelist emails (fallback)
- * - user_profiles.is_admin (source de vérité)
+ * Vérifie si un utilisateur est admin via token Bearer.
+ * Source de vérité : user_profiles.role === 'admin' (côté base de données).
  */
 export async function verifyAdmin(token: string): Promise<AdminAuthResult> {
   if (!supabaseAdmin) {
@@ -25,15 +24,14 @@ export async function verifyAdmin(token: string): Promise<AdminAuthResult> {
 
   try {
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
+
     if (authError || !user) {
       return { isAdmin: false, error: 'Token invalide ou expiré' };
     }
 
-    // Vérifier user_profiles.is_admin
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('user_profiles')
-      .select('is_admin')
+      .select('role')
       .eq('user_id', user.id)
       .maybeSingle();
 
@@ -42,7 +40,7 @@ export async function verifyAdmin(token: string): Promise<AdminAuthResult> {
       return { isAdmin: false, error: 'Erreur vérification profil' };
     }
 
-    return { isAdmin: profile?.is_admin === true, userId: user.id };
+    return { isAdmin: profile?.role === 'admin', userId: user.id };
   } catch (error: any) {
     console.error('Erreur vérification admin:', error);
     return { isAdmin: false, error: error.message || 'Erreur serveur' };

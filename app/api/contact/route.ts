@@ -1,25 +1,26 @@
 import React from 'react';
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { z } from 'zod';
 import { SndrushAdminQuoteEmail } from '@/emails/SndrushAdminQuoteEmail';
 import { getSupabaseServerClient } from '@/lib/supabase-server';
 import { checkContactRateLimit, getClientIp } from '@/lib/ratelimit';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-type ContactPayload = {
-  name: string;
-  company?: string;
-  email: string;
-  phone?: string;
-  eventType?: string;
-  attendees?: string;
-  date?: string;
-  location?: string;
-  services?: string[];
-  message: string;
-  fileUrl?: string;
-};
+const ContactSchema = z.object({
+  name: z.string().min(1).max(200),
+  company: z.string().max(200).optional(),
+  email: z.string().email().max(320),
+  phone: z.string().max(30).optional(),
+  eventType: z.string().min(1).max(100),
+  attendees: z.string().min(1).max(50),
+  date: z.string().min(1).max(50),
+  location: z.string().min(1).max(300),
+  services: z.array(z.string().max(100)).min(1).max(20),
+  message: z.string().min(1).max(5000),
+  fileUrl: z.string().url().optional().or(z.literal('')),
+});
 
 export async function POST(request: NextRequest) {
   // Rate limiting — évite l'utilisation comme relai spam
@@ -32,30 +33,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Configuration error' }, { status: 500 });
   }
 
+  let body: z.infer<typeof ContactSchema>;
   try {
-    const body = (await request.json()) as Partial<ContactPayload>;
-    const { name, email, message } = body;
-
-    if (!name?.trim() || !email?.trim() || !message?.trim()) {
-      return NextResponse.json({ error: 'Name, email and message are required' }, { status: 400 });
-    }
-
-    if (
-      !body.eventType?.trim() ||
-      !body.attendees?.trim() ||
-      !body.date?.trim() ||
-      !body.location?.trim()
-    ) {
+    const raw = await request.json();
+    const result = ContactSchema.safeParse(raw);
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'Event type, attendees, date and location are required' },
+        { error: 'Données invalides', details: result.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    body = result.data;
+  } catch {
+    return NextResponse.json({ error: 'JSON invalide' }, { status: 400 });
+  }
 
-    if (!Array.isArray(body.services) || body.services.length === 0) {
-      return NextResponse.json({ error: 'At least one service is required' }, { status: 400 });
-    }
-
+  try {
+    const { name, email, message } = body;
     const servicesArray = body.services.filter(Boolean);
     const servicesList = servicesArray.join(', ');
 

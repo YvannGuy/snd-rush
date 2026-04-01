@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import { getCatalogItemById } from '@/lib/catalog';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil',
@@ -67,7 +69,48 @@ export async function POST(req: NextRequest) {
     }
     const userId = user.id; // toujours l'ID réel du token, pas celui du body
 
-    const body = await req.json();
+    const CheckoutBodySchema = z.object({
+      items: z.array(z.object({
+        name: z.string().max(200),
+        price: z.number().positive(),
+        quantity: z.number().int().positive(),
+      })).optional(),
+      cartItems: z.array(z.object({
+        catalogId: z.string().max(100).optional(),
+        name: z.string().max(200).optional(),
+        quantity: z.number().int().positive().optional(),
+        rentalDays: z.number().int().positive().optional(),
+        startDate: z.string().max(50).optional(),
+        endDate: z.string().max(50).optional(),
+        startTime: z.string().max(20).optional(),
+        endTime: z.string().max(20).optional(),
+        isDelivery: z.boolean().optional(),
+      })).optional(),
+      total: z.number().nonnegative().optional(),
+      depositTotal: z.number().nonnegative().optional(),
+      deliveryFee: z.number().nonnegative().optional(),
+      deliveryOption: z.enum(['paris', 'petite_couronne', 'grande_couronne']).optional(),
+      customerEmail: z.string().email().max(320).optional(),
+      customerName: z.string().max(200).optional(),
+      customerPhone: z.string().max(30).optional(),
+      address: z.string().max(500).optional(),
+    });
+
+    let body: z.infer<typeof CheckoutBodySchema>;
+    try {
+      const rawBody = await req.json();
+      const result = CheckoutBodySchema.safeParse(rawBody);
+      if (!result.success) {
+        return NextResponse.json(
+          { success: false, error: 'Données invalides', details: result.error.flatten().fieldErrors },
+          { status: 400 }
+        );
+      }
+      body = result.data;
+    } catch {
+      return NextResponse.json({ success: false, error: 'JSON invalide' }, { status: 400 });
+    }
+
     const { items, cartItems, total, depositTotal, deliveryFee, deliveryOption, customerEmail, customerName, customerPhone, address } = body;
 
     // Vérifier que Supabase admin est configuré (nécessaire pour créer la réservation)
@@ -99,11 +142,85 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Calculer le montant total (la livraison est déjà incluse dans total car elle est dans cart.items)
-    const totalAmount = total;
+    // ── Prix serveur-side ──────────────────────────────────────────────────────
+    // Les prix ne proviennent JAMAIS du corps de la requête.
+    // On les recalcule depuis le catalogue (Supabase / lib/catalog.ts).
+
+    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Le panier est vide ou invalide.' },
+        { status: 400 }
+      );
+    }
+
+    // Tarifs de livraison définis côté serveur
+    const DELIVERY_FEES: Record<string, number> = {
+      paris: 8000,          // 80 € en centimes
+      petite_couronne: 12000,
+      grande_couronne: 16000,
+    };
+
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+    let serverTotal = 0;
+
+    for (const cartItem of cartItems) {
+      // Items de livraison : prix calculé côté serveur selon la zone
+      if (cartItem.isDelivery || cartItem.catalogId === 'delivery') {
+        const zone = (deliveryOption || 'paris').toLowerCase().replace('-', '_');
+        const deliveryUnitAmount = DELIVERY_FEES[zone] ?? DELIVERY_FEES['paris'];
+        lineItems.push({
+          price_data: {
+            currency: 'eur',
+            product_data: { name: cartItem.name || 'Livraison' },
+            unit_amount: deliveryUnitAmount,
+          },
+          quantity: 1,
+        });
+        serverTotal += deliveryUnitAmount;
+        continue;
+      }
+
+      // Items catalogue (packs, produits, installation) : prix chargé depuis la BDD
+      if (!cartItem.catalogId) continue;
+
+      const catalogItem = await getCatalogItemById(cartItem.catalogId);
+      if (!catalogItem) {
+        console.error(`❌ Produit catalogue introuvable: ${cartItem.catalogId}`);
+        return NextResponse.json(
+          { success: false, error: `Produit introuvable dans le catalogue: ${cartItem.catalogId}` },
+          { status: 400 }
+        );
+      }
+
+      const rentalDays = cartItem.rentalDays || 1;
+      const qty = cartItem.quantity || 1;
+      const unitAmountCents =
+        catalogItem.billingUnit === 'event'
+          ? Math.round(catalogItem.unitPriceEur * 100)
+          : Math.round(catalogItem.unitPriceEur * rentalDays * 100);
+
+      lineItems.push({
+        price_data: {
+          currency: 'eur',
+          product_data: { name: catalogItem.name },
+          unit_amount: unitAmountCents,
+        },
+        quantity: qty,
+      });
+      serverTotal += unitAmountCents * qty;
+    }
+
+    if (lineItems.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Impossible de construire le panier côté serveur.' },
+        { status: 400 }
+      );
+    }
+
+    // Montant total calculé côté serveur (en euros)
+    const totalAmount = serverTotal / 100;
 
     // Vérifier l'email vérifié pour les commandes importantes (> 1000€)
-    // Seulement si on a réussi à récupérer l'utilisateur admin
     if (verifiedUser) {
       if (totalAmount > 1000 && !verifiedUser.user.email_confirmed_at) {
         return NextResponse.json(
@@ -112,19 +229,6 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-
-    // Créer les line items pour Stripe
-    // La livraison est déjà incluse dans items car elle fait partie de cart.items
-    const lineItems = items.map((item: { name: string; quantity: number; price: number }) => ({
-      price_data: {
-        currency: 'eur',
-        product_data: {
-          name: item.name,
-        },
-        unit_amount: item.price, // Déjà en centimes
-      },
-      quantity: item.quantity,
-    }));
 
     // Extraire les dates depuis les cartItems (utiliser les dates du premier item)
     const firstCartItem = cartItems && cartItems.length > 0 ? cartItems[0] : null;
@@ -146,11 +250,11 @@ export async function POST(req: NextRequest) {
         .from('reservations')
         .insert({
           user_id: userId,
-          status: 'PENDING', // Utiliser PENDING en majuscules (contrainte de la table)
+          status: 'PENDING',
           start_date: startDate,
           end_date: endDate,
-          quantity: 1, // Valeur par défaut, sera mis à jour par le webhook avec les vraies données
-          total_price: totalAmount,
+          quantity: 1,
+          total_price: totalAmount,       // prix calculé côté serveur
           deposit_amount: depositTotal || 0,
           stripe_payment_intent_id: null, // Sera mis à jour par le webhook
           address: address || '',
@@ -229,14 +333,14 @@ export async function POST(req: NextRequest) {
       // Rediriger vers l'API de création de session caution après succès du paiement principal
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/create-deposit-session?session_id={CHECKOUT_SESSION_ID}&deposit=${depositAmountInCents}&reservationId=${reservation.id}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/panier/cancel`,
-      customer_email: customerEmail || (user?.user?.email || undefined),
+      customer_email: customerEmail || (user?.email || undefined),
       metadata: {
         userId: userId,
-        reservationId: reservation.id, // Stocker l'ID de la réservation au lieu des cartItems
+        reservationId: reservation.id,
         type: 'cart',
         deliveryOption: deliveryOption || 'paris',
         deliveryFee: deliveryFee?.toString() || '0',
-        total: total.toString(),
+        total: totalAmount.toString(),  // total validé côté serveur
         depositTotal: depositTotal?.toString() || '0',
         address: address || '',
         customerEmail: customerEmail || '',

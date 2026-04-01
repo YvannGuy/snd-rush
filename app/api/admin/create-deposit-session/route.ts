@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { verifyAdmin } from '@/lib/adminAuth';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil',
 });
 
 export async function GET(req: NextRequest) {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 });
+  }
+  const { isAdmin, error: adminError } = await verifyAdmin(authHeader.replace('Bearer ', ''));
+  if (!isAdmin || adminError) {
+    return NextResponse.json({ success: false, error: 'Accès refusé' }, { status: 403 });
+  }
+
   try {
     // Vérifier les variables d'environnement
     if (!process.env.STRIPE_SECRET_KEY) {

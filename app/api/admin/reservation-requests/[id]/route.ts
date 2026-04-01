@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdmin } from '@/lib/adminAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -24,17 +25,9 @@ export async function GET(
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
+    const { isAdmin, error: adminError } = await verifyAdmin(token);
 
-    const isAdmin = user.user_metadata?.role === 'admin' || 
-                    user.email === 'yvann.guyonnet@gmail.com' ||
-                    user.email === 'sndrush12@gmail.com';
-    
-    if (!isAdmin) {
+    if (!isAdmin || adminError) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
