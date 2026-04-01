@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { SndrushAdminQuoteEmail } from '@/emails/SndrushAdminQuoteEmail';
 import { getSupabaseServerClient } from '@/lib/supabase-server';
+import { checkContactRateLimit, getClientIp } from '@/lib/ratelimit';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -21,6 +22,12 @@ type ContactPayload = {
 };
 
 export async function POST(request: NextRequest) {
+  // Rate limiting — évite l'utilisation comme relai spam
+  const { success: rateLimitOk } = await checkContactRateLimit(getClientIp(request));
+  if (!rateLimitOk) {
+    return NextResponse.json({ error: 'Trop de requêtes, merci de patienter.' }, { status: 429 });
+  }
+
   if (!process.env.RESEND_API_KEY) {
     return NextResponse.json({ error: 'Configuration error' }, { status: 500 });
   }

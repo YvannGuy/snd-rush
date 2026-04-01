@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { ChatMessage, DraftFinalConfig, ChatIntent } from '@/types/chat';
+import { checkChatRateLimit, getClientIp } from '@/lib/ratelimit';
 import { getScenario } from '@/lib/scenarios';
 import { ScenarioId } from '@/types/scenarios';
 import {
@@ -1444,6 +1445,15 @@ function hasNormalUserMessage(messages: ChatMessage[]): boolean {
 // isConversationEngaged remplacé par buildConversationState (importé depuis lib/chatState.ts)
 
 export async function POST(req: NextRequest) {
+  // Rate limiting — protège le budget OpenAI
+  const { success: rateLimitOk } = await checkChatRateLimit(getClientIp(req));
+  if (!rateLimitOk) {
+    return NextResponse.json(
+      { reply: 'Trop de messages envoyés, merci de patienter quelques secondes.', intent: 'NEEDS_INFO' },
+      { status: 429 }
+    );
+  }
+
   // Déclarer packKey au niveau de la fonction pour qu'il soit accessible dans le catch
   let packKey: string | null = null;
   

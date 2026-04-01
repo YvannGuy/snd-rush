@@ -30,12 +30,6 @@ export async function verifyAdmin(token: string): Promise<AdminAuthResult> {
       return { isAdmin: false, error: 'Token invalide ou expiré' };
     }
 
-    // Whitelist emails (fallback)
-    const whitelistEmails = ['yvann.guyonnet@gmail.com', 'sndrush12@gmail.com'];
-    if (user.email && whitelistEmails.includes(user.email.toLowerCase())) {
-      return { isAdmin: true, userId: user.id };
-    }
-
     // Vérifier user_profiles.is_admin
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('user_profiles')

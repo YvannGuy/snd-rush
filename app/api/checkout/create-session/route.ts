@@ -41,60 +41,55 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
-    const { userId, items, cartItems, total, depositTotal, deliveryFee, deliveryOption, customerEmail, customerName, customerPhone, address } = body;
-
-    // Vérifier que l'utilisateur est authentifié
-    if (!userId) {
-      console.error('❌ userId manquant dans la requête');
+    // Vérifier l'identité depuis le token Bearer — jamais depuis le body
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
         { success: false, error: 'Authentification requise. Veuillez vous connecter.' },
         { status: 401 }
       );
     }
 
-    // Vérifier que l'ID est un UUID valide
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
-      console.error('❌ userId invalide:', userId);
+    if (!supabaseUrl || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return NextResponse.json({ success: false, error: 'Configuration Supabase manquante.' }, { status: 500 });
+    }
+
+    // Vérifier le token côté serveur — retourne l'utilisateur réel connecté
+    const supabaseUserClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await supabaseUserClient.auth.getUser();
+    if (authError || !user) {
       return NextResponse.json(
-        { success: false, error: 'ID utilisateur invalide. Veuillez vous reconnecter.' },
+        { success: false, error: 'Session expirée. Veuillez vous reconnecter.' },
         { status: 401 }
       );
     }
+    const userId = user.id; // toujours l'ID réel du token, pas celui du body
 
-    // Vérifier que Supabase est configuré (nécessaire pour créer la réservation)
+    const body = await req.json();
+    const { items, cartItems, total, depositTotal, deliveryFee, deliveryOption, customerEmail, customerName, customerPhone, address } = body;
+
+    // Vérifier que Supabase admin est configuré (nécessaire pour créer la réservation)
     if (!supabaseAdmin) {
       console.error('❌ Supabase non configuré');
-      console.error('   NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'défini' : 'manquant');
-      console.error('   SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'défini' : 'manquant');
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Configuration Supabase manquante. Veuillez vérifier les variables d\'environnement NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY.' 
-        },
+        { success: false, error: 'Configuration Supabase manquante.' },
         { status: 500 }
       );
     }
 
-    // Vérifier que l'utilisateur existe (optionnel si Supabase a des problèmes)
-    let user;
+    // Vérifier que l'utilisateur existe dans Supabase admin
+    let verifiedUser;
     if (supabaseAdmin) {
       try {
         const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
         
         if (userError) {
           console.error('❌ Erreur récupération utilisateur:', userError);
-          // Si l'erreur est "Invalid API key", c'est un problème de configuration
-          if (userError.message?.includes('Invalid API key') || userError.message?.includes('JWT') || userError.message?.includes('Invalid')) {
-            console.error('⚠️ Clé API Supabase invalide. Continuation en mode dégradé (sans vérification utilisateur).');
-            // On continue sans vérification utilisateur mais on log l'erreur
-          } else {
-            // Pour les autres erreurs, on continue aussi en mode dégradé
-            console.warn('⚠️ Erreur vérification utilisateur, continuation en mode dégradé:', userError.message);
-          }
+          console.warn('⚠️ Continuation en mode dégradé:', userError.message);
         } else if (userData) {
-          user = userData;
+          verifiedUser = userData;
           console.log('✅ Utilisateur vérifié:', userData.user.email);
         }
       } catch (error: any) {
@@ -108,9 +103,9 @@ export async function POST(req: NextRequest) {
     const totalAmount = total;
 
     // Vérifier l'email vérifié pour les commandes importantes (> 1000€)
-    // Seulement si on a réussi à récupérer l'utilisateur
-    if (user) {
-      if (totalAmount > 1000 && !user.user.email_confirmed_at) {
+    // Seulement si on a réussi à récupérer l'utilisateur admin
+    if (verifiedUser) {
+      if (totalAmount > 1000 && !verifiedUser.user.email_confirmed_at) {
         return NextResponse.json(
           { success: false, error: 'Vérification email requise pour les commandes supérieures à 1000€' },
           { status: 403 }
