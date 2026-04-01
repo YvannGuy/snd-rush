@@ -17,6 +17,21 @@ const supabaseAdmin = (supabaseUrl && supabaseServiceKey && supabaseUrl.trim() !
  * Appelée depuis le dashboard après le succès du paiement de la caution
  */
 export async function POST(req: NextRequest) {
+  // ── Authentification Bearer token ────────────────────────────────────────
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 });
+  }
+  if (!supabaseAdmin) {
+    return NextResponse.json({ success: false, error: 'Configuration Supabase manquante' }, { status: 500 });
+  }
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+  if (authError || !user) {
+    return NextResponse.json({ success: false, error: 'Token invalide' }, { status: 401 });
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   try {
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -79,9 +94,14 @@ export async function POST(req: NextRequest) {
     try {
       const { data: existingReservation } = await supabaseAdmin
         .from('reservations')
-        .select('notes, pickup_time, return_time')
+        .select('notes, pickup_time, return_time, user_id')
         .eq('id', reservationId)
         .single();
+
+      // Vérification de propriété
+      if (existingReservation && existingReservation.user_id !== user.id) {
+        return NextResponse.json({ success: false, error: 'Accès refusé' }, { status: 403 });
+      }
       
       if (existingReservation?.notes) {
         existingNotes = JSON.parse(existingReservation.notes);

@@ -1,15 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { verifyAdmin } from '@/lib/adminAuth';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseAdmin = (supabaseUrl && supabaseServiceKey)
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null;
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // ── Admin uniquement ─────────────────────────────────────────────────────
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  }
+  const { isAdmin, error: adminError } = await verifyAdmin(authHeader.replace('Bearer ', ''));
+  if (!isAdmin || adminError) {
+    return NextResponse.json({ error: 'Accès refusé — admin requis' }, { status: 403 });
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  if (!supabaseAdmin) {
+    return NextResponse.json({ error: 'Supabase non configuré' }, { status: 500 });
+  }
+
   try {
     const { id } = await params;
     const reservationId = id;
     const body = await request.json();
-    const { action } = body; // 'approve' ou 'reject'
+    const { action } = body;
 
     if (!action || !['approve', 'reject'].includes(action)) {
       return NextResponse.json(
@@ -18,24 +40,16 @@ export async function POST(
       );
     }
 
-    // Récupérer la réservation
-    if (!supabase) {
-      return NextResponse.json({ error: 'Supabase non configuré' }, { status: 500 });
-    }
-    const { data: reservation, error: fetchError } = await supabase!
+    const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
       .select('*')
       .eq('id', reservationId)
       .single();
 
     if (fetchError || !reservation) {
-      return NextResponse.json(
-        { error: 'Reservation not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Reservation not found' }, { status: 404 });
     }
 
-    // Vérifier que le statut est bien CHANGE_REQUESTED
     if (reservation.status !== 'CHANGE_REQUESTED') {
       return NextResponse.json(
         { error: 'Reservation status is not CHANGE_REQUESTED' },
@@ -43,28 +57,24 @@ export async function POST(
       );
     }
 
-    const existingNotes = reservation.notes 
-      ? (typeof reservation.notes === 'string' ? JSON.parse(reservation.notes) : reservation.notes) 
+    const existingNotes = reservation.notes
+      ? (typeof reservation.notes === 'string' ? JSON.parse(reservation.notes) : reservation.notes)
       : {};
 
     let updateData: any = {
       updated_at: new Date().toISOString(),
-      // Préserver les heures de retrait et de retour si elles existent
       pickup_time: reservation.pickup_time || null,
       return_time: reservation.return_time || null,
     };
 
     if (action === 'approve') {
-      // Approuver la modification : appliquer les changements et revenir à CONFIRMED
       const changeRequest = existingNotes.changeRequest || {};
       const requestedChanges = changeRequest.requestedChanges || {};
 
-      // Appliquer les modifications demandées
       if (requestedChanges.nouveauLieu) {
         updateData.address = requestedChanges.nouveauLieu;
       }
       if (requestedChanges.nouveauxHoraires) {
-        // Les horaires peuvent être stockés dans notes
         updateData.notes = JSON.stringify({
           ...existingNotes,
           changeRequest: {
@@ -85,15 +95,10 @@ export async function POST(
           },
         });
       }
-
-      // Revenir au statut CONFIRMED
       updateData.status = 'CONFIRMED';
     } else {
-      // Rejeter la modification : revenir au statut précédent (ou CONFIRMED par défaut)
       const previousStatus = existingNotes.changeRequest?.previousStatus || 'CONFIRMED';
       updateData.status = previousStatus;
-      
-      // Stocker les détails du rejet
       updateData.notes = JSON.stringify({
         ...existingNotes,
         changeRequest: {
@@ -104,7 +109,7 @@ export async function POST(
       });
     }
 
-    const { data: updatedReservation, error: updateError } = await supabase
+    const { data: updatedReservation, error: updateError } = await supabaseAdmin
       .from('reservations')
       .update(updateData)
       .eq('id', reservationId)
@@ -113,10 +118,7 @@ export async function POST(
 
     if (updateError) {
       console.error('Error updating reservation:', updateError);
-      return NextResponse.json(
-        { error: 'Failed to update reservation' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to update reservation' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -126,9 +128,6 @@ export async function POST(
     });
   } catch (error: any) {
     console.error('Error in validate-change:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }

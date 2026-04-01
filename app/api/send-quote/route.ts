@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { checkContactRateLimit, getClientIp } from '@/lib/ratelimit';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request as unknown as Request);
+  const { success } = await checkContactRateLimit(ip);
+  if (!success) {
+    return NextResponse.json({ error: 'Trop de requêtes. Réessayez dans une minute.' }, { status: 429 });
+  }
+
   try {
     const { quoteData, pdfBase64 } = await request.json();
     
