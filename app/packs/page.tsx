@@ -318,14 +318,12 @@ export default function AllPacksPage() {
                         {language === 'fr' ? 'Composez votre pack' : 'Compose your pack'}
                       </Link>
                     ) : pack.price === 'Sur devis' || pack.price === 'On quote' ? (
-                      <button
-                        onClick={() => {
-                          window.dispatchEvent(new CustomEvent('openAssistantModal'));
-                        }}
+                      <Link
+                        href="/contact"
                         className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors text-center mt-auto"
                       >
                         {currentTexts.requestQuote}
-                      </button>
+                      </Link>
                     ) : (
                       <Link
                         href={`/packs/${pack.id}`}
@@ -351,14 +349,12 @@ export default function AllPacksPage() {
             <p className="text-xl text-gray-600 mb-8">
               {currentTexts.needHelpDescription}
             </p>
-            <button
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('openAssistantModal'));
-              }}
-              className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-[#E63A1A] transition-colors"
+            <Link
+              href="/contact"
+              className="inline-block bg-[#F2431E] text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-[#E63A1A] transition-colors text-center"
             >
               {currentTexts.openAssistant}
-            </button>
+            </Link>
           </div>
         </div>
       </main>

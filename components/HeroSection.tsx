@@ -172,7 +172,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 sm:mt-12">
                   <a
-                    href="#contact"
+                    href="/contact"
                     onClick={(e) => {
                       e.preventDefault();
                       const contactSection = document.getElementById('contact');

@@ -129,10 +129,8 @@ export default function RecommendedPacks({ language, packs, loading }: Recommend
 
                   {/* CTA Button */}
                   {isCustomPack ? (
-                    <button
-                      onClick={() => {
-                        window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
-                      }}
+                    <Link
+                      href="/contact"
                       className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-center mt-auto ${
                         pack.featured
                           ? 'bg-[#F2431E] text-white hover:bg-[#E63A1A]'
@@ -140,7 +138,7 @@ export default function RecommendedPacks({ language, packs, loading }: Recommend
                       }`}
                     >
                       {currentTexts.requestQuote}
-                    </button>
+                    </Link>
                   ) : (
                     <Link
                       href={`/packs/${pack.id.toString().replace('pack-', '')}`}
@@ -220,14 +218,12 @@ export default function RecommendedPacks({ language, packs, loading }: Recommend
 
                     {/* CTA Button */}
                     {isCustomPack ? (
-                      <button
-                        onClick={() => {
-                          window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
-                        }}
+                      <Link
+                        href="/contact"
                         className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors text-center mt-auto"
                       >
                         {currentTexts.requestQuote}
-                      </button>
+                      </Link>
                     ) : (
                       <Link
                         href={`/packs/${pack.id.toString().replace('pack-', '')}`}

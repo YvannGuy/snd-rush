@@ -165,7 +165,7 @@ export default function SearchBar({ language }: SearchBarProps) {
       type: 'section',
       title: language === 'fr' ? 'Contact' : 'Contact',
       description: language === 'fr' ? 'Contactez-nous' : 'Contact us',
-      url: '/#contact',
+      url: '/contact',
       icon: '📬'
     }
   ];
@@ -189,8 +189,11 @@ export default function SearchBar({ language }: SearchBarProps) {
     {
       type: 'page',
       title: currentTexts.pages.generator,
-      description: language === 'fr' ? 'Générateur de devis en ligne' : 'Online quote generator',
-      url: '/generateur_de_prix',
+      description:
+        language === 'fr'
+          ? 'Demander un devis via le formulaire contact'
+          : 'Request a quote via the contact form',
+      url: '/contact',
       icon: '💰'
     }
   ];

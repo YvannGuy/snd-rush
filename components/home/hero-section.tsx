@@ -43,7 +43,7 @@ export default function HeroSection() {
           <p className="mt-6 max-w-xl text-base leading-relaxed text-white/78 sm:text-lg">{h.body}</p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <QuoteCtaLink href="#contact" label={h.cta} />
+            <QuoteCtaLink href="/contact" label={h.cta} />
             <span className="font-helvetica text-sm font-bold tracking-display text-white/70 sm:text-base">
               {h.note}
             </span>

@@ -104,7 +104,7 @@ export default function PrestataireAudiovisuelParisPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
-                  href="/devis"
+                  href="/contact"
                   className="inline-flex items-center justify-center px-8 py-4 bg-[#F2431E] text-white font-semibold rounded-lg shadow-lg hover:bg-[#E63A1A] transition-colors text-lg"
                 >
                   📋 Demander un devis
@@ -161,10 +161,10 @@ export default function PrestataireAudiovisuelParisPage() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold mb-4">Besoin d'un prestataire audiovisuel pour votre événement ?</h2>
             <p className="text-xl mb-8 text-gray-100">
-              Demandez un <Link href="/devis" className="underline font-semibold">devis gratuit</Link> ou appelez-nous au <a href="tel:+33744782754" className="underline font-semibold">07 44 78 27 54</a>
+              Demandez un <Link href="/contact" className="underline font-semibold">devis gratuit</Link> ou appelez-nous au <a href="tel:+33744782754" className="underline font-semibold">07 44 78 27 54</a>
             </p>
             <Link
-              href="/devis"
+              href="/contact"
               className="inline-flex items-center justify-center px-8 py-4 bg-white text-[#F2431E] font-semibold rounded-lg shadow-lg hover:bg-gray-100 transition-colors text-lg"
             >
               📋 Demander un devis

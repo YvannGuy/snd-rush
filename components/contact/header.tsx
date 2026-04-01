@@ -43,7 +43,7 @@ export function ContactHeader() {
           asChild
           className="h-10 rounded-sm bg-[#f36b21] px-4 text-[12px] font-bold uppercase tracking-[0.18em] text-white hover:bg-[#ff7a33] lg:h-11 lg:px-6"
         >
-          <Link href="#contact">Devis</Link>
+          <Link href="/contact">Devis</Link>
         </Button>
       </div>
     </header>

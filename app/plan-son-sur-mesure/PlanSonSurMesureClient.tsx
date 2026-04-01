@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SectionChevron from '@/components/SectionChevron';
@@ -40,6 +41,7 @@ const caseStudies = [
 ];
 
 export default function PlanSonSurMesureClient({}: PlanSonSurMesureClientProps) {
+  const router = useRouter();
   const [language, setLanguage] = useState<'fr' | 'en'>('fr');
   const [status, setStatus] = useState<string | null>(null);
 
@@ -68,17 +70,12 @@ export default function PlanSonSurMesureClient({}: PlanSonSurMesureClientProps) 
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const eventType = formData.get('eventType') || 'Événement';
-    const venue = formData.get('venue') || 'Lieu';
-    const guests = formData.get('guests') || 'Nombre d’invités';
-    const phone = formData.get('phone') || '';
-    const message = formData.get('message') || '';
-    const body = encodeURIComponent(
-      `Type d'événement: ${eventType}\nLieu: ${venue}\nInvités: ${guests}\nTéléphone: ${phone}\nMessage: ${message}`,
+    setStatus(
+      language === 'fr'
+        ? 'Redirection vers le formulaire de contact…'
+        : 'Redirecting to the contact form…'
     );
-    window.location.href = `mailto:devisclients@guylocationevents.com?subject=Plan son sur mesure&body=${body}`;
-    setStatus(language === 'fr' ? 'Nous ouvrons votre email...' : 'Opening your email...');
+    router.push('/contact');
   };
 
   return (
@@ -103,7 +100,7 @@ export default function PlanSonSurMesureClient({}: PlanSonSurMesureClientProps) 
               <p className="text-lg text-gray-200 max-w-2xl">{currentTexts.subtitle}</p>
               <div className="flex flex-wrap gap-4">
                 <Link
-                  href="mailto:devisclients@guylocationevents.com"
+                  href="/contact"
                   className="bg-[#F2431E] hover:bg-[#d6391a] text-white rounded-full px-8 py-3 font-semibold"
                 >
                   {language === 'fr' ? 'Demander un plan' : 'Request a plan'}
@@ -153,7 +150,7 @@ export default function PlanSonSurMesureClient({}: PlanSonSurMesureClientProps) 
                 <p className="text-xs uppercase tracking-[0.5em] text-[#F2431E] mb-2">Réussites</p>
                 <h2 className="text-3xl font-bold text-gray-900">{currentTexts.caseLabel}</h2>
               </div>
-              <Link href="/generateur_de_prix" className="text-[#F2431E] font-semibold">
+              <Link href="/contact" className="text-[#F2431E] font-semibold">
                 {language === 'fr' ? 'Voir les détails' : 'See the details'}
               </Link>
             </div>

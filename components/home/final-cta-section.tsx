@@ -20,7 +20,7 @@ export default function FinalCTASection() {
           </h2>
         </div>
         <QuoteCtaLink
-          href="mailto:contact@guylocationevents.com"
+          href="/contact"
           label={c.button}
           className="mt-9"
         />

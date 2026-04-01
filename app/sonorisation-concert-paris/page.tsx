@@ -90,12 +90,12 @@ export default function SonorisationConcertParisPage() {
                 >
                   🎵 Pack Concert
                 </Link>
-                <a
-                  href="tel:+33744782754"
+                <Link
+                  href="/contact"
                   className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-semibold rounded-lg shadow-lg hover:bg-gray-100 transition-colors text-lg"
                 >
-                  📞 Devis personnalisé
-                </a>
+                  📋 Devis personnalisé
+                </Link>
               </div>
             </div>
           </div>
@@ -143,7 +143,11 @@ export default function SonorisationConcertParisPage() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold mb-4">Organisez un concert à Paris ?</h2>
             <p className="text-xl mb-8 text-gray-100">
-              Découvrez notre <Link href="/soiree" className="underline font-semibold">pack concert</Link> ou demandez un devis personnalisé au <a href="tel:+33744782754" className="underline font-semibold">07 44 78 27 54</a>
+              Découvrez notre <Link href="/soiree" className="underline font-semibold">pack concert</Link> ou{' '}
+              <Link href="/contact" className="underline font-semibold">
+                demandez un devis personnalisé
+              </Link>
+              .
             </p>
             <a
               href="tel:+33744782754"

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import SectionChevron from './SectionChevron';
 import { Users, Home, Music, Calendar, ArrowRight, CheckCircle2, Phone } from 'lucide-react';
 
@@ -539,13 +540,13 @@ export default function PackWizardSection({ language }: PackWizardSectionProps) 
               </div>
             )}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="tel:+33744782754"
+              <Link
+                href="/contact"
                 className="inline-flex items-center justify-center gap-2 bg-[#F2431E] text-white px-8 py-4 rounded-xl font-semibold hover:bg-[#E63A1A] transition-all"
               >
                 <Phone className="w-5 h-5" />
                 {currentTexts.contact}
-              </a>
+              </Link>
               <button
                 onClick={resetWizard}
                 className="inline-flex items-center justify-center gap-2 bg-gray-200 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-300 transition-all"

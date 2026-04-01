@@ -597,14 +597,12 @@ export default function CatalogueContent({ language }: CatalogueContentProps) {
                   {/* Buttons - alignés en bas */}
                   <div className="flex flex-col gap-2 mt-auto pt-2">
                     {product.category === 'packs' && (product.price.includes('devis') || product.price.includes('quote')) ? (
-                      <button
-                        onClick={() => {
-                          window.dispatchEvent(new CustomEvent('openChatWithDraft', { detail: { message: undefined } }));
-                        }}
+                      <Link
+                        href="/contact"
                         className="w-full bg-[#F2431E] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#E63A1A] transition-colors text-center min-h-[44px] flex items-center justify-center"
                       >
                         {language === 'fr' ? '🤖 Utiliser l\'assistant SoundRush Paris' : '🤖 Use SoundRush Paris Assistant'}
-                      </button>
+                      </Link>
                     ) : isLightProduct(product) ? (
                       <button
                         disabled
