@@ -16,7 +16,7 @@ export function MethodologySection() {
         <div className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
           {copy.steps.map((step) => (
             <div key={step.number} className="border-t border-[#ddd6cd] pt-5">
-              <span className="block font-black leading-none text-[#050505]/8 text-[88px]">
+              <span className="block font-black leading-none text-[#f36b21] text-[88px]">
                 {step.number}
               </span>
               <h3 className="mt-1 text-lg font-bold tracking-tight text-[#050505]">{step.title}</h3>

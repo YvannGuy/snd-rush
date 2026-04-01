@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, ArrowRight, Check, Loader2, UploadCloud } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHomeLocale } from '@/contexts/HomeLocaleContext';
@@ -16,7 +16,8 @@ type FormState = {
   phone: string;
   eventType: string;
   attendees: string;
-  date: string;
+  dateFrom: string;
+  dateTo: string;
   location: string;
   services: ServiceKey[];
   message: string;
@@ -32,7 +33,8 @@ const initialForm: FormState = {
   phone: '',
   eventType: '',
   attendees: '',
-  date: '',
+  dateFrom: '',
+  dateTo: '',
   location: '',
   services: [],
   message: '',
@@ -173,12 +175,33 @@ const EVENT_TYPE_OPTIONS: Record<string, string[]> = {
   zh: ['音乐会', '会议', '婚礼', '企业活动', '发布会', '展会', '私人派对', '其他'],
 };
 
-function formatDateInput(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-}
+const DATE_RANGE_COPY: Record<string, { from: string; to: string; invalidRange: string }> = {
+  fr: {
+    from: 'Du',
+    to: 'Au',
+    invalidRange: 'La date de fin doit être postérieure ou égale à la date de début.',
+  },
+  en: {
+    from: 'From',
+    to: 'To',
+    invalidRange: 'End date must be on or after start date.',
+  },
+  it: {
+    from: 'Dal',
+    to: 'Al',
+    invalidRange: 'La data di fine deve essere uguale o successiva alla data di inizio.',
+  },
+  es: {
+    from: 'Desde',
+    to: 'Hasta',
+    invalidRange: 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
+  },
+  zh: {
+    from: '开始',
+    to: '结束',
+    invalidRange: '结束日期必须晚于或等于开始日期。',
+  },
+};
 
 function stripCountryCodeFromPlaceholder(placeholder?: string) {
   if (!placeholder) return '';
@@ -190,10 +213,12 @@ export function QuoteRequestForm() {
   const copy = getContactCopy(locale).form;
   const serviceOptions: ServiceKey[] = copy.servicesOptions;
   const eventTypeOptions = EVENT_TYPE_OPTIONS[locale] ?? EVENT_TYPE_OPTIONS.fr;
+  const dateRangeCopy = DATE_RANGE_COPY[locale] ?? DATE_RANGE_COPY.fr;
   const [form, setForm] = useState<FormState>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
 
   const servicesLabel = useMemo(
     () =>
@@ -217,6 +242,77 @@ export function QuoteRequestForm() {
     setError(null);
   };
 
+  useEffect(() => {
+    const query = form.location.trim();
+    if (query.length < 2) {
+      setLocationSuggestions([]);
+      return;
+    }
+
+    let cancelled = false;
+    const timeout = setTimeout(async () => {
+      try {
+        const [citiesRes, countriesRes] = await Promise.all([
+          fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+              query
+            )}&count=8&language=${encodeURIComponent(locale)}&format=json`
+          ),
+          fetch(
+            `https://restcountries.com/v3.1/name/${encodeURIComponent(
+              query
+            )}?fields=name,translations&limit=6`
+          ),
+        ]);
+
+        const citySuggestions: string[] = [];
+        if (citiesRes.ok) {
+          const cityJson = (await citiesRes.json()) as {
+            results?: Array<{ name?: string; admin1?: string; country?: string }>;
+          };
+          for (const result of cityJson.results ?? []) {
+            if (!result.name || !result.country) continue;
+            citySuggestions.push(
+              [result.name, result.admin1, result.country].filter(Boolean).join(', ')
+            );
+          }
+        }
+
+        const countrySuggestions: string[] = [];
+        if (countriesRes.ok) {
+          const countriesJson = (await countriesRes.json()) as Array<{
+            name?: { common?: string };
+            translations?: Record<string, { common?: string }>;
+          }>;
+          for (const country of countriesJson ?? []) {
+            const translated =
+              locale === 'fr'
+                ? country.translations?.fra?.common
+                : locale === 'es'
+                  ? country.translations?.spa?.common
+                  : locale === 'it'
+                    ? country.translations?.ita?.common
+                    : country.name?.common;
+            if (translated) countrySuggestions.push(translated);
+          }
+        }
+
+        if (!cancelled) {
+          const merged = [...citySuggestions, ...countrySuggestions];
+          const unique = Array.from(new Set(merged)).slice(0, 12);
+          setLocationSuggestions(unique);
+        }
+      } catch {
+        if (!cancelled) setLocationSuggestions([]);
+      }
+    }, 280);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [form.location, locale]);
+
   const handleFileChange = (file?: File) => {
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
@@ -238,10 +334,15 @@ export function QuoteRequestForm() {
     if (
       !form.eventType.trim() ||
       !form.attendees.trim() ||
-      !form.date.trim() ||
+      !form.dateFrom.trim() ||
+      !form.dateTo.trim() ||
       !form.location.trim()
     ) {
       setError(copy.errors.requiredEvent);
+      return;
+    }
+    if (form.dateTo < form.dateFrom) {
+      setError(dateRangeCopy.invalidRange);
       return;
     }
     if (!form.services.length) {
@@ -266,7 +367,7 @@ export function QuoteRequestForm() {
         phone: form.phone.trim() ? `${form.phoneCountryCode} ${form.phone.trim()}` : '',
         eventType: form.eventType,
         attendees: form.attendees,
-        date: form.date,
+        date: `${form.dateFrom} -> ${form.dateTo}`,
         location: form.location,
         services: form.services,
         message: form.message,
@@ -381,13 +482,14 @@ export function QuoteRequestForm() {
             placeholder={copy.placeholders.attendees}
             required
           />
-          <InputField
+          <DateRangeField
             label={copy.labels.date}
-            value={form.date}
-            onChange={(v) => handleChange('date', formatDateInput(v))}
-            placeholder={copy.placeholders.date}
-            inputMode="numeric"
-            maxLength={10}
+            fromLabel={dateRangeCopy.from}
+            toLabel={dateRangeCopy.to}
+            fromValue={form.dateFrom}
+            toValue={form.dateTo}
+            onFromChange={(v) => handleChange('dateFrom', v)}
+            onToChange={(v) => handleChange('dateTo', v)}
             required
           />
           <InputField
@@ -395,8 +497,14 @@ export function QuoteRequestForm() {
             value={form.location}
             onChange={(v) => handleChange('location', v)}
             placeholder={copy.placeholders.location}
+            listId="location-suggestions"
             required
           />
+          <datalist id="location-suggestions">
+            {locationSuggestions.map((item) => (
+              <option key={item} value={item} />
+            ))}
+          </datalist>
         </div>
 
         <div className="space-y-3">
@@ -532,6 +640,7 @@ type InputFieldProps = {
   type?: string;
   inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
   maxLength?: number;
+  listId?: string;
   required?: boolean;
 };
 
@@ -543,6 +652,7 @@ function InputField({
   type = 'text',
   inputMode,
   maxLength,
+  listId,
   required,
 }: InputFieldProps) {
   return (
@@ -555,10 +665,66 @@ function InputField({
         placeholder={placeholder}
         inputMode={inputMode}
         maxLength={maxLength}
+        list={listId}
         required={required}
         className="h-12 rounded-sm border border-[#ddd6cd] bg-white px-4 text-sm text-[#171717] placeholder:text-[#6f6a63] focus:border-[#f36b21] focus:outline-none"
       />
     </label>
+  );
+}
+
+type DateRangeFieldProps = {
+  label: string;
+  fromLabel: string;
+  toLabel: string;
+  fromValue: string;
+  toValue: string;
+  onFromChange: (v: string) => void;
+  onToChange: (v: string) => void;
+  required?: boolean;
+};
+
+function DateRangeField({
+  label,
+  fromLabel,
+  toLabel,
+  fromValue,
+  toValue,
+  onFromChange,
+  onToChange,
+  required,
+}: DateRangeFieldProps) {
+  const today = new Date().toISOString().slice(0, 10);
+  const minToDate = fromValue && fromValue > today ? fromValue : today;
+
+  return (
+    <div className="sm:col-span-2">
+      <span className="text-[12px] font-semibold uppercase tracking-[0.22em] text-[#f36b21]">{label}</span>
+      <div className="mt-2 grid gap-3 sm:grid-cols-2">
+        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#6f6a63]">
+          {fromLabel}
+          <input
+            type="date"
+            value={fromValue}
+            onChange={(e) => onFromChange(e.target.value)}
+            required={required}
+            min={today}
+            className="h-12 rounded-sm border border-[#ddd6cd] bg-white px-4 text-sm normal-case tracking-normal text-[#171717] focus:border-[#f36b21] focus:outline-none"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#6f6a63]">
+          {toLabel}
+          <input
+            type="date"
+            value={toValue}
+            onChange={(e) => onToChange(e.target.value)}
+            required={required}
+            min={minToDate}
+            className="h-12 rounded-sm border border-[#ddd6cd] bg-white px-4 text-sm normal-case tracking-normal text-[#171717] focus:border-[#f36b21] focus:outline-none"
+          />
+        </label>
+      </div>
+    </div>
   );
 }
 
