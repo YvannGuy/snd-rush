@@ -4,6 +4,10 @@ module.exports = {
     content: ["./{app,components,libs,pages,hooks}/**/*.{html,js,ts,jsx,tsx}"],
   theme: {
   	extend: {
+  		transitionTimingFunction: {
+  			// Équivalent CSS `ease` — évite ease-[cubic-bezier(...)] (ambigu en Tailwind v4)
+  			smooth: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+  		},
   		fontFamily: {
   			helvetica: ['"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
   		},

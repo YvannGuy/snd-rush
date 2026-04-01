@@ -333,7 +333,7 @@ export function QuoteRequestForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="group inline-flex w-full items-center justify-center rounded-full border-2 border-[#f36b21] bg-[#f36b21] px-6 py-3 text-white transition-[padding,background-color,border-color] duration-600 ease-[cubic-bezier(0.25,0.1,0.25,1)] hover:border-[#ff7a33] hover:bg-[#ff7a33] hover:px-8 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:px-8 sm:py-3.5 sm:hover:px-10"
+          className="group inline-flex w-full items-center justify-center rounded-full border-2 border-[#f36b21] bg-[#f36b21] px-6 py-3 text-white transition-[padding,background-color,border-color] duration-600 ease-smooth hover:border-[#ff7a33] hover:bg-[#ff7a33] hover:px-8 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:px-8 sm:py-3.5 sm:hover:px-10"
         >
           {isSubmitting ? (
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -342,9 +342,9 @@ export function QuoteRequestForm() {
               <span className="font-helvetica text-xs font-bold uppercase tracking-[0.08em] sm:text-sm">
                 {copy.cta}
               </span>
-              <span className="mx-2 h-[2px] w-8 bg-current transition-[width] duration-600 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:w-16 sm:w-10 sm:group-hover:w-20" />
+              <span className="mx-2 h-[2px] w-8 bg-current transition-[width] duration-600 ease-smooth group-hover:w-16 sm:w-10 sm:group-hover:w-20" />
               <ArrowRight
-                className="h-4 w-4 shrink-0 transition-transform duration-600 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:translate-x-0.5 sm:h-5 sm:w-5"
+                className="h-4 w-4 shrink-0 transition-transform duration-600 ease-smooth group-hover:translate-x-0.5 sm:h-5 sm:w-5"
                 strokeWidth={2.2}
               />
             </>

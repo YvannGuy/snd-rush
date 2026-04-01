@@ -78,7 +78,7 @@ export default function ServicesInteractivePanels() {
                     fill
                     sizes="(max-width: 1024px) 50vw, 20vw"
                     className={cn(
-                      'object-cover transition-transform duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+                      'object-cover transition-transform duration-700 ease-smooth',
                       isActive ? 'scale-105' : 'scale-100'
                     )}
                   />
@@ -102,7 +102,7 @@ export default function ServicesInteractivePanels() {
                     </p>
                     <div
                       className={cn(
-                        'overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]',
+                        'overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-smooth',
                         isActive
                           ? 'max-h-[min(46vh,22rem)] translate-y-0 opacity-100'
                           : 'max-h-0 translate-y-1 opacity-0'
