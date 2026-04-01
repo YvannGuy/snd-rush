@@ -1,6 +1,4 @@
 'use client';
-
-import Link from 'next/link';
 import { useHomeLocale } from '@/contexts/HomeLocaleContext';
 import { getContactCopy } from '@/data/contact-i18n';
 
@@ -19,17 +17,6 @@ export function ContactIntroPanel() {
         <p className="max-w-xl text-base leading-relaxed text-[#6f6a63]">
           {copy.body}
         </p>
-      </div>
-
-      <div className="rounded-sm border border-[#ddd6cd] bg-[#fbf9f5] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.04)]">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.22em] text-[#f36b21]">
-          {copy.contactLabel}
-        </p>
-        <div className="mt-3 space-y-2 text-[#171717]">
-          <Link href={`mailto:${copy.contactEmail}`} className="text-base font-semibold hover:text-[#f36b21]">
-            {copy.contactEmail}
-          </Link>
-        </div>
       </div>
 
       <div className="relative rounded-sm border border-[#ddd6cd] bg-[#fbf9f5] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.04)]">

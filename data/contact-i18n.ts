@@ -171,7 +171,7 @@ const contactFR: ContactCopy = {
     labels: {
       name: 'Nom complet',
       company: 'Société (optionnel)',
-      email: 'E-mail professionnel',
+      email: 'E-mail',
       phone: 'Téléphone (optionnel)',
       eventType: 'Type d’événement',
       attendees: 'Nombre de participants',
@@ -187,7 +187,7 @@ const contactFR: ContactCopy = {
     placeholders: {
       name: 'Nom Prénom',
       company: 'Votre structure',
-      email: 'email@entreprise.com',
+      email: 'vous@exemple.com',
       phone: '+33 ...',
       eventType: 'Concert, conférence, lancement...',
       attendees: 'ex : 1 000',
@@ -300,7 +300,7 @@ const contactEN: ContactCopy = {
     labels: {
       name: 'Full name',
       company: 'Company (optional)',
-      email: 'Work email',
+      email: 'Email',
       phone: 'Phone (optional)',
       eventType: 'Event type',
       attendees: 'Number of attendees',
@@ -316,7 +316,7 @@ const contactEN: ContactCopy = {
     placeholders: {
       name: 'First Last',
       company: 'Your company',
-      email: 'email@company.com',
+      email: 'you@example.com',
       phone: '+33 ...',
       eventType: 'Concert, conference, launch...',
       attendees: 'e.g. 1,000',
@@ -428,7 +428,7 @@ const contactIT: ContactCopy = {
     labels: {
       name: 'Nome completo',
       company: 'Azienda (opzionale)',
-      email: 'E-mail di lavoro',
+      email: 'E-mail',
       phone: 'Telefono (opzionale)',
       eventType: 'Tipo di evento',
       attendees: 'Numero di partecipanti',
@@ -444,7 +444,7 @@ const contactIT: ContactCopy = {
     placeholders: {
       name: 'Nome Cognome',
       company: 'La tua azienda',
-      email: 'email@azienda.com',
+      email: 'nome@esempio.it',
       phone: '+39 ...',
       eventType: 'Concerto, conferenza, lancio...',
       attendees: 'es: 1.000',
@@ -558,7 +558,7 @@ const contactES: ContactCopy = {
     labels: {
       name: 'Nombre completo',
       company: 'Empresa (opcional)',
-      email: 'E-mail profesional',
+      email: 'Correo electrónico',
       phone: 'Teléfono (opcional)',
       eventType: 'Tipo de evento',
       attendees: 'Número de asistentes',
@@ -574,7 +574,7 @@ const contactES: ContactCopy = {
     placeholders: {
       name: 'Nombre Apellido',
       company: 'Tu empresa',
-      email: 'email@empresa.com',
+      email: 'tu@ejemplo.com',
       phone: '+34 ...',
       eventType: 'Concierto, conferencia, lanzamiento...',
       attendees: 'ej: 1.000',
@@ -684,7 +684,7 @@ const contactZH: ContactCopy = {
     labels: {
       name: '姓名',
       company: '公司（可选）',
-      email: '工作邮箱',
+      email: '电子邮箱',
       phone: '电话（可选）',
       eventType: '活动类型',
       attendees: '人数',
@@ -700,7 +700,7 @@ const contactZH: ContactCopy = {
     placeholders: {
       name: '姓名',
       company: '贵公司',
-      email: 'email@company.com',
+      email: 'you@example.com',
       phone: '+33 ...',
       eventType: '演唱会、会议、发布会…',
       attendees: '例：1 000',

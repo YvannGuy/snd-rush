@@ -12,6 +12,7 @@ type FormState = {
   name: string;
   company: string;
   email: string;
+  phoneCountryCode: string;
   phone: string;
   eventType: string;
   attendees: string;
@@ -27,6 +28,7 @@ const initialForm: FormState = {
   name: '',
   company: '',
   email: '',
+  phoneCountryCode: '+33',
   phone: '',
   eventType: '',
   attendees: '',
@@ -38,10 +40,156 @@ const initialForm: FormState = {
   consent: false,
 };
 
+const PHONE_COUNTRY_OPTIONS = [
+  { label: 'Afghanistan (+93)', code: '+93' },
+  { label: 'Afrique du Sud (+27)', code: '+27' },
+  { label: 'Albanie (+355)', code: '+355' },
+  { label: 'Algerie (+213)', code: '+213' },
+  { label: 'Allemagne (+49)', code: '+49' },
+  { label: 'Andorre (+376)', code: '+376' },
+  { label: 'Angola (+244)', code: '+244' },
+  { label: 'Arabie saoudite (+966)', code: '+966' },
+  { label: 'Argentine (+54)', code: '+54' },
+  { label: 'Armenie (+374)', code: '+374' },
+  { label: 'Australie (+61)', code: '+61' },
+  { label: 'Autriche (+43)', code: '+43' },
+  { label: 'Azerbaidjan (+994)', code: '+994' },
+  { label: 'Bahrein (+973)', code: '+973' },
+  { label: 'Bangladesh (+880)', code: '+880' },
+  { label: 'Belgique (+32)', code: '+32' },
+  { label: 'Benin (+229)', code: '+229' },
+  { label: 'Bielorussie (+375)', code: '+375' },
+  { label: 'Bolivie (+591)', code: '+591' },
+  { label: 'Bosnie-Herzegovine (+387)', code: '+387' },
+  { label: 'Bresil (+55)', code: '+55' },
+  { label: 'Bulgarie (+359)', code: '+359' },
+  { label: 'Cambodge (+855)', code: '+855' },
+  { label: 'Cameroun (+237)', code: '+237' },
+  { label: 'Canada (+1)', code: '+1' },
+  { label: 'Chili (+56)', code: '+56' },
+  { label: 'Chine (+86)', code: '+86' },
+  { label: 'Chypre (+357)', code: '+357' },
+  { label: 'Colombie (+57)', code: '+57' },
+  { label: 'Coree du Sud (+82)', code: '+82' },
+  { label: 'Costa Rica (+506)', code: '+506' },
+  { label: 'Cote d Ivoire (+225)', code: '+225' },
+  { label: 'Croatie (+385)', code: '+385' },
+  { label: 'Danemark (+45)', code: '+45' },
+  { label: 'Egypte (+20)', code: '+20' },
+  { label: 'Emirats arabes unis (+971)', code: '+971' },
+  { label: 'Equateur (+593)', code: '+593' },
+  { label: 'Espagne (+34)', code: '+34' },
+  { label: 'Estonie (+372)', code: '+372' },
+  { label: 'Etats-Unis (+1)', code: '+1' },
+  { label: 'Finlande (+358)', code: '+358' },
+  { label: 'France (+33)', code: '+33' },
+  { label: 'Gabon (+241)', code: '+241' },
+  { label: 'Georgie (+995)', code: '+995' },
+  { label: 'Ghana (+233)', code: '+233' },
+  { label: 'Grece (+30)', code: '+30' },
+  { label: 'Guinee (+224)', code: '+224' },
+  { label: 'Hong Kong (+852)', code: '+852' },
+  { label: 'Hongrie (+36)', code: '+36' },
+  { label: 'Inde (+91)', code: '+91' },
+  { label: 'Indonesie (+62)', code: '+62' },
+  { label: 'Irak (+964)', code: '+964' },
+  { label: 'Iran (+98)', code: '+98' },
+  { label: 'Irlande (+353)', code: '+353' },
+  { label: 'Islande (+354)', code: '+354' },
+  { label: 'Israel (+972)', code: '+972' },
+  { label: 'Italie (+39)', code: '+39' },
+  { label: 'Japon (+81)', code: '+81' },
+  { label: 'Jordanie (+962)', code: '+962' },
+  { label: 'Kazakhstan (+7)', code: '+7' },
+  { label: 'Kenya (+254)', code: '+254' },
+  { label: 'Koweit (+965)', code: '+965' },
+  { label: 'Laos (+856)', code: '+856' },
+  { label: 'Lettonie (+371)', code: '+371' },
+  { label: 'Liban (+961)', code: '+961' },
+  { label: 'Lituanie (+370)', code: '+370' },
+  { label: 'Luxembourg (+352)', code: '+352' },
+  { label: 'Madagascar (+261)', code: '+261' },
+  { label: 'Malaisie (+60)', code: '+60' },
+  { label: 'Mali (+223)', code: '+223' },
+  { label: 'Malte (+356)', code: '+356' },
+  { label: 'Maroc (+212)', code: '+212' },
+  { label: 'Maurice (+230)', code: '+230' },
+  { label: 'Mauritanie (+222)', code: '+222' },
+  { label: 'Mexique (+52)', code: '+52' },
+  { label: 'Moldavie (+373)', code: '+373' },
+  { label: 'Monaco (+377)', code: '+377' },
+  { label: 'Mongolie (+976)', code: '+976' },
+  { label: 'Montenegro (+382)', code: '+382' },
+  { label: 'Mozambique (+258)', code: '+258' },
+  { label: 'Nepal (+977)', code: '+977' },
+  { label: 'Niger (+227)', code: '+227' },
+  { label: 'Nigeria (+234)', code: '+234' },
+  { label: 'Norvege (+47)', code: '+47' },
+  { label: 'Nouvelle-Zelande (+64)', code: '+64' },
+  { label: 'Oman (+968)', code: '+968' },
+  { label: 'Ouganda (+256)', code: '+256' },
+  { label: 'Ouzbekistan (+998)', code: '+998' },
+  { label: 'Pakistan (+92)', code: '+92' },
+  { label: 'Panama (+507)', code: '+507' },
+  { label: 'Paraguay (+595)', code: '+595' },
+  { label: 'Pays-Bas (+31)', code: '+31' },
+  { label: 'Perou (+51)', code: '+51' },
+  { label: 'Philippines (+63)', code: '+63' },
+  { label: 'Pologne (+48)', code: '+48' },
+  { label: 'Portugal (+351)', code: '+351' },
+  { label: 'Qatar (+974)', code: '+974' },
+  { label: 'Republique tcheque (+420)', code: '+420' },
+  { label: 'Republique dominicaine (+1)', code: '+1' },
+  { label: 'Roumanie (+40)', code: '+40' },
+  { label: 'Royaume-Uni (+44)', code: '+44' },
+  { label: 'Russie (+7)', code: '+7' },
+  { label: 'Rwanda (+250)', code: '+250' },
+  { label: 'Senegal (+221)', code: '+221' },
+  { label: 'Serbie (+381)', code: '+381' },
+  { label: 'Singapour (+65)', code: '+65' },
+  { label: 'Slovaquie (+421)', code: '+421' },
+  { label: 'Slovenie (+386)', code: '+386' },
+  { label: 'Sri Lanka (+94)', code: '+94' },
+  { label: 'Suede (+46)', code: '+46' },
+  { label: 'Suisse (+41)', code: '+41' },
+  { label: 'Taiwan (+886)', code: '+886' },
+  { label: 'Tanzanie (+255)', code: '+255' },
+  { label: 'Thailande (+66)', code: '+66' },
+  { label: 'Tunisie (+216)', code: '+216' },
+  { label: 'Turquie (+90)', code: '+90' },
+  { label: 'Ukraine (+380)', code: '+380' },
+  { label: 'Uruguay (+598)', code: '+598' },
+  { label: 'Venezuela (+58)', code: '+58' },
+  { label: 'Vietnam (+84)', code: '+84' },
+  { label: 'Zambie (+260)', code: '+260' },
+  { label: 'Zimbabwe (+263)', code: '+263' },
+];
+
+const EVENT_TYPE_OPTIONS: Record<string, string[]> = {
+  fr: ['Concert', 'Conference', 'Mariage', 'Evenement d entreprise', 'Lancement', 'Salon', 'Soiree privee', 'Autre'],
+  en: ['Concert', 'Conference', 'Wedding', 'Corporate event', 'Launch event', 'Trade show', 'Private party', 'Other'],
+  it: ['Concerto', 'Conferenza', 'Matrimonio', 'Evento aziendale', 'Lancio', 'Fiera', 'Festa privata', 'Altro'],
+  es: ['Concierto', 'Conferencia', 'Boda', 'Evento corporativo', 'Lanzamiento', 'Feria', 'Fiesta privada', 'Otro'],
+  zh: ['音乐会', '会议', '婚礼', '企业活动', '发布会', '展会', '私人派对', '其他'],
+};
+
+function formatDateInput(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function stripCountryCodeFromPlaceholder(placeholder?: string) {
+  if (!placeholder) return '';
+  return placeholder.replace(/^\s*\+\d{1,4}\s*/, '').trim() || '06 12 34 56 78';
+}
+
 export function QuoteRequestForm() {
   const { locale } = useHomeLocale();
   const copy = getContactCopy(locale).form;
   const serviceOptions: ServiceKey[] = copy.servicesOptions;
+  const eventTypeOptions = EVENT_TYPE_OPTIONS[locale] ?? EVENT_TYPE_OPTIONS.fr;
   const [form, setForm] = useState<FormState>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -130,7 +278,7 @@ export function QuoteRequestForm() {
           name: form.name,
           company: form.company,
           email: form.email,
-          phone: form.phone,
+          phone: form.phone.trim() ? `${form.phoneCountryCode} ${form.phone.trim()}` : '',
           eventType: form.eventType,
           attendees: form.attendees,
           date: form.date,
@@ -185,13 +333,33 @@ export function QuoteRequestForm() {
             placeholder={copy.placeholders.email}
             required
           />
-          <InputField
-            label={copy.labels.phone}
-            type="tel"
-            value={form.phone}
-            onChange={(v) => handleChange('phone', v)}
-            placeholder={copy.placeholders.phone}
-          />
+          <label className="flex flex-col gap-2 text-sm text-[#171717]">
+            <span className="text-[12px] font-semibold uppercase tracking-[0.22em] text-[#f36b21]">
+              {copy.labels.phone}
+            </span>
+            <div className="grid h-12 grid-cols-[110px_minmax(0,1fr)] overflow-hidden rounded-sm border border-[#ddd6cd] bg-white focus-within:border-[#f36b21]">
+              <select
+                value={form.phoneCountryCode}
+                onChange={(e) => handleChange('phoneCountryCode', e.target.value)}
+                className="h-full border-r border-[#ddd6cd] bg-[#f8f5ef] px-3 text-sm text-[#171717] focus:outline-none"
+                aria-label="Indicatif pays"
+              >
+                {PHONE_COUNTRY_OPTIONS.map((option) => (
+                  <option key={option.label} value={option.code}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(e) => handleChange('phone', e.target.value)}
+                placeholder={stripCountryCodeFromPlaceholder(copy.placeholders.phone)}
+                className="h-full px-4 text-sm text-[#171717] placeholder:text-[#6f6a63] focus:outline-none"
+                inputMode="tel"
+              />
+            </div>
+          </label>
         </div>
 
         <div className="space-y-2">
@@ -200,11 +368,12 @@ export function QuoteRequestForm() {
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <InputField
+          <SelectField
             label={copy.labels.eventType}
             value={form.eventType}
             onChange={(v) => handleChange('eventType', v)}
             placeholder={copy.placeholders.eventType}
+            options={eventTypeOptions}
             required
           />
           <InputField
@@ -217,8 +386,10 @@ export function QuoteRequestForm() {
           <InputField
             label={copy.labels.date}
             value={form.date}
-            onChange={(v) => handleChange('date', v)}
+            onChange={(v) => handleChange('date', formatDateInput(v))}
             placeholder={copy.placeholders.date}
+            inputMode="numeric"
+            maxLength={10}
             required
           />
           <InputField
@@ -361,10 +532,21 @@ type InputFieldProps = {
   onChange: (v: string) => void;
   placeholder?: string;
   type?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
+  maxLength?: number;
   required?: boolean;
 };
 
-function InputField({ label, value, onChange, placeholder, type = 'text', required }: InputFieldProps) {
+function InputField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  inputMode,
+  maxLength,
+  required,
+}: InputFieldProps) {
   return (
     <label className="flex flex-col gap-2 text-sm text-[#171717]">
       <span className="text-[12px] font-semibold uppercase tracking-[0.22em] text-[#f36b21]">{label}</span>
@@ -373,9 +555,41 @@ function InputField({ label, value, onChange, placeholder, type = 'text', requir
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        inputMode={inputMode}
+        maxLength={maxLength}
         required={required}
         className="h-12 rounded-sm border border-[#ddd6cd] bg-white px-4 text-sm text-[#171717] placeholder:text-[#6f6a63] focus:border-[#f36b21] focus:outline-none"
       />
+    </label>
+  );
+}
+
+type SelectFieldProps = {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  options: string[];
+  required?: boolean;
+};
+
+function SelectField({ label, value, onChange, placeholder, options, required }: SelectFieldProps) {
+  return (
+    <label className="flex flex-col gap-2 text-sm text-[#171717]">
+      <span className="text-[12px] font-semibold uppercase tracking-[0.22em] text-[#f36b21]">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className="h-12 rounded-sm border border-[#ddd6cd] bg-white px-4 text-sm text-[#171717] focus:border-[#f36b21] focus:outline-none"
+      >
+        <option value="">{placeholder ?? 'Selectionner'}</option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
