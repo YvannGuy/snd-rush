@@ -62,12 +62,19 @@ export default function ServicesInteractivePanels() {
               <article
                 key={`${number}-${service.title}-mobile`}
                 onClick={() => setHovered(index)}
+                onMouseEnter={() => setHovered(index)}
+                onMouseLeave={() => setHovered(null)}
                 className={cn(
                   'relative overflow-hidden rounded-3xl shadow-[0_18px_45px_rgba(0,0,0,0.28)] transition-all duration-700',
-                  isActive ? 'scale-100 brightness-100' : 'scale-[0.97] brightness-[0.9]'
+                  isActive ? 'scale-[1.02] brightness-100' : 'scale-[0.9] brightness-[0.8]'
                 )}
               >
-                <div className="relative h-[340px] w-full">
+                <div
+                  className={cn(
+                    'relative w-full transition-all duration-700',
+                    isActive ? 'h-[340px]' : 'h-[220px]'
+                  )}
+                >
                   <Image
                     src={media.image}
                     alt={alt}
@@ -85,7 +92,17 @@ export default function ServicesInteractivePanels() {
                       <p className="font-helvetica text-lg font-semibold uppercase tracking-[0.08em] text-white">
                         {service.title}
                       </p>
-                      <p className="text-sm leading-snug text-white/85">{service.description}</p>
+                      <div
+                        className={cn(
+                          'overflow-hidden transition-[max-height,opacity,transform] duration-500 ease-smooth',
+                          isActive
+                            ? 'max-h-[240px] translate-y-0 opacity-100'
+                            : 'max-h-0 translate-y-1 opacity-0'
+                        )}
+                        aria-hidden={!isActive}
+                      >
+                        <p className="text-sm leading-snug text-white/85">{service.description}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
