@@ -21,22 +21,17 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/60 to-black/42" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 to-transparent" />
 
-      <div className="relative mx-auto flex w-full max-w-[1240px] px-5 pb-16 pt-44 sm:px-8 sm:pt-[11.5rem] lg:px-10 lg:pb-24 lg:pt-56">
+      <div className="relative mx-auto flex w-full max-w-[1240px] px-6 pb-16 pt-44 sm:px-8 sm:pt-[11.5rem] lg:px-10 lg:pb-24 lg:pt-56">
         <div className="max-w-3xl">
-          <p className="mb-5 font-helvetica text-sm font-bold tracking-display text-white/75 sm:text-base md:text-lg">
-            {h.kicker}
-          </p>
-
-          <h1 className="font-helvetica text-5xl font-bold leading-[0.92] tracking-display text-white sm:text-6xl md:text-7xl lg:text-[84px] xl:text-[96px]">
+          <h1 className="font-helvetica text-[clamp(2.25rem,calc(6.75vw+1rem),3.5rem)] font-bold leading-[0.88] tracking-display text-white sm:text-6xl sm:leading-[0.88] md:text-7xl lg:text-8xl xl:text-[6.5rem]">
+            {h.titleLine1}
+            <br />
             {h.titleLine1Accent ? (
               <>
-                <span>{h.titleLine1}</span>{' '}
-                <span className="text-[#f36b21]">{h.titleLine1Accent}</span>
+                <span className="text-[#f36b21] md:whitespace-nowrap">{h.titleLine1Accent}</span>
+                <br />
               </>
-            ) : (
-              <span>{h.titleLine1}</span>
-            )}
-            <br />
+            ) : null}
             {h.titleLine2}
           </h1>
 

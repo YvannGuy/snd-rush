@@ -29,7 +29,6 @@ export type HomeCopy = {
     cta: string;
   };
   hero: {
-    kicker: string;
     titleLine1: string;
     /** Si défini, affiché en orange après `titleLine1` (ex. « votre événement »). */
     titleLine1Accent?: string;
@@ -112,8 +111,7 @@ const FR: HomeCopy = {
     cta: 'Demander un devis',
   },
   hero: {
-    kicker: 'Sndrush Paris · Son, lumière, audiovisuel, photo, vidéo et régie',
-    titleLine1: 'Nous orchestrons',
+    titleLine1: 'Nous\u00a0orchestrons',
     titleLine1Accent: 'votre événement',
     titleLine2: 'de A à Z',
     body:
@@ -152,8 +150,8 @@ const FR: HomeCopy = {
     },
   ],
   eventScale: {
-    titleLine1: 'Des formats intimistes aux',
-    titleLine2: 'productions de grande ampleur',
+    titleLine1: 'Des formats intimistes',
+    titleLine2: 'aux\u00a0productions de grande ampleur',
     titleLine3: '',
     body:
       'Nous accompagnons aussi bien les événements élégants en petit comité que les dispositifs techniques de grande ampleur.',
@@ -226,8 +224,7 @@ const EN: HomeCopy = {
     cta: 'Request a quote',
   },
   hero: {
-    kicker: 'Sndrush Paris · Sound, lighting, AV, photo, video and show control',
-    titleLine1: 'We orchestrate',
+    titleLine1: 'We\u00a0orchestrate',
     titleLine1Accent: 'your event',
     titleLine2: 'from A to Z',
     body:
@@ -266,8 +263,8 @@ const EN: HomeCopy = {
     },
   ],
   eventScale: {
-    titleLine1: 'From intimate formats to',
-    titleLine2: 'large-scale productions',
+    titleLine1: 'From intimate formats',
+    titleLine2: 'to\u00a0large-scale productions',
     titleLine3: '',
     body:
       'We support both elegant small gatherings and large-scale technical productions.',
@@ -340,7 +337,6 @@ const IT: HomeCopy = {
     cta: 'Richiedi un preventivo',
   },
   hero: {
-    kicker: 'Sndrush Paris · Audio, luci, LED, AV, foto, video e regia',
     titleLine1: 'Orchestri',
     titleLine1Accent: 'il tuo evento',
     titleLine2: 'da A a Z',
@@ -379,8 +375,8 @@ const IT: HomeCopy = {
     },
   ],
   eventScale: {
-    titleLine1: 'Da formati intimi a',
-    titleLine2: 'produzioni su larga scala',
+    titleLine1: 'Da formati intimi',
+    titleLine2: 'a\u00a0produzioni su larga scala',
     titleLine3: '',
     body:
       'Supportiamo eventi eleganti in piccolo comitato e produzioni tecniche complesse ad alta capienza.',
@@ -453,7 +449,6 @@ const ES: HomeCopy = {
     cta: 'Pedir presupuesto',
   },
   hero: {
-    kicker: 'Sndrush Paris · Sonido, luces, AV, foto, video y regiduría',
     titleLine1: 'Orquestamos',
     titleLine1Accent: 'tu evento',
     titleLine2: 'de principio a fin',
@@ -488,8 +483,8 @@ const ES: HomeCopy = {
     },
   ],
   eventScale: {
-    titleLine1: 'De formatos íntimos a',
-    titleLine2: 'producciones a gran escala',
+    titleLine1: 'De formatos íntimos',
+    titleLine2: 'a\u00a0producciones a gran escala',
     titleLine3: '',
     body:
       'Acompañamos tanto eventos elegantes en pequeño comité como producciones técnicas complejas.',
@@ -559,7 +554,6 @@ const ZH: HomeCopy = {
     cta: '索取报价',
   },
   hero: {
-    kicker: 'Sndrush Paris · 音响 · 灯光 · LED · 视听 · 摄影 · 视频 · 统筹',
     titleLine1: '我们为你统筹',
     titleLine1Accent: '整场活动',
     titleLine2: '端到端',
