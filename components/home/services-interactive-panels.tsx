@@ -37,7 +37,7 @@ const PANEL_MEDIA: { image: string; altFr: string; altEn: string }[] = [
 export default function ServicesInteractivePanels() {
   const { copy, locale } = useHomeLocale();
   const contentLocale = resolveHomeContentLocale(locale);
-  const [hovered, setHovered] = useState<number | null>(null);
+  const [hovered, setHovered] = useState<number | null>(0);
 
   const services = copy.services;
 
@@ -48,7 +48,54 @@ export default function ServicesInteractivePanels() {
           {copy.servicesTitle}
         </h2>
 
-        <div className="flex gap-3 sm:gap-4 lg:gap-5">
+        {/* Mobile : cartes empilées, tap pour agrandir */}
+        <div className="mt-2 flex flex-col gap-4 md:hidden">
+          {services.map((service, index) => {
+            const media = PANEL_MEDIA[index];
+            if (!media) return null;
+
+            const number = String(index + 1).padStart(2, '0');
+            const isActive = hovered === index;
+            const alt = contentLocale === 'fr' ? media.altFr : media.altEn;
+
+            return (
+              <article
+                key={`${number}-${service.title}-mobile`}
+                onClick={() => setHovered(index)}
+                className={cn(
+                  'relative overflow-hidden rounded-3xl shadow-[0_18px_45px_rgba(0,0,0,0.28)] transition-all duration-700',
+                  isActive ? 'scale-100 brightness-100' : 'scale-[0.97] brightness-[0.9]'
+                )}
+              >
+                <div className="relative h-[340px] w-full">
+                  <Image
+                    src={media.image}
+                    alt={alt}
+                    fill
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(0,0,0,0.72),rgba(0,0,0,0.28))]" />
+                  <div className="absolute inset-0 flex flex-col justify-between p-6">
+                    <div className="space-y-2">
+                      <p className="font-helvetica text-4xl font-black leading-none text-white">{number}</p>
+                      <div className="h-px w-full bg-white/70" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-helvetica text-lg font-semibold uppercase tracking-[0.08em] text-white">
+                        {service.title}
+                      </p>
+                      <p className="text-sm leading-snug text-white/85">{service.description}</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        {/* Desktop / tablette : panneaux interactifs étirables */}
+        <div className="-mx-5 hidden gap-3 overflow-visible px-1 sm:gap-4 lg:gap-5 md:flex">
           {services.map((service, index) => {
             const media = PANEL_MEDIA[index];
             if (!media) return null;
@@ -64,10 +111,11 @@ export default function ServicesInteractivePanels() {
                 aria-label={service.title}
                 onMouseEnter={() => setHovered(index)}
                 onMouseLeave={() => setHovered(null)}
-                className="group relative flex min-w-0 cursor-pointer overflow-hidden rounded-md bg-black/60"
+                onClick={() => setHovered(index)}
+                className="group relative flex min-w-[75vw] md:min-w-0 cursor-pointer overflow-hidden rounded-md bg-black/60 snap-start"
                 style={{
                   flexGrow,
-                  flexBasis: 0,
+                  flexBasis: '0%',
                   transition: 'flex-grow 700ms cubic-bezier(0.25, 0.1, 0.25, 1)',
                 }}
               >
@@ -76,7 +124,7 @@ export default function ServicesInteractivePanels() {
                     src={media.image}
                     alt={alt}
                     fill
-                    sizes="(max-width: 1024px) 50vw, 20vw"
+                    sizes="(max-width: 1024px) 70vw, 20vw"
                     className={cn(
                       'object-cover transition-transform duration-700 ease-smooth',
                       isActive ? 'scale-105' : 'scale-100'
