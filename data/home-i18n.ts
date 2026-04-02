@@ -170,7 +170,7 @@ const FR: HomeCopy = {
   },
   stats: [
     { figure: '3+', label: 'ans d’expérience' },
-    { figure: '50+', label: 'événements accompagnés' },
+    { figure: '100+', label: 'événements accompagnés' },
     { figure: '10 000+', label: 'Capacité sur grands événements' },
   ],
   clients: { sectionLabel: 'Ils nous ont fait confiance' },
@@ -284,7 +284,7 @@ const EN: HomeCopy = {
   },
   stats: [
     { figure: '3+', label: 'years of experience' },
-    { figure: '50+', label: 'events supported' },
+    { figure: '100+', label: 'events supported' },
     { figure: '10,000+', label: 'Capacity for large-scale events' },
   ],
   clients: { sectionLabel: 'Trusted by clients and partners' },
@@ -397,7 +397,7 @@ const IT: HomeCopy = {
   },
   stats: [
     { figure: '3+', label: 'Anni di esperienza' },
-    { figure: '50+', label: 'Eventi seguiti' },
+    { figure: '100+', label: 'Eventi seguiti' },
     { figure: '10.000+', label: 'Capienza su grandi eventi' },
   ],
   clients: { sectionLabel: 'Ci hanno scelto' },
@@ -506,7 +506,7 @@ const ES: HomeCopy = {
   },
   stats: [
     { figure: '3+', label: 'Años de experiencia' },
-    { figure: '50+', label: 'Eventos acompañados' },
+    { figure: '100+', label: 'Eventos acompañados' },
     { figure: '10.000+', label: 'Capacidad para grandes eventos' },
   ],
   clients: { sectionLabel: 'Nos han elegido' },
@@ -608,7 +608,7 @@ const ZH: HomeCopy = {
   },
   stats: [
     { figure: '3+', label: '年经验' },
-    { figure: '50+', label: '场活动' },
+    { figure: '100+', label: '场活动' },
     { figure: '10,000+', label: '大型容量' },
   ],
   clients: { sectionLabel: '客户与合作伙伴' },

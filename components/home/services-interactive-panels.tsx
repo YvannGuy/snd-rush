@@ -65,7 +65,7 @@ export default function ServicesInteractivePanels() {
                 onMouseEnter={() => setHovered(index)}
                 onMouseLeave={() => setHovered(null)}
                 className={cn(
-                  'relative overflow-hidden rounded-3xl shadow-[0_18px_45px_rgba(0,0,0,0.28)] transition-all duration-700',
+                  'relative overflow-hidden shadow-[0_18px_45px_rgba(0,0,0,0.28)] transition-all duration-700',
                   isActive ? 'scale-[1.02] brightness-100' : 'scale-[0.9] brightness-[0.8]'
                 )}
               >
@@ -129,7 +129,7 @@ export default function ServicesInteractivePanels() {
                 onMouseEnter={() => setHovered(index)}
                 onMouseLeave={() => setHovered(null)}
                 onClick={() => setHovered(index)}
-                className="group relative flex min-w-[75vw] md:min-w-0 cursor-pointer overflow-hidden rounded-md bg-black/60 snap-start"
+                className="group relative flex min-w-[75vw] md:min-w-0 cursor-pointer overflow-hidden bg-black/60 snap-start"
                 style={{
                   flexGrow,
                   flexBasis: '0%',
