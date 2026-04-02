@@ -49,7 +49,7 @@ export default function ServicesInteractivePanels() {
         </h2>
 
         {/* Mobile : cartes empilées, tap pour agrandir */}
-        <div className="mt-2 flex flex-col gap-4 md:hidden">
+        <div className="mt-2 flex flex-col gap-2 md:hidden">
           {services.map((service, index) => {
             const media = PANEL_MEDIA[index];
             if (!media) return null;
