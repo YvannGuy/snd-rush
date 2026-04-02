@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import ScrollToTopButton from './ScrollToTopButton';
+import WhatsAppButton from './WhatsAppButton';
 
 export default function GlobalButtons() {
   const [mounted, setMounted] = useState(false);
@@ -17,5 +18,14 @@ export default function GlobalButtons() {
   const isDashboardPage =
     pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/mes-');
 
-  return <>{!isDashboardPage && <ScrollToTopButton />}</>;
+  return (
+    <>
+      {!isDashboardPage && (
+        <>
+          <WhatsAppButton />
+          <ScrollToTopButton />
+        </>
+      )}
+    </>
+  );
 }

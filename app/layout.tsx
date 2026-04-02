@@ -221,11 +221,6 @@ export default function RootLayout({
         {/* Google Analytics - Chargé conditionnellement selon le consentement */}
         <GoogleAnalytics />
 
-        {/* Crisp Chat */}
-        <Script id="crisp-chat" strategy="afterInteractive">
-          {`window.$crisp=[];window.CRISP_WEBSITE_ID="bceee50b-ec29-4f49-a5bb-c83abd1640c6";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();`}
-        </Script>
-
         <CartProvider>
           <HomeLocaleProvider>{children}</HomeLocaleProvider>
           

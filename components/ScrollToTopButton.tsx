@@ -52,7 +52,7 @@ export default function ScrollToTopButton() {
     <button
       type="button"
       onClick={scrollToTop}
-      className="fixed bottom-28 right-5 z-[35] flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-[#F2431E] text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[#E63A1A] sm:bottom-32 sm:right-6"
+      className="fixed bottom-5 right-5 z-[50] flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[#F2431E] text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[#E63A1A] sm:bottom-6 sm:right-6"
       aria-label="Retour en haut"
     >
       <svg
@@ -63,7 +63,7 @@ export default function ScrollToTopButton() {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="h-6 w-6 shrink-0"
+        className="h-7 w-7 shrink-0"
         aria-hidden
       >
         <path d="M12 19V5M5 12l7-7 7 7" />

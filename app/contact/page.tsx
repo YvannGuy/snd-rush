@@ -1,5 +1,4 @@
 import Header from '@/components/home/header';
-import { ContactHeroSection } from '@/components/contact/contact-hero-section';
 import { ContactIntroPanel } from '@/components/contact/contact-intro-panel';
 import { FAQSection } from '@/components/contact/faq-section';
 import Footer from '@/components/home/footer';
@@ -17,7 +16,6 @@ export default function ContactPage() {
   return (
     <main className="bg-[#f3efe9] text-[#050505]">
       <Header />
-      <ContactHeroSection />
       <TrustStrip />
 
       <section className="bg-[#f3efe9]" id="contact">

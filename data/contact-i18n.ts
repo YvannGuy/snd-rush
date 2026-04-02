@@ -1,14 +1,6 @@
 import { type HomeLocale, resolveHomeContentLocale } from '@/data/home-i18n';
 
 export type ContactCopy = {
-  hero: {
-    kicker: string;
-    titleLine1: string;
-    titleLine1Accent?: string;
-    titleLine2: string;
-    body: string;
-    bgAlt: string;
-  };
   trust: Array<{ icon: 'timer' | 'shield' | 'wrench' | 'users'; title: string }>;
   intro: {
     kicker: string;
@@ -81,15 +73,6 @@ export type ContactCopy = {
 };
 
 const contactFR: ContactCopy = {
-  hero: {
-    kicker: 'Sndrush Paris · Son, lumière, audiovisuel, photo, vidéo et régie',
-    titleLine1: 'Nous orchestrons',
-    titleLine1Accent: 'votre événement',
-    titleLine2: 'de A à Z',
-    body:
-      "Concert, conférence, mariage, événement d’entreprise ou grand rassemblement : Sndrush prend en charge le son, la lumière, les écrans LED, l’audiovisuel, la photo, la vidéo et la régie dans une organisation claire, fiable et professionnelle.",
-    bgAlt: 'Scène immersive Sndrush',
-  },
   trust: [
     { icon: 'timer', title: 'Réponse sous 24h' },
     { icon: 'shield', title: 'Devis sur mesure' },
@@ -213,15 +196,6 @@ const contactFR: ContactCopy = {
 };
 
 const contactEN: ContactCopy = {
-  hero: {
-    kicker: 'Sndrush Paris · Sound, lighting, AV, photo, video and show control',
-    titleLine1: 'We orchestrate',
-    titleLine1Accent: 'your event',
-    titleLine2: 'end to end',
-    body:
-      'Concerts, conferences, weddings, corporate events or large gatherings: Sndrush handles sound, lighting, LED, AV, photo, video and show control with clear, reliable operations.',
-    bgAlt: 'Immersive Sndrush stage',
-  },
   trust: [
     { icon: 'timer', title: 'Reply within 24h' },
     { icon: 'shield', title: 'Tailored quote' },
@@ -342,15 +316,6 @@ const contactEN: ContactCopy = {
 };
 
 const contactIT: ContactCopy = {
-  hero: {
-    kicker: 'Sndrush Paris · Audio, luci, AV, foto, video e regia',
-    titleLine1: 'Orchestri',
-    titleLine1Accent: 'il tuo evento',
-    titleLine2: 'da A a Z',
-    body:
-      'Concerti, conferenze, matrimoni, eventi corporate o grandi raduni: Sndrush gestisce audio, luci, LED, AV, foto, video e regia con un’organizzazione chiara e affidabile.',
-    bgAlt: 'Palco immersivo Sndrush',
-  },
   trust: [
     { icon: 'timer', title: 'Risposta entro 24h' },
     { icon: 'shield', title: 'Preventivo su misura' },
@@ -470,15 +435,6 @@ const contactIT: ContactCopy = {
 };
 
 const contactES: ContactCopy = {
-  hero: {
-    kicker: 'Sndrush Paris · Sonido, iluminación, AV, foto, video y regiduría',
-    titleLine1: 'Orquestamos',
-    titleLine1Accent: 'tu evento',
-    titleLine2: 'de principio a fin',
-    body:
-      'Conciertos, conferencias, bodas, eventos corporativos o grandes aforos: Sndrush gestiona sonido, luces, LED, AV, foto, video y regiduría con una operación clara y fiable.',
-    bgAlt: 'Escenario inmersivo Sndrush',
-  },
   trust: [
     { icon: 'timer', title: 'Respuesta en 24h' },
     { icon: 'shield', title: 'Presupuesto a medida' },
@@ -600,14 +556,6 @@ const contactES: ContactCopy = {
 };
 
 const contactZH: ContactCopy = {
-  hero: {
-    kicker: 'Sndrush Paris · 音响 · 灯光 · 视听 · 摄影 · 视频 · 舞台统筹',
-    titleLine1: '我们为你统筹',
-    titleLine1Accent: '整场活动',
-    titleLine2: '端到端',
-    body: '音乐会、会议、婚礼、企业活动或大型活动：Sndrush 负责音响、灯光、LED、视听、摄影、视频和舞台统筹，流程清晰、可靠。',
-    bgAlt: 'Sndrush 沉浸式舞台',
-  },
   trust: [
     { icon: 'timer', title: '24 小时内回复' },
     { icon: 'shield', title: '定制报价' },

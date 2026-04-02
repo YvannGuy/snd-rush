@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, ArrowRight, Check, Loader2, UploadCloud } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHomeLocale } from '@/contexts/HomeLocaleContext';
@@ -219,6 +219,8 @@ export function QuoteRequestForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const locationRef = useRef<HTMLDivElement>(null);
 
   const servicesLabel = useMemo(
     () =>
@@ -246,6 +248,7 @@ export function QuoteRequestForm() {
     const query = form.location.trim();
     if (query.length < 2) {
       setLocationSuggestions([]);
+      setShowLocationDropdown(false);
       return;
     }
 
@@ -261,7 +264,7 @@ export function QuoteRequestForm() {
           fetch(
             `https://restcountries.com/v3.1/name/${encodeURIComponent(
               query
-            )}?fields=name,translations&limit=6`
+            )}?fields=name,translations`
           ),
         ]);
 
@@ -284,7 +287,7 @@ export function QuoteRequestForm() {
             name?: { common?: string };
             translations?: Record<string, { common?: string }>;
           }>;
-          for (const country of countriesJson ?? []) {
+          for (const country of (Array.isArray(countriesJson) ? countriesJson : []).slice(0, 6)) {
             const translated =
               locale === 'fr'
                 ? country.translations?.fra?.common
@@ -301,9 +304,13 @@ export function QuoteRequestForm() {
           const merged = [...citySuggestions, ...countrySuggestions];
           const unique = Array.from(new Set(merged)).slice(0, 12);
           setLocationSuggestions(unique);
+          setShowLocationDropdown(unique.length > 0);
         }
       } catch {
-        if (!cancelled) setLocationSuggestions([]);
+        if (!cancelled) {
+          setLocationSuggestions([]);
+          setShowLocationDropdown(false);
+        }
       }
     }, 280);
 
@@ -312,6 +319,16 @@ export function QuoteRequestForm() {
       clearTimeout(timeout);
     };
   }, [form.location, locale]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (locationRef.current && !locationRef.current.contains(e.target as Node)) {
+        setShowLocationDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleFileChange = (file?: File) => {
     if (!file) return;
@@ -492,19 +509,41 @@ export function QuoteRequestForm() {
             onToChange={(v) => handleChange('dateTo', v)}
             required
           />
-          <InputField
-            label={copy.labels.location}
-            value={form.location}
-            onChange={(v) => handleChange('location', v)}
-            placeholder={copy.placeholders.location}
-            listId="location-suggestions"
-            required
-          />
-          <datalist id="location-suggestions">
-            {locationSuggestions.map((item) => (
-              <option key={item} value={item} />
-            ))}
-          </datalist>
+          <div ref={locationRef} className="relative flex flex-col gap-2 text-sm text-[#171717]">
+            <span className="text-[12px] font-semibold uppercase tracking-[0.22em] text-[#f36b21]">
+              {copy.labels.location}
+            </span>
+            <input
+              type="text"
+              value={form.location}
+              onChange={(e) => {
+                handleChange('location', e.target.value);
+                setShowLocationDropdown(true);
+              }}
+              onFocus={() => locationSuggestions.length > 0 && setShowLocationDropdown(true)}
+              placeholder={copy.placeholders.location}
+              required
+              autoComplete="off"
+              className="h-12 rounded-sm border border-[#ddd6cd] bg-white px-4 text-sm text-[#171717] placeholder:text-[#6f6a63] focus:border-[#f36b21] focus:outline-none"
+            />
+            {showLocationDropdown && locationSuggestions.length > 0 && (
+              <ul className="absolute top-[calc(100%+2px)] left-0 z-50 w-full rounded-sm border border-[#ddd6cd] bg-white shadow-lg">
+                {locationSuggestions.map((item) => (
+                  <li
+                    key={item}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleChange('location', item);
+                      setShowLocationDropdown(false);
+                    }}
+                    className="cursor-pointer px-4 py-2.5 text-sm text-[#171717] hover:bg-[#fff5ee] hover:text-[#d95c18]"
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         <div className="space-y-3">

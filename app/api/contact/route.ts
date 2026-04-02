@@ -160,23 +160,59 @@ export async function POST(request: NextRequest) {
       submittedAt,
     });
 
-    await resend.emails.send({
-      from: 'SND Rush <devisclients@guylocationevents.com>',
-      to: ['contact@guylocationevents.com'],
-      replyTo: email,
-      subject: `📬 Demande de devis - ${name}`,
-      react: emailReact,
-      attachments:
-        resendAttachment != null
-          ? [
-              {
-                filename: resendAttachment.filename,
-                content: resendAttachment.content,
-                ...(resendAttachment.contentType ? { contentType: resendAttachment.contentType } : {}),
-              },
-            ]
-          : undefined,
-    });
+    const telegramPromise = (async () => {
+      const token = process.env.TELEGRAM_BOT_TOKEN;
+      const chatId = process.env.TELEGRAM_CHAT_ID;
+      if (!token || !chatId) return;
+      const lines = [
+        `📬 *Nouvelle demande de devis*`,
+        ``,
+        `👤 *Nom :* ${name}${body.company ? ` (${body.company})` : ''}`,
+        `✉️ *Email :* ${email}`,
+        body.phone ? `📞 *Téléphone :* ${body.phone}` : null,
+        ``,
+        `🎪 *Événement :* ${body.eventType}`,
+        `👥 *Participants :* ${body.attendees}`,
+        `📅 *Date :* ${body.date}`,
+        `📍 *Lieu :* ${body.location}`,
+        `🎛️ *Services :* ${servicesArray.join(', ')}`,
+        ``,
+        `💬 *Message :*\n${body.message}`,
+        briefPublicUrl ? `\n📎 *Fichier :* ${briefPublicUrl}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n');
+      try {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: lines, parse_mode: 'Markdown' }),
+        });
+      } catch (tgErr) {
+        console.error('Telegram notification error:', tgErr);
+      }
+    })();
+
+    await Promise.all([
+      resend.emails.send({
+        from: 'SND Rush <devisclients@guylocationevents.com>',
+        to: ['contact@guylocationevents.com'],
+        replyTo: email,
+        subject: `📬 Demande de devis - ${name}`,
+        react: emailReact,
+        attachments:
+          resendAttachment != null
+            ? [
+                {
+                  filename: resendAttachment.filename,
+                  content: resendAttachment.content,
+                  ...(resendAttachment.contentType ? { contentType: resendAttachment.contentType } : {}),
+                },
+              ]
+            : undefined,
+      }),
+      telegramPromise,
+    ]);
 
     try {
       const supabase = getSupabaseServerClient();
