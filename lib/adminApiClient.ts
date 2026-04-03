@@ -18,6 +18,11 @@ export async function getAdminAccessToken(): Promise<string> {
   return session.access_token;
 }
 
+/** Init fetch admin : body peut être un objet sérialisé en JSON (en plus des BodyInit standards). */
+export type AdminFetchInit = Omit<RequestInit, 'body'> & {
+  body?: RequestInit['body'] | Record<string, unknown>;
+};
+
 /**
  * Effectue un fetch vers une API route admin avec authentification Bearer
  * @param path - Chemin relatif (ex: '/api/admin/pending-actions')
@@ -27,7 +32,7 @@ export async function getAdminAccessToken(): Promise<string> {
  */
 export async function adminFetch<T = any>(
   path: string,
-  init?: RequestInit
+  init?: AdminFetchInit
 ): Promise<T> {
   try {
     const token = await getAdminAccessToken();
@@ -41,35 +46,27 @@ export async function adminFetch<T = any>(
     
     // Gérer Content-Type et body selon le type
     if (init?.body) {
-      if (init.body instanceof FormData) {
-        // FormData => ne jamais définir Content-Type, passer tel quel
-        bodyToSend = init.body;
-      } else if (init.body instanceof URLSearchParams) {
-        // URLSearchParams => passer tel quel, ne pas JSON.stringify
-        bodyToSend = init.body;
-      } else if (init.body instanceof Blob) {
-        // Blob => passer tel quel, ne pas JSON.stringify
-        bodyToSend = init.body;
-      } else if (init.body instanceof ArrayBuffer) {
-        // ArrayBuffer => passer tel quel, ne pas JSON.stringify
-        bodyToSend = init.body;
-      } else if (ArrayBuffer.isView(init.body)) {
-        // ArrayBufferView (ex: Uint8Array) => passer tel quel, ne pas JSON.stringify
-        bodyToSend = init.body;
-      } else if (typeof ReadableStream !== 'undefined' && init.body instanceof ReadableStream) {
-        // ReadableStream => passer tel quel, ne pas JSON.stringify
-        // Vérification typeof pour éviter erreurs SSR si ReadableStream undefined
-        bodyToSend = init.body;
-      } else if (typeof init.body === 'string') {
-        // string => passer tel quel, set Content-Type application/json seulement si ressemble à du JSON
-        bodyToSend = init.body;
-        const trimmed = init.body.trim();
+      const b = init.body;
+      if (b instanceof FormData) {
+        bodyToSend = b;
+      } else if (b instanceof URLSearchParams) {
+        bodyToSend = b;
+      } else if (b instanceof Blob) {
+        bodyToSend = b;
+      } else if (b instanceof ArrayBuffer) {
+        bodyToSend = b;
+      } else if (ArrayBuffer.isView(b)) {
+        bodyToSend = b;
+      } else if (typeof ReadableStream !== 'undefined' && b instanceof ReadableStream) {
+        bodyToSend = b;
+      } else if (typeof b === 'string') {
+        bodyToSend = b;
+        const trimmed = b.trim();
         if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
           headers.set('Content-Type', 'application/json');
         }
       } else {
-        // plain object => JSON.stringify + Content-Type application/json
-        bodyToSend = JSON.stringify(init.body);
+        bodyToSend = JSON.stringify(b);
         headers.set('Content-Type', 'application/json');
       }
     } else if (init?.method && init.method !== 'GET') {
@@ -77,10 +74,11 @@ export async function adminFetch<T = any>(
       headers.set('Content-Type', 'application/json');
     }
     
+    const { body: _initBody, headers: _initHeaders, ...restInit } = init ?? {};
     const response = await fetch(path, {
-      ...init,
+      ...restInit,
       headers,
-      body: bodyToSend !== null ? bodyToSend : init?.body,
+      body: bodyToSend !== null ? bodyToSend : undefined,
     });
 
     if (!response.ok) {

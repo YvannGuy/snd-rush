@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/adminApiClient';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
@@ -44,19 +44,11 @@ export default function AdminClientsPage() {
   }, [isAdmin, checkingAdmin, user, router]);
 
   useEffect(() => {
-    if (!user || !supabase || !isAdmin) return;
+    if (!user || checkingAdmin || !isAdmin) return;
 
     const loadClients = async () => {
-      if (!supabase) return;
       try {
-        // OPTIMISATION: Limiter à 200 orders récents pour les performances (suffisant pour la plupart des cas)
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('orders')
-          .select('customer_email, customer_name, customer_phone, total, created_at')
-          .order('created_at', { ascending: false })
-          .limit(200);
-
-        if (ordersError) throw ordersError;
+        const { orders: ordersData } = await adminFetch<{ orders: any[] }>('/api/admin/clients');
 
         // Grouper par email pour créer la liste des clients
         const clientsMap = new Map();
@@ -90,7 +82,7 @@ export default function AdminClientsPage() {
     };
 
     loadClients();
-  }, [user]);
+  }, [user, isAdmin, checkingAdmin]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -195,51 +187,13 @@ export default function AdminClientsPage() {
     setIsModalOpen(true);
     setLoadingDetails(true);
 
-    if (!supabase) return;
     try {
-      // Charger les commandes du client
-      const { data: ordersData } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('customer_email', client.email || '')
-        .order('created_at', { ascending: false });
-
-      // OPTIMISATION: Charger seulement les réservations récentes (limitées à 200)
-      // et filtrer côté serveur si possible
-      const { data: recentReservations } = await supabase
-        .from('reservations')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(200);
-
-      // Filtrer les réservations qui correspondent à ce client
-      let reservationsData: any[] = [];
-      if (recentReservations) {
-        const sessionIds = (ordersData || []).map((o: any) => o.stripe_session_id).filter(Boolean);
-        // OPTIMISATION: Créer un Set pour recherche O(1)
-        const sessionIdsSet = new Set(sessionIds);
-        
-        reservationsData = recentReservations.filter((reservation: any) => {
-          if (reservation.notes) {
-            try {
-              const notesData = JSON.parse(reservation.notes);
-              if (notesData.sessionId && sessionIdsSet.has(notesData.sessionId)) {
-                return true;
-              }
-              if (notesData.customerEmail && notesData.customerEmail.toLowerCase() === client.email.toLowerCase()) {
-                return true;
-              }
-            } catch (e) {
-              // Ignorer
-            }
-          }
-          return false;
-        });
-      }
-
+      const data = await adminFetch<{ orders: any[]; reservations: any[] }>(
+        `/api/admin/clients?email=${encodeURIComponent(client.email || '')}`
+      );
       setClientDetails({
-        orders: ordersData || [],
-        reservations: reservationsData || [],
+        orders: data.orders || [],
+        reservations: data.reservations || [],
       });
     } catch (error) {
       console.error('Erreur chargement détails client:', error);

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/adminApiClient';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
@@ -43,16 +43,8 @@ useEffect(() => {
 
     const loadContracts = async () => {
       try {
-        // Utiliser l'API admin pour récupérer les contrats avec le client admin
-        const response = await fetch('/api/admin/contrats');
-        
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await adminFetch<{ contracts: any[] }>('/api/admin/contrats');
         const allContracts = data.contracts || [];
-
         setContracts(allContracts);
         setFilteredContracts(allContracts);
       } catch (error) {

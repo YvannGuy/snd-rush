@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { useAdmin } from '@/hooks/useAdmin';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/adminApiClient';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
@@ -35,57 +35,20 @@ export default function AdminClientDetailPage() {
   }, [isAdmin, checkingAdmin, user, router]);
 
 useEffect(() => {
-    if (!user || !supabase || !clientEmail) return;
+    if (!user || !clientEmail) return;
+    if (checkingAdmin) return;
+    if (!isAdmin) {
+      setLoadingData(false);
+      return;
+    }
 
     const loadClientData = async () => {
-      if (!supabase) return;
+      setLoadingData(true);
       try {
-        // Charger les commandes du client
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('customer_email', clientEmail)
-          .order('created_at', { ascending: false });
-
-        if (ordersError) throw ordersError;
-
-        // OPTIMISATION: Charger seulement les réservations récentes (limitées à 200)
-        const { data: recentReservations, error: reservationsError } = await supabase
-          .from('reservations')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(200);
-
-        // Filtrer les réservations qui correspondent à ce client
-        let reservationsData: any[] = [];
-        if (recentReservations) {
-          // Récupérer les sessionIds des orders de ce client
-          const sessionIds = (ordersData || []).map((o: any) => o.stripe_session_id).filter(Boolean);
-          // OPTIMISATION: Utiliser un Set pour recherche O(1)
-          const sessionIdsSet = new Set(sessionIds);
-          
-          reservationsData = recentReservations.filter((reservation: any) => {
-            // Vérifier si la réservation a un sessionId qui correspond à un order de ce client
-            if (reservation.notes) {
-              try {
-                const notesData = JSON.parse(reservation.notes);
-                if (notesData.sessionId && sessionIdsSet.has(notesData.sessionId)) {
-                  return true;
-                }
-                if (notesData.customerEmail && notesData.customerEmail.toLowerCase() === clientEmail.toLowerCase()) {
-                  return true;
-                }
-              } catch (e) {
-                // Ignorer les erreurs de parsing
-              }
-            }
-            return false;
-          });
-        }
-
-        if (reservationsError) {
-          console.error('Erreur chargement réservations:', reservationsError);
-        }
+        const { orders: ordersData, reservations: reservationsData } = await adminFetch<{
+          orders: any[];
+          reservations: any[];
+        }>(`/api/admin/clients?email=${encodeURIComponent(clientEmail)}`);
 
         // Extraire les infos client depuis la première commande
         if (ordersData && ordersData.length > 0) {
@@ -153,7 +116,7 @@ useEffect(() => {
     };
 
     loadClientData();
-  }, [user, clientEmail]);
+  }, [user, clientEmail, isAdmin, checkingAdmin]);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';

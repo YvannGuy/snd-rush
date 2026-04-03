@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useUser } from './useUser';
+import { isAdminMetadataOrFallbackEmail } from '@/lib/admin-identity';
 import { supabase } from '@/lib/supabase';
+import { useUser } from './useUser';
 
 export function useAdmin() {
   const { user, loading: userLoading } = useUser();
@@ -17,15 +18,13 @@ export function useAdmin() {
         return;
       }
 
-      // OPTIMISATION: Vérifier d'abord user_metadata et email (instantané)
-      // Cela évite les requêtes DB inutiles qui peuvent échouer
-      const isAdminFromMetadata = user.user_metadata?.role?.toLowerCase() === 'admin' ||
-                                   user.email?.toLowerCase() === 'yvann.guyonnet@gmail.com';
-      
+      // OPTIMISATION: metadata / email fallback (aligné avec verifyAdmin côté API)
+      const isAdminFromMetadata = isAdminMetadataOrFallbackEmail(user);
+
       if (isAdminFromMetadata) {
         setIsAdmin(true);
         setCheckingAdmin(false);
-        return; // Pas besoin de requête DB si déjà admin via metadata
+        return;
       }
 
       // Seulement si pas admin via metadata, vérifier dans user_profiles
@@ -40,9 +39,8 @@ export function useAdmin() {
           console.error('Erreur vérification rôle admin:', error);
         }
 
-        const isAdminRole = profile?.role?.toLowerCase() === 'admin' || 
-                           isAdminFromMetadata ||
-                           user.email?.toLowerCase() === 'yvann.guyonnet@gmail.com';
+        const isAdminRole =
+          profile?.role?.toLowerCase() === 'admin' || isAdminMetadataOrFallbackEmail(user);
         
         setIsAdmin(isAdminRole);
         setCheckingAdmin(false);

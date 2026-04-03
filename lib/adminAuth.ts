@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { isAdminMetadataOrFallbackEmail } from '@/lib/admin-identity';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -15,7 +16,7 @@ export interface AdminAuthResult {
 
 /**
  * Vérifie si un utilisateur est admin via token Bearer.
- * Source de vérité : user_profiles.role === 'admin' (côté base de données).
+ * Aligné avec useAdmin : user_metadata / email fallback, puis user_profiles.role.
  */
 export async function verifyAdmin(token: string): Promise<AdminAuthResult> {
   if (!supabaseAdmin) {
@@ -29,6 +30,10 @@ export async function verifyAdmin(token: string): Promise<AdminAuthResult> {
       return { isAdmin: false, error: 'Token invalide ou expiré' };
     }
 
+    if (isAdminMetadataOrFallbackEmail(user)) {
+      return { isAdmin: true, userId: user.id };
+    }
+
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('user_profiles')
       .select('role')
@@ -40,7 +45,9 @@ export async function verifyAdmin(token: string): Promise<AdminAuthResult> {
       return { isAdmin: false, error: 'Erreur vérification profil' };
     }
 
-    return { isAdmin: profile?.role === 'admin', userId: user.id };
+    const profileAdmin = String(profile?.role ?? '').toLowerCase() === 'admin';
+
+    return { isAdmin: profileAdmin, userId: user.id };
   } catch (error: any) {
     console.error('Erreur vérification admin:', error);
     return { isAdmin: false, error: error.message || 'Erreur serveur' };

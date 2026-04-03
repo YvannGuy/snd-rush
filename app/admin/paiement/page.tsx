@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { adminFetch } from '@/lib/adminApiClient';
 import { Plus, X, Send, Loader2, Copy, Check, MessageCircle } from 'lucide-react';
 
 interface CustomProduct {
@@ -191,12 +192,14 @@ export default function AdminPaiementPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/admin/create-payment-link', {
+      const data = await adminFetch<{
+        url?: string;
+        emailSent?: boolean;
+        sessionId?: string;
+        emailError?: string;
+      }>('/api/admin/create-payment-link', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        body: {
           customerName,
           customerEmail,
           eventAddress,
@@ -205,19 +208,12 @@ export default function AdminPaiementPage() {
           startTime,
           endDate,
           endTime,
-          participants: participants ? parseInt(participants) : null,
+          participants: participants ? parseInt(participants, 10) : null,
           customProducts,
-        }),
+        },
       });
 
-      const data = await response.json();
-      
       console.log('📡 Réponse complète de l\'API:', data);
-
-      if (!response.ok) {
-        console.error('❌ Erreur API:', data);
-        throw new Error(data.error || 'Erreur lors de l\'envoi');
-      }
 
       // Stocker le lien de paiement
       if (data.url) {

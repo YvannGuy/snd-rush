@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useUser } from '@/hooks/useUser';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/adminApiClient';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
@@ -48,11 +48,7 @@ export default function AdminProPage() {
     const loadProRequests = async () => {
       setLoadingRequests(true);
       try {
-        // Utiliser l'API route qui récupère les emails avec service role
-        const response = await fetch('/api/admin/pro-requests');
-        if (!response.ok) throw new Error('Erreur récupération demandes');
-        
-        const data = await response.json();
+        const data = await adminFetch<{ requests: any[] }>('/api/admin/pro-requests');
         setProRequests(data.requests || []);
         setFilteredRequests(data.requests || []);
       } catch (error) {
@@ -104,38 +100,15 @@ export default function AdminProPage() {
 
   // Actions sur les demandes
   const handleActivate = async (userId: string) => {
-    if (!supabase) return;
     setActionLoading(userId);
     try {
-      // Récupérer le token de session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        alert('Session expirée. Veuillez vous reconnecter.');
-        return;
-      }
-
-      // Appeler l'API route sécurisée
-      const response = await fetch('/api/admin/pro-requests/activate', {
+      await adminFetch('/api/admin/pro-requests/activate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ user_id: userId }),
+        body: { user_id: userId },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de l\'activation');
-      }
-
-      // Recharger les demandes via API
-      const refreshResponse = await fetch('/api/admin/pro-requests');
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json();
-        setProRequests(refreshData.requests || []);
-      }
+      const refreshData = await adminFetch<{ requests: any[] }>('/api/admin/pro-requests');
+      setProRequests(refreshData.requests || []);
       setIsDetailModalOpen(false);
     } catch (error: any) {
       console.error('Erreur activation pro:', error);
@@ -146,33 +119,14 @@ export default function AdminProPage() {
   };
 
   const handleBlock = async (userId: string) => {
-    if (!supabase) return;
     if (!confirm('Êtes-vous sûr de vouloir bloquer cet accès Pro ?')) return;
 
     setActionLoading(userId);
     try {
-      // Récupérer le token de session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        alert('Session expirée. Veuillez vous reconnecter.');
-        return;
-      }
-
-      // Appeler l'API route sécurisée
-      const response = await fetch('/api/admin/pro-requests/block', {
+      await adminFetch('/api/admin/pro-requests/block', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ user_id: userId }),
+        body: { user_id: userId },
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors du blocage');
-      }
 
       // OPTIMISATION: Mettre à jour l'état local au lieu de recharger toutes les données
       setProRequests(prev => prev.map(req => 
@@ -190,33 +144,14 @@ export default function AdminProPage() {
   };
 
   const handleReject = async (userId: string) => {
-    if (!supabase) return;
     if (!confirm('Êtes-vous sûr de vouloir refuser cette demande ?')) return;
 
     setActionLoading(userId);
     try {
-      // Récupérer le token de session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        alert('Session expirée. Veuillez vous reconnecter.');
-        return;
-      }
-
-      // Appeler l'API route sécurisée
-      const response = await fetch('/api/admin/pro-requests/reject', {
+      await adminFetch('/api/admin/pro-requests/reject', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ user_id: userId }),
+        body: { user_id: userId },
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors du refus');
-      }
 
       // OPTIMISATION: Retirer la demande de la liste au lieu de recharger toutes les données
       setProRequests(prev => prev.filter(req => req.user_id !== userId));

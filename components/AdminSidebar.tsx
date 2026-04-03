@@ -5,6 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
+import { useAdmin } from '@/hooks/useAdmin';
+import { useUser } from '@/hooks/useUser';
 import { adminFetch } from '@/lib/adminApiClient';
 import UserIconWithName from '@/components/UserIconWithName';
 
@@ -26,6 +28,8 @@ export default function AdminSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useAuth();
+  const { user } = useUser();
+  const { isAdmin, checkingAdmin } = useAdmin();
 
   const [pendingActions, setPendingActions] = useState({
     pending_reservations: 0,
@@ -82,6 +86,10 @@ export default function AdminSidebar({
   };
 
   useEffect(() => {
+    if (!user || checkingAdmin || !isAdmin) {
+      return;
+    }
+
     const fetchPendingActions = async () => {
       try {
         const data = await adminFetch<{
@@ -107,7 +115,11 @@ export default function AdminSidebar({
             console.warn('[AdminSidebar] Pas de session, badges non chargés');
             hasLoggedNoSession.current = true;
           }
-          // fail gracefully: keep 0s
+        } else if (
+          error instanceof Error &&
+          (error.message.includes('(403)') || error.message.includes('Accès refusé'))
+        ) {
+          // Session présente mais droits API admin insuffisants : pas d’erreur console (cas attendu)
         } else {
           console.error('[AdminSidebar] Erreur chargement badges:', error);
         }
@@ -125,7 +137,7 @@ export default function AdminSidebar({
     return () => {
       window.removeEventListener('pendingActionsUpdated', handlePendingActionsUpdated);
     };
-  }, []);
+  }, [user?.id, checkingAdmin, isAdmin]);
 
   const closeSidebar = () => {
     if (onClose) onClose();

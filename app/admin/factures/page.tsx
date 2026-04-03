@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { adminFetch } from '@/lib/adminApiClient';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminHeader from '@/components/AdminHeader';
 import AdminFooter from '@/components/AdminFooter';
@@ -57,59 +57,26 @@ export default function AdminFacturesPage() {
   }, [isAdmin, checkingAdmin, user, router]);
 
 useEffect(() => {
-    if (!user || !supabase) return;
+    if (!user) return;
 
-    const loadOrders = async () => {
-      if (!supabase) return;
+    const loadFacturesData = async () => {
       try {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
+        const data = await adminFetch<{
+          orders: any[];
+          reservations: any[];
+          clientReservations: any[];
+        }>('/api/admin/orders');
 
-        if (error) throw error;
-        setOrders(data || []);
-        setFilteredOrders(data || []);
+        setOrders(data.orders || []);
+        setFilteredOrders(data.orders || []);
+        setReservations(data.reservations || []);
+        setClientReservations(data.clientReservations || []);
       } catch (error) {
         console.error('Erreur chargement factures:', error);
       }
     };
 
-    const loadReservations = async () => {
-      if (!supabase) return;
-      try {
-        // Charger les anciennes réservations
-        const { data: oldReservations, error: oldError } = await supabase
-          .from('reservations')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(50);
-
-        if (oldError) {
-          console.error('Erreur chargement réservations:', oldError);
-        } else {
-          setReservations(oldReservations || []);
-        }
-
-        // Charger les client_reservations
-        const { data: clientReservationsData, error: clientError } = await supabase
-          .from('client_reservations')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(50);
-
-        if (clientError) {
-          console.error('Erreur chargement client_reservations:', clientError);
-        } else {
-          setClientReservations(clientReservationsData || []);
-        }
-      } catch (error) {
-        console.error('Erreur chargement réservations:', error);
-      }
-    };
-
-    loadOrders();
-    loadReservations();
+    loadFacturesData();
   }, [user]);
 
   useEffect(() => {
@@ -478,14 +445,13 @@ useEffect(() => {
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
-                if (!user || !supabase) return;
+                if (!user) return;
 
                 setIsSubmitting(true);
                 try {
-                  if (!supabase) return;
-                  const { error } = await supabase
-                    .from('orders')
-                    .insert({
+                  await adminFetch('/api/admin/orders', {
+                    method: 'POST',
+                    body: {
                       customer_email: formData.customer_email,
                       customer_name: formData.customer_name,
                       customer_phone: formData.customer_phone || null,
@@ -499,20 +465,13 @@ useEffect(() => {
                         reservation_id: formData.reservation_id || null,
                         manual_creation: true,
                       },
-                    });
+                    },
+                  });
 
-                  if (error) throw error;
-                  
-                  // Recharger les factures
-                  if (!supabase) return;
-                  const { data: newOrders } = await supabase
-                    .from('orders')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                  if (newOrders) {
-                    setOrders(newOrders);
-                    setFilteredOrders(newOrders);
+                  const refreshed = await adminFetch<{ orders: any[] }>('/api/admin/orders?scope=orders');
+                  if (refreshed.orders) {
+                    setOrders(refreshed.orders);
+                    setFilteredOrders(refreshed.orders);
                   }
 
                   setIsInvoiceModalOpen(false);
