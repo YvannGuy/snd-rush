@@ -6,6 +6,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { HomeLocaleProvider } from "@/contexts/HomeLocaleContext";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import CookieBanner from "@/components/CookieBanner";
+import InternationalWelcomePopup from "@/components/InternationalWelcomePopup";
 // import ConditionalChatWidget from "@/components/ConditionalChatWidget"; // Masqué
 import GlobalButtons from "@/components/GlobalButtons";
 import "./globals.css";
@@ -230,6 +231,9 @@ export default function RootLayout({
           {/* Boutons globaux - WhatsApp et Retour en haut - Apparaissent sur toutes les pages */}
           <GlobalButtons />
         </CartProvider>
+
+        {/* Message clientèle internationale — une fois par session, fermeture auto 10 s */}
+        <InternationalWelcomePopup />
 
         {/* Cookie Banner - Apparaît sur toutes les pages */}
         <CookieBanner />
